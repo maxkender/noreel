@@ -39,3 +39,33 @@ Chaque choix non trivial, une ligne de justification (§2 règle 3).
   lui-même comme le plus gros risque technique.
 - Skia dans Expo Go : géré par Expo 57, mais l'inclusion dans Expo Go reste à vérifier
   empiriquement. Si absent → development build EAS obligatoire.
+
+## Blocage d'apps (hors périmètre du brief, demandé ensuite)
+
+- **Écart au §0 assumé.** Le brief exclut explicitement le mécanisme de blocage
+  (« stubs propres derrière des interfaces »). Demandé en cours de route, donc
+  implémenté — mais sans casser ce qui marche.
+- **`react-native-device-activity` 0.6.1** plutôt qu'un module natif maison :
+  fournit les trois extensions qu'Apple exige (ActivityMonitorExtension,
+  ShieldConfiguration, ShieldAction), qu'il faudrait sinon écrire en Swift avec
+  des cibles Xcode générées à la main.
+- **Plugin verrouillé derrière `EXPO_PUBLIC_FAMILY_CONTROLS=1`.** L'entitlement
+  `com.apple.developer.family-controls` n'est accordé pour la distribution
+  qu'après examen par Apple. L'ajouter avant l'accord ferait échouer le build
+  TestFlight (le profil de provisioning ne peut pas le contenir). Vérifié des
+  deux côtés : `expo config` ne contient pas le plugin par défaut, le contient
+  avec le drapeau.
+- **`services/index.ts` bascule tout seul** du mock au vrai blocage selon ce même
+  drapeau. Aucun autre fichier à toucher le jour de l'accord.
+- **API vérifiée avant usage.** `getAuthorizationStatus` (synchrone),
+  `requestAuthorization`, `isShieldActive`, `enableBlockAllMode`, `resetBlocks`
+  et la constante runtime `AuthorizationStatus` existent bien dans le paquet
+  installé — contrôlé dans les `.d.ts`, pas supposé.
+
+## En attente d'une action humaine
+
+- [ ] **Demander l'entitlement Family Controls à Apple** :
+      https://developer.apple.com/contact/request/family-controls-distribution
+      Sans accord, le blocage iOS reste inopérant, quel que soit le code.
+- [ ] Blocage Android (service d'accessibilité) : non implémenté. Policy Play
+      Store restrictive depuis 2023, à traiter séparément.
