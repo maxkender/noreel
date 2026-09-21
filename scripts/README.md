@@ -6,13 +6,11 @@ Liste les capacites d'un identifiant de bundle via l'API App Store Connect.
 
     python3 scripts/check-entitlements.py
 
-**Limite importante** : l'API publique ne connait pas le type `FAMILY_CONTROLS`
-(absent de son enum, verifie : HTTP 409 avec la liste des types acceptes).
-C'est une *managed capability*. Ce script ne peut donc **pas** confirmer que
-l'entitlement Family Controls est actif. Font foi, dans l'ordre :
-
-1. le mail d'Apple Developer Relations accordant l'entitlement au compte ;
-2. un build EAS qui reussit avec `EXPO_PUBLIC_FAMILY_CONTROLS=1`.
+**Limite exacte** : l'API publique sait **lire** `FAMILY_CONTROLS` mais refuse
+de l'**ecrire** (HTTP 409, absent de l'enum accepte en POST). C'est une
+*managed capability* : elle ne s'active que dans le portail web. Le script est
+donc fiable en lecture — s'il affiche `FAMILY_CONTROLS`, c'est qu'elle est bien
+active sur cet identifiant.
 
 Si le build echoue sur le provisioning, activer la capacite a la main :
 developer.apple.com > Identifiers > l'App ID > cocher Family Controls.
@@ -36,3 +34,12 @@ ceux des extensions :
 Cocher sur chacun : **Family Controls** et **App Groups**
 (groupe `group.com.vikstudios.noreel`). D'autres identifiants d'extension
 apparaitront au build suivant : meme traitement.
+
+
+## Quand les capacites changent
+
+Apple passe automatiquement tous les profils de provisioning de l'identifiant
+a l'etat `INVALID` des qu'on modifie ses capacites. C'est normal : il faut les
+regenerer. EAS le detecte et les refait au build suivant. Si ce n'est pas le
+cas, les supprimer dans le portail (Certificates > Profiles) force la
+regeneration.
