@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, withAlpha } from '@/theme/colors';
@@ -12,7 +12,7 @@ type Props = {
   intensity?: number;
   /** Côté du liseré chaud : le soleil est bas, donc « bottom » par défaut (§4.4). */
   warmEdge?: 'bottom' | 'top' | 'none';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Un panneau devant du détail mérite un vrai flou ; sur un ciel lisse, non. */
   blur?: boolean;
 };

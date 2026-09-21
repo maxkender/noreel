@@ -15,8 +15,15 @@ import { S1Welcome } from './screens/S1Welcome';
 import { S2Explain } from './screens/S2Explain';
 import { S3Pain } from './screens/S3Pain';
 import { S4Solution } from './screens/S4Solution';
+import { S5Input } from './screens/S5Input';
+import { S6LifeGrid } from './screens/S6LifeGrid';
+import { S7Harms } from './screens/S7Harms';
+import { S8Love } from './screens/S8Love';
+import { S9HomeApps } from './screens/S9HomeApps';
+import { Permissions } from './screens/Permissions';
+import { Paywall } from './screens/Paywall';
 
-const TOTAL = 9; // la progression reste a l'echelle des 9 ecrans du brief
+const TOTAL = 11; // 9 ecrans + permissions + paywall
 
 function Flow() {
   const router = useRouter();
@@ -26,9 +33,7 @@ function Flow() {
   const start = useOnboardingStore((s) => s.start);
 
   const go = useCallback((next: number) => {
-    // Ecrans 5 a 9 pas encore construits : on termine proprement plutot que
-    // d'afficher du vide.
-    if (next > 3) {
+    if (next >= TOTAL) {
       complete();
       track('onboarding_completed');
       router.replace('/home');
@@ -48,6 +53,14 @@ function Flow() {
     <S2Explain key="s2" onNext={() => go(2)} />,
     <S3Pain key="s3" onNext={() => go(3)} />,
     <S4Solution key="s4" onNext={() => go(4)} />,
+    <S5Input key="s5" onNext={() => go(5)} />,
+    <S6LifeGrid key="s6" onNext={() => go(6)} />,
+    <S7Harms key="s7" onNext={() => go(7)} />,
+    <S8Love key="s8" onNext={() => go(8)} />,
+    <S9HomeApps key="s9" onNext={() => go(9)} />,
+    <Permissions key="perm" onDone={() => go(10)} />,
+    // Le paywall ne bloque jamais : ses deux boutons menent a la Home.
+    <Paywall key="pay" onDone={() => go(TOTAL)} />,
   ];
 
   return (

@@ -139,6 +139,27 @@ export const fr = {
     unavailable: `L'ajout automatique n'est pas disponible sur cet appareil. Tu pourras le faire depuis les réglages de NoReel.`,
   },
 
+  paywall: {
+    kicker: 'NoReel Pro',
+    title: 'Aide-toi à tenir.',
+    subtitle: 'Les trois premiers jours sont les plus durs.',
+    free: 'Gratuit',
+    pro: 'Pro',
+    f1: 'Bloquer les fils de vidéos courtes',
+    f2: 'Bloquer les apps d’origine',
+    f3: 'Masquer les posts suggérés',
+    f4: 'Mode nuit',
+    f5: 'Plusieurs comptes',
+    yearly: '49,90 €/an',
+    yearlySub: '4,16 €/mois',
+    monthly: '7,99 €/mois',
+    monthlySub: 'Facturé mensuellement',
+    save: 'Économise 48 %',
+    cta: 'Débloquer Pro',
+    skip: 'Continuer avec la version gratuite',
+    soon: 'Les paiements arrivent bientôt. Tout est gratuit pour l’instant.',
+  },
+
   home: {
     morning: 'Bonjour.',
     evening: 'Bonsoir.',

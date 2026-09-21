@@ -134,6 +134,27 @@ export const en: Dict = {
     unavailable: `Automatic adding isn't available on this device. You can do it later from NoReel's settings.`,
   },
 
+  paywall: {
+    kicker: 'NoReel Pro',
+    title: 'Help yourself stick with it.',
+    subtitle: 'The first three days are the hardest.',
+    free: 'Free',
+    pro: 'Pro',
+    f1: 'Block short-form feeds',
+    f2: 'Lock the native apps',
+    f3: 'Hide suggested posts',
+    f4: 'Sleep mode',
+    f5: 'Multiple accounts',
+    yearly: '€49.90/yr',
+    yearlySub: '€4.16/mo',
+    monthly: '€7.99/mo',
+    monthlySub: 'Billed monthly',
+    save: 'Save 48%',
+    cta: 'Unlock Pro',
+    skip: 'Continue with the free version',
+    soon: 'Payments are coming soon. Everything is free for now.',
+  },
+
   home: {
     morning: 'Good morning.',
     evening: 'Good evening.',
