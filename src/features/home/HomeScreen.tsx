@@ -9,9 +9,11 @@ import { Glow } from '@/components/Glow';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours, locale } from '@/lib/format';
-import { filteredApps, shield, stats } from '@/services';
+import { shield, stats } from '@/services';
+import { useRouter } from 'expo-router';
 
 export function HomeScreen() {
+  const router = useRouter();
   const { d, t } = useT();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
   const [week, setWeek] = useState<number[]>([]);
@@ -67,12 +69,12 @@ export function HomeScreen() {
         </View>
 
         <View style={st.tiles}>
-          {([['instagram', d.s9.appInsta, d.home.instaSub],
-             ['tiktok', d.s9.appTiktok, d.home.tiktokSub]] as const).map(([app, name, sub]) => (
+          {([['instagram', 'Instagram', d.home.instaSub],
+             ['youtube', 'YouTube', d.home.tiktokSub]] as const).map(([app, name, sub]) => (
             <Pressable
               key={app}
               style={st.tile}
-              onPress={() => { haptics.press(); void filteredApps.open(app); }}
+              onPress={() => { haptics.press(); router.push(`/client/${app}`); }}
             >
               <View style={st.tileIcon}><View style={st.tileRing} /></View>
               <Text variant="body">{name}</Text>

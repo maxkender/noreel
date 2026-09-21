@@ -9,8 +9,10 @@ export const setMockProfile = (p: MockProfile) => { profile = p; };
 export const getMockProfile = () => profile;
 
 export const mockFilteredApps: FilteredAppsService = {
+  // La navigation se fait depuis la Home via expo-router ; ce service reste
+  // pour les appels hors composant.
   async open(app: SocialApp) {
-    console.log(`[mock] ouvrirait la version NoReel de ${app}`);
+    if (__DEV__) console.log(`[client] ouvrir /client/${app}`);
   },
 };
 

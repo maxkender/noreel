@@ -46,7 +46,12 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.night },
             animation: 'none',
           }}
-        />
+        >
+          <Stack.Screen
+            name="client/[id]"
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+          />
+        </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
