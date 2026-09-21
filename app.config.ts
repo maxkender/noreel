@@ -1,6 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 
-const NIGHT = '#0B0D1F';
+const NIGHT = '#08090B';
 
 /**
  * L'entitlement com.apple.developer.family-controls doit etre approuve par Apple

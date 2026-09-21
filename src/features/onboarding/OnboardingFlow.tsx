@@ -69,6 +69,6 @@ export function OnboardingFlow() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
   progress: { flexDirection: 'row', gap: 4 },
-  dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: withAlpha(colors.mist, 0.15) },
-  dotOn: { backgroundColor: colors.sun },
+  dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: colors.line },
+  dotOn: { backgroundColor: colors.accent },
 });

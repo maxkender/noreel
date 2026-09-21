@@ -55,15 +55,15 @@ export function DayArcDial({
         <Canvas style={StyleSheet.absoluteFill}>
           {/* reste de la journee : abricot tres doux */}
           <Path path={arc(180, 360)} style="stroke" strokeWidth={10} strokeCap="round"
-                color={colors.sun} opacity={0.18} />
+                color={colors.mist} opacity={0.12} />
           {/* temps d'ecran : lumiere froide */}
           <Path path={arc(180, 180 + ratio * 180)} style="stroke" strokeWidth={10}
-                strokeCap="round" color={colors.screenGlow} />
+                strokeCap="round" color={colors.accent} />
           <Group>
-            <Circle cx={kx} cy={ky} r={16} color={colors.sun} opacity={0.35}>
+            <Circle cx={kx} cy={ky} r={16} color={colors.accent} opacity={0.4}>
               <Blur blur={10} />
             </Circle>
-            <Circle cx={kx} cy={ky} r={9} color={colors.sun} />
+            <Circle cx={kx} cy={ky} r={9} color={colors.mist} />
           </Group>
         </Canvas>
       </View>

@@ -1,45 +1,60 @@
 import { Pressable, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
-import { radii } from '@/theme/spacing';
+import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from './type/Text';
 
-/** Un vrai bouton plein. Pas de verre, pas de flou : lisible, evident. */
+const A = Animated.createAnimatedComponent(Pressable);
+
+/** Blanc plein sur noir. L'enfoncement est un ressort, pas une opacite. */
 export function Button({
   label, onPress, disabled, variant = 'primary',
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost';
 }) {
-  const ghost = variant === 'ghost';
+  const scale = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  const fg =
+    variant === 'primary' ? colors.night
+    : variant === 'secondary' ? colors.mist
+    : withAlpha(colors.mist, 0.55);
+
   return (
-    <Pressable
+    <A
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={() => { haptics.press(); onPress(); }}
-      style={({ pressed }) => [
+      onPressIn={() => { scale.value = withSpring(0.975, springs.snappy); haptics.press(); }}
+      onPressOut={() => { scale.value = withSpring(1, springs.snappy); }}
+      onPress={onPress}
+      style={[
         styles.base,
-        ghost ? styles.ghost : styles.primary,
+        variant === 'primary' && styles.primary,
+        variant === 'secondary' && styles.secondary,
+        variant === 'ghost' && styles.ghost,
         disabled && styles.disabled,
-        pressed && { opacity: 0.85 },
+        anim,
       ]}
     >
-      <Text
-        variant="button"
-        color={ghost ? withAlpha(colors.mist, 0.7) : '#0B0D1F'}
-      >
+      <Text variant="button" color={disabled ? withAlpha(colors.mist, 0.3) : fg}>
         {label}
       </Text>
-    </Pressable>
+    </A>
   );
 }
 
 const styles = StyleSheet.create({
-  base: { height: 54, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  primary: { backgroundColor: colors.sun },
+  base: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  primary: { backgroundColor: colors.mist },
+  secondary: {
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+  },
   ghost: { backgroundColor: 'transparent' },
-  disabled: { backgroundColor: withAlpha(colors.mist, 0.12) },
+  disabled: { backgroundColor: colors.surface },
 });

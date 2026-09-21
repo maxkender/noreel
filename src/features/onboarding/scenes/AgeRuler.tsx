@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
   num: { marginTop: 4 },
   cursor: {
     position: 'absolute', top: 0, left: '50%', width: 2, height: 22,
-    marginLeft: -1, borderRadius: 1, backgroundColor: colors.sun,
+    marginLeft: -1, borderRadius: 1, backgroundColor: colors.accent,
   },
 });

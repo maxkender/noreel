@@ -45,10 +45,10 @@ export function LifeGrid({
     u_fill: fill.value,
     u_reclaim: reclaim.value,
     u_time: clock.value / 1000,
-    u_cLived: toRgb01('#F4A0B5'),
+    u_cLived: toRgb01('#3A3F4B'),
     u_cFuture: toRgb01('#EEF0FA'),
-    u_cLost: toRgb01('#8FB8FF'),
-    u_cReclaimed: toRgb01('#FFB37D'),
+    u_cLost: toRgb01('#6E8BFF'),
+    u_cReclaimed: toRgb01('#FAFAFA'),
   }));
 
   if (!effect) return <View style={{ width, height }} />;

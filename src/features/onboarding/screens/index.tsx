@@ -248,7 +248,7 @@ export function S6({ onNext }: P) {
               const act = d.s6.activities[a.id as keyof typeof d.s6.activities];
               return (
                 <View key={a.id} style={s.activity}>
-                  <Text variant="title" color={colors.sun}>{n}</Text>
+                  <Text variant="title" color={colors.accent}>{n}</Text>
                   <Text variant="body" tone="secondary" style={{ flex: 1 }}>
                     {plural(n, act)}
                   </Text>
@@ -256,7 +256,7 @@ export function S6({ onNext }: P) {
               );
             })}
             <View style={s.activity}>
-              <Text variant="title" color={colors.sun}>
+              <Text variant="title" color={colors.accent}>
                 {friendEveningsPerWeek(st.hoursPerWeek)}
               </Text>
               <Text variant="body" tone="secondary" style={{ flex: 1 }}>
@@ -395,51 +395,59 @@ function Step({ n, label }: { n: string; label: string }) {
 
 const s = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: space.xxl },
-  markWrap: { width: 96, height: 96, alignItems: 'center', justifyContent: 'center', marginBottom: space.xl },
-  ring: { width: 72, height: 72, borderRadius: 36, borderWidth: 6, borderColor: colors.sun },
+  markWrap: { width: 88, height: 88, alignItems: 'center', justifyContent: 'center', marginBottom: space.xl },
+  ring: { width: 64, height: 64, borderRadius: 32, borderWidth: 5, borderColor: colors.mist },
   horizonLine: {
-    position: 'absolute', bottom: 18, width: 96, height: 3,
-    borderRadius: 2, backgroundColor: colors.mist,
+    position: 'absolute', bottom: 18, width: 88, height: 2,
+    borderRadius: 1, backgroundColor: colors.accent,
   },
   center: { textAlign: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  bullet: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  bulletKeep: { backgroundColor: colors.sun },
-  bulletDrop: { backgroundColor: withAlpha(colors.mist, 0.12) },
+  bullet: {
+    width: 22, height: 22, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bulletKeep: { backgroundColor: colors.mist },
+  bulletDrop: { backgroundColor: colors.surfaceHi, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong },
   option: {
-    paddingHorizontal: space.lg, paddingVertical: space.lg, borderRadius: radii.chip,
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.14),
-    backgroundColor: withAlpha(colors.mist, 0.04),
+    paddingHorizontal: space.lg, paddingVertical: space.lg, borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    backgroundColor: colors.surface,
   },
-  optionOn: { borderColor: colors.sun, backgroundColor: withAlpha(colors.sun, 0.12) },
+  optionOn: { borderColor: colors.accent, backgroundColor: withAlpha(colors.accent, 0.1) },
   compare: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
-  side: { flex: 1, padding: space.md, borderRadius: radii.tile, borderWidth: 1, gap: space.sm },
-  coldBar: { height: 22, borderRadius: 6, backgroundColor: withAlpha(colors.screenGlow, 0.25) },
-  warmBar: { height: 22, borderRadius: 6, backgroundColor: withAlpha(colors.sun, 0.25) },
+  side: {
+    flex: 1, padding: space.md, borderRadius: 14, gap: space.sm,
+    borderWidth: StyleSheet.hairlineWidth, backgroundColor: colors.surface,
+  },
+  coldBar: { height: 20, borderRadius: 4, backgroundColor: withAlpha(colors.accent, 0.35) },
+  warmBar: { height: 20, borderRadius: 4, backgroundColor: withAlpha(colors.mist, 0.22) },
   dialWrap: { alignItems: 'center', marginTop: space.xl },
-  bigValue: { fontSize: 52, lineHeight: 58, textAlign: 'center', marginTop: space.lg },
-  activity: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  bigValue: { textAlign: 'center', marginTop: space.lg },
+  activity: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    paddingVertical: space.sm,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line,
+  },
   card: {
-    marginTop: space.lg, padding: space.lg, borderRadius: radii.panel,
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
-    backgroundColor: withAlpha(colors.mist, 0.04),
+    marginTop: space.lg, padding: space.lg, borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    backgroundColor: colors.surface,
   },
-  cardNum: { fontSize: 46, lineHeight: 50, marginBottom: space.sm },
-  lights: { height: 90, marginTop: space.xl, justifyContent: 'center' },
-  lightLine: {
-    position: 'absolute', left: 0, right: 0, height: 1,
-    backgroundColor: withAlpha(colors.mist, 0.25),
-  },
-  light: { position: 'absolute', width: 14, height: 14, borderRadius: 7, backgroundColor: colors.sun },
-  appsRow: { flexDirection: 'row', gap: space.lg, marginTop: space.xl },
+  cardNum: { marginBottom: space.sm },
+  lights: { height: 80, marginTop: space.xl, justifyContent: 'center' },
+  lightLine: { position: 'absolute', left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.lineStrong },
+  light: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
+  appsRow: { flexDirection: 'row', gap: space.md, marginTop: space.xl },
   appTile: { alignItems: 'center', gap: space.sm },
   appIcon: {
-    width: 56, height: 56, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha(colors.sun, 0.18),
+    width: 54, height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },
-  appRing: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: colors.sun },
+  appRing: { width: 22, height: 22, borderRadius: 11, borderWidth: 2.5, borderColor: colors.mist },
   stepNum: {
-    width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha(colors.mist, 0.1),
+    width: 24, height: 24, borderRadius: 7, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceHi,
   },
 });

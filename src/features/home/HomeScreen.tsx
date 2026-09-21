@@ -93,11 +93,11 @@ export function HomeScreen() {
 
         <View style={st.tiles}>
           <View style={[st.card, st.stat]}>
-            <Text variant="displayM" color={colors.sun}>{dayOne ? '—' : reels}</Text>
+            <Text variant="displayM" color={colors.accent}>{dayOne ? '—' : reels}</Text>
             <Text variant="label" tone="secondary">{d.home.reelsAvoided}</Text>
           </View>
           <View style={[st.card, st.stat]}>
-            <Text variant="displayM" color={colors.sun}>{dayOne ? '—' : streak}</Text>
+            <Text variant="displayM" color={colors.accent}>{dayOne ? '—' : streak}</Text>
             <Text variant="label" tone="secondary">{d.home.streak}</Text>
           </View>
         </View>
@@ -110,34 +110,35 @@ const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
   scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: space.xxl, gap: space.md },
   card: {
-    padding: space.lg, borderRadius: radii.panel, borderWidth: 1,
-    borderColor: withAlpha(colors.mist, 0.12),
-    backgroundColor: withAlpha(colors.mist, 0.04),
+    padding: space.lg, borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    backgroundColor: colors.surface,
   },
   hero: {
-    padding: space.lg, borderRadius: radii.panel, borderWidth: 1,
-    borderColor: withAlpha(colors.sun, 0.25),
-    backgroundColor: withAlpha(colors.sun, 0.06),
+    padding: space.lg, borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: colors.surfaceHi,
   },
-  big: { fontSize: 46, lineHeight: 50 },
-  week: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, marginTop: space.sm, height: 44 },
-  bar: { flex: 1, borderRadius: 3, backgroundColor: colors.sun },
+  big: {},
+  week: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: space.sm, height: 42 },
+  bar: { flex: 1, borderRadius: 2, backgroundColor: colors.accent },
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: {
-    flex: 1, padding: space.lg, gap: 4, borderRadius: radii.tile,
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
-    backgroundColor: withAlpha(colors.mist, 0.04),
+    flex: 1, padding: space.lg, gap: 4, borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    backgroundColor: colors.surface,
   },
   tileIcon: {
-    width: 34, height: 34, borderRadius: 10, marginBottom: space.sm,
+    width: 32, height: 32, borderRadius: 9, marginBottom: space.sm,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha(colors.sun, 0.18),
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },
-  tileRing: { width: 16, height: 16, borderRadius: 8, borderWidth: 2.5, borderColor: colors.sun },
+  tileRing: { width: 14, height: 14, borderRadius: 7, borderWidth: 2.5, borderColor: colors.mist },
   shieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  switch: { width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: withAlpha(colors.mist, 0.14) },
-  switchOn: { backgroundColor: withAlpha(colors.sun, 0.55) },
-  knob: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mist },
+  switch: { width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: colors.surfaceHi },
+  switchOn: { backgroundColor: colors.accent },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.mist },
   knobOn: { marginLeft: 18 },
   stat: { flex: 1, gap: 2 },
 });

@@ -1,7 +1,7 @@
 import { useContext, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Button } from './Button';
@@ -34,7 +34,10 @@ export function Screen({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeIn.duration(300)}>{children}</Animated.View>
+        {/* Entree fluide : fondu + montee legere, ressort plutot que lineaire. */}
+        <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)}>
+          {children}
+        </Animated.View>
       </ScrollView>
 
       <View style={styles.footer}>

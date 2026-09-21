@@ -19,7 +19,13 @@ export function Text({
   return (
     <RNText
       maxFontSizeMultiplier={maxFontSizeMultiplier[variant]}
-      style={[base, { color: color ?? withAlpha(colors.mist, textAlpha[tone]) }, style]}
+      style={[
+        base,
+        // Les labels en capitales espacees : c'est ce qui donne le ton technique.
+        variant === 'label' && { textTransform: 'uppercase' as const },
+        { color: color ?? withAlpha(colors.mist, textAlpha[tone]) },
+        style,
+      ]}
       {...rest}
     />
   );
