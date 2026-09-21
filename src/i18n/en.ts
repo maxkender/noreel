@@ -155,6 +155,18 @@ export const en: Dict = {
     soon: 'Payments are coming soon. Everything is free for now.',
   },
 
+  brain: {
+    title: 'Here’s what doomscrolling does to your {brain}.',
+    step1: 'Dopamine spikes, over and over',
+    step1b: 'Every short video fires a reward. Hundreds a day.',
+    step2: 'Your receptors flatten out',
+    step2b: 'Your brain turns the volume down to protect itself.',
+    step3: 'Nothing lands anymore',
+    step3b: 'Feeling pleasure, focusing, falling in love: everything goes flat.',
+    fix: 'With NoReel, you repair your receptors without losing touch with the people you love.',
+    cta: 'Continue',
+  },
+
   home: {
     morning: 'Good morning.',
     evening: 'Good evening.',
@@ -179,6 +191,35 @@ export const en: Dict = {
     tabStats: 'Stats',
     tabSettings: 'Settings',
     soon: 'Coming soon.',
+  },
+
+  nav: { home: 'Home', block: 'Blocking', account: 'Account' },
+  block: {
+    title: 'Blocking',
+    shield: 'Protection',
+    shieldOn: 'Reels and Shorts are filtered',
+    shieldOff: 'Filtering paused',
+    screenTime: 'Lock the native apps',
+    screenTimeBody: 'Stops Instagram and TikTok from opening normally, via Screen Time.',
+    screenTimeSoon: 'Coming soon',
+    authorize: 'Allow Screen Time',
+    homeScreen: 'Put the apps back on your home screen',
+    homeScreenBody: 'Place NoReel Insta and NoReel YouTube where the originals were.',
+    add: 'Add',
+    redirect: 'Redirect the native apps',
+    redirectBody: 'Opening Instagram or TikTok sends you to the filtered version.',
+  },
+  account: {
+    title: 'Account',
+    profile: 'Your profile',
+    screenTimeValue: 'Declared screen time',
+    ageValue: 'Age',
+    edit: 'Edit',
+    data: 'Your data',
+    dataBody: 'Everything stays on your phone. Nothing is sent anywhere.',
+    sources: 'Sources and method',
+    restart: 'Replay the intro',
+    version: 'Version',
   },
 
   sources: {

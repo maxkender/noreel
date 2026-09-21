@@ -6,11 +6,11 @@ import { gutter, space } from '@/theme/spacing';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
-import { S1, S2, S3, S4, S5, S6, S7, S8, S9 } from './screens';
+import { S1, S2, S3, S4, S5, S6, S7, S9 } from './screens';
 import { Permissions } from './screens/Permissions';
 import { Paywall } from './screens/Paywall';
 
-const TOTAL = 11;
+const TOTAL = 10;
 
 
 export function OnboardingFlow() {
@@ -51,9 +51,8 @@ export function OnboardingFlow() {
     <S5 key="5" onNext={() => go(5)} />,
     <S6 key="6" onNext={() => go(6)} />,
     <S7 key="7" onNext={() => go(7)} />,
-    <S8 key="8" onNext={() => go(8)} />,
-    <S9 key="9" onNext={() => go(9)} />,
-    <Permissions key="p" onDone={() => go(10)} />,
+    <S9 key="8" onNext={() => go(8)} />,
+    <Permissions key="p" onDone={() => go(9)} />,
     <Paywall key="pw" onDone={finish} />,
   ];
 

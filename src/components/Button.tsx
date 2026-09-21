@@ -10,8 +10,8 @@ import { Text } from './type/Text';
 const A = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Pilule de verre pleine largeur, 60 pt, avec une lueur qui deborde par le bas.
- * Le texte est centre par le conteneur, pas par une marge : il ne peut pas deriver.
+ * La lueur est DERRIERE le bouton, floue et debordante — pas une bande dessinee
+ * a l'interieur. C'est ce qui fait la difference avec un bouton plat.
  */
 export function Button({
   label, onPress, disabled, variant = 'primary',
@@ -26,57 +26,73 @@ export function Button({
 
   if (variant === 'ghost') {
     return (
-      <Pressable onPress={onPress} style={styles.ghost} hitSlop={8}>
-        <Text variant="body" color={withAlpha(colors.mist, 0.5)}>{label}</Text>
+      <Pressable onPress={onPress} style={styles.ghost} hitSlop={10}>
+        <Text variant="body" color={withAlpha(colors.mist, 0.45)}>{label}</Text>
       </Pressable>
     );
   }
 
   return (
-    <A
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPressIn={() => { scale.value = withSpring(0.97, springs.snappy); haptics.press(); }}
-      onPressOut={() => { scale.value = withSpring(1, springs.snappy); }}
-      onPress={onPress}
-      style={[styles.shell, anim, disabled && styles.off]}
-    >
-      <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={styles.fill} />
-
-      {/* La lueur sous le bouton : signature Opal, elle "pose" le bouton. */}
+    <View style={styles.wrap}>
       {!disabled && (
-        <LinearGradient
-          colors={['transparent', withAlpha(colors.accent, 0.5)]}
-          style={styles.glow}
-          pointerEvents="none"
-        />
+        <>
+          {/* Halo diffus sous le bouton : deux couches, l'une large, l'une serree. */}
+          <LinearGradient
+            colors={[withAlpha(colors.accent, 0.5), withAlpha('#6E8BFF', 0.35), 'transparent']}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.haloWide}
+            pointerEvents="none"
+          />
+          <View style={styles.haloTight} pointerEvents="none" />
+        </>
       )}
 
-      <Text
-        variant="button"
-        color={disabled ? withAlpha(colors.mist, 0.3) : colors.mist}
-        style={styles.label}
+      <A
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPressIn={() => { scale.value = withSpring(0.975, springs.snappy); haptics.press(); }}
+        onPressOut={() => { scale.value = withSpring(1, springs.snappy); }}
+        onPress={onPress}
+        style={[styles.pill, anim, disabled && styles.off]}
       >
-        {label}
-      </Text>
-    </A>
+        <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={styles.tint} />
+        <Text
+          variant="button"
+          color={disabled ? withAlpha(colors.mist, 0.28) : colors.mist}
+          style={styles.label}
+        >
+          {label}
+        </Text>
+      </A>
+    </View>
   );
 }
 
+const H = 58;
 const styles = StyleSheet.create({
-  shell: {
-    height: 60,
-    borderRadius: 30,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: withAlpha(colors.mist, 0.22),
+  wrap: { height: H },
+  haloWide: {
+    position: 'absolute', left: 14, right: 14, bottom: -6, height: H,
+    borderRadius: H / 2, opacity: 0.55,
   },
-  fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: withAlpha(colors.mist, 0.07) },
-  glow: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 22, opacity: 0.55 },
+  haloTight: {
+    position: 'absolute', left: 40, right: 40, bottom: 2, height: 16,
+    borderRadius: 8, backgroundColor: withAlpha(colors.accent, 0.5),
+    shadowColor: colors.accent, shadowOpacity: 0.9, shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  pill: {
+    height: H, borderRadius: H / 2, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.28),
+  },
+  tint: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(colors.mist, 0.09),
+  },
   label: { textAlign: 'center' },
   off: { borderColor: withAlpha(colors.mist, 0.1) },
   ghost: { alignSelf: 'center', paddingVertical: 14 },

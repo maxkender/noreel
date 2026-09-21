@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT, plural } from '@/i18n';
 import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
@@ -43,18 +43,17 @@ function Option({
 /* ---------- 1 ---------- */
 export function S1({ onNext }: P) {
   const { d } = useT();
-  const [step, setStep] = useState(0);
   return (
     <Screen cta={d.s1.cta} onPress={onNext} center>
       <View style={s.mark}>
         <View style={s.ring} />
         <View style={s.bar} />
       </View>
-      <Typewriter text={d.s1.title1} variant="displayL" style={s.center} onDone={() => setStep(1)} />
-      {step >= 1 && (
-        <Typewriter text={d.s1.title2} variant="displayL" style={s.center} onDone={() => setStep(2)} />
+      <Typewriter text={d.s1.title1} variant="displayL" style={s.center} />
+      {true && (
+        <Typewriter text={d.s1.title2} variant="displayL" style={s.center} />
       )}
-      {step >= 2 && (
+      {true && (
         <Animated.View entering={FadeIn.duration(500)}>
           <Text variant="lead" tone="secondary" style={[s.center, { marginTop: space.lg }]}>
             {d.s1.subtitle}
@@ -68,11 +67,10 @@ export function S1({ onNext }: P) {
 /* ---------- 2 ---------- */
 export function S2({ onNext }: P) {
   const { d } = useT();
-  const [done, setDone] = useState(false);
   return (
     <Screen cta={d.s2.cta} onPress={onNext} center>
-      <Typewriter text={d.s2.title} variant="displayM" style={s.center} onDone={() => setDone(true)} />
-      {done && (
+      <Typewriter text={d.s2.title} variant="displayM" style={s.center} />
+      {true && (
         <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
           <Keep label={d.s2.keep1} keep />
           <Keep label={d.s2.keep2} keep />
@@ -101,7 +99,6 @@ export function S3({ onNext }: P) {
   const { d } = useT();
   const setPain = useOnboardingStore((x) => x.setPainFrequency);
   const [a, setA] = useState<PainFrequency | null>(null);
-  const [done, setDone] = useState(false);
 
   const opts: [PainFrequency, string, string][] = [
     ['daily', '🌙', d.s3.daily],
@@ -111,8 +108,8 @@ export function S3({ onNext }: P) {
 
   return (
     <Screen cta={d.s3.cta} onPress={onNext} disabled={!a}>
-      <Typewriter text={d.s3.title} variant="displayM" onDone={() => setDone(true)} />
-      {done && (
+      <Typewriter text={d.s3.title} variant="displayM" />
+      {true && (
         <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.sm }}>
           {opts.map(([k, icon, label]) => (
             <Option
@@ -194,18 +191,18 @@ export function S6({ onNext }: P) {
   const st = lifeStats(minutes, age);
   const [taken, setTaken] = useState(false);
 
-  const fill = useSharedValue(0);
-  const reclaim = useSharedValue(0);
+  const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    fill.value = withDelay(400, withTiming(1, { duration: 1600 }));
-  }, [fill]);
+    const id = setTimeout(() => setRunning(true), 500);
+    return () => clearTimeout(id);
+  }, []);
 
   const take = () => {
     setTaken(true);
     track('life_reclaimed');
     haptics.success();
-    reclaim.value = withTiming(1, { duration: 1400 });
+
   };
 
   return (
@@ -216,7 +213,7 @@ export function S6({ onNext }: P) {
         <LifeGrid
           width={width - 48}
           lived={st.livedMonths} lost={st.lostMonths} total={st.totalMonths}
-          fill={fill} reclaim={reclaim}
+          running={running} reclaiming={taken}
         />
       </View>
 
@@ -256,36 +253,39 @@ export function S6({ onNext }: P) {
 /* ---------- 7 ---------- */
 export function S7({ onNext }: P) {
   const { d } = useT();
-  const [done, setDone] = useState(false);
-  return (
-    <Screen cta={d.s7.cta} onPress={onNext} center>
-      <Typewriter text={d.s7.p1Title} variant="displayM" style={s.center} onDone={() => setDone(true)} />
-      {done && (
-        <Animated.View entering={FadeIn.duration(600)}>
-          <Text variant="hero" color={colors.accent} style={[s.center, s.value]}>
-            {d.s7.p1Number}
-          </Text>
-          <Text variant="body" tone="secondary" style={s.center}>{d.s7.p1Body}</Text>
-        </Animated.View>
-      )}
-    </Screen>
-  );
-}
+  const steps = [
+    [d.brain.step1, d.brain.step1b],
+    [d.brain.step2, d.brain.step2b],
+    [d.brain.step3, d.brain.step3b],
+  ];
+  const head = typeDuration(d.brain.title);
 
-/* ---------- 8 ---------- */
-export function S8({ onNext }: P) {
-  const { d } = useT();
-  const [done, setDone] = useState(false);
   return (
-    <Screen cta={d.s8.cta} onPress={onNext} center>
-      <Typewriter text={d.s8.conclusion} variant="displayL" style={s.center} onDone={() => setDone(true)} />
-      {done && (
-        <Animated.View entering={FadeIn.duration(600)}>
-          <Text variant="lead" tone="secondary" style={[s.center, { marginTop: space.lg }]}>
-            {d.s8.l1}
-          </Text>
-        </Animated.View>
-      )}
+    <Screen cta={d.brain.cta} onPress={onNext}>
+      <Typewriter text={d.brain.title} variant="displayM" />
+
+      <View style={{ marginTop: space.xxl }}>
+        {steps.map(([title, body], i) => (
+          <Animated.View
+            key={title}
+            entering={FadeIn.delay(head + i * 450).duration(500)}
+            style={s.chain}
+          >
+            <View style={s.chainCol}>
+              <View style={s.chainDot} />
+              {i < steps.length - 1 && <View style={s.chainLine} />}
+            </View>
+            <View style={{ flex: 1, paddingBottom: space.xl }}>
+              <Text variant="title">{title}</Text>
+              <Text variant="body" tone="secondary" style={{ marginTop: 4 }}>{body}</Text>
+            </View>
+          </Animated.View>
+        ))}
+      </View>
+
+      <Animated.View entering={FadeIn.delay(head + 1600).duration(600)}>
+        <Text variant="lead" color={colors.accent}>{d.brain.fix}</Text>
+      </Animated.View>
     </Screen>
   );
 }
@@ -309,6 +309,10 @@ export function S9({ onNext }: P) {
 }
 
 const s = StyleSheet.create({
+  chain: { flexDirection: 'row', gap: space.md },
+  chainCol: { alignItems: 'center', width: 12 },
+  chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
+  chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
   center: { textAlign: 'center' },
   mark: { alignItems: 'center', justifyContent: 'center', height: 90, marginBottom: space.xl },
   ring: { width: 58, height: 58, borderRadius: 29, borderWidth: 5, borderColor: colors.mist },

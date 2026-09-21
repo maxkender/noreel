@@ -1,77 +1,78 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 
 const COLS = 24;
 
 /**
- * 960 mois en vues simples, groupes par lignes.
- * Le shader Skia precedent crashait l'app en build release ; ici il n'y a
- * rien a compiler a l'execution.
+ * Le remplissage avance par paliers pilotes en JS : on voit reellement les
+ * cases s'allumer une a une. La version precedente animait chaque case avec
+ * son propre worklet, ce qui ne produisait aucun mouvement visible.
  */
 export function LifeGrid({
-  width, lived, lost, total, fill, reclaim,
+  width, lived, lost, total, running, reclaiming,
 }: {
   width: number; lived: number; lost: number; total: number;
-  fill: SharedValue<number>; reclaim: SharedValue<number>;
+  running: boolean; reclaiming: boolean;
 }) {
-  const rows = Math.ceil(total / COLS);
+  const [lit, setLit] = useState(0);
+  const [back, setBack] = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval>>(undefined);
+
   const gap = 2;
   const cell = Math.max(2, (width - gap * (COLS - 1)) / COLS);
+  const rows = Math.ceil(total / COLS);
+
+  // ~24 paliers : assez pour que l'oeil suive, assez peu pour rester fluide.
+  useEffect(() => {
+    if (!running) return;
+    const steps = 24;
+    let i = 0;
+    timer.current = setInterval(() => {
+      i += 1;
+      setLit(Math.round((lost * i) / steps));
+      if (i >= steps && timer.current) clearInterval(timer.current);
+    }, 70);
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [running, lost]);
+
+  useEffect(() => {
+    if (!reclaiming) return;
+    const steps = 20;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setBack(Math.round((lost * i) / steps));
+      if (i >= steps) clearInterval(id);
+    }, 60);
+    return () => clearInterval(id);
+  }, [reclaiming, lost]);
 
   const cells = useMemo(
-    () => Array.from({ length: total }, (_, i) => ({
-      i,
-      kind: i < lived ? 'lived' : i < lived + lost ? 'lost' : 'ahead',
-      k: i < lived ? 0 : (i - lived) / Math.max(lost, 1),
-    })),
-    [total, lived, lost]
+    () => Array.from({ length: total }, (_, i) => i),
+    [total]
   );
 
   return (
     <View style={[styles.grid, { width, height: rows * (cell + gap) }]}>
-      {cells.map((c) =>
-        c.kind === 'lost'
-          ? <LostCell key={c.i} size={cell} gap={gap} k={c.k} fill={fill} reclaim={reclaim} />
-          : (
-            <View
-              key={c.i}
-              style={{
-                width: cell, height: cell, marginRight: gap, marginBottom: gap,
-                borderRadius: 1.5,
-                backgroundColor: c.kind === 'lived'
-                  ? withAlpha(colors.mist, 0.14)
-                  : withAlpha(colors.mist, 0.05),
-              }}
-            />
-          )
-      )}
+      {cells.map((i) => {
+        const isLost = i >= lived && i < lived + lost;
+        const k = i - lived;
+        let bg = withAlpha(colors.mist, 0.05);          // devant toi
+        if (i < lived) bg = withAlpha(colors.mist, 0.13); // vecu
+        else if (isLost && k < back) bg = colors.mist;    // recupere
+        else if (isLost && k < lit) bg = colors.accent;   // sur ton telephone
+        return (
+          <View
+            key={i}
+            style={{
+              width: cell, height: cell, marginRight: gap, marginBottom: gap,
+              borderRadius: 1.5, backgroundColor: bg,
+            }}
+          />
+        );
+      })}
     </View>
-  );
-}
-
-function LostCell({
-  size, gap, k, fill, reclaim,
-}: {
-  size: number; gap: number; k: number;
-  fill: SharedValue<number>; reclaim: SharedValue<number>;
-}) {
-  const s = useAnimatedStyle(() => {
-    const lit = fill.value > k ? 1 : 0;
-    const back = reclaim.value > k ? 1 : 0;
-    return {
-      opacity: 0.18 + lit * 0.82,
-      backgroundColor: back ? colors.mist : colors.accent,
-    };
-  });
-  return (
-    <Animated.View
-      style={[
-        { width: size, height: size, marginRight: gap, marginBottom: gap, borderRadius: 1.5 },
-        s,
-      ]}
-    />
   );
 }
 

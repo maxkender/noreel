@@ -160,6 +160,18 @@ export const fr = {
     soon: 'Les paiements arrivent bientôt. Tout est gratuit pour l’instant.',
   },
 
+  brain: {
+    title: 'Voici ce que le doomscrolling fait à ton {cerveau}.',
+    step1: 'Dose de dopamine trop élevée',
+    step1b: 'Chaque vidéo courte déclenche une récompense. Des centaines par jour.',
+    step2: 'Tes récepteurs s’aplatissent',
+    step2b: 'Ton cerveau baisse le volume pour se protéger de l’excès.',
+    step3: 'Plus rien ne fait d’effet',
+    step3b: 'Ressentir du plaisir, te concentrer, tomber amoureux : tout devient plus fade.',
+    fix: 'Avec NoReel, tu répares tes récepteurs sans perdre contact avec tes proches.',
+    cta: 'Continuer',
+  },
+
   home: {
     morning: 'Bonjour.',
     evening: 'Bonsoir.',
@@ -184,6 +196,39 @@ export const fr = {
     tabStats: 'Stats',
     tabSettings: 'Réglages',
     soon: 'Bientôt ici.',
+  },
+
+  nav: {
+    home: 'Accueil',
+    block: 'Blocage',
+    account: 'Compte',
+  },
+  block: {
+    title: 'Blocage',
+    shield: 'Protection',
+    shieldOn: 'Les reels et les shorts sont filtrés',
+    shieldOff: 'Filtrage en pause',
+    screenTime: 'Bloquer les apps d’origine',
+    screenTimeBody: 'Empêche Instagram et TikTok de s’ouvrir normalement, via Temps d’écran.',
+    screenTimeSoon: 'Bientôt disponible',
+    authorize: 'Autoriser Temps d’écran',
+    homeScreen: 'Remettre les apps sur l’écran d’accueil',
+    homeScreenBody: 'Place NoReel Insta et NoReel YouTube là où étaient les originales.',
+    add: 'Ajouter',
+    redirect: 'Rediriger les apps d’origine',
+    redirectBody: 'Ouvrir Instagram ou TikTok renvoie vers la version filtrée.',
+  },
+  account: {
+    title: 'Compte',
+    profile: 'Ton profil',
+    screenTimeValue: 'Temps d’écran déclaré',
+    ageValue: 'Âge',
+    edit: 'Modifier',
+    data: 'Tes données',
+    dataBody: 'Tout reste sur ton téléphone. Rien n’est envoyé ailleurs.',
+    sources: 'Sources et méthode',
+    restart: 'Refaire l’introduction',
+    version: 'Version',
   },
 
   sources: {
