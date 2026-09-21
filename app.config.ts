@@ -23,6 +23,9 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.vikstudios.noreel',
+    // Exige par @bacons/apple-targets (via react-native-device-activity) pour
+    // generer les cibles d'extension. Sans lui : echec a "Configure Xcode project".
+    appleTeamId: 'K792T8TQ4X',
     infoPlist: {
       // Débloque le 120 Hz sur ProMotion (§3).
       CADisableMinimumFrameDurationOnPhone: true,
