@@ -28,11 +28,11 @@ developer.apple.com > Identifiers > l'App ID > cocher Family Controls.
 Les capacites doivent etre cochees a la main sur **chaque** identifiant, y compris
 ceux des extensions :
 
-- com.nutria25.noreel
+- com.vikstudios.noreel
   https://developer.apple.com/account/resources/identifiers/bundleId/edit/7NL25CY98X
-- com.nutria25.noreel.ShieldConfiguration
+- com.vikstudios.noreel.ShieldConfiguration
   https://developer.apple.com/account/resources/identifiers/bundleId/edit/5KW983RBFB
 
 Cocher sur chacun : **Family Controls** et **App Groups**
-(groupe `group.com.nutria25.noreel`). D'autres identifiants d'extension
+(groupe `group.com.vikstudios.noreel`). D'autres identifiants d'extension
 apparaitront au build suivant : meme traitement.

@@ -22,7 +22,7 @@ const config: ExpoConfig = {
   icon: './assets/images/icon.png',
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.nutria25.noreel',
+    bundleIdentifier: 'com.vikstudios.noreel',
     infoPlist: {
       // Débloque le 120 Hz sur ProMotion (§3).
       CADisableMinimumFrameDurationOnPhone: true,
@@ -30,7 +30,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    package: 'com.nutria25.noreel',
+    package: 'com.vikstudios.noreel',
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: NIGHT,
@@ -45,7 +45,7 @@ const config: ExpoConfig = {
       ? [[
           'react-native-device-activity',
           {
-            appGroup: 'group.com.nutria25.noreel',
+            appGroup: 'group.com.vikstudios.noreel',
             // Les trois extensions requises par FamilyControls.
             shieldConfiguration: { backgroundColor: { red: 11, green: 13, blue: 31, alpha: 1 } },
           },
