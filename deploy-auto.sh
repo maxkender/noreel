@@ -13,6 +13,10 @@ export EXPO_ASC_KEY_ID="P8G4THGFGZ"
 export EXPO_ASC_ISSUER_ID="3ecb59f2-287c-494e-b451-a288cb57158d"
 export EXPO_APPLE_TEAM_ID="K792T8TQ4X"
 export EXPO_APPLE_TEAM_TYPE="COMPANY_OR_ORGANIZATION"
+# Apple n'accepte pas FAMILY_CONTROLS via l'API des capacites (verifie : HTTP 409).
+# EAS echoue donc en tentant de la synchroniser. On lui dit de ne pas essayer :
+# les capacites sont cochees a la main dans le portail, une fois pour toutes.
+export EXPO_NO_CAPABILITY_SYNC=1
 export EAS_BUILD_NO_EXPO_GO_WARNING=true
 
 if [ ! -f "$EXPO_ASC_API_KEY_PATH" ]; then
