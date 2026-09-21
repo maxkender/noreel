@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, radii, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
+import { Glow } from '@/components/Glow';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours, locale } from '@/lib/format';
@@ -35,6 +36,7 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={st.root} edges={['top']}>
+      <Glow />
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeIn.duration(300)}>
           <Text variant="displayM">{greeting}</Text>

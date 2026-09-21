@@ -11,15 +11,15 @@ export const fr = {
   },
 
   s1: {
-    title1: 'Garde tes potes.',
+    title1: 'Garde tes {potes}.',
     title2: 'Vire les reels.',
-    subtitle: 'Instagram et TikTok, sans le scroll infini.',
+    subtitle: 'Instagram et TikTok. Sans le vide.',
     cta: 'Commencer',
   },
 
   s2: {
-    title: 'Les mêmes apps. Sans le piège.',
-    body: 'NoReel ouvre Instagram et TikTok dans une version épurée.',
+    title: 'Les mêmes apps.\nSans le {piège}.',
+    body: 'Tes messages et tes potes restent. Le reste part.',
     keep1: 'Tes messages',
     keep2: 'Les stories et posts des gens que tu suis',
     remove: 'Reels, Explorer, Pour toi',

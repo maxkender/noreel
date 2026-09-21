@@ -10,11 +10,13 @@ export const colors = {
   lineStrong: '#FFFFFF24',
   mist: '#FAFAFA',         // texte principal
   sun: '#FFFFFF',          // action principale (blanc plein)
-  accent: '#6E8BFF',       // donnees, etats actifs
-  screenGlow: '#6E8BFF',   // temps perdu
+  accent: '#7CF0C4',       // menthe : donnees, etats actifs
+  screenGlow: '#7CF0C4',   // temps perdu
   dawn: '#3A3F4B',         // deja vecu, neutre
   haze: '#8B92A5',
   fog: '#6B7280',
+  accentSoft: '#2BD9A522',   // halo haut, tres dilue
+  accentFaint: '#2BD9A50D',
   ground: '#000000',
 } as const;
 

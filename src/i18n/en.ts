@@ -6,15 +6,15 @@ export const en: Dict = {
   chrome: { step: 'Step {n} of {total}', back: 'Back' },
 
   s1: {
-    title1: 'Keep your friends.',
+    title1: 'Keep your {friends}.',
     title2: 'Lose the reels.',
-    subtitle: 'Instagram and TikTok, without the endless scroll.',
+    subtitle: 'Instagram and TikTok. Without the void.',
     cta: 'Get started',
   },
 
   s2: {
-    title: 'Same apps. Without the trap.',
-    body: 'NoReel opens Instagram and TikTok in a clean version.',
+    title: 'Same apps.\nWithout the {trap}.',
+    body: 'Your messages and friends stay. The rest goes.',
     keep1: 'Your messages',
     keep2: 'Stories and posts from people you follow',
     remove: 'Reels, Explore, For You',

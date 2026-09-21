@@ -1,64 +1,80 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Fill, Shader, Skia, useClock } from '@shopify/react-native-skia';
-import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
-import { toRgb01 } from '@/theme/colors';
-import { LIFE_GRID_SKSL } from './lifegrid.sksl';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import { colors, withAlpha } from '@/theme/colors';
 
-const effect = Skia.RuntimeEffect.Make(LIFE_GRID_SKSL);
-if (!effect && __DEV__) console.error('LifeGrid : le shader ne compile pas');
+const COLS = 24;
 
-const CANDIDATES = [24, 30, 32, 40];
-
-/** Choisit le nombre de colonnes qui donne les plus gros carreaux carres. */
-export function gridGeometry(total: number, w: number, h: number) {
-  let best = { cols: 24, rows: 40, cell: 0 };
-  for (const cols of CANDIDATES) {
-    const rows = Math.ceil(total / cols);
-    const cell = Math.min(w / cols, h / rows);
-    if (cell > best.cell) best = { cols, rows, cell };
-  }
-  return best;
-}
-
+/**
+ * 960 mois en vues simples, groupes par lignes.
+ * Le shader Skia precedent crashait l'app en build release ; ici il n'y a
+ * rien a compiler a l'execution.
+ */
 export function LifeGrid({
-  width, height, lived, lost, total,
-  reveal, fill, reclaim,
+  width, lived, lost, total, fill, reclaim,
 }: {
-  width: number; height: number; lived: number; lost: number; total: number;
-  reveal: SharedValue<number>; fill: SharedValue<number>; reclaim: SharedValue<number>;
+  width: number; lived: number; lost: number; total: number;
+  fill: SharedValue<number>; reclaim: SharedValue<number>;
 }) {
-  const clock = useClock();
-  const g = useMemo(() => gridGeometry(total, width, height), [total, width, height]);
-  const ox = (width - g.cols * g.cell) / 2;
-  const oy = 0;
+  const rows = Math.ceil(total / COLS);
+  const gap = 2;
+  const cell = Math.max(2, (width - gap * (COLS - 1)) / COLS);
 
-  const uniforms = useDerivedValue(() => ({
-    u_origin: [ox, oy],
-    u_cell: g.cell,
-    u_cols: g.cols,
-    u_rows: g.rows,
-    u_total: total,
-    u_lived: lived,
-    u_lost: lost,
-    u_reveal: reveal.value,
-    u_fill: fill.value,
-    u_reclaim: reclaim.value,
-    u_time: clock.value / 1000,
-    u_cLived: toRgb01('#3A3F4B'),
-    u_cFuture: toRgb01('#EEF0FA'),
-    u_cLost: toRgb01('#6E8BFF'),
-    u_cReclaimed: toRgb01('#FAFAFA'),
-  }));
+  const cells = useMemo(
+    () => Array.from({ length: total }, (_, i) => ({
+      i,
+      kind: i < lived ? 'lived' : i < lived + lost ? 'lost' : 'ahead',
+      k: i < lived ? 0 : (i - lived) / Math.max(lost, 1),
+    })),
+    [total, lived, lost]
+  );
 
-  if (!effect) return <View style={{ width, height }} />;
   return (
-    <Canvas style={{ width, height }} pointerEvents="none">
-      <Fill>
-        <Shader source={effect} uniforms={uniforms} />
-      </Fill>
-    </Canvas>
+    <View style={[styles.grid, { width, height: rows * (cell + gap) }]}>
+      {cells.map((c) =>
+        c.kind === 'lost'
+          ? <LostCell key={c.i} size={cell} gap={gap} k={c.k} fill={fill} reclaim={reclaim} />
+          : (
+            <View
+              key={c.i}
+              style={{
+                width: cell, height: cell, marginRight: gap, marginBottom: gap,
+                borderRadius: 1.5,
+                backgroundColor: c.kind === 'lived'
+                  ? withAlpha(colors.mist, 0.14)
+                  : withAlpha(colors.mist, 0.05),
+              }}
+            />
+          )
+      )}
+    </View>
   );
 }
 
-export const gridStyles = StyleSheet.create({});
+function LostCell({
+  size, gap, k, fill, reclaim,
+}: {
+  size: number; gap: number; k: number;
+  fill: SharedValue<number>; reclaim: SharedValue<number>;
+}) {
+  const s = useAnimatedStyle(() => {
+    const lit = fill.value > k ? 1 : 0;
+    const back = reclaim.value > k ? 1 : 0;
+    return {
+      opacity: 0.18 + lit * 0.82,
+      backgroundColor: back ? colors.mist : colors.accent,
+    };
+  });
+  return (
+    <Animated.View
+      style={[
+        { width: size, height: size, marginRight: gap, marginBottom: gap, borderRadius: 1.5 },
+        s,
+      ]}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+});

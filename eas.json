@@ -25,7 +25,10 @@
         "appName": "NoReel by Vik",
         "language": "French",
         "sku": "noreel",
-        "ascAppId": "6814633088"
+        "ascAppId": "6814633088",
+        "ascApiKeyPath": "/Users/maximilienkender/.appstoreconnect/private_keys/AuthKey_P8G4THGFGZ.p8",
+        "ascApiKeyId": "P8G4THGFGZ",
+        "ascApiKeyIssuerId": "3ecb59f2-287c-494e-b451-a288cb57158d"
       }
     }
   }

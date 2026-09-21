@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { radii, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
+import { Typewriter } from '@/components/type/Typewriter';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
@@ -20,7 +21,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
       onSecondary={onDone}
     >
       <Text variant="label" tone="secondary">{d.paywall.kicker}</Text>
-      <Text variant="displayM" style={{ marginTop: space.xs }}>{d.paywall.title}</Text>
+      <Typewriter text={d.paywall.title} variant="displayM" />
       <Text variant="lead" tone="secondary" style={{ marginTop: space.sm }}>
         {d.paywall.subtitle}
       </Text>
