@@ -6,10 +6,14 @@ import Animated, {
 import { colors, withAlpha } from '@/theme/colors';
 import { haptics } from '@/lib/haptics';
 
+// Le noir avant tout : rien ne bouge, l'oeil se pose.
+const HOLD = 520;
+
 /**
- * Ouverture en quatre temps : la boule nait, respire, l'horizon la traverse,
- * puis elle s'ouvre en grand pour laisser passer le premier ecran.
- * C'est l'ouverture qui donne le ton : elle merite ses 2,6 s.
+ * Ouverture en cinq temps : le noir tient une demi-seconde, puis la boule
+ * nait, respire, l'horizon la traverse, et elle s'ouvre en grand pour
+ * laisser passer le premier ecran. C'est l'ouverture qui donne le ton :
+ * elle merite ses 3,3 s, et elle commence sur du noir pur.
  */
 export function Intro({ onDone }: { onDone: () => void }) {
   const born = useSharedValue(0);   // 0 -> 1 : apparition
@@ -20,21 +24,21 @@ export function Intro({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const E = Easing.bezier(0.16, 1, 0.3, 1);
 
-    born.value = withTiming(1, { duration: 700, easing: E });
+    born.value = withDelay(HOLD, withTiming(1, { duration: 820, easing: E }));
 
-    pulse.value = withDelay(600, withSequence(
+    pulse.value = withDelay(HOLD + 700, withSequence(
       withTiming(1, { duration: 520, easing: Easing.inOut(Easing.sin) }),
       withTiming(0, { duration: 460, easing: Easing.inOut(Easing.sin) }),
       withTiming(0.6, { duration: 340, easing: Easing.inOut(Easing.sin) }),
       withTiming(0, { duration: 300, easing: Easing.inOut(Easing.sin) })
     ));
 
-    line.value = withDelay(900, withTiming(1, { duration: 760, easing: E }));
-    open.value = withDelay(2000, withTiming(1, { duration: 620, easing: Easing.in(Easing.cubic) }));
+    line.value = withDelay(HOLD + 1050, withTiming(1, { duration: 880, easing: E }));
+    open.value = withDelay(HOLD + 2250, withTiming(1, { duration: 640, easing: Easing.in(Easing.cubic) }));
 
-    const h1 = setTimeout(() => haptics.tap(), 700);
-    const h2 = setTimeout(() => haptics.success(), 2000);
-    const end = setTimeout(onDone, 2620);
+    const h1 = setTimeout(() => haptics.tap(), HOLD + 700);
+    const h2 = setTimeout(() => haptics.success(), HOLD + 2250);
+    const end = setTimeout(onDone, HOLD + 2900);
     return () => { clearTimeout(h1); clearTimeout(h2); clearTimeout(end); };
   }, [born, pulse, line, open, onDone]);
 
@@ -75,7 +79,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
 const styles = StyleSheet.create({
   root: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: colors.night, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.ground, alignItems: 'center', justifyContent: 'center',
     zIndex: 50,
   },
   stage: { width: '100%', alignItems: 'center', justifyContent: 'center' },

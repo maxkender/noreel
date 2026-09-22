@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -11,18 +12,22 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
 import { Glass } from '@/components/glass/Glass';
+import { GlassSweep } from '@/components/GlassSweep';
+import { Stars } from '@/components/Stars';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { formatHours, locale } from '@/lib/format';
+import { formatHours } from '@/lib/format';
 import { shield, stats, homeScreen } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
+import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, Pill } from './parts';
 import { AppSlider } from './AppSlider';
+import { Header } from './Header';
 import { Referral } from './Referral';
 import { Settings } from './Settings';
-import { useSettings } from '@/store/settings';
-import { Stars } from '@/components/Stars';
+
+const STREAK_PNG = require('@/assets/brand/streak.png');
 
 type Tab = 'home' | 'block' | 'account';
 
@@ -30,6 +35,9 @@ export function HomeScreen() {
   const { d } = useT();
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => { void stats.streakDays().then(setStreak); }, []);
 
   const tabs: [Tab, string, typeof HomeIcon][] = [
     ['home', d.nav.home, HomeIcon],
@@ -42,16 +50,23 @@ export function HomeScreen() {
       <Glow />
       <Stars />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {/* Fondu entre onglets : le changement de page ne saute plus. */}
-        <Animated.View
-          key={tab}
-          entering={FadeIn.duration(260)}
-          style={{ flex: 1 }}
-        >
-          {tab === 'home' && <HomeTab onSettings={() => setSettings(true)} />}
-          {tab === 'block' && <BlockTab />}
-          {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
-        </Animated.View>
+        {/* Epinglee : la marque, la serie et le profil ne defilent jamais. */}
+        <Header streak={streak} onProfile={() => { setTab('account'); }} />
+
+        <View style={{ flex: 1 }}>
+          <Animated.View key={tab} entering={FadeIn.duration(260)} style={{ flex: 1 }}>
+            {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
+            {tab === 'block' && <BlockTab />}
+            {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+          </Animated.View>
+
+          {/* Fondu noir : le contenu s'efface sous l'en-tete au lieu d'y etre coupe. */}
+          <LinearGradient
+            colors={[colors.night, withAlpha(colors.night, 0.85), 'transparent']}
+            style={st.fade}
+            pointerEvents="none"
+          />
+        </View>
       </SafeAreaView>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -86,21 +101,22 @@ export function HomeScreen() {
           })}
         </View>
       </View>
+
+      {/* La lame de verre passe a chaque changement d'onglet. */}
+      <GlassSweep key={tab} />
     </View>
   );
 }
 
 /* ---------------- Accueil ---------------- */
-function HomeTab({ onSettings }: { onSettings: () => void }) {
+function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => void }) {
   const { d, t } = useT();
+  const router = useRouter();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
-  const [streak, setStreak] = useState(0);
   const goal = useSettings((x) => x.goalMinutes);
+  const [detox, setDetox] = useState(false);
 
-  useEffect(() => {
-    void stats.today().then(setToday);
-    void stats.streakDays().then(setStreak);
-  }, []);
+  useEffect(() => { void stats.today().then(setToday); }, []);
 
   const perApp = {
     instagram: Math.round(today.reclaimedMinutes * 0.4),
@@ -112,13 +128,6 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-      <View style={st.topRow}>
-        <Text variant="title">NoReel</Text>
-        <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.score} hitSlop={10}>
-          <SettingsIcon size={18} strokeWidth={1.8} color={colors.accent} />
-        </Pressable>
-      </View>
-
       {/* Bandeau de chiffres : la meme information que les anneaux, en une ligne. */}
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
         <Stat label="Récupéré" value={formatHours(today.reclaimedMinutes)} />
@@ -130,6 +139,55 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
 
       <AppSlider minutes={perApp} />
 
+      {/* Toujours autorisees : on rassure avant de bloquer. */}
+      <Glass radius={22} intensity={45} warmEdge="none" style={st.cardRow}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text variant="title">Toujours autorisées ?</Text>
+          <Text variant="body" tone="secondary">
+            Plans, Uber, tes apps de santé : elles ne seront jamais bloquées.
+          </Text>
+        </View>
+        <Pill label="Configurer" onPress={() => { haptics.tap(); onSettings(); }} />
+      </Glass>
+
+      {/* Detox : le geste fort, mis en avant. */}
+      <Glass radius={22} intensity={45} warmEdge="none" style={st.detox}>
+        <Text variant="title">L’heure d’une détox ?</Text>
+        <Text variant="body" tone="secondary" style={{ marginTop: space.xs }}>
+          Passe quelques heures hors ligne, ou même une semaine si tu oses.
+        </Text>
+        <Pressable
+          style={st.detoxBtn}
+          onPress={() => { haptics.press(); const v = !detox; setDetox(v); void shield.setActive(v); }}
+        >
+          <LinearGradient
+            colors={[withAlpha(colors.accent, 0.35), withAlpha(colors.accentDeep, 0.2)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text variant="button" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+            {detox ? '■  Arrêter la détox' : '▶  Commencer la détox'}
+          </Text>
+        </Pressable>
+      </Glass>
+
+      {/* Premier pas : la serie devient une recompense visible. */}
+      <Glass radius={22} intensity={45} warmEdge="none" style={st.cardRow}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text variant="title">{streak > 0 ? 'Série en cours' : 'Premier pas franchi'}</Text>
+          <Text variant="body" tone="secondary">
+            {streak > 0
+              ? `${streak} jour${streak > 1 ? 's' : ''} sans doomscroll. Ne casse pas la chaîne.`
+              : 'Tu as commencé. C’est le plus dur. Ton futur toi te remercie déjà.'}
+          </Text>
+        </View>
+        <View style={st.egg}>
+          <Image source={STREAK_PNG} style={st.eggFlame} contentFit="contain" />
+          <Text variant="title" style={st.eggN}>{streak}</Text>
+        </View>
+      </Glass>
+
       <Glass radius={22} intensity={45} warmEdge="none" style={st.idea}>
         <Text variant="label" tone="tertiary">IDÉE DU JOUR</Text>
         <Text variant="body" style={{ marginTop: space.xs }}>
@@ -139,6 +197,11 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
           })}
         </Text>
       </Glass>
+
+      <Pressable style={st.shortcut} onPress={() => { haptics.tap(); router.push('/widgets'); }}>
+        <Text variant="body">Mettre les apps sur l’écran d’accueil</Text>
+        <Text variant="body" tone="tertiary">›</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -265,6 +328,7 @@ function AccountTab({ onSettings }: { onSettings: () => void }) {
 
       <Text variant="label" tone="secondary" style={st.section}>Assistance</Text>
       <Card>
+        <Row title="Apps sur l’écran d’accueil" onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => {}} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
@@ -280,20 +344,29 @@ const st = StyleSheet.create({
     borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
   },
   section: { marginTop: space.lg },
+  fade: { position: 'absolute', top: 0, left: 0, right: 0, height: 30 },
   idea: { padding: space.lg, marginTop: space.lg },
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(colors.mist, 0.14) },
-  header: { paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.md },
-  banner: {
+  cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
-    marginHorizontal: gutter, padding: space.md, borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    padding: space.lg, marginTop: space.lg,
   },
-  bannerIcon: {
-    width: 30, height: 30, borderRadius: 9,
-    backgroundColor: withAlpha(colors.accent, 0.25),
+  detox: { padding: space.lg, marginTop: space.lg },
+  detoxBtn: {
+    height: 48, borderRadius: 24, marginTop: space.lg, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.28),
+  },
+  egg: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center' },
+  eggFlame: { position: 'absolute', width: 54, height: 54, opacity: 0.9 },
+  eggN: { color: colors.night, marginTop: 8 },
+  shortcut: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: space.lg, paddingVertical: space.md, paddingHorizontal: space.lg,
+    borderRadius: 18, backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
   },
   status: {
     alignItems: 'center', gap: space.md, padding: space.xl, borderRadius: 22,
@@ -314,23 +387,7 @@ const st = StyleSheet.create({
   },
   statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   root: { flex: 1, backgroundColor: colors.night },
-  scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 120, gap: space.md },
-  hero: { gap: 2 },
-  week: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: space.lg, height: 38 },
-  bar: { flex: 1, borderRadius: 2, backgroundColor: colors.accent },
-  apps: { flexDirection: 'row', gap: space.sm },
-  app: {
-    flex: 1, padding: space.lg, gap: 4, borderRadius: 18,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
-  },
-  appIcon: {
-    width: 34, height: 34, borderRadius: 10, marginBottom: space.sm,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
-  },
-  appRing: { width: 15, height: 15, borderRadius: 8, borderWidth: 2.5, borderColor: colors.accent },
+  scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
   navWrap: { position: 'absolute', left: gutter, right: gutter, bottom: 28 },
   nav: {
     flexDirection: 'row', borderRadius: 28, overflow: 'hidden', padding: 6,

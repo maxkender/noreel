@@ -1,5 +1,6 @@
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS, useAnimatedStyle, useSharedValue, withSpring,
@@ -9,15 +10,17 @@ import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 
 const MIN = 15, MAX = 720, STEP = 15;
+const KNOB = 38;
 
-/** Une ligne, une poignee de verre. Rien d'autre. */
+/** Rail de verre, poignee de verre. La poignee grossit sous le doigt. */
 export function TimeSlider({
   minutes, onChange,
 }: { minutes: number; onChange: (m: number) => void }) {
   const { width } = useWindowDimensions();
-  const track = width - 48 - 32;          // marges d'ecran + demi-poignees
+  const track = width - 48 - KNOB;        // marges d'ecran + demi-poignees
   const ratio = (minutes - MIN) / (MAX - MIN);
   const x = useSharedValue(ratio * track);
+  const grab = useSharedValue(0);         // 0 pose, 1 saisi
 
   const commit = (px: number) => {
     const r = Math.min(1, Math.max(0, px / track));
@@ -32,22 +35,61 @@ export function TimeSlider({
   // d'heure. Arrondir la position faisait sauter le curseur.
   const pan = Gesture.Pan()
     .minDistance(0)
+    .onBegin(() => { grab.value = withSpring(1, springs.snappy); })
     .onChange((e) => {
       x.value = Math.min(track, Math.max(0, x.value + e.changeX));
       runOnJS(commit)(x.value);
-    });
+    })
+    .onFinalize(() => { grab.value = withSpring(0, springs.gentle); });
 
-  const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const filled = useAnimatedStyle(() => ({ width: x.value + 16 }));
+  const knob = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: x.value },
+      { scale: 1 + grab.value * 0.3 },
+    ],
+    shadowOpacity: 0.35 + grab.value * 0.45,
+  }));
+  const filled = useAnimatedStyle(() => ({ width: x.value + KNOB / 2 }));
+  const halo = useAnimatedStyle(() => ({
+    opacity: grab.value * 0.5,
+    transform: [{ translateX: x.value }, { scale: 1 + grab.value * 0.9 }],
+  }));
 
   return (
     <GestureDetector gesture={pan}>
-      <View style={[styles.root, { width: track + 32 }]}>
-        <View style={styles.track} />
-        <Animated.View style={[styles.filled, filled]} />
+      <View style={[styles.root, { width: track + KNOB }]}>
+        {/* Le rail est lui aussi du verre : flou, filet, creux. */}
+        <View style={styles.track}>
+          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.trackTint} />
+        </View>
+
+        <Animated.View style={[styles.filledWrap, filled]}>
+          <LinearGradient
+            colors={[withAlpha(colors.accentDeep, 0.5), colors.accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
+        {/* Halo sous la poignee : il ne naît qu'au contact du doigt. */}
+        <Animated.View style={[styles.halo, halo]} pointerEvents="none" />
+
         <Animated.View style={[styles.knob, knob]}>
-          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
-          <View style={styles.knobFill} />
+          <BlurView intensity={75} tint="light" style={StyleSheet.absoluteFill} />
+          <LinearGradient
+            colors={[withAlpha(colors.mist, 0.42), withAlpha(colors.accent, 0.3)]}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 0.8, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['transparent', withAlpha(colors.mist, 0.9), 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.knobSheen}
+          />
         </Animated.View>
       </View>
     </GestureDetector>
@@ -55,24 +97,31 @@ export function TimeSlider({
 }
 
 const styles = StyleSheet.create({
-  root: { height: 44, justifyContent: 'center' },
+  root: { height: 52, justifyContent: 'center' },
   track: {
-    height: 2, borderRadius: 1, marginHorizontal: 16,
-    backgroundColor: withAlpha(colors.mist, 0.12),
+    height: 10, borderRadius: 5, marginHorizontal: KNOB / 2, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.16),
   },
-  filled: {
-    position: 'absolute', left: 8, height: 2, borderRadius: 1,
-    backgroundColor: colors.accent,
+  trackTint: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(colors.mist, 0.06),
+  },
+  filledWrap: {
+    position: 'absolute', left: KNOB / 2 - 1, height: 10, borderRadius: 5,
+    overflow: 'hidden',
+  },
+  halo: {
+    position: 'absolute', left: 0, width: KNOB, height: KNOB,
+    borderRadius: KNOB / 2, backgroundColor: colors.accent,
   },
   knob: {
-    position: 'absolute', left: 0, width: 32, height: 32, borderRadius: 16,
+    position: 'absolute', left: 0, width: KNOB, height: KNOB, borderRadius: KNOB / 2,
     overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.5),
+    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.55),
+    shadowColor: colors.accentDeep, shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
   },
-  knobFill: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.18),
-  },
+  knobSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
 });
 
 export const SLIDER = { MIN, MAX, STEP };

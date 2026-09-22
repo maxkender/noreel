@@ -1,6 +1,7 @@
 /**
- * Noir, technique, sobre. Un seul accent froid ; le blanc porte l'action.
- * Aucune couleur chaude : c'est ce qui donnait le cote "coucher de soleil".
+ * Noir, technique, sobre. Un seul accent : le violet. Le blanc porte
+ * l'action. Aucune couleur chaude — c'est ce qui donnait le cote
+ * "coucher de soleil".
  */
 export const colors = {
   night: '#08090B',        // fond, presque noir
@@ -10,13 +11,14 @@ export const colors = {
   lineStrong: '#FFFFFF24',
   mist: '#FAFAFA',         // texte principal
   sun: '#FFFFFF',          // action principale (blanc plein)
-  accent: '#7CF0C4',       // menthe : donnees, etats actifs
-  screenGlow: '#7CF0C4',   // temps perdu
+  accent: '#A78CFF',       // violet : donnees, etats actifs
+  accentDeep: '#7C5CFF',   // violet sature : halos et degrades
+  screenGlow: '#A78CFF',   // temps perdu
   dawn: '#3A3F4B',         // deja vecu, neutre
   haze: '#8B92A5',
   fog: '#6B7280',
-  accentSoft: '#2BD9A522',   // halo haut, tres dilue
-  accentFaint: '#2BD9A50D',
+  accentSoft: '#7C5CFF2E',   // halo haut, tres dilue
+  accentFaint: '#7C5CFF12',
   danger: '#FF5A5F',      // le temps perdu, uniquement ici
   ground: '#000000',
 } as const;

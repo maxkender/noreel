@@ -14,6 +14,7 @@ import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { ExitBubble } from './ExitBubble';
+import { GlassSweep } from '@/components/GlassSweep';
 
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
@@ -105,6 +106,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* Sortie de secours : elle flotte au-dessus de la WebView. */}
       <ExitBubble onExit={() => router.back()} />
+
+      {/* La lame de verre marque l'ouverture de la page. */}
+      <GlassSweep />
 
       {!ready && !error && (
         <View style={styles.overlay} pointerEvents="none">

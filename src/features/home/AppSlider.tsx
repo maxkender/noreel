@@ -33,7 +33,7 @@ export const APPS: { id: ClientId; name: string; sub: string }[] = [
   { id: 'youtube', name: 'YouTube', sub: 'Sans Shorts' },
 ];
 
-const TILE = 168;
+const TILE = 208;
 
 /**
  * Les icones defilent comme des diapositives et les reglages de l'app
@@ -168,7 +168,7 @@ const st = StyleSheet.create({
     width: TILE, height: TILE, alignItems: 'center', justifyContent: 'center',
     marginBottom: space.lg,
   },
-  logo: { width: TILE * 0.62, height: TILE * 0.62 },
+  logo: { width: TILE * 0.66, height: TILE * 0.66 },
   name: { marginTop: 2 },
   open: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.md,
