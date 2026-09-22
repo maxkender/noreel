@@ -15,6 +15,9 @@
       "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_FAMILY_CONTROLS": "1"
       }
     }
   },
