@@ -48,10 +48,6 @@ export function Widgets() {
 
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
           <Text variant="displayM">Tes apps filtrées, à côté des autres.</Text>
-          <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-            Trois gestes, une fois pour toutes. Ensuite tu ouvres Instagram
-            sans Reels directement depuis ton écran d’accueil.
-          </Text>
 
           <Glass radius={22} intensity={45} warmEdge="none" style={st.steps}>
             <Step n="1" text="Copie le lien de l’app ci-dessous." />
@@ -85,11 +81,6 @@ export function Widgets() {
               </Text>
             </Pressable>
           )}
-
-          <Text variant="label" tone="tertiary" style={{ marginTop: space.xl, lineHeight: 18 }}>
-            Un widget UnSwipe avec tes chiffres du jour arrive ensuite : il
-            demande une extension native, que l’app n’embarque pas encore.
-          </Text>
         </ScrollView>
       </SafeAreaView>
       <GlassSweep />

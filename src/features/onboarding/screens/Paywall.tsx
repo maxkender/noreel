@@ -37,7 +37,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const top = Math.max(...weeks);
 
   return (
-    <Screen cta="Démarrer mon essai gratuit" onPress={onDone} secondary="Continuer sans Pro" onSecondary={onDone}>
+    <Screen cta="Démarrer mon essai gratuit" onPress={onDone} secondary="Continuer sans Pro" onSecondary={onDone} hue="warm">
       <View style={st.head}>
         <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
         <View style={{ flex: 1 }} />
@@ -98,6 +98,10 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         </View>
       </Glass>
 
+      <Text variant="label" tone="tertiary" style={[st.center, { marginTop: space.lg }]}>
+        Gratuit pendant la bêta.
+      </Text>
+
       <Pressable
         onPress={() => { haptics.tap(); setMore((m) => !m); }}
         style={st.more}
@@ -112,10 +116,6 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         </Animated.View>
       )}
 
-      <Text variant="label" tone="tertiary" style={[st.center, { marginTop: space.lg, lineHeight: 18 }]}>
-        7 jours gratuits, puis 99,99 €/an. Annule quand tu veux. Les achats ne
-        sont pas encore actifs : tout est débloqué pendant la bêta.
-      </Text>
     </Screen>
   );
 }

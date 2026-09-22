@@ -6,7 +6,8 @@ import { colors } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Button } from './Button';
 import { Text } from './type/Text';
-import { Glow } from './Glow';
+import { Glow, type Hue } from './Glow';
+import { Stars } from './Stars';
 import { ProgressContext } from './ProgressContext';
 
 /**
@@ -15,11 +16,12 @@ import { ProgressContext } from './ProgressContext';
  */
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
-  tapToContinue, hintDelay = 1800,
+  tapToContinue, hintDelay = 1800, hue = 'accent',
 }: {
   children: ReactNode;
-  cta: string;
-  onPress: () => void;
+  /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
+  cta?: string;
+  onPress?: () => void;
   disabled?: boolean;
   secondary?: string;
   onSecondary?: () => void;
@@ -29,6 +31,8 @@ export function Screen({
   tapToContinue?: boolean;
   /** Retard avant l'invite, en ms. Laisse le temps de lire.  */
   hintDelay?: number;
+  /** Teinte du halo : elle change d'un ecran a l'autre. */
+  hue?: Hue;
 }) {
   const bar = useContext(ProgressContext);
 
@@ -36,7 +40,8 @@ export function Screen({
 
   return (
     <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
-      <Glow />
+      <Glow hue={hue} />
+      <Stars />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {bar && <View style={styles.progress}>{bar}</View>}
 
@@ -48,7 +53,13 @@ export function Screen({
           {children}
         </ScrollView>
 
-        {tapToContinue ? (
+        {!cta ? (
+          secondary && onSecondary ? (
+            <View style={styles.footer}>
+              <Button label={secondary} onPress={onSecondary} variant="ghost" />
+            </View>
+          ) : null
+        ) : tapToContinue ? (
           // L'invite n'apparait qu'apres le texte : le silence fait le suspense.
           <Animated.View
             entering={FadeIn.delay(hintDelay).duration(900)}
@@ -58,7 +69,7 @@ export function Screen({
           </Animated.View>
         ) : (
           <View style={styles.footer}>
-            <Button label={cta} onPress={onPress} disabled={disabled} />
+            <Button label={cta} onPress={onPress ?? (() => {})} disabled={disabled} />
             {secondary && onSecondary && (
               <Button label={secondary} onPress={onSecondary} variant="ghost" />
             )}

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming,
+} from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
@@ -15,7 +18,7 @@ import { formatHours } from '@/lib/format';
 import { track } from '@/services';
 import { screenYears, wakingShare } from '../calculations';
 import { TimeSlider } from '../scenes/TimeSlider';
-import { AgeRuler } from '../scenes/AgeRuler';
+import { AgeInput } from '../scenes/AgeInput';
 
 const MARK = require('@/assets/brand/mark.png');
 
@@ -25,7 +28,7 @@ type P = { onNext: () => void };
 export function S1({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400}>
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} hue="accent">
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       {true && (
@@ -46,7 +49,7 @@ export function S1({ onNext }: P) {
 export function S2({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.s2.cta} onPress={onNext} center>
+    <Screen cta={d.s2.cta} onPress={onNext} center hue="deep">
       <Typewriter text={d.s2.title} variant="displayM" style={s.center} />
       {true && (
         <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
@@ -85,7 +88,7 @@ export function S3({ onNext }: P) {
   ];
 
   return (
-    <Screen cta={d.s3.cta} onPress={onNext} disabled={!a}>
+    <Screen cta={d.s3.cta} onPress={onNext} disabled={!a} hue="warm">
       <Typewriter text={d.s3.title} variant="displayM" />
       {true && (
         <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
@@ -108,7 +111,7 @@ export function S3({ onNext }: P) {
 export function S4({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3600}>
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3600} hue="deep">
       <Typewriter text={d.s4.title} variant="displayM" speed={40} style={s.center} />
       {/* TODO produit : enregistrement d'ecran de l'app a la place de ce cadre. */}
       <Animated.View entering={FadeIn.delay(1200).duration(600)} style={s.videoSlot}>
@@ -129,7 +132,7 @@ export function S5({ onNext }: P) {
 
   if (phase === 'time') {
     return (
-      <Screen cta={d.s5.ctaA} onPress={() => { track('screen_time_set', { minutes }); setPhase('age'); }} center>
+      <Screen cta={d.s5.ctaA} onPress={() => { track('screen_time_set', { minutes }); setPhase('age'); }} center hue="accent">
         <Typewriter text={d.s5.titleA} variant="displayM" style={s.center} />
         <Text variant="hero" style={[s.center, s.value]} numberOfLines={1} adjustsFontSizeToFit>
           {formatHours(minutes)}
@@ -145,12 +148,11 @@ export function S5({ onNext }: P) {
   }
 
   return (
-    <Screen cta={d.s5.ctaB} onPress={() => { track('age_set', { age }); onNext(); }} center>
+    <Screen cta={d.s5.ctaB} onPress={() => { track('age_set', { age }); onNext(); }} center hue="warm">
       <Typewriter text={d.s5.titleB} variant="displayM" style={s.center} />
-      <Text variant="hero" style={[s.center, s.value]} numberOfLines={1} adjustsFontSizeToFit>
-        {age}
-      </Text>
-      <AgeRuler age={age} onChange={setAge} />
+      <View style={s.ageWrap}>
+        <AgeInput age={age} onChange={setAge} />
+      </View>
     </Screen>
   );
 }
@@ -178,7 +180,7 @@ export function S6({ onNext }: P) {
   const done = lit >= target;
 
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done}>
+    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done} hue="danger">
       <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
       <View style={s.hundredWrap}>
@@ -229,6 +231,8 @@ export function S7({ onNext }: P) {
     [d.brain.fix, ''],
   ];
   const last = i >= steps.length - 1;
+  // Le rouge monte a chaque symptome, puis retombe quand arrive la sortie.
+  const harm = last ? 0 : i / (steps.length - 1);
 
   return (
     <Screen
@@ -237,15 +241,27 @@ export function S7({ onNext }: P) {
       tapToContinue
       hintDelay={2400}
       center
+      hue="danger"
     >
-      {/* La timeline reste a l'ecran et avance : on voit ou on en est. */}
-      <View style={s.dots}>
-        {steps.map((_, k) => (
-          <View key={k} style={[s.dotLine, k <= i && s.dotLineOn]} />
+      <Harm level={harm} on={last} />
+
+      {/* La trace de ce qui precede reste visible, en petit et en rouge :
+          une seule ligne de temps, celle du haut de l'ecran. */}
+      <View style={s.trace}>
+        {steps.slice(0, i).map(([t], k) => (
+          <Animated.View key={t} entering={FadeIn.duration(400)}>
+            <Text
+              variant="label"
+              color={withAlpha(last ? colors.accent : colors.danger, 0.3 + k * 0.12)}
+              numberOfLines={1}
+            >
+              {t}
+            </Text>
+          </Animated.View>
         ))}
       </View>
 
-      <Animated.View key={i} entering={FadeIn.duration(500)} style={{ marginTop: space.xxl }}>
+      <Animated.View key={i} entering={FadeIn.duration(500)}>
         <Typewriter
           text={steps[i][0]}
           variant={last ? 'displayM' : 'displayL'}
@@ -264,10 +280,27 @@ export function S7({ onNext }: P) {
   );
 }
 
+/** Halo rouge qui grandit avec les degats, et vire a l'accent a la fin. */
+function Harm({ level, on }: { level: number; on: boolean }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withTiming(on ? 0 : level, { duration: 900, easing: Easing.out(Easing.quad) });
+  }, [level, on, t]);
+
+  const style = useAnimatedStyle(() => ({ opacity: t.value }));
+
+  return (
+    <Animated.View style={[s.harm, style]} pointerEvents="none">
+      <LinearGradient
+        colors={[withAlpha(colors.danger, 0.34), withAlpha(colors.danger, 0.08), 'transparent']}
+        locations={[0, 0.45, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
+  );
+}
+
 const s = StyleSheet.create({
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.lg },
-  dotLine: { width: 28, height: 3, borderRadius: 2, backgroundColor: withAlpha(colors.mist, 0.15) },
-  dotLineOn: { backgroundColor: colors.accent },
   videoSlot: {
     marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
@@ -287,9 +320,12 @@ const s = StyleSheet.create({
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
   chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
   center: { textAlign: 'center' },
+  trace: { alignItems: 'center', gap: 2, marginBottom: space.xl, minHeight: 60 },
+  harm: { position: 'absolute', top: -200, left: -60, right: -60, height: 460 },
   mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },
+  ageWrap: { marginTop: space.xxl, alignItems: 'center' },
   keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   compare: { flexDirection: 'row', gap: space.md, marginTop: space.xxl },
   col: { flex: 1, gap: space.sm },

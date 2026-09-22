@@ -63,6 +63,11 @@ export function SelectCard({
     transform: [{ scale: 0.5 + on.value * 0.5 }],
   }));
 
+  // Le logo avance d'un cran quand la reponse est retenue.
+  const lift = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + on.value * 0.12 }],
+  }));
+
   return (
     <A
       accessibilityRole={shape === 'check' ? 'checkbox' : 'radio'}
@@ -84,7 +89,7 @@ export function SelectCard({
         />
       </Animated.View>
 
-      {lead ? <View style={st.lead}>{lead}</View> : null}
+      {lead ? <Animated.View style={[st.lead, lift]}>{lead}</Animated.View> : null}
 
       <View style={st.text}>
         <Text variant="body">{label}</Text>

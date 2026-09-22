@@ -6,7 +6,7 @@ import { radii, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { track } from '@/services';
-import { SystemSheet } from '../scenes/SystemSheet';
+import { SystemAlert } from '../scenes/SystemAlert';
 import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
@@ -20,12 +20,10 @@ import {
  */
 export function Permissions({ onDone }: { onDone: () => void }) {
   const [state, setState] = useState<AuthState>('notDetermined');
-  const [asked, setAsked] = useState(false);
 
   useEffect(() => { void authorizationStatus().then(setState); }, []);
 
   const ask = useCallback(async () => {
-    setAsked(true);
     const next = await requestAuthorization();
     setState(next);
     track('step_viewed', { step: 'permissions', result: next });
@@ -55,7 +53,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
 
   if (state === 'approved') {
     return (
-      <Screen cta="Continuer" onPress={onDone} center>
+      <Screen cta="Continuer" onPress={onDone} center hue="accent">
         <View style={st.okRing}>
           <Check size={34} strokeWidth={2.4} color={colors.accent} />
         </View>
@@ -83,44 +81,38 @@ export function Permissions({ onDone }: { onDone: () => void }) {
         <Text variant="displayM" style={{ marginTop: space.lg }}>
           Le bouton bleu, c’était le refus.
         </Text>
-        <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-          Pas grave, ça se rattrape en dix secondes.
-        </Text>
 
         <View style={st.card}>
           <Path n="1" text="Ouvre Réglages → Temps d’écran." />
           <Path n="2" text="Descends jusqu’à « Applications autorisées »." />
           <Path n="3" text="Active UnSwipe, puis reviens ici." />
         </View>
-
-        <Text variant="label" tone="tertiary" style={{ marginTop: space.lg, lineHeight: 18 }}>
-          Tu peux aussi continuer sans : les versions filtrées d’Instagram,
-          TikTok, X et YouTube marcheront, mais les apps d’origine resteront
-          ouvrables.
-        </Text>
       </Screen>
     );
   }
 
+  // Pas de bouton a nous : c'est le « Continuer » de la maquette qui
+  // declenche la vraie alerte, posee au meme endroit. Le doigt est deja au
+  // bon pixel quand elle apparait.
   return (
-    <Screen cta={asked ? 'Réessayer' : 'Continuer'} onPress={() => { void ask(); }} secondary="Plus tard" onSecondary={onDone}>
-      <Text variant="displayM">
-        Connectons UnSwipe à Temps d’écran. En toute sécurité.
-      </Text>
+    <View style={{ flex: 1 }}>
+      <Screen secondary="Plus tard" onSecondary={onDone} hue="warm">
+        <Text variant="displayM">Connectons UnSwipe à Temps d’écran.</Text>
+        <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
+          Appuie sur Continuer.
+        </Text>
+      </Screen>
 
-      <SystemSheet
+      <SystemAlert
         goodSide="left"
         title="« UnSwipe » souhaite accéder à Temps d’écran"
-        body="Autoriser « UnSwipe » à accéder à Temps d’écran peut lui permettre de voir tes données d’activité, de restreindre des contenus et de limiter l’utilisation d’Apps et de sites web."
+        body="Cela permet de voir tes données d’activité et de limiter l’utilisation d’Apps et de sites web."
         good="Continuer"
         bad="Ne pas autoriser"
+        onGood={() => { void ask(); }}
+        onBad={() => { void ask(); }}
       />
-
-      <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.xl }]}>
-        Tes informations sont protégées par Apple et resteront 100 % sur ton
-        téléphone.
-      </Text>
-    </Screen>
+    </View>
   );
 }
 

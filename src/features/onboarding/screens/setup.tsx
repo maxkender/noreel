@@ -18,7 +18,7 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { screenYears } from '../calculations';
-import { SystemSheet } from '../scenes/SystemSheet';
+import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
 
 type P = { onNext: () => void };
@@ -29,7 +29,7 @@ export function Name({ onNext }: P) {
   const setName = useOnboardingStore((x) => x.setFirstName);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center>
+    <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
       <Typewriter text="Comment on t’appelle ?" variant="displayM" style={st.center} />
       <Animated.View entering={FadeIn.delay(900).duration(600)}>
         <TextInput
@@ -43,9 +43,6 @@ export function Name({ onNext }: P) {
           maxLength={18}
           style={st.input}
         />
-        <Text variant="label" tone="tertiary" style={[st.center, { marginTop: space.lg }]}>
-          Il ne sort jamais de ton téléphone.
-        </Text>
       </Animated.View>
     </Screen>
   );
@@ -64,7 +61,7 @@ export function Distractions({ onNext }: P) {
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={picked.length === 0}>
+    <Screen cta="Continuer" onPress={onNext} disabled={picked.length === 0} hue="accent">
       <Text variant="displayM">Choisis tes plus grandes distractions.</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
         UnSwipe garde ta sélection sur ton téléphone.
@@ -82,11 +79,6 @@ export function Distractions({ onNext }: P) {
           />
         ))}
       </View>
-
-      <Text variant="label" tone="tertiary" style={{ marginTop: space.lg, lineHeight: 18 }}>
-        Chacune aura sa version filtrée dans UnSwipe, et son app d’origine
-        mise en pause.
-      </Text>
     </Screen>
   );
 }
@@ -96,12 +88,9 @@ const ESSENTIAL = ['Téléphone', 'Messages', 'Plans', 'Santé', 'Réglages'];
 
 export function Essentials({ onNext }: P) {
   return (
-    <Screen cta="Continuer" onPress={onNext} center>
+    <Screen cta="Continuer" onPress={onNext} center hue="warm">
       <Text variant="displayM" style={st.center}>
         Les apps essentielles restent toujours accessibles.
-      </Text>
-      <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
-        Tu pourras en ajouter d’autres plus tard.
       </Text>
 
       <Glass radius={26} intensity={50} warmEdge="none" style={st.essential}>
@@ -165,12 +154,9 @@ export function RulesPick({ onNext }: P) {
   const page = width - gutter * 2;
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={rules.length === 0} center>
+    <Screen cta="Continuer" onPress={onNext} disabled={rules.length === 0} center hue="deep">
       <Text variant="displayM" style={st.center}>
         {name ? `${name}, voici les règles que je te propose` : 'Voici les règles que je te propose'}
-      </Text>
-      <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
-        Tu pourras modifier ça plus tard.
       </Text>
 
       <ScrollView
@@ -215,12 +201,10 @@ export function RulesPick({ onNext }: P) {
 
 /* ---------- Notifications ---------- */
 export function NotificationsAsk({ onNext }: P) {
-  const [asked, setAsked] = useState(false);
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; }, []);
 
   const ask = async () => {
-    setAsked(true);
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       track('step_viewed', { step: 'notifications', result: status });
@@ -231,26 +215,24 @@ export function NotificationsAsk({ onNext }: P) {
   };
 
   return (
-    <Screen
-      cta={asked ? 'Continuer' : 'Continuer'}
-      onPress={() => { void ask(); }}
-      secondary="Plus tard"
-      onSecondary={onNext}
-    >
-      <Text variant="displayM">Reçois ton rapport et suis tes progrès.</Text>
+    <View style={{ flex: 1 }}>
+      <Screen secondary="Plus tard" onSecondary={onNext} hue="deep">
+        <Text variant="displayM">Reçois ton rapport chaque semaine.</Text>
+        <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
+          Un résumé, jamais de relance.
+        </Text>
+      </Screen>
 
-      <SystemSheet
+      <SystemAlert
         goodSide="right"
         title="« UnSwipe » souhaite t’envoyer des notifications"
-        body="Les notifications peuvent inclure des alertes, des sons et des pastilles d’icône. Tu peux les configurer dans Réglages."
+        body="Les notifications peuvent inclure des alertes, des sons et des pastilles d’icône."
         good="Autoriser"
         bad="Ne pas autoriser"
+        onGood={() => { void ask(); }}
+        onBad={() => { void ask(); }}
       />
-
-      <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.xl }]}>
-        Un résumé par semaine. Jamais de relance pour te faire revenir.
-      </Text>
-    </Screen>
+    </View>
   );
 }
 
@@ -263,7 +245,7 @@ export function PromiseScreen({ onNext }: P) {
   const days = Math.round((minutes * 0.3 * 365) / 60 / 24);
 
   return (
-    <Screen cta="👊  C’est parti" onPress={onNext}>
+    <Screen cta="👊  C’est parti" onPress={onNext} hue="accent">
       <Text variant="displayM" style={st.center}>
         {name ? `${name},\n` : ''}UnSwipe te rendra{' '}
         <Text variant="displayM" color={colors.accent}>{years} ans</Text> de ta vie

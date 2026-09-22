@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -24,6 +23,7 @@ import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, Pill } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
+import { NavBar } from './NavBar';
 import { Referral } from './Referral';
 import { Settings } from './Settings';
 
@@ -53,54 +53,16 @@ export function HomeScreen() {
         {/* Epinglee : la marque, la serie et le profil ne defilent jamais. */}
         <Header streak={streak} onProfile={() => { setTab('account'); }} />
 
-        <View style={{ flex: 1 }}>
-          <Animated.View key={tab} entering={FadeIn.duration(260)} style={{ flex: 1 }}>
-            {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
-            {tab === 'block' && <BlockTab />}
-            {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
-          </Animated.View>
-
-          {/* Fondu noir : le contenu s'efface sous l'en-tete au lieu d'y etre coupe. */}
-          <LinearGradient
-            colors={[colors.night, withAlpha(colors.night, 0.85), 'transparent']}
-            style={st.fade}
-            pointerEvents="none"
-          />
-        </View>
+        <Animated.View key={tab} entering={FadeIn.duration(260)} style={{ flex: 1 }}>
+          {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
+          {tab === 'block' && <BlockTab />}
+          {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+        </Animated.View>
       </SafeAreaView>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
 
-      {/* Barre flottante en verre : elle survole le contenu, elle ne le pousse pas. */}
-      <View style={st.navWrap} pointerEvents="box-none">
-        <View style={st.nav}>
-          <BlurView intensity={95} tint="dark" style={StyleSheet.absoluteFill} />
-          <View style={st.navTint} />
-          {/* Reflet haut : c'est lui qui donne l'epaisseur du verre. */}
-          <LinearGradient
-            colors={[withAlpha(colors.mist, 0.28), 'transparent']}
-            style={st.navSheen}
-            pointerEvents="none"
-          />
-          {tabs.map(([key, label, Icon]) => {
-            const on = tab === key;
-            return (
-              <Pressable
-                key={key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: on }}
-                onPress={() => { haptics.tap(); setTab(key); }}
-                style={st.tab}
-              >
-                <Icon size={20} strokeWidth={1.8} color={on ? colors.accent : withAlpha(colors.mist, 0.45)} />
-                <Text variant="label" color={on ? colors.accent : withAlpha(colors.mist, 0.45)}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      <NavBar tabs={tabs} value={tab} onChange={setTab} />
 
       {/* La lame de verre passe a chaque changement d'onglet. */}
       <GlassSweep key={tab} />
@@ -350,7 +312,6 @@ const st = StyleSheet.create({
     borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
   },
   section: { marginTop: space.lg },
-  fade: { position: 'absolute', top: 0, left: 0, right: 0, height: 30 },
   idea: { padding: space.lg, marginTop: space.lg },
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
@@ -394,17 +355,4 @@ const st = StyleSheet.create({
   statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   root: { flex: 1, backgroundColor: colors.night },
   scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
-  navWrap: { position: 'absolute', left: gutter, right: gutter, bottom: 28 },
-  nav: {
-    flexDirection: 'row', borderRadius: 28, overflow: 'hidden', padding: 6,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.3),
-    shadowColor: '#000', shadowOpacity: 0.65, shadowRadius: 28,
-    shadowOffset: { width: 0, height: 14 }, elevation: 18,
-  },
-  navTint: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.11),
-  },
-  navSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
-  tab: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8 },
 });

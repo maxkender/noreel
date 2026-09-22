@@ -1,16 +1,37 @@
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 
+export type Hue = 'accent' | 'deep' | 'warm' | 'danger';
+
+// Les trois teintes de la marque, plus le rouge reserve au moment qui fait
+// mal. Changer de teinte d'un ecran a l'autre casse la monotonie sans
+// sortir de la palette.
+const HUES: Record<Hue, string> = {
+  accent: colors.accent,
+  deep: colors.accentDeep,
+  warm: colors.accentWarm,
+  danger: colors.danger,
+};
+
 /** Halo haut en degrade. Sans Skia : rien a compiler, rien qui puisse tomber. */
-export function Glow() {
+export function Glow({ hue = 'accent' }: { hue?: Hue }) {
   const { width } = useWindowDimensions();
+  const c = HUES[hue];
+
   return (
-    <LinearGradient
-      colors={[withAlpha(colors.accent, 0.16), withAlpha(colors.accentWarm, 0.07), 'transparent']}
-      locations={[0, 0.5, 1]}
+    <Animated.View
+      key={hue}
+      entering={FadeIn.duration(900)}
       style={[StyleSheet.absoluteFill, { height: width * 0.9 }]}
       pointerEvents="none"
-    />
+    >
+      <LinearGradient
+        colors={[withAlpha(c, 0.18), withAlpha(c, 0.06), 'transparent']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
   );
 }
