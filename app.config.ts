@@ -64,6 +64,16 @@ const config: ExpoConfig = {
         ] as [string, Record<string, unknown>]]
       : []),
   ],
+  // Mises a jour par-dessus l'air.
+  //
+  // Apple limite le nombre de binaires qu'une app peut recevoir dans une
+  // fenetre courte, et on a atteint cette limite : treize envois dans la
+  // journee. Avec expo-updates, tout changement qui ne touche PAS au natif
+  // part en quelques secondes sans repasser par Apple. A partir du prochain
+  // binaire installe, on ne rebuilde plus que pour du natif.
+  runtimeVersion: { policy: 'fingerprint' as const },
+  updates: { url: 'https://u.expo.dev/9223efc1-91e7-4011-9441-7d2d8db87422' },
+
   experiments: { typedRoutes: true },
   extra: { eas: { projectId: '9223efc1-91e7-4011-9441-7d2d8db87422' } },
   owner: 'nutria25',
