@@ -49,7 +49,12 @@ export default function RootLayout() {
         >
           <Stack.Screen
             name="client/[id]"
-            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+              gestureEnabled: true,
+              gestureDirection: 'vertical',
+            }}
           />
         </Stack>
       </SafeAreaProvider>

@@ -175,39 +175,36 @@ export function S5({ onNext }: P) {
 export function S6({ onNext }: P) {
   const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
-  const share = wakingShare(minutes);
+  const target = Math.round(wakingShare(minutes) * 100);
   const years = screenYears(minutes);
-  const target = Math.round(share * 100);
   const [lit, setLit] = useState(0);
 
-  // Remplissage visible : un carre tous les 26 ms, on voit la part monter.
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       setLit(i);
       if (i >= target) clearInterval(id);
-    }, 26);
+    }, 24);
     return () => clearInterval(id);
   }, [target]);
 
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext}>
-      <Typewriter text={d.s6.title} variant="displayM" />
+    <Screen cta={d.s6.cta2} onPress={onNext} center>
+      <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
-      <View style={s.hundred}>
-        {Array.from({ length: 100 }, (_, i) => (
-          <View
-            key={i}
-            style={[s.square, i < lit ? s.squareOn : s.squareOff]}
-          />
-        ))}
+      <View style={s.hundredWrap}>
+        <View style={s.hundred}>
+          {Array.from({ length: 100 }, (_, i) => (
+            <View key={i} style={[s.square, i < lit ? s.squareOn : s.squareOff]} />
+          ))}
+        </View>
       </View>
 
-      <Text variant="hero" style={s.value} numberOfLines={1} adjustsFontSizeToFit>
+      <Text variant="hero" style={[s.center, s.pct]} numberOfLines={1} adjustsFontSizeToFit>
         {lit} %
       </Text>
-      <Text variant="body" tone="secondary">
+      <Text variant="body" tone="secondary" style={s.center}>
         {t(d.s6.body, { y: Math.round(years) })}
       </Text>
     </Screen>
@@ -217,38 +214,46 @@ export function S6({ onNext }: P) {
 /* ---------- 7 ---------- */
 export function S7({ onNext }: P) {
   const { d } = useT();
+  const [i, setI] = useState(0);
+
   const steps = [
     [d.brain.step1, d.brain.step1b],
     [d.brain.step2, d.brain.step2b],
     [d.brain.step3, d.brain.step3b],
+    [d.brain.fix, ''],
   ];
-  const head = typeDuration(d.brain.title);
+  const last = i >= steps.length - 1;
 
   return (
-    <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={4200}>
-      <Typewriter text={d.brain.title} variant="displayM" />
+    <Screen
+      cta={d.tapHint}
+      onPress={() => (last ? onNext() : setI((n) => n + 1))}
+      tapToContinue
+      hintDelay={1600}
+      center
+    >
+      <Text variant="label" tone="tertiary" style={s.center}>{d.brain.title}</Text>
 
-      <View style={{ marginTop: space.xxl }}>
-        {steps.map(([title, body], i) => (
-          <Animated.View
-            key={title}
-            entering={FadeIn.delay(head + i * 450).duration(500)}
-            style={s.chain}
-          >
-            <View style={s.chainCol}>
-              <View style={s.chainDot} />
-              {i < steps.length - 1 && <View style={s.chainLine} />}
-            </View>
-            <View style={{ flex: 1, paddingBottom: space.xl }}>
-              <Text variant="title">{title}</Text>
-              <Text variant="body" tone="secondary" style={{ marginTop: 4 }}>{body}</Text>
-            </View>
-          </Animated.View>
+      {/* La timeline reste a l'ecran et avance : on voit ou on en est. */}
+      <View style={s.dots}>
+        {steps.map((_, k) => (
+          <View key={k} style={[s.dotLine, k <= i && s.dotLineOn]} />
         ))}
       </View>
 
-      <Animated.View entering={FadeIn.delay(head + 1600).duration(600)}>
-        <Text variant="lead" color={colors.accent}>{d.brain.fix}</Text>
+      <Animated.View key={i} entering={FadeIn.duration(500)} style={{ marginTop: space.xxl }}>
+        <Typewriter
+          text={steps[i][0]}
+          variant={last ? 'displayM' : 'displayL'}
+          style={s.center}
+        />
+        {steps[i][1] ? (
+          <Animated.View entering={FadeIn.delay(900).duration(500)}>
+            <Text variant="lead" tone="secondary" style={[s.center, { marginTop: space.lg }]}>
+              {steps[i][1]}
+            </Text>
+          </Animated.View>
+        ) : null}
       </Animated.View>
     </Screen>
   );
@@ -273,17 +278,22 @@ export function S9({ onNext }: P) {
 }
 
 const s = StyleSheet.create({
+  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.lg },
+  dotLine: { width: 28, height: 3, borderRadius: 2, backgroundColor: withAlpha(colors.mist, 0.15) },
+  dotLineOn: { backgroundColor: colors.accent },
   videoSlot: {
     marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
     backgroundColor: colors.surface,
   },
   videoInner: { flex: 1, borderRadius: 20, backgroundColor: colors.surfaceHi },
+  hundredWrap: { alignItems: 'center', marginVertical: space.xl },
   hundred: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 6,
-    marginTop: space.xl, marginBottom: space.lg,
+    flexDirection: 'row', flexWrap: 'wrap', gap: 5,
+    width: 250,
   },
-  square: { width: '8%', aspectRatio: 1, borderRadius: 3 },
+  square: { width: 20.5, height: 20.5, borderRadius: 4 },
+  pct: { marginTop: 0, marginBottom: space.sm },
   squareOn: { backgroundColor: colors.accent },
   squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },

@@ -4,6 +4,11 @@
  * YouTube sont obfusquees et changent en permanence.
  */
 
+/** Construit le script final en y injectant les reglages actifs. */
+export function buildScript(base: string, settings: Record<string, boolean>): string {
+  return `window.__NR = ${JSON.stringify(settings)};\n` + base;
+}
+
 const COMMON = `
   let __q = false;
   const __schedule = (fn) => {
@@ -22,6 +27,13 @@ const COMMON = `
     __schedule(fn);
   };
   const __hide = (el) => el && el.style.setProperty('display', 'none', 'important');
+  const __on = (k) => !!(window.__NR && window.__NR[k]);
+
+  // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
+  const __gray = () => {
+    const v = __on('grayscale') ? 'grayscale(1)' : '';
+    document.documentElement.style.setProperty('filter', v, 'important');
+  };
 `;
 
 export const INSTAGRAM_BLOCKER = `
@@ -66,9 +78,19 @@ export const YOUTUBE_BLOCKER = `
   (document.head || document.documentElement).appendChild(style);
 
   __watch(() => {
+    __gray();
     document.querySelectorAll('a[href^="/shorts"]').forEach((a) => {
       __hide(a.closest('ytd-rich-item-renderer, ytd-video-renderer, ytm-shorts-lockup-view-model') || a);
     });
+    if (__on('comments')) {
+      document.querySelectorAll('#comments, ytm-comments-entry-point-header-renderer').forEach(__hide);
+    }
+    if (__on('recommended')) {
+      document.querySelectorAll('#related, ytm-item-section-renderer[section-identifier="related-items"]').forEach(__hide);
+    }
+    if (__on('home') && (location.pathname === '/' || location.pathname === '/feed/trending')) {
+      location.replace('/feed/subscriptions');
+    }
     if (location.pathname.startsWith('/shorts')) location.replace('/feed/subscriptions');
   });
 })();
@@ -91,6 +113,16 @@ export const TIKTOK_BLOCKER = `
   (document.head || document.documentElement).appendChild(style);
 
   __watch(() => {
+    __gray();
+    if (__on('explore')) {
+      document.querySelectorAll('[data-e2e="nav-explore"], a[href^="/explore"]').forEach(__hide);
+    }
+    if (__on('create')) {
+      document.querySelectorAll('[data-e2e="nav-upload"], a[href^="/upload"]').forEach(__hide);
+    }
+    if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
+      location.replace('/messages');
+    }
     // Le fil « Pour toi » EST le produit de TikTok : on ne garde que les abonnements.
     if (location.pathname === '/' || location.pathname.startsWith('/foryou')) {
       location.replace('/following');
@@ -124,6 +156,10 @@ export const TWITTER_BLOCKER = `
       if (/pour vous|for you/.test(txt)) t.style.setProperty('display', 'none', 'important');
     });
     if (following && following.getAttribute('aria-selected') === 'false') following.click();
+    __gray();
+    if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
+      location.replace('/messages');
+    }
     if (location.pathname.startsWith('/explore')) location.replace('/home');
   });
 })();

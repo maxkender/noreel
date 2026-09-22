@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
@@ -16,7 +17,10 @@ import { shield, stats, homeScreen } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { Card, Row, Toggle, Pill } from './parts';
-import { AppCarousel } from './AppCarousel';
+import { AppList } from './AppList';
+import { Rings } from './Rings';
+import { Referral } from './Referral';
+import { Stars } from '@/components/Stars';
 
 type Tab = 'home' | 'block' | 'account';
 
@@ -33,6 +37,7 @@ export function HomeScreen() {
   return (
     <View style={st.root}>
       <Glow />
+      <Stars />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {tab === 'home' && <HomeTab />}
         {tab === 'block' && <BlockTab />}
@@ -42,8 +47,14 @@ export function HomeScreen() {
       {/* Barre flottante en verre : elle survole le contenu, elle ne le pousse pas. */}
       <View style={st.navWrap} pointerEvents="box-none">
         <View style={st.nav}>
-          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={75} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={st.navTint} />
+          {/* Reflet haut : c'est lui qui donne l'epaisseur du verre. */}
+          <LinearGradient
+            colors={[withAlpha(colors.mist, 0.28), 'transparent']}
+            style={st.navSheen}
+            pointerEvents="none"
+          />
           {tabs.map(([key, label, Icon]) => {
             const on = tab === key;
             return (
@@ -69,48 +80,71 @@ export function HomeScreen() {
 
 /* ---------------- Accueil ---------------- */
 function HomeTab() {
-  const { d } = useT();
+  const { d, t } = useT();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
+  const [streak, setStreak] = useState(0);
   const [banner, setBanner] = useState(true);
   const [added, setAdded] = useState(false);
 
-  useEffect(() => { void stats.today().then(setToday); }, []);
+  useEffect(() => {
+    void stats.today().then(setToday);
+    void stats.streakDays().then(setStreak);
+  }, []);
 
-  // Repartition indicative tant que le suivi reel n'existe pas.
   const perApp = {
-    instagram: Math.round(today.reclaimedMinutes * 0.5),
-    tiktok: Math.round(today.reclaimedMinutes * 0.3),
+    instagram: Math.round(today.reclaimedMinutes * 0.4),
+    tiktok: Math.round(today.reclaimedMinutes * 0.25),
+    twitter: Math.round(today.reclaimedMinutes * 0.15),
     youtube: Math.round(today.reclaimedMinutes * 0.2),
   };
+  const focus = Math.round((today.reclaimedMinutes / Math.max(today.goalMinutes, 1)) * 100);
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={st.header}>
+    <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
+      <View style={st.topRow}>
         <Text variant="title">NoReel</Text>
+        <View style={st.score}>
+          <Text variant="label" color={colors.accent}>{focus}</Text>
+        </View>
       </View>
+
+      <Rings
+        items={[
+          { label: 'Récupéré', value: today.reclaimedMinutes, max: today.goalMinutes },
+          { label: 'Série', value: streak, max: 7 },
+          { label: 'Objectif', value: focus, max: 100 },
+        ]}
+      />
 
       {banner && !added && (
         <Pressable
           style={st.banner}
-          onPress={() => {
-            haptics.tap();
-            void homeScreen.add('instagram').then(() => setAdded(true));
-          }}
+          onPress={() => { haptics.tap(); void homeScreen.add('instagram').then(() => setAdded(true)); }}
         >
           <View style={st.bannerIcon} />
-          <Text variant="body" tone="secondary" style={{ flex: 1 }}>
-            {d.block.homeScreen}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text variant="body">{d.block.homeScreen}</Text>
+            <Text variant="label" tone="secondary" numberOfLines={2}>{d.block.homeScreenBody}</Text>
+          </View>
           <Pressable onPress={() => setBanner(false)} hitSlop={12}>
             <Text variant="body" tone="tertiary">✕</Text>
           </Pressable>
         </Pressable>
       )}
 
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <AppCarousel minutesByApp={perApp} />
+      <Text variant="label" tone="secondary" style={st.section}>Tes apps</Text>
+      <AppList minutes={perApp} />
+
+      <View style={st.idea}>
+        <Text variant="label" tone="secondary">Idée du jour</Text>
+        <Text variant="body" style={{ marginTop: space.xs }}>
+          {t(d.home.idea, {
+            h: formatHours(today.reclaimedMinutes),
+            n: Math.round((today.reclaimedMinutes * 238) / 275),
+          })}
+        </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -207,21 +241,23 @@ function AccountTab() {
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
       <Text variant="displayM">{d.account.title}</Text>
 
+      <Referral />
+
+      <Text variant="label" tone="secondary" style={st.section}>{d.account.profile}</Text>
       <Card>
-        <Text variant="label" tone="secondary">{d.account.profile}</Text>
         <Row title={d.account.screenTimeValue} right={<Text variant="body" tone="secondary">{formatHours(minutes)}</Text>} />
         <Row title={d.account.ageValue} right={<Text variant="body" tone="secondary">{age}</Text>} />
       </Card>
 
+      <Text variant="label" tone="secondary" style={st.section}>{d.account.data}</Text>
       <Card>
-        <Text variant="label" tone="secondary">{d.account.data}</Text>
-        <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
-          {d.account.dataBody}
-        </Text>
+        <Text variant="body" tone="secondary">{d.account.dataBody}</Text>
       </Card>
 
+      <Text variant="label" tone="secondary" style={st.section}>Assistance</Text>
       <Card>
-        <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} />
+        <Row title={d.sources.title} onPress={() => {}} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
       </Card>
     </ScrollView>
@@ -229,6 +265,16 @@ function AccountTab() {
 }
 
 const st = StyleSheet.create({
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  score: {
+    width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
+  },
+  section: { marginTop: space.lg },
+  idea: {
+    padding: space.lg, borderRadius: 18, backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+  },
   header: { paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.md },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
@@ -278,9 +324,15 @@ const st = StyleSheet.create({
   appRing: { width: 15, height: 15, borderRadius: 8, borderWidth: 2.5, borderColor: colors.accent },
   navWrap: { position: 'absolute', left: gutter, right: gutter, bottom: 28 },
   nav: {
-    flexDirection: 'row', borderRadius: 26, overflow: 'hidden', padding: 6,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
+    flexDirection: 'row', borderRadius: 28, overflow: 'hidden', padding: 6,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.3),
+    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 }, elevation: 16,
   },
-  navTint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: withAlpha(colors.mist, 0.06) },
+  navTint: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(colors.mist, 0.08),
+  },
+  navSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
   tab: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8 },
 });

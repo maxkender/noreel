@@ -227,6 +227,18 @@ export const en: Dict = {
     version: 'Version',
   },
 
+  referral: {
+    title: 'Invite 5 friends, get a year of Pro',
+    body: 'Every friend who enters your code gets you closer. At five, Pro is free for a year.',
+    yourCode: 'Your code',
+    copied: 'Copied',
+    copy: 'Copy',
+    share: 'Share',
+    progress: '{n} / 5 friends joined',
+    unlocked: 'Pro unlocked for 1 year',
+    shareText: 'I switched to NoReel: Instagram and TikTok without the reels. Use my code {code} for a free week of Pro.',
+  },
+
   sources: {
     title: 'Sources and method',
     method: 'How we calculate',

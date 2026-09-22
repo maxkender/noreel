@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Platform, Pressable, StyleSheet, View,
 } from 'react-native';
@@ -11,7 +11,9 @@ import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { CLIENTS, type ClientId } from './blockers';
+import { CLIENTS, buildScript, type ClientId } from './blockers';
+import { APP_TOGGLES, useAppsStore } from '@/store/apps';
+import { ExitBubble } from './ExitBubble';
 
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
@@ -29,6 +31,16 @@ const UA =
 export function ClientScreen({ id }: { id: ClientId }) {
   const router = useRouter();
   const client = CLIENTS[id];
+
+  // Les reglages sont injectes dans le script : les changer et rouvrir suffit.
+  const settingsMap = useAppsStore((st) => st.settings);
+  const script = useMemo(() => {
+    const active: Record<string, boolean> = {};
+    for (const t of APP_TOGGLES[id]) {
+      active[t.key] = t.locked ? true : !!settingsMap[`${id}.${t.key}`];
+    }
+    return buildScript(client.script, active);
+  }, [id, client.script, settingsMap]);
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +84,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         ref={web}
         source={{ uri: client.url }}
         userAgent={UA}
-        injectedJavaScriptBeforeContentLoaded={client.script}
+        injectedJavaScriptBeforeContentLoaded={script}
         onShouldStartLoadWithRequest={guard}
         onLoadEnd={() => setReady(true)}
         onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
@@ -90,6 +102,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
         setSupportMultipleWindows={false}
         style={styles.web}
       />
+
+      {/* Sortie de secours : elle flotte au-dessus de la WebView. */}
+      <ExitBubble onExit={() => router.back()} />
 
       {!ready && !error && (
         <View style={styles.overlay} pointerEvents="none">

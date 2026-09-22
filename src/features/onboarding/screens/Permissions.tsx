@@ -30,10 +30,10 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       secondary={unsupported || state === 'approved' ? undefined : 'Plus tard'}
       onSecondary={unsupported || state === 'approved' ? undefined : onDone}
     >
-      <Text variant="displayM">Bloquer les apps d’origine</Text>
+      <Text variant="displayM">Ferme la porte de derrière.</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-        Pour que NoReel tienne, il faut empêcher Instagram et TikTok de s’ouvrir
-        normalement. Sinon, un réflexe suffit à contourner.
+        Sans ça, un réflexe suffit : tu rouvres l’app d’origine et tout
+        recommence.
       </Text>
 
       <View style={st.card}>
