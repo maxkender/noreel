@@ -16,6 +16,7 @@ import { CLIENTS, type ClientId } from './blockers';
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
   tiktok: 'TikTok · abonnements',
+  twitter: 'X · abonnements',
   youtube: 'YouTube · sans shorts',
 };
 

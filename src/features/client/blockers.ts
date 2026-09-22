@@ -100,6 +100,36 @@ export const TIKTOK_BLOCKER = `
 true;
 `;
 
+
+export const TWITTER_BLOCKER = `
+(() => {
+  'use strict';
+  ${COMMON}
+
+  const css = \`
+    a[href="/explore"], a[href^="/i/trends"],
+    [data-testid="trend"], [aria-label="Timeline: Trending now" i] { display: none !important; }
+  \`;
+  const style = document.createElement('style');
+  style.textContent = css;
+  (document.head || document.documentElement).appendChild(style);
+
+  __watch(() => {
+    // « Pour vous » est l'onglet algorithmique : on bascule sur « Abonnements ».
+    const tabs = document.querySelectorAll('[role="tab"]');
+    let following = null;
+    tabs.forEach((t) => {
+      const txt = (t.textContent || '').trim().toLowerCase();
+      if (/abonnements|following/.test(txt)) following = t;
+      if (/pour vous|for you/.test(txt)) t.style.setProperty('display', 'none', 'important');
+    });
+    if (following && following.getAttribute('aria-selected') === 'false') following.click();
+    if (location.pathname.startsWith('/explore')) location.replace('/home');
+  });
+})();
+true;
+`;
+
 export const CLIENTS = {
   instagram: {
     url: 'https://www.instagram.com/',
@@ -112,6 +142,12 @@ export const CLIENTS = {
     host: 'tiktok.com',
     script: TIKTOK_BLOCKER,
     blocked: (p: string) => p === '/' || p.startsWith('/foryou'),
+  },
+  twitter: {
+    url: 'https://x.com/home',
+    host: 'x.com',
+    script: TWITTER_BLOCKER,
+    blocked: (p: string) => p.startsWith('/explore'),
   },
   youtube: {
     url: 'https://m.youtube.com/feed/subscriptions',

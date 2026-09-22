@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
@@ -15,9 +16,17 @@ import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import type { ClientId } from '@/features/client/blockers';
 import { Toggle } from './parts';
 
+const LOGOS = {
+  instagram: require('@/assets/apps/instagram.png'),
+  tiktok: require('@/assets/apps/tiktok.png'),
+  twitter: require('@/assets/apps/twitter.png'),
+  youtube: require('@/assets/apps/youtube.png'),
+} as const;
+
 const APPS: { id: ClientId; name: string }[] = [
   { id: 'instagram', name: 'Instagram' },
   { id: 'tiktok', name: 'TikTok' },
+  { id: 'twitter', name: 'X' },
   { id: 'youtube', name: 'YouTube' },
 ];
 
@@ -51,8 +60,7 @@ export function AppCarousel({ minutesByApp }: { minutesByApp: Record<string, num
               onPress={() => { haptics.press(); router.push(`/client/${app.id}`); }}
               style={styles.iconWrap}
             >
-              {/* TODO produit : remplacer par le PNG du logo une fois fourni. */}
-              <View style={styles.icon}><View style={styles.iconRing} /></View>
+              <Image source={LOGOS[app.id]} style={styles.icon} contentFit="contain" />
             </Pressable>
 
             <Button label={`Ouvrir ${app.name}`} onPress={() => router.push(`/client/${app.id}`)} />
@@ -117,13 +125,7 @@ const styles = StyleSheet.create({
   page: { alignItems: 'center', gap: space.sm, paddingHorizontal: space.xl },
   minutes: { textAlign: 'center' },
   iconWrap: { marginVertical: space.xl },
-  icon: {
-    width: 116, height: 116, borderRadius: 30,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
-  },
-  iconRing: { width: 46, height: 46, borderRadius: 23, borderWidth: 5, borderColor: colors.accent },
+  icon: { width: 132, height: 132 },
   scrim: { flex: 1, backgroundColor: '#000000B0', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 26, borderTopRightRadius: 26, overflow: 'hidden',
