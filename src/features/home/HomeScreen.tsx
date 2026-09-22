@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
+} from 'react-native-reanimated';
 import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
@@ -37,6 +39,12 @@ export function HomeScreen() {
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
+  // Le fondu n'existe que lorsqu'il y a quelque chose a masquer.
+  const y = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
+  const veil = useAnimatedStyle(() => ({
+    opacity: Math.min(1, Math.max(0, y.value / 36)),
+  }));
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
 
@@ -57,23 +65,31 @@ export function HomeScreen() {
         entering={FadeInDown.duration(340).springify().damping(20)}
         style={{ flex: 1 }}
       >
-        {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
-        {tab === 'block' && <BlockTab />}
-        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} onSettings={() => setSettings(true)} />}
+        {tab === 'block' && <BlockTab onScroll={onScroll} />}
+        {tab === 'account' && <AccountTab onScroll={onScroll} onSettings={() => setSettings(true)} />}
       </Animated.View>
 
-      <LinearGradient
-        colors={[colors.night, colors.night, withAlpha(colors.night, 0.9), 'transparent']}
-        locations={[0, 0.55, 0.78, 1]}
-        style={st.veil}
-        pointerEvents="none"
-      />
+      <Animated.View style={[st.veil, veil]} pointerEvents="none">
+        <LinearGradient
+          colors={[colors.night, colors.night, withAlpha(colors.night, 0.9), 'transparent']}
+          locations={[0, 0.55, 0.78, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
 
       <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
         <Header streak={streak} onProfile={() => { setTab('account'); }} />
       </SafeAreaView>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
+
+      {/* Le contenu se dissout avant d'atteindre la barre. */}
+      <LinearGradient
+        colors={['transparent', withAlpha(colors.night, 0.85), colors.night]}
+        style={st.hem}
+        pointerEvents="none"
+      />
 
       <NavBar tabs={tabs} value={tab} onChange={setTab} />
 
@@ -84,7 +100,11 @@ export function HomeScreen() {
 }
 
 /* ---------------- Accueil ---------------- */
-function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => void }) {
+type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
+
+function HomeTab({
+  streak, onScroll, onSettings,
+}: { streak: number; onScroll: Scroll; onSettings: () => void }) {
   const { d, t } = useT();
   const router = useRouter();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
@@ -102,10 +122,15 @@ function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => voi
   const focus = Math.min(100, Math.round((today.reclaimedMinutes / Math.max(goal, 1)) * 100));
 
   return (
-    <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-      <ScreenTime minutes={perApp} />
+    <Animated.ScrollView
+      contentContainerStyle={st.scroll}
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
+      {/* Les apps d'abord : c'est ce qu'on vient chercher. */}
+      <AppSlider minutes={perApp} />
 
-      {/* Bandeau de chiffres : serie et objectif, en une ligne. */}
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
         <Stat label="Récupéré" value={formatHours(today.reclaimedMinutes)} />
         <View style={st.stripLine} />
@@ -113,8 +138,6 @@ function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => voi
         <View style={st.stripLine} />
         <Stat label="Objectif" value={`${focus} %`} />
       </Glass>
-
-      <AppSlider minutes={perApp} />
 
       {/* Toujours autorisees : on rassure avant de bloquer. */}
       <Glass radius={22} intensity={45} warmEdge="none" style={st.cardRow}>
@@ -175,11 +198,13 @@ function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => voi
         </Text>
       </Glass>
 
+      <ScreenTime minutes={perApp} />
+
       <Pressable style={st.shortcut} onPress={() => { haptics.tap(); router.push('/widgets'); }}>
         <Text variant="body">Mettre les apps sur l’écran d’accueil</Text>
         <Text variant="body" tone="tertiary">›</Text>
       </Pressable>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 
@@ -193,7 +218,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /* ---------------- Blocage ---------------- */
-function BlockTab() {
+function BlockTab({ onScroll }: { onScroll: Scroll }) {
   const { d } = useT();
   const [on, setOn] = useState(true);
   const [redirect, setRedirect] = useState(false);
@@ -209,7 +234,12 @@ function BlockTab() {
   const armed = on && (!ready || auth === 'approved');
 
   return (
-    <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
+    <Animated.ScrollView
+      contentContainerStyle={st.scroll}
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
       <Text variant="displayM">{d.block.title}</Text>
 
       {/* Carte d'etat : le statut se lit d'un coup d'oeil, l'action est dessous. */}
@@ -275,12 +305,12 @@ function BlockTab() {
           }
         />
       </Card>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab({ onSettings }: { onSettings: () => void }) {
+function AccountTab({ onScroll, onSettings }: { onScroll: Scroll; onSettings: () => void }) {
   const { d } = useT();
   const router = useRouter();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
@@ -288,7 +318,12 @@ function AccountTab({ onSettings }: { onSettings: () => void }) {
   const reset = useOnboardingStore((x) => x.reset);
 
   return (
-    <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
+    <Animated.ScrollView
+      contentContainerStyle={st.scroll}
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
       <View style={st.topRow}>
         <Text variant="displayM">{d.account.title}</Text>
         <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.score} hitSlop={10}>
@@ -316,7 +351,7 @@ function AccountTab({ onSettings }: { onSettings: () => void }) {
         <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
       </Card>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 
@@ -372,5 +407,6 @@ const st = StyleSheet.create({
   // La marge haute laisse passer le contenu sous l'en-tete flottante.
   scroll: { paddingHorizontal: gutter, paddingTop: 108, paddingBottom: 130, gap: space.md },
   veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 132 },
+  hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
   headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

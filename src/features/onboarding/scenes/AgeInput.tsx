@@ -78,12 +78,10 @@ function Cell({
   // Animer borderColor faisait quitter l'app a l'arrivee sur cet ecran.
   const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 + on.value * 0.03 }] }));
   const lit = useAnimatedStyle(() => ({ opacity: on.value }));
-  const glow = useAnimatedStyle(() => ({ opacity: on.value * 0.5 }));
 
   return (
     <Pressable onPress={() => innerRef.current?.focus()}>
       <Animated.View style={[st.cell, shell]}>
-        <Animated.View style={[st.glow, glow]} pointerEvents="none" />
         <Animated.View style={[st.ring, lit]} pointerEvents="none" />
         <TextInput
           ref={innerRef}
@@ -112,11 +110,6 @@ const st = StyleSheet.create({
   ring: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     borderRadius: 18, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.7),
-  },
-  // Une lueur tres diluee au focus : la case reste vide, elle ne se remplit pas.
-  glow: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.accent, 0.07),
   },
   input: {
     width: '100%', height: '100%', textAlign: 'center',

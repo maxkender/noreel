@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { colors } from '@/theme/colors';
 import { haptics } from '@/lib/haptics';
 
 const MARK = require('@/assets/brand/mark.png');
@@ -29,20 +29,20 @@ const SHIFT = (WORD_W + GAP) / 2;
  * w et i se touchent, leurs bornes sont posees sur leurs largeurs reelles.
  */
 const LETTERS = [0.164, 0.311, 0.455, 0.626, 0.705, 0.863, 1];
-const KEY = 55;    // la lettre entre
-const HOLD = 60;   // le temps entre deux frappes
+const KEY = 62;    // la lettre entre
+const HOLD = 78;   // le temps entre deux frappes
 
 const T = {
-  hold: 220,     // noir pur
-  fade: 720,     // la marque nait
-  settle: 340,   // temps de pose
-  slide: 620,    // elle glisse a gauche
-  linger: 480,   // on laisse lire
-  out: 700,      // le contenu s'efface — long, comme demande
-  black: 640,    // puis le noir s'ouvre sur le premier ecran
+  hold: 420,     // noir pur
+  fade: 980,     // la marque nait
+  settle: 620,   // temps de pose
+  slide: 720,    // elle glisse a gauche
+  linger: 900,   // on laisse lire
+  out: 760,      // le contenu s'efface
+  black: 700,    // puis le noir s'ouvre sur le premier ecran
 };
 const T_SLIDE = T.hold + T.fade + T.settle;
-const T_WRITE = T_SLIDE + 240;
+const T_WRITE = T_SLIDE + 300;
 const WRITE = LETTERS.length * (KEY + HOLD);
 const T_OUT = T_WRITE + WRITE + T.linger;
 const T_BLACK = T_OUT + T.out;
@@ -112,11 +112,6 @@ export function Intro({ onDone }: { onDone: () => void }) {
     opacity: born.value,
     transform: [{ translateX: MARK_NUDGE }, { scale: pop.value }],
   }));
-  // Halo tres dilue derriere la marque : il donne de la profondeur au noir.
-  const halo = useAnimatedStyle(() => ({
-    opacity: born.value * 0.5 * (1 - out.value),
-    transform: [{ translateX: MARK_NUDGE }, { scale: 0.9 + pop.value * 0.5 }],
-  }));
   // Le masque s'elargit par bonds de lettre : jamais d'etirement du dessin.
   const mask = useAnimatedStyle(() => ({ width: write.value * WORD_W }));
   const bar = useAnimatedStyle(() => ({
@@ -128,7 +123,6 @@ export function Intro({ onDone }: { onDone: () => void }) {
     <Animated.View style={[styles.root, veil]} pointerEvents="none">
       <Animated.View style={[styles.stage, stage]}>
         <Animated.View style={styles.slot}>
-          <Animated.View style={[styles.halo, halo]} />
           <Animated.View style={mark}>
             <Image source={MARK} style={styles.mark} contentFit="contain" />
           </Animated.View>
@@ -157,10 +151,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   mark: { width: MARK_SIZE, height: MARK_SIZE },
-  halo: {
-    position: 'absolute', width: MARK_SIZE, height: MARK_SIZE,
-    borderRadius: MARK_SIZE / 2, backgroundColor: withAlpha(colors.accent, 0.3),
-  },
   word: { width: WORD_W, height: WORD_H, marginLeft: GAP },
   mask: { height: WORD_H, overflow: 'hidden' },
   // Largeur fixe a l'interieur du masque : c'est le masque qui bouge.

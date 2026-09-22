@@ -23,6 +23,57 @@ import { LOGOS } from '@/features/home/AppSlider';
 
 type P = { onNext: () => void };
 
+/* ---------- Le constat ---------- */
+
+/**
+ * Premier ecran apres la marque. Quatre constats qu'on avance au doigt :
+ * on ne vend rien, on demande seulement de se souvenir.
+ */
+export function Constat({ onNext }: P) {
+  const [i, setI] = useState(0);
+
+  const steps: [string, string?][] = [
+    [
+      'De combien de reels te souviens-tu, ces derniers jours ?',
+      'Arriverais-tu à en citer un seul ?',
+    ],
+    [
+      'As-tu senti ta mémoire flancher ? Ta concentration ? Ton plaisir ?',
+    ],
+    [
+      'La {dopamine} est au centre de ce qui te rend heureux.',
+      'C’est elle qui donne du goût à tout le reste.',
+    ],
+    [
+      'Ce réflexe abîme ta mémoire, à court comme à long terme.',
+      'Les dégâts peuvent durer. Mais il n’est pas trop tard.',
+    ],
+  ];
+  const last = i >= steps.length - 1;
+
+  return (
+    <Screen
+      cta="Appuie pour continuer"
+      onPress={() => (last ? onNext() : setI((n) => n + 1))}
+      tapToContinue
+      hintDelay={2600}
+      center
+      hue={i >= 2 ? 'ember' : 'deep'}
+    >
+      <Animated.View key={i} entering={FadeIn.duration(520)}>
+        <Typewriter text={steps[i][0]} variant="displayM" speed={44} style={st.center} />
+        {steps[i][1] ? (
+          <Animated.View entering={FadeIn.delay(1100).duration(520)}>
+            <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.lg }]}>
+              {steps[i][1]}
+            </Text>
+          </Animated.View>
+        ) : null}
+      </Animated.View>
+    </Screen>
+  );
+}
+
 /* ---------- Prenom ---------- */
 export function Name({ onNext }: P) {
   const name = useOnboardingStore((x) => x.firstName);

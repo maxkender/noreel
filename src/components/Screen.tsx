@@ -1,5 +1,6 @@
 import { useContext, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
@@ -53,6 +54,14 @@ export function Screen({
           {children}
         </ScrollView>
 
+        {/* Le contenu se dissout dans le noir avant d'atteindre le bouton :
+            sans ce fondu, le pied de page coupait le texte d'un trait net. */}
+        <LinearGradient
+          colors={['transparent', colors.night]}
+          style={styles.hem}
+          pointerEvents="none"
+        />
+
         {!cta ? (
           secondary && onSecondary ? (
             <View style={styles.footer}>
@@ -88,5 +97,6 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space.xl },
   centered: { flexGrow: 1, justifyContent: 'center' },
   footer: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: space.xs },
+  hem: { height: 36, marginTop: -36 },
   hint: { alignItems: 'center', paddingBottom: space.xl, paddingTop: space.md },
 });

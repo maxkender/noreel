@@ -159,10 +159,9 @@ export function S5({ onNext }: P) {
 
 /* ---------- 6 ---------- */
 export function S6({ onNext }: P) {
-  const { d, t } = useT();
+  const { d } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const target = Math.round(wakingShare(minutes) * 100);
-  const years = screenYears(minutes);
   const [lit, setLit] = useState(0);
 
   // 88 ms par case : assez lent pour qu'on voie la part grandir et que ca pese.
@@ -201,16 +200,36 @@ export function S6({ onNext }: P) {
         {lit} %
       </Text>
 
-      {done && (
-        <Animated.View entering={FadeIn.duration(900)} style={s.years}>
-          <Text variant="displayL" color={colors.danger} style={s.center}>
-            {t(d.s6.years, { y: Math.round(years) })}
-          </Text>
-          <Text variant="body" tone="secondary" style={s.center}>
-            {d.s6.bodyShort}
-          </Text>
-        </Animated.View>
-      )}
+    </Screen>
+  );
+}
+
+/**
+ * Le verdict a son propre ecran : pose sous la grille, le nombre d'annees
+ * se lisait comme une legende. Seul, il se prend en pleine figure.
+ */
+export function S6Years({ onNext }: P) {
+  const { d, t } = useT();
+  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const years = Math.round(screenYears(minutes));
+
+  return (
+    <Screen cta="Récupérer ce temps" onPress={onNext} center hue="ember">
+      <Animated.View entering={FadeIn.duration(700)} style={s.years}>
+        <Text variant="label" tone="tertiary">SUR UNE VIE DE 80 ANS</Text>
+        <Text
+          variant="hero"
+          color={colors.danger}
+          style={s.center}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {t(d.s6.years, { y: years })}
+        </Text>
+        <Text variant="lead" tone="secondary" style={s.center}>
+          {d.s6.bodyShort}
+        </Text>
+      </Animated.View>
     </Screen>
   );
 }
