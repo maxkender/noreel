@@ -29,7 +29,7 @@ export function SystemSheet({
     <Animated.View entering={FadeIn.delay(400).duration(700)} style={st.wrap}>
       {/* Cadre violet lumineux : l'oeil va la, pas ailleurs. */}
       <LinearGradient
-        colors={[colors.accent, withAlpha(colors.accentDeep, 0.75)]}
+        colors={[colors.accent, colors.accentDeep, colors.accentWarm]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={st.frame}

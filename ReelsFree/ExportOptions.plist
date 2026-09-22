@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+
+    <!-- xcodebuild envoie directement la build à App Store Connect -->
+    <key>destination</key>
+    <string>upload</string>
+
+    <key>teamID</key>
+    <string>REMPLACER_PAR_TON_TEAM_ID</string>
+
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <!-- Incrémente le numéro de build tout seul si celui-ci est déjà pris -->
+    <key>manageAppVersionAndBuildNumber</key>
+    <true/>
+
+    <key>uploadSymbols</key>
+    <true/>
+</dict>
+</plist>

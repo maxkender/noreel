@@ -44,7 +44,7 @@ export function GlassSweep({ delay = 0 }: { delay?: number }) {
     >
       <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
       <LinearGradient
-        colors={['transparent', withAlpha(colors.mist, 0.16), withAlpha(colors.accent, 0.1), 'transparent']}
+        colors={['transparent', withAlpha(colors.accent, 0.14), withAlpha(colors.accentWarm, 0.12), 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}

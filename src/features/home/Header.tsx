@@ -7,7 +7,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 
-const MARK = require('@/assets/brand/mark.png');
+const LOCKUP = require('@/assets/brand/lockup.png');
 const STREAK = require('@/assets/brand/streak.png');
 const PROFILE = require('@/assets/brand/profile.png');
 
@@ -20,7 +20,7 @@ export function Header({
 }: { streak: number; onProfile: () => void; onStreak?: () => void }) {
   return (
     <View style={st.root}>
-      <Image source={MARK} style={st.mark} contentFit="contain" />
+      <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
 
       <Pressable
         style={st.pill}
@@ -30,7 +30,7 @@ export function Header({
       >
         <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <LinearGradient
-          colors={[withAlpha(colors.mist, 0.14), withAlpha(colors.accent, 0.08)]}
+          colors={[withAlpha(colors.accent, 0.14), withAlpha(colors.accentWarm, 0.1)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -52,7 +52,8 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: gutter, paddingBottom: space.sm,
   },
-  mark: { width: 44, height: 44 },
+  // Ratio du fichier : 1024 x 389. A 26 pt de haut, le mot reste lisible.
+  lockup: { width: 106, height: 40 },
   pill: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, height: 44, borderRadius: 22, overflow: 'hidden',

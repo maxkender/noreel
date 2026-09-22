@@ -66,7 +66,7 @@ export function TimeSlider({
 
         <Animated.View style={[styles.filledWrap, filled]}>
           <LinearGradient
-            colors={[withAlpha(colors.accentDeep, 0.5), colors.accent]}
+            colors={[colors.accent, colors.accentDeep, colors.accentWarm]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}
@@ -79,7 +79,7 @@ export function TimeSlider({
         <Animated.View style={[styles.knob, knob]}>
           <BlurView intensity={75} tint="light" style={StyleSheet.absoluteFill} />
           <LinearGradient
-            colors={[withAlpha(colors.mist, 0.42), withAlpha(colors.accent, 0.3)]}
+            colors={[withAlpha(colors.mist, 0.4), withAlpha(colors.accentDeep, 0.35), withAlpha(colors.accentWarm, 0.3)]}
             start={{ x: 0.2, y: 0 }}
             end={{ x: 0.8, y: 1 }}
             style={StyleSheet.absoluteFill}

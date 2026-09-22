@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { haptics } from '@/lib/haptics';
+
+const MARK = require('@/assets/brand/mark.png');
 
 // Le noir avant tout : rien ne bouge, l'oeil se pose.
 const HOLD = 520;
@@ -51,7 +54,6 @@ export function Intro({ onDone }: { onDone: () => void }) {
     return {
       opacity: born.value,
       transform: [{ scale: grow * burst }],
-      borderWidth: 5 + pulse.value * 2 - open.value * 4.4,
     };
   });
 
@@ -60,9 +62,9 @@ export function Intro({ onDone }: { onDone: () => void }) {
     transform: [{ scale: 1 + pulse.value * 0.5 + open.value * 3 }],
   }));
 
-  // La barre traverse l'anneau en diagonale : c'est la marque UnSwipe.
+  // L'horizon passe sous la marque : un trait, rien de plus.
   const bar = useAnimatedStyle(() => ({
-    width: line.value * 150,
+    width: line.value * 190,
     opacity: line.value * (1 - open.value),
   }));
 
@@ -70,7 +72,9 @@ export function Intro({ onDone }: { onDone: () => void }) {
     <Animated.View style={[styles.root, root]} pointerEvents="none">
       <View style={styles.stage}>
         <Animated.View style={[styles.halo, halo]} />
-        <Animated.View style={[styles.ring, ring]} />
+        <Animated.View style={[styles.ring, ring]}>
+          <Image source={MARK} style={styles.mark} contentFit="contain" />
+        </Animated.View>
         <Animated.View style={[styles.bar, bar]} />
       </View>
     </Animated.View>
@@ -84,17 +88,14 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   stage: { width: '100%', alignItems: 'center', justifyContent: 'center' },
-  ring: {
-    width: 76, height: 76, borderRadius: 38,
-    borderColor: colors.mist, borderWidth: 5,
-  },
+  ring: { width: 108, height: 108, alignItems: 'center', justifyContent: 'center' },
+  mark: { width: 108, height: 108 },
   halo: {
-    position: 'absolute', width: 76, height: 76, borderRadius: 38,
+    position: 'absolute', width: 108, height: 108, borderRadius: 54,
     backgroundColor: withAlpha(colors.accent, 0.35),
   },
   bar: {
-    position: 'absolute', height: 9, borderRadius: 5,
-    backgroundColor: colors.accent,
-    transform: [{ rotate: '-45deg' }],
+    position: 'absolute', top: '50%', height: 2, borderRadius: 1,
+    marginTop: 86, backgroundColor: colors.accent,
   },
 });

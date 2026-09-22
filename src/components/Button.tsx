@@ -50,7 +50,7 @@ export function Button({
         <LinearGradient
           colors={disabled
             ? [withAlpha(colors.mist, 0.05), withAlpha(colors.mist, 0.02)]
-            : [withAlpha(colors.accent, 0.34), withAlpha(colors.accentDeep, 0.16)]}
+            : [withAlpha(colors.accent, 0.38), withAlpha(colors.accentDeep, 0.3), withAlpha(colors.accentWarm, 0.22)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}

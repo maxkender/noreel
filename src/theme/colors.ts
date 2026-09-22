@@ -1,7 +1,8 @@
 /**
- * Noir, technique, sobre. Un seul accent : le violet. Le blanc porte
- * l'action. Aucune couleur chaude — c'est ce qui donnait le cote
- * "coucher de soleil".
+ * Noir, technique, sobre. L'accent vient du logo : un iris qui va du bleu
+ * glace au lavande puis au rose. Les trois teintes sont echantillonnees
+ * directement dans la marque, pour que l'app et l'icone soient la meme
+ * chose.
  */
 export const colors = {
   night: '#08090B',        // fond, presque noir
@@ -11,14 +12,15 @@ export const colors = {
   lineStrong: '#FFFFFF24',
   mist: '#FAFAFA',         // texte principal
   sun: '#FFFFFF',          // action principale (blanc plein)
-  accent: '#A78CFF',       // violet : donnees, etats actifs
-  accentDeep: '#7C5CFF',   // violet sature : halos et degrades
-  screenGlow: '#A78CFF',   // temps perdu
+  accent: '#A8D8FC',       // bleu glace : donnees, etats actifs
+  accentDeep: '#B9C0F5',   // lavande : milieu de l'iris
+  accentWarm: '#F5CFD8',   // rose : fin de l'iris, degrades seulement
+  screenGlow: '#A8D8FC',   // temps perdu
   dawn: '#3A3F4B',         // deja vecu, neutre
   haze: '#8B92A5',
   fog: '#6B7280',
-  accentSoft: '#7C5CFF2E',   // halo haut, tres dilue
-  accentFaint: '#7C5CFF12',
+  accentSoft: '#B9C0F52E',   // halo haut, tres dilue
+  accentFaint: '#B9C0F512',
   danger: '#FF5A5F',      // le temps perdu, uniquement ici
   ground: '#000000',
 } as const;

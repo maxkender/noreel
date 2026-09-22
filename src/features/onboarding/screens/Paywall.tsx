@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Check, X } from 'lucide-react-native';
@@ -11,6 +12,8 @@ import { Glass } from '@/components/glass/Glass';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { useOnboardingStore } from '@/store/onboarding';
+
+const LOCKUP = require('@/assets/brand/lockup.png');
 
 type Trial = 'free7' | 'paid30';
 
@@ -35,6 +38,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   return (
     <Screen cta="Démarrer mon essai gratuit" onPress={onDone} secondary="Continuer sans Pro" onSecondary={onDone}>
       <View style={st.head}>
+        <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
         <View style={{ flex: 1 }} />
         <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={14}>
           <X size={22} strokeWidth={2} color={withAlpha(colors.mist, 0.5)} />
@@ -58,7 +62,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
               >
                 <LinearGradient
                   colors={last
-                    ? [colors.accent, withAlpha(colors.accentDeep, 0.5)]
+                    ? [colors.accent, colors.accentDeep, colors.accentWarm]
                     : [withAlpha(colors.mist, 0.16), withAlpha(colors.mist, 0.04)]}
                   style={StyleSheet.absoluteFill}
                 />
@@ -134,6 +138,7 @@ function Option({
 
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
+  lockup: { width: 112, height: 42 },
   center: { textAlign: 'center' },
   chart: {
     flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',

@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "ReelsFree",
+    "slug": "reelsfree",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nutria25.reelsfree",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "userInterfaceStyle": "automatic"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.nutria25.reelsfree"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "reelsfree",
+    "backgroundColor": "#ffffff",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1d4ed8"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e375ec92-42d6-4b58-8658-48c0654d2837"
+      }
+    },
+    "owner": "nutria25"
+  }
+}

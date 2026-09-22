@@ -161,7 +161,7 @@ function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => voi
           onPress={() => { haptics.press(); const v = !detox; setDetox(v); void shield.setActive(v); }}
         >
           <LinearGradient
-            colors={[withAlpha(colors.accent, 0.35), withAlpha(colors.accentDeep, 0.2)]}
+            colors={[withAlpha(colors.accent, 0.35), withAlpha(colors.accentDeep, 0.28), withAlpha(colors.accentWarm, 0.22)]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}

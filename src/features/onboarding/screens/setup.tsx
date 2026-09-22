@@ -195,7 +195,7 @@ export function RulesPick({ onNext }: P) {
               <Pressable onPress={() => { haptics.tick(); toggle(r.id); }}>
                 <Glass radius={28} intensity={55} warmEdge="none" style={[st.rule, on && st.ruleOn]}>
                   <LinearGradient
-                    colors={[withAlpha(colors.accentDeep, 0.3), 'transparent']}
+                    colors={[withAlpha(colors.accent, 0.26), withAlpha(colors.accentWarm, 0.16), 'transparent']}
                     style={StyleSheet.absoluteFill}
                   />
                   <Icon size={26} strokeWidth={1.8} color={colors.accent} />
