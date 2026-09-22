@@ -17,6 +17,7 @@ export const colors = {
   fog: '#6B7280',
   accentSoft: '#2BD9A522',   // halo haut, tres dilue
   accentFaint: '#2BD9A50D',
+  danger: '#FF5A5F',      // le temps perdu, uniquement ici
   ground: '#000000',
 } as const;
 

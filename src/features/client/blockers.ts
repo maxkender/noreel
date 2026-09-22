@@ -29,6 +29,17 @@ const COMMON = `
   const __hide = (el) => el && el.style.setProperty('display', 'none', 'important');
   const __on = (k) => !!(window.__NR && window.__NR[k]);
 
+  // Banniere de cookies : on refuse l'optionnel, jamais on n'accepte.
+  // Sans ca, la page reste bloquee derriere le dialogue.
+  const __cookies = () => {
+    const DECLINE = /refuser|decline|only allow essential|essentiels uniquement|reject/i;
+    const nodes = document.querySelectorAll('button, [role="button"], div[tabindex]');
+    for (const n of nodes) {
+      const t = (n.textContent || '').trim();
+      if (t.length < 60 && DECLINE.test(t)) { n.click(); return; }
+    }
+  };
+
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
   const __gray = () => {
     const v = __on('grayscale') ? 'grayscale(1)' : '';
@@ -79,6 +90,7 @@ export const YOUTUBE_BLOCKER = `
 
   __watch(() => {
     __gray();
+    __cookies();
     document.querySelectorAll('a[href^="/shorts"]').forEach((a) => {
       __hide(a.closest('ytd-rich-item-renderer, ytd-video-renderer, ytm-shorts-lockup-view-model') || a);
     });
@@ -114,6 +126,7 @@ export const TIKTOK_BLOCKER = `
 
   __watch(() => {
     __gray();
+    __cookies();
     if (__on('explore')) {
       document.querySelectorAll('[data-e2e="nav-explore"], a[href^="/explore"]').forEach(__hide);
     }
@@ -157,6 +170,7 @@ export const TWITTER_BLOCKER = `
     });
     if (following && following.getAttribute('aria-selected') === 'false') following.click();
     __gray();
+    __cookies();
     if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
       location.replace('/messages');
     }

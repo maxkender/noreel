@@ -5,7 +5,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
+import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
@@ -20,6 +20,8 @@ import { Card, Row, Toggle, Pill } from './parts';
 import { AppList } from './AppList';
 import { Rings } from './Rings';
 import { Referral } from './Referral';
+import { Settings } from './Settings';
+import { useSettings } from '@/store/settings';
 import { Stars } from '@/components/Stars';
 
 type Tab = 'home' | 'block' | 'account';
@@ -27,6 +29,7 @@ type Tab = 'home' | 'block' | 'account';
 export function HomeScreen() {
   const { d } = useT();
   const [tab, setTab] = useState<Tab>('home');
+  const [settings, setSettings] = useState(false);
 
   const tabs: [Tab, string, typeof HomeIcon][] = [
     ['home', d.nav.home, HomeIcon],
@@ -39,10 +42,19 @@ export function HomeScreen() {
       <Glow />
       <Stars />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {tab === 'home' && <HomeTab />}
-        {tab === 'block' && <BlockTab />}
-        {tab === 'account' && <AccountTab />}
+        {/* Fondu entre onglets : le changement de page ne saute plus. */}
+        <Animated.View
+          key={tab}
+          entering={FadeIn.duration(260)}
+          style={{ flex: 1 }}
+        >
+          {tab === 'home' && <HomeTab onSettings={() => setSettings(true)} />}
+          {tab === 'block' && <BlockTab />}
+          {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+        </Animated.View>
       </SafeAreaView>
+
+      <Settings visible={settings} onClose={() => setSettings(false)} />
 
       {/* Barre flottante en verre : elle survole le contenu, elle ne le pousse pas. */}
       <View style={st.navWrap} pointerEvents="box-none">
@@ -79,10 +91,11 @@ export function HomeScreen() {
 }
 
 /* ---------------- Accueil ---------------- */
-function HomeTab() {
+function HomeTab({ onSettings }: { onSettings: () => void }) {
   const { d, t } = useT();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
   const [streak, setStreak] = useState(0);
+  const goal = useSettings((x) => x.goalMinutes);
   const [banner, setBanner] = useState(true);
   const [added, setAdded] = useState(false);
 
@@ -97,20 +110,20 @@ function HomeTab() {
     twitter: Math.round(today.reclaimedMinutes * 0.15),
     youtube: Math.round(today.reclaimedMinutes * 0.2),
   };
-  const focus = Math.round((today.reclaimedMinutes / Math.max(today.goalMinutes, 1)) * 100);
+  const focus = Math.round((today.reclaimedMinutes / Math.max(goal, 1)) * 100);
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
       <View style={st.topRow}>
         <Text variant="title">NoReel</Text>
-        <View style={st.score}>
-          <Text variant="label" color={colors.accent}>{focus}</Text>
-        </View>
+        <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.score} hitSlop={10}>
+          <SettingsIcon size={18} strokeWidth={1.8} color={colors.accent} />
+        </Pressable>
       </View>
 
       <Rings
         items={[
-          { label: 'Récupéré', value: today.reclaimedMinutes, max: today.goalMinutes },
+          { label: 'Récupéré', value: today.reclaimedMinutes, max: goal },
           { label: 'Série', value: streak, max: 7 },
           { label: 'Objectif', value: focus, max: 100 },
         ]}
@@ -230,7 +243,7 @@ function BlockTab() {
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab() {
+function AccountTab({ onSettings }: { onSettings: () => void }) {
   const { d } = useT();
   const router = useRouter();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
@@ -239,7 +252,12 @@ function AccountTab() {
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-      <Text variant="displayM">{d.account.title}</Text>
+      <View style={st.topRow}>
+        <Text variant="displayM">{d.account.title}</Text>
+        <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.score} hitSlop={10}>
+          <SettingsIcon size={18} strokeWidth={1.8} color={colors.accent} />
+        </Pressable>
+      </View>
 
       <Referral />
 

@@ -158,6 +158,8 @@ export const en: Dict = {
   },
 
   brain: {
+    intro: 'Tap to see what doomscrolling does to your {brain}.',
+    introSub: 'Based on recent scientific research.',
     title: 'Here’s what doomscrolling does to your {brain}.',
     step1: 'Dopamine spikes, over and over',
     step1b: 'Every short video fires a reward. Hundreds a day.',

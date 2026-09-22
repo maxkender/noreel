@@ -124,10 +124,10 @@ const st = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
   },
   main: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md,
-    padding: space.md,
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.lg,
+    paddingVertical: space.md, paddingHorizontal: space.lg,
   },
-  logo: { width: 46, height: 46 },
+  logo: { width: 72, height: 72 },
   gear: {
     width: 46, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch',
     borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.line,
@@ -140,7 +140,7 @@ const st = StyleSheet.create({
   sheetTint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0B0D11F0' },
   grip: { width: 38, height: 4, borderRadius: 2, backgroundColor: colors.lineStrong, alignSelf: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.lg },
-  headLogo: { width: 34, height: 34 },
+  headLogo: { width: 44, height: 44 },
   done: {
     width: 44, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.accent,

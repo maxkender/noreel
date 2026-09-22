@@ -179,24 +179,28 @@ export function S6({ onNext }: P) {
   const years = screenYears(minutes);
   const [lit, setLit] = useState(0);
 
+  // 70 ms par case : assez lent pour qu'on voie la part grandir et que ca pese.
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       setLit(i);
+      if (i % 10 === 0) haptics.tick();
       if (i >= target) clearInterval(id);
-    }, 24);
+    }, 70);
     return () => clearInterval(id);
   }, [target]);
 
+  const done = lit >= target;
+
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext} center>
+    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done}>
       <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
       <View style={s.hundredWrap}>
         <View style={s.hundred}>
           {Array.from({ length: 100 }, (_, i) => (
-            <View key={i} style={[s.square, i < lit ? s.squareOn : s.squareOff]} />
+            <Cell key={i} on={i < lit} index={i} />
           ))}
         </View>
       </View>
@@ -204,10 +208,27 @@ export function S6({ onNext }: P) {
       <Text variant="hero" style={[s.center, s.pct]} numberOfLines={1} adjustsFontSizeToFit>
         {lit} %
       </Text>
-      <Text variant="body" tone="secondary" style={s.center}>
-        {t(d.s6.body, { y: Math.round(years) })}
-      </Text>
+
+      {done && (
+        <Animated.View entering={FadeIn.duration(900)}>
+          <Text variant="body" tone="secondary" style={s.center}>
+            {t(d.s6.body, { y: Math.round(years) })}
+          </Text>
+        </Animated.View>
+      )}
     </Screen>
+  );
+}
+
+/** Chaque case s'allume en fondu : le remplissage devient une vague, pas un saut. */
+function Cell({ on, index }: { on: boolean; index: number }) {
+  return on ? (
+    <Animated.View
+      entering={FadeIn.duration(420)}
+      style={[s.square, { backgroundColor: colors.danger }]}
+    />
+  ) : (
+    <View key={index} style={[s.square, s.squareOff]} />
   );
 }
 
@@ -217,6 +238,7 @@ export function S7({ onNext }: P) {
   const [i, setI] = useState(0);
 
   const steps = [
+    [d.brain.intro, d.brain.introSub],
     [d.brain.step1, d.brain.step1b],
     [d.brain.step2, d.brain.step2b],
     [d.brain.step3, d.brain.step3b],
@@ -294,7 +316,6 @@ const s = StyleSheet.create({
   },
   square: { width: 20.5, height: 20.5, borderRadius: 4 },
   pct: { marginTop: 0, marginBottom: space.sm },
-  squareOn: { backgroundColor: colors.accent },
   squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },

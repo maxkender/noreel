@@ -163,6 +163,8 @@ export const fr = {
   },
 
   brain: {
+    intro: 'Appuie pour découvrir ce que le doomscrolling fait à ton {cerveau}.',
+    introSub: 'Sources scientifiques récentes.',
     title: 'Voici ce que le doomscrolling fait à ton {cerveau}.',
     step1: 'Dose de dopamine trop élevée',
     step1b: 'Chaque vidéo courte déclenche une récompense. Des centaines par jour.',
