@@ -11,6 +11,7 @@ import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
 import { Poppins_600SemiBold } from '@expo-google-fonts/poppins/600SemiBold';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins/700Bold';
 import { colors } from '@/theme/colors';
+import { useProStore } from '@/store/pro';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
@@ -23,6 +24,9 @@ export default function RootLayout() {
     SansSemi: Poppins_600SemiBold,
     SansBold: Poppins_700Bold,
   });
+
+  // RevenueCat se configure au demarrage, une seule fois.
+  useEffect(() => { void useProStore.getState().start(); }, []);
 
   useEffect(() => {
     // On masque le splash aussi en cas d'échec : mieux vaut du texte système

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,9 @@ import { SelectCard } from '@/components/SelectCard';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { useOnboardingStore } from '@/store/onboarding';
+import { useProStore } from '@/store/pro';
+import { PURCHASES_ENABLED, buy, currentOffering } from '@/services/purchases';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
 
@@ -26,6 +29,33 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const [trial, setTrial] = useState<Trial>('free7');
   const [more, setMore] = useState(false);
+  const [packs, setPacks] = useState<PurchasesPackage[]>([]);
+  const [busy, setBusy] = useState(false);
+  const setPro = useProStore((x) => x.setPro);
+  const restorePro = useProStore((x) => x.restore);
+
+  // Les vrais prix viennent du magasin. Sans cle, la liste reste vide et
+  // l'ecran garde ses valeurs d'exemple.
+  useEffect(() => {
+    let alive = true;
+    void currentOffering().then((o) => {
+      if (alive && o) setPacks(o.availablePackages);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const chosen = packs[trial === 'free7' ? 0 : Math.min(1, packs.length - 1)];
+
+  const go = async () => {
+    // Sans achat configure, le bouton continue vers l'app : jamais de mur.
+    if (!PURCHASES_ENABLED || !chosen) { onDone(); return; }
+    setBusy(true);
+    const r = await buy(chosen);
+    setBusy(false);
+    if (r === 'bought') { setPro(true); onDone(); return; }
+    if (r === 'cancelled') return;   // l'utilisateur a renonce : on le laisse
+    onDone();                        // un echec ne doit pas l'enfermer ici
+  };
 
   // Quatre semaines : trois telles quelles, la derniere a -30 %.
   const weeks = [
@@ -37,7 +67,14 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const top = Math.max(...weeks);
 
   return (
-    <Screen cta="Démarrer mon essai gratuit" onPress={onDone} secondary="Continuer sans Pro" onSecondary={onDone} hue="warm">
+    <Screen
+      cta={busy ? 'Un instant…' : 'Démarrer mon essai gratuit'}
+      onPress={() => { void go(); }}
+      disabled={busy}
+      secondary="Continuer sans Pro"
+      onSecondary={onDone}
+      hue="warm"
+    >
       <View style={st.head}>
         <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
         <View style={{ flex: 1 }} />
@@ -98,9 +135,14 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         </View>
       </Glass>
 
-      <Text variant="label" tone="tertiary" style={[st.center, { marginTop: space.lg }]}>
-        Gratuit pendant la bêta.
-      </Text>
+      <Pressable
+        onPress={() => { haptics.tap(); void restorePro(); }}
+        style={{ alignSelf: 'center', marginTop: space.lg, paddingVertical: space.sm }}
+      >
+        <Text variant="label" tone="tertiary">
+          {PURCHASES_ENABLED ? 'Restaurer mes achats' : 'Gratuit pendant la bêta.'}
+        </Text>
+      </Pressable>
 
       <Pressable
         onPress={() => { haptics.tap(); setMore((m) => !m); }}
