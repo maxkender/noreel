@@ -75,12 +75,43 @@ export const YOUTUBE_BLOCKER = `
 true;
 `;
 
+
+export const TIKTOK_BLOCKER = `
+(() => {
+  'use strict';
+  ${COMMON}
+
+  const css = \`
+    a[href="/foryou"], a[href^="/foryou"],
+    [data-e2e="nav-foryou"], [data-e2e="recommend-list-item-container"],
+    [aria-label="Pour toi" i], [aria-label="For You" i] { display: none !important; }
+  \`;
+  const style = document.createElement('style');
+  style.textContent = css;
+  (document.head || document.documentElement).appendChild(style);
+
+  __watch(() => {
+    // Le fil « Pour toi » EST le produit de TikTok : on ne garde que les abonnements.
+    if (location.pathname === '/' || location.pathname.startsWith('/foryou')) {
+      location.replace('/following');
+    }
+  });
+})();
+true;
+`;
+
 export const CLIENTS = {
   instagram: {
     url: 'https://www.instagram.com/',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
     blocked: (p: string) => /^\/reels?(\/|$)/.test(p),
+  },
+  tiktok: {
+    url: 'https://www.tiktok.com/following',
+    host: 'tiktok.com',
+    script: TIKTOK_BLOCKER,
+    blocked: (p: string) => p === '/' || p.startsWith('/foryou'),
   },
   youtube: {
     url: 'https://m.youtube.com/feed/subscriptions',

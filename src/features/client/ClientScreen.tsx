@@ -13,6 +13,12 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, type ClientId } from './blockers';
 
+const LABELS: Record<ClientId, string> = {
+  instagram: 'Instagram · sans reels',
+  tiktok: 'TikTok · abonnements',
+  youtube: 'YouTube · sans shorts',
+};
+
 // Sans un UA de vrai Safari mobile, les deux sites servent une page degradee
 // avec un bandeau « ouvrir dans l'app » permanent.
 const UA =
@@ -52,7 +58,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
           <X size={20} strokeWidth={2} color={colors.mist} />
         </Pressable>
         <Text variant="label" tone="secondary" style={styles.host}>
-          {id === 'instagram' ? 'Instagram' : 'YouTube'} · sans reels
+          {LABELS[id]}
         </Text>
       </SafeAreaView>
 

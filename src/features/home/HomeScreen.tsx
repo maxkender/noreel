@@ -106,7 +106,8 @@ function HomeTab() {
 
       <View style={st.apps}>
         {([['instagram', 'Instagram', d.home.instaSub],
-           ['youtube', 'YouTube', d.home.tiktokSub]] as const).map(([app, name, sub]) => (
+           ['tiktok', 'TikTok', d.home.tiktokSub],
+           ['youtube', 'YouTube', d.home.youtubeSub]] as const).map(([app, name, sub]) => (
           <Pressable
             key={app}
             style={st.app}
@@ -114,7 +115,7 @@ function HomeTab() {
           >
             <View style={st.appIcon}><View style={st.appRing} /></View>
             <Text variant="body">{name}</Text>
-            <Text variant="label" tone="secondary">{sub}</Text>
+            <Text variant="label" tone="secondary" numberOfLines={2}>{sub}</Text>
           </Pressable>
         ))}
       </View>
@@ -136,18 +137,29 @@ function BlockTab() {
   }, []);
 
   const ready = FAMILY_CONTROLS_ENABLED && auth !== 'unsupported';
+  const armed = on && (!ready || auth === 'approved');
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
       <Text variant="displayM">{d.block.title}</Text>
 
-      <Card>
-        <Row
-          title={d.block.shield}
-          body={on ? d.block.shieldOn : d.block.shieldOff}
-          right={<Toggle on={on} onChange={(v) => { setOn(v); void shield.setActive(v); }} />}
-        />
-      </Card>
+      {/* Carte d'etat : le statut se lit d'un coup d'oeil, l'action est dessous. */}
+      <View style={[st.status, armed ? st.statusOn : st.statusOff]}>
+        <View style={[st.statusRing, armed && st.statusRingOn]}>
+          <Shield size={26} strokeWidth={1.8} color={armed ? colors.accent : withAlpha(colors.mist, 0.5)} />
+        </View>
+        <Text variant="title" style={{ textAlign: 'center' }}>
+          {armed ? d.block.shieldOn : d.block.shieldOff}
+        </Text>
+        <Pressable
+          onPress={() => { haptics.press(); const v = !on; setOn(v); void shield.setActive(v); }}
+          style={[st.statusBtn, armed && st.statusBtnOn]}
+        >
+          <Text variant="button" color={armed ? colors.night : colors.mist}>
+            {armed ? d.block.pause : d.block.activate}
+          </Text>
+        </Pressable>
+      </View>
 
       <Card>
         <Row
@@ -157,11 +169,21 @@ function BlockTab() {
             ready
               ? <Pill
                   label={auth === 'approved' ? '✓' : d.block.authorize}
-                  onPress={auth === 'approved' ? undefined : () => { void requestAuthorization().then(setAuth); }}
                   muted={auth === 'approved'}
+                  onPress={auth === 'approved' ? undefined : () => { void requestAuthorization().then(setAuth); }}
                 />
               : <Pill label={d.block.screenTimeSoon} muted />
           }
+        />
+      </Card>
+
+      <Card>
+        <Row
+          title={d.block.redirect}
+          body={d.block.redirectBody}
+          right={ready
+            ? <Toggle on={redirect} onChange={setRedirect} />
+            : <Pill label={d.block.screenTimeSoon} muted />}
         />
       </Card>
 
@@ -173,19 +195,9 @@ function BlockTab() {
             <Pill
               label={added ? '✓' : d.block.add}
               muted={added}
-              onPress={added ? undefined : () => {
-                void homeScreen.add('instagram').then(() => setAdded(true));
-              }}
+              onPress={added ? undefined : () => { void homeScreen.add('instagram').then(() => setAdded(true)); }}
             />
           }
-        />
-      </Card>
-
-      <Card>
-        <Row
-          title={d.block.redirect}
-          body={d.block.redirectBody}
-          right={<Toggle on={redirect} onChange={setRedirect} />}
         />
       </Card>
     </ScrollView>
@@ -226,6 +238,24 @@ function AccountTab() {
 }
 
 const st = StyleSheet.create({
+  status: {
+    alignItems: 'center', gap: space.md, padding: space.xl, borderRadius: 22,
+    borderWidth: 1,
+  },
+  statusOn: { borderColor: withAlpha(colors.accent, 0.5), backgroundColor: withAlpha(colors.accent, 0.07) },
+  statusOff: { borderColor: colors.lineStrong, backgroundColor: colors.surface },
+  statusRing: {
+    width: 62, height: 62, borderRadius: 31, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: colors.lineStrong,
+  },
+  statusRingOn: { borderColor: withAlpha(colors.accent, 0.6) },
+  statusBtn: {
+    alignSelf: 'stretch', height: 48, borderRadius: 24,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+  },
+  statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   root: { flex: 1, backgroundColor: colors.night },
   scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 120, gap: space.md },
   hero: { gap: 2 },
