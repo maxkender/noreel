@@ -46,11 +46,27 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Sortie unique. `router.back()` seul ne fait RIEN quand la pile n'a pas
+   * d'ecran precedent — au retour d'arriere-plan ou sur un lien profond,
+   * par exemple. C'est la que la croix semblait morte.
+   */
+  const exit = useCallback(() => {
+    haptics.tap();
+    if (router.canGoBack()) router.back();
+    else router.replace('/home');
+  }, [router]);
+
   const guard = useCallback((req: { url: string }) => {
     try {
       const { hostname, pathname } = new URL(req.url);
       if (hostname.endsWith(client.host) && client.blocked(pathname)) {
-        web.current?.injectJavaScript("history.back(); true;");
+        // On renvoie vers la page saine plutot que `history.back()` : sans
+        // historique, revenir en arriere ne menait nulle part et laissait
+        // un ecran blanc dont on ne pouvait plus sortir.
+        web.current?.injectJavaScript(
+          `location.replace(${JSON.stringify(client.url)}); true;`
+        );
         return false;
       }
     } catch {
@@ -66,13 +82,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
             et ne recevait plus les touches sur iOS. */}
         <View style={styles.barRow}>
           <Pressable
-            onPress={() => { haptics.tap(); router.back(); }}
-            hitSlop={16}
+            onPress={exit}
+            hitSlop={20}
             style={styles.close}
             accessibilityRole="button"
-            accessibilityLabel="Fermer"
+            accessibilityLabel="Quitter"
           >
-            <X size={20} strokeWidth={2} color={colors.mist} />
+            <X size={19} strokeWidth={2.4} color={colors.mist} />
+            <Text variant="label">Quitter</Text>
           </Pressable>
           <Text variant="label" tone="secondary" style={styles.host}>
             {LABELS[id]}
@@ -105,7 +122,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
       />
 
       {/* Sortie de secours : elle flotte au-dessus de la WebView. */}
-      <ExitBubble onExit={() => router.back()} />
+      <ExitBubble onExit={exit} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
@@ -137,12 +154,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg, paddingVertical: space.md,
   },
   close: {
-    width: 38, height: 38, borderRadius: 19,
-    alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    height: 38, borderRadius: 19, paddingHorizontal: 14,
+    justifyContent: 'center',
     backgroundColor: colors.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },
-  closeSpacer: { width: 38 },
+  closeSpacer: { width: 92 },
   host: { flex: 1, textAlign: 'center' },
   web: { flex: 1, backgroundColor: colors.night },
   overlay: {

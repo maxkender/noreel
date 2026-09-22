@@ -71,6 +71,24 @@ const COMMON = `
   const __cookies = () => { if (__tries < 40) { __tries += 1; __clickDecline(); } };
   setInterval(__cookies, 300);
 
+  // On ne redirige JAMAIS pendant un parcours de connexion : le faire
+  // casse le formulaire, et l'utilisateur ne reste jamais connecte.
+  // Classes [/] plutot que des slashs echappes : dans un litteral de
+  // gabarit, \/ devient / et cassait la regex a l'execution.
+  const AUTH = /(accounts[/](login|signup|emailsignup|password|onetap)|challenge|checkpoint|oauth|[/]login|[/]signup|[/]register|two[-_]step|i[/]flow)/i;
+  const __auth = () => AUTH.test(location.pathname + location.search);
+
+  // Une meme redirection n'est tentee qu'une fois par page : sans ce
+  // garde-fou, une page qui renvoie vers elle-meme boucle sans fin et
+  // l'app parait figee — plus moyen d'en sortir.
+  const __went = {};
+  const __go = (to) => {
+    const from = location.pathname;
+    if (__auth() || from === to || __went[from] === to) return;
+    __went[from] = to;
+    location.replace(to);
+  };
+
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
   const __gray = () => {
     const v = __on('grayscale') ? 'grayscale(1)' : '';
@@ -131,11 +149,11 @@ export const INSTAGRAM_BLOCKER = `
     if (__on('feed')) document.querySelectorAll('main article').forEach(__hide);
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
-      location.replace('/direct/inbox/');
+      __go('/direct/inbox/');
       return;
     }
-    if (/^\\/reels?(\\/|$)/.test(location.pathname)) location.replace('/');
-    if (location.pathname.startsWith('/explore')) location.replace('/');
+    if (/^\\/reels?(\\/|$)/.test(location.pathname)) __go('/');
+    if (location.pathname.startsWith('/explore')) __go('/');
   });
 })();
 true;
@@ -170,9 +188,9 @@ export const YOUTUBE_BLOCKER = `
       document.querySelectorAll('#related, ytm-item-section-renderer[section-identifier="related-items"]').forEach(__hide);
     }
     if (__on('home') && (location.pathname === '/' || location.pathname === '/feed/trending')) {
-      location.replace('/feed/subscriptions');
+      __go('/feed/subscriptions');
     }
-    if (location.pathname.startsWith('/shorts')) location.replace('/feed/subscriptions');
+    if (location.pathname.startsWith('/shorts')) __go('/feed/subscriptions');
   });
 })();
 true;
@@ -203,11 +221,11 @@ export const TIKTOK_BLOCKER = `
       document.querySelectorAll('[data-e2e="nav-upload"], a[href^="/upload"]').forEach(__hide);
     }
     if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
-      location.replace('/messages');
+      __go('/messages');
     }
     // Le fil « Pour toi » EST le produit de TikTok : on ne garde que les abonnements.
     if (location.pathname === '/' || location.pathname.startsWith('/foryou')) {
-      location.replace('/following');
+      __go('/following');
     }
   });
 })();
@@ -241,9 +259,9 @@ export const TWITTER_BLOCKER = `
     __gray();
     __cookies();
     if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
-      location.replace('/messages');
+      __go('/messages');
     }
-    if (location.pathname.startsWith('/explore')) location.replace('/home');
+    if (location.pathname.startsWith('/explore')) __go('/home');
   });
 })();
 true;
