@@ -19,8 +19,9 @@ const KEY = Platform.select({
   android: process.env.EXPO_PUBLIC_RC_ANDROID_KEY,
 });
 
-/** Le droit d'acces qu'un achat debloque, cote RevenueCat. */
-export const ENTITLEMENT = 'pro';
+/** Le droit d'acces qu'un achat debloque, tel qu'il est nomme au tableau
+ *  de bord. Le changer ici sans le changer la-bas coupe tous les abonnes. */
+export const ENTITLEMENT = 'unswap_pro';
 
 export const PURCHASES_ENABLED = !!KEY;
 

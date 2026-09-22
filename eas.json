@@ -17,7 +17,8 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_FAMILY_CONTROLS": "1"
+        "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
+        "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF"
       },
       "channel": "production"
     },
@@ -28,7 +29,8 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_FAMILY_CONTROLS": "1"
+        "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
+        "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF"
       }
     }
   },

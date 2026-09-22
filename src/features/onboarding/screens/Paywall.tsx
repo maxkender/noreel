@@ -5,10 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
-import { radii, space } from '@/theme/spacing';
+import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Glass } from '@/components/glass/Glass';
 import { SelectCard } from '@/components/SelectCard';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
@@ -19,7 +18,12 @@ import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
 
-type Trial = 'free7' | 'paid30';
+type Plan = 'annual' | 'monthly';
+
+// Prix de reference, affiches tant que le magasin n'a pas repondu.
+// Ils doivent coller a ceux d'App Store Connect, sinon l'ecran ment
+// pendant la seconde de chargement.
+const FALLBACK = { annual: '39,99 €', monthly: '8,99 €' };
 
 /**
  * UI seule — aucun achat n'est branche. La croix et le lien du bas mènent
@@ -27,8 +31,7 @@ type Trial = 'free7' | 'paid30';
  */
 export function Paywall({ onDone }: { onDone: () => void }) {
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
-  const [trial, setTrial] = useState<Trial>('free7');
-  const [more, setMore] = useState(false);
+  const [plan, setPlan] = useState<Plan>('annual');
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
   const setPro = useProStore((x) => x.setPro);
@@ -44,7 +47,12 @@ export function Paywall({ onDone }: { onDone: () => void }) {
     return () => { alive = false; };
   }, []);
 
-  const chosen = packs[trial === 'free7' ? 0 : Math.min(1, packs.length - 1)];
+  // On vise le forfait par son identifiant, jamais par sa position :
+  // l'ordre se change au tableau de bord sans prevenir.
+  const find = (k: string) => packs.find((x) => x.identifier === k);
+  const annual = find('$rc_annual');
+  const monthly = find('$rc_monthly');
+  const chosen = plan === 'annual' ? annual : monthly;
 
   const go = async () => {
     // Sans achat configure, le bouton continue vers l'app : jamais de mur.
@@ -68,7 +76,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
   return (
     <Screen
-      cta={busy ? 'Un instant…' : 'Démarrer mon essai gratuit'}
+      cta={busy ? 'Un instant…' : 'Passer en Pro'}
       onPress={() => { void go(); }}
       disabled={busy}
       secondary="Continuer sans Pro"
@@ -110,30 +118,20 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         })}
       </View>
 
-      <Glass radius={radii.tile} intensity={55} warmEdge="none" style={st.plan}>
-        <View style={st.planTop}>
-          <View style={{ flex: 1 }}>
-            <Text variant="title">Annuel</Text>
-            <Text variant="label" tone="tertiary">0,27 €/jour · annule quand tu veux</Text>
-          </View>
-          <Text variant="title">99,99 €</Text>
-        </View>
-
-        <View style={st.options}>
-          <SelectCard
-            label="Gratuit pendant 7 jours"
-            sub="Pas de paiement aujourd’hui"
-            selected={trial === 'free7'}
-            onPress={() => setTrial('free7')}
-          />
-          <SelectCard
-            label="4,99 € pendant 30 jours"
-            sub="Prolonger ton essai"
-            selected={trial === 'paid30'}
-            onPress={() => setTrial('paid30')}
-          />
-        </View>
-      </Glass>
+      <View style={st.options}>
+        <SelectCard
+          label={`Annuel · ${annual?.product.priceString ?? FALLBACK.annual}`}
+          sub="0,11 €/jour — deux tiers d’économie"
+          selected={plan === 'annual'}
+          onPress={() => setPlan('annual')}
+        />
+        <SelectCard
+          label={`Mensuel · ${monthly?.product.priceString ?? FALLBACK.monthly}`}
+          sub="Sans engagement, annule quand tu veux"
+          selected={plan === 'monthly'}
+          onPress={() => setPlan('monthly')}
+        />
+      </View>
 
       <Pressable
         onPress={() => { haptics.tap(); void restorePro(); }}
@@ -145,18 +143,13 @@ export function Paywall({ onDone }: { onDone: () => void }) {
       </Pressable>
 
       <Pressable
-        onPress={() => { haptics.tap(); setMore((m) => !m); }}
-        style={st.more}
+        onPress={() => { haptics.tap(); void restorePro(); }}
+        style={{ alignSelf: 'center', marginTop: space.lg, paddingVertical: space.sm }}
       >
-        <Text variant="label" tone="secondary">Autres forfaits {more ? '⌃' : '⌄'}</Text>
+        <Text variant="label" tone="tertiary">
+          {PURCHASES_ENABLED ? 'Restaurer mes achats' : 'Gratuit pendant la bêta.'}
+        </Text>
       </Pressable>
-
-      {more && (
-        <Animated.View entering={FadeInUp.duration(300)} style={st.others}>
-          <Text variant="body" tone="secondary">Mensuel · 12,99 €/mois</Text>
-          <Text variant="body" tone="secondary">À vie · 199,99 €, une fois</Text>
-        </Animated.View>
-      )}
 
     </Screen>
   );
@@ -172,13 +165,5 @@ const st = StyleSheet.create({
   },
   col: { flex: 1, alignItems: 'center', gap: 6 },
   bar: { width: '100%', borderRadius: 12, overflow: 'hidden' },
-  plan: { padding: space.lg, marginTop: space.lg },
-  planTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  options: { marginTop: space.lg, gap: space.sm },
-  more: {
-    alignSelf: 'center', marginTop: space.lg,
-    paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.16),
-  },
-  others: { marginTop: space.md, gap: space.xs, alignItems: 'center' },
+  options: { marginTop: space.xl, gap: space.md },
 });
