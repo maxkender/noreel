@@ -3,16 +3,17 @@ import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
+  Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming,
 } from 'react-native-reanimated';
 import type { LucideIcon } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
-import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
 
 const PAD = 6;
+// Sortie douce, sans depassement : rien ne rebondit.
+const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 const AIcon = Animated.createAnimatedComponent(View);
 
 /**
@@ -36,11 +37,12 @@ export function NavBar<T extends string>({
   const pop = useSharedValue(0);
 
   useEffect(() => {
-    x.value = withSpring(index * cell, springs.gentle);
-    // La pastille gonfle puis se repose : le changement de page se voit.
+    // Courbes, pas ressorts : un ressort depasse sa cible puis revient, et
+    // c'est ce rebond qu'on voyait a chaque changement d'onglet.
+    x.value = withTiming(index * cell, { duration: 260, easing: EASE });
     pop.value = withSequence(
-      withTiming(1, { duration: 160, easing: Easing.out(Easing.quad) }),
-      withSpring(0, springs.bouncy)
+      withTiming(1, { duration: 130, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 220, easing: Easing.inOut(Easing.quad) })
     );
   }, [index, cell, x, pop]);
 
@@ -106,7 +108,9 @@ function Tab({
   const press = useSharedValue(0);
   const on = useSharedValue(active ? 1 : 0);
 
-  useEffect(() => { on.value = withSpring(active ? 1 : 0, springs.snappy); }, [active, on]);
+  useEffect(() => {
+    on.value = withTiming(active ? 1 : 0, { duration: 200, easing: EASE });
+  }, [active, on]);
 
   const anim = useAnimatedStyle(() => ({
     transform: [{ scale: (1 - press.value * 0.12) * (1 + on.value * 0.08) }],
@@ -117,7 +121,7 @@ function Tab({
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       onPressIn={() => { press.value = withTiming(1, { duration: 90 }); }}
-      onPressOut={() => { press.value = withSpring(0, springs.snappy); }}
+      onPressOut={() => { press.value = withTiming(0, { duration: 160, easing: EASE }); }}
       onPress={onPress}
       style={st.tab}
     >

@@ -22,6 +22,8 @@ export function Header({
     <View style={st.root}>
       <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
 
+      <View style={{ flex: 1 }} />
+
       <Pressable
         style={st.pill}
         onPress={() => { haptics.tap(); onStreak?.(); }}
@@ -36,8 +38,7 @@ export function Header({
           style={StyleSheet.absoluteFill}
         />
         <Image source={STREAK} style={st.flame} contentFit="contain" />
-        <Text variant="title">{streak}</Text>
-        <Text variant="label" tone="secondary">jours</Text>
+        <Text variant="label">{streak}</Text>
       </Pressable>
 
       <Pressable onPress={() => { haptics.tap(); onProfile(); }} hitSlop={10}>
@@ -54,11 +55,12 @@ const st = StyleSheet.create({
   },
   // Ratio du fichier : 1024 x 389. A 26 pt de haut, le mot reste lisible.
   lockup: { width: 106, height: 40 },
+  // Compacte : la serie est une information, pas un bouton d'action.
   pill: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, height: 44, borderRadius: 22, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.2),
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 4, height: 30, paddingHorizontal: 10, borderRadius: 15, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
   },
-  flame: { width: 20, height: 20 },
+  flame: { width: 14, height: 14 },
   profile: { width: 40, height: 40 },
 });

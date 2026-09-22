@@ -9,7 +9,7 @@ import Animated, {
   FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
 } from 'react-native-reanimated';
 import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { blend, colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
@@ -33,6 +33,11 @@ import { Settings } from './Settings';
 
 const STREAK_PNG = require('@/assets/brand/streak.png');
 
+// Couleur reelle du fond en haut de l'ecran : le noir plus le halo.
+// C'est elle que le voile doit porter, sinon il se voit comme une tache
+// sombre posee sur un fond teinte.
+const TOP = blend(colors.night, colors.accent, 0.16);
+
 type Tab = 'home' | 'block' | 'account';
 
 export function HomeScreen() {
@@ -44,9 +49,9 @@ export function HomeScreen() {
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
   const veil = useAnimatedStyle(() => {
-    // Rampe adoucie : une simple division donnait un depart sec et une fin
-    // brutale. Ici l'apparition demarre doucement et se pose.
-    const t = Math.min(1, Math.max(0, y.value / 70));
+    // Rampe longue et adoucie : sur 110 pt, avec une courbe en S. En dessous
+    // l'apparition se voyait arriver d'un bloc.
+    const t = Math.min(1, Math.max(0, y.value / 110));
     return { opacity: t * t * (3 - 2 * t) };
   });
 
@@ -113,18 +118,20 @@ export function HomeScreen() {
 function MaskedFade() {
   return (
     <>
-      <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={34} tint="dark" style={StyleSheet.absoluteFill} />
       <LinearGradient
         colors={[
-          colors.night,
-          colors.night,
-          withAlpha(colors.night, 0.94),
-          withAlpha(colors.night, 0.76),
-          withAlpha(colors.night, 0.44),
-          withAlpha(colors.night, 0.14),
+          TOP,
+          TOP,
+          withAlpha(TOP, 0.95),
+          withAlpha(TOP, 0.84),
+          withAlpha(TOP, 0.64),
+          withAlpha(TOP, 0.4),
+          withAlpha(TOP, 0.18),
+          withAlpha(TOP, 0.05),
           'transparent',
         ]}
-        locations={[0, 0.4, 0.54, 0.68, 0.8, 0.91, 1]}
+        locations={[0, 0.3, 0.44, 0.56, 0.68, 0.78, 0.87, 0.94, 1]}
         style={StyleSheet.absoluteFill}
       />
     </>
@@ -438,7 +445,7 @@ const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
   // La marge haute laisse passer le contenu sous l'en-tete flottante.
   scroll: { paddingHorizontal: gutter, paddingTop: 108, paddingBottom: 130, gap: space.md },
-  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 176 },
+  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 210 },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
   headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

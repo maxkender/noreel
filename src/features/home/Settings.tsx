@@ -36,7 +36,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
-        <Animated.View entering={SlideInDown.springify().damping(26).stiffness(170)} style={st.sheet}>
+        <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
           <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 

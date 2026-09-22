@@ -33,6 +33,20 @@ export const withAlpha = (hex: string, alpha: number): string => {
   return `${hex.slice(0, 7)}${a}`;
 };
 
+/**
+ * Melange deux couleurs. Sert a reconstituer la couleur REELLE du fond a un
+ * endroit donne : le fond n'est pas le noir pur, c'est le noir plus le halo.
+ * Un voile en noir pur se voyait donc comme une tache.
+ */
+export const blend = (a: string, b: string, t: number): string => {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [r1, g1, b1] = p(a);
+  const [r2, g2, b2] = p(b);
+  const c = (x: number, y: number) =>
+    Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+  return `#${c(r1, r2)}${c(g1, g2)}${c(b1, b2)}`;
+};
+
 export const toRgb01 = (hex: string): [number, number, number] => {
   const n = parseInt(hex.slice(1, 7), 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
