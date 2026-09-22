@@ -49,8 +49,12 @@ const config: ExpoConfig = {
           'react-native-device-activity',
           {
             appGroup: 'group.com.vikstudios.noreel',
-            // Les trois extensions requises par FamilyControls.
-            shieldConfiguration: { backgroundColor: { red: 11, green: 13, blue: 31, alpha: 1 } },
+            appleTeamId: 'K792T8TQ4X',
+            // Aucune extension : la signature multi-cible d'EAS echouait en
+            // silence avec 4 cibles. Le blocage de base (choisir des apps,
+            // les bloquer) se fait depuis l'app principale seule. On perd
+            // l'ecran de blocage personnalise et le suivi programme.
+            copyToTargetFolder: false,
           },
         ] as [string, Record<string, unknown>]]
       : []),
