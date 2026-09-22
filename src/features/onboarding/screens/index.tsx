@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
@@ -42,36 +39,6 @@ export function S1({ onNext }: P) {
         </Animated.View>
       )}
     </Screen>
-  );
-}
-
-/* ---------- 2 ---------- */
-export function S2({ onNext }: P) {
-  const { d } = useT();
-  return (
-    <Screen cta={d.s2.cta} onPress={onNext} center hue="deep">
-      <Typewriter text={d.s2.title} variant="displayM" style={s.center} />
-      {true && (
-        <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
-          <Keep label={d.s2.keep1} keep />
-          <Keep label={d.s2.keep2} keep />
-          <Keep label={d.s2.remove} />
-        </Animated.View>
-      )}
-    </Screen>
-  );
-}
-
-function Keep({ label, keep }: { label: string; keep?: boolean }) {
-  return (
-    <View style={s.keepRow}>
-      <Text variant="title" color={keep ? colors.accent : withAlpha(colors.mist, 0.25)}>
-        {keep ? '✓' : '✕'}
-      </Text>
-      <Text variant="body" tone={keep ? 'primary' : 'tertiary'} style={{ flex: 1 }}>
-        {label}
-      </Text>
-    </View>
   );
 }
 
@@ -129,6 +96,8 @@ export function S5({ onNext }: P) {
   const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
   const age = useOnboardingStore((x) => x.age);
   const setAge = useOnboardingStore((x) => x.setAge);
+  // Les cases partent vides : tant qu'elles le sont, on ne peut pas avancer.
+  const [ageOk, setAgeOk] = useState(false);
 
   if (phase === 'time') {
     return (
@@ -148,10 +117,16 @@ export function S5({ onNext }: P) {
   }
 
   return (
-    <Screen cta={d.s5.ctaB} onPress={() => { track('age_set', { age }); onNext(); }} center hue="warm">
+    <Screen
+      cta={d.s5.ctaB}
+      onPress={() => { track('age_set', { age }); onNext(); }}
+      disabled={!ageOk}
+      center
+      hue="warm"
+    >
       <Typewriter text={d.s5.titleB} variant="displayM" style={s.center} />
       <View style={s.ageWrap}>
-        <AgeInput age={age} onChange={setAge} />
+        <AgeInput age={age} onChange={setAge} onReady={setAgeOk} />
       </View>
     </Screen>
   );
@@ -179,7 +154,14 @@ export function S6({ onNext }: P) {
   const done = lit >= target;
 
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done} hue="ember">
+    <Screen
+      cta={d.s6.cta2}
+      onPress={onNext}
+      center
+      disabled={!done}
+      hue="ember"
+      hueLevel={Math.min(1, lit / Math.max(1, target))}
+    >
       <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
       <View style={s.hundredWrap}>
@@ -253,12 +235,12 @@ export function S7({ onNext }: P) {
 
   // Trois symptomes, un fait qui frappe, une sortie. Pas d'ecran d'accroche
   // et pas de rappel des etapes passees : la ligne de temps du haut suffit.
-  const steps: [string, string, string?][] = [
+  const steps: [string, string?, string?][] = [
     [d.brain.step1, d.brain.step1b],
     [d.brain.step2, d.brain.step2b],
     [d.brain.step3, d.brain.step3b],
     [d.brain.love, d.brain.loveSub, d.brain.loveCite],
-    [d.brain.fix, d.brain.loveEnd],
+    [d.brain.fix],
   ];
   const last = i >= steps.length - 1;
   const harm = last ? 0 : (i + 1) / steps.length;
@@ -271,8 +253,8 @@ export function S7({ onNext }: P) {
       hintDelay={2400}
       center
       hue="ember"
+      hueLevel={harm}
     >
-      <Harm level={harm} on={last} />
 
       <Animated.View key={i} entering={FadeIn.duration(500)}>
         <Typewriter
@@ -300,26 +282,6 @@ export function S7({ onNext }: P) {
   );
 }
 
-/** Halo orange qui grandit avec les degats, et s'eteint a la sortie. */
-function Harm({ level, on }: { level: number; on: boolean }) {
-  const t = useSharedValue(0);
-  useEffect(() => {
-    t.value = withTiming(on ? 0 : level, { duration: 900, easing: Easing.out(Easing.quad) });
-  }, [level, on, t]);
-
-  const style = useAnimatedStyle(() => ({ opacity: t.value }));
-
-  return (
-    <Animated.View style={[s.harm, style]} pointerEvents="none">
-      <LinearGradient
-        colors={[withAlpha(colors.ember, 0.36), withAlpha(colors.danger, 0.1), 'transparent']}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-}
-
 const s = StyleSheet.create({
   videoSlot: {
     marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
@@ -341,7 +303,6 @@ const s = StyleSheet.create({
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
   chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
   center: { textAlign: 'center' },
-  harm: { position: 'absolute', top: -200, left: -60, right: -60, height: 460 },
   mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },

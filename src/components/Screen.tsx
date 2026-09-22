@@ -17,7 +17,7 @@ import { ProgressContext } from './ProgressContext';
  */
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
-  tapToContinue, hintDelay = 1800, hue = 'accent',
+  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -34,6 +34,8 @@ export function Screen({
   hintDelay?: number;
   /** Teinte du halo : elle change d'un ecran a l'autre. */
   hue?: Hue;
+  /** 0 a 1 : intensite du halo, pour les ecrans qui montent en tension. */
+  hueLevel?: number;
 }) {
   const bar = useContext(ProgressContext);
 
@@ -41,7 +43,7 @@ export function Screen({
 
   return (
     <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
-      <Glow hue={hue} />
+      <Glow hue={hue} level={hueLevel} />
       <Stars count={14} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {bar && <View style={styles.progress}>{bar}</View>}

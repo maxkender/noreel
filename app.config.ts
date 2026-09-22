@@ -45,7 +45,10 @@ const config: ExpoConfig = {
     'expo-localization',
     // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
     './plugins/withoutPushEntitlement',
-    ['expo-splash-screen', { backgroundColor: NIGHT, image: './assets/images/splash-icon.png', imageWidth: 180 }],
+    // Pas d'image : l'icone apparaissait une fraction de seconde avant
+    // l'animation d'ouverture, ce qui faisait un a-coup. Noir plein, et
+    // l'animation enchaine sans couture.
+    ['expo-splash-screen', { backgroundColor: NIGHT }],
     ...(FAMILY_CONTROLS
       ? [[
           'react-native-device-activity',

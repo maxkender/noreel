@@ -17,18 +17,28 @@ const MIN = 10, MAX = 99;
  * tape, c'est tout.
  */
 export function AgeInput({
-  age, onChange,
-}: { age: number; onChange: (v: number) => void }) {
-  const init = String(Math.min(MAX, Math.max(MIN, age))).padStart(2, '0');
-  const [d, setD] = useState<[string, string]>([init[0], init[1]]);
+  age, onChange, onReady,
+}: { age: number; onChange: (v: number) => void; onReady?: (ok: boolean) => void }) {
+  // Vides au depart : afficher un age par defaut, c'est repondre a la place
+  // de l'utilisateur.
+  const [d, setD] = useState<[string, string]>(['', '']);
   const [focus, setFocus] = useState(0);
+
   const second = useRef<TextInput>(null);
   const first = useRef<TextInput>(null);
 
+  // Le clavier arrive apres la transition d'ecran, pas pendant.
+  useEffect(() => {
+    const id = setTimeout(() => first.current?.focus(), 420);
+    return () => clearTimeout(id);
+  }, []);
+
   useEffect(() => {
     const n = parseInt(d[0] + d[1], 10);
-    if (!Number.isNaN(n) && n >= MIN && n <= MAX && n !== age) onChange(n);
-  }, [d, age, onChange]);
+    const ok = !Number.isNaN(n) && n >= MIN && n <= MAX;
+    onReady?.(ok);
+    if (ok && n !== age) onChange(n);
+  }, [d, age, onChange, onReady]);
 
   const set = (i: 0 | 1, raw: string) => {
     const c = raw.replace(/\D/g, '').slice(-1);

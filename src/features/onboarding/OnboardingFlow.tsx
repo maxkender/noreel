@@ -8,7 +8,7 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { S1, S2, S3, S4, S5, S6, S6Years, S7 } from './screens';
+import { S1, S3, S4, S5, S6, S6Years, S7 } from './screens';
 import {
   Constat, Distractions, Essentials, Name, NotificationsAsk, PromiseScreen,
   RulesIntro, RulesPick,
@@ -46,26 +46,38 @@ export function OnboardingFlow() {
 
   const n = (i: number) => () => go(i + 1);
 
+  /**
+   * L'ordre suit un arc, pas une liste de reglages.
+   *
+   * 1. On accroche et on se presente.  2. L'utilisateur nomme LUI-MEME son
+   * probleme : une reponse qu'on donne soi-meme pese plus qu'une affirmation
+   * qu'on subit.  3. On lui fait constater ce qu'il ne sait plus.  4. Il
+   * donne ses chiffres, et le choc qui suit est calcule sur LES SIENS — un
+   * chiffre generique ne fait rien, le sien fait mal.  5. On explique le
+   * mecanisme : l'autorite justifie le prix a venir.  6. On donne l'espoir
+   * AVANT de demander quoi que ce soit.  7. Il configure, il autorise : a
+   * chaque oui le suivant coute moins cher, et ce qu'on a construit soi-meme
+   * on y tient.  8. La promesse chiffree, a son nom, est le sommet — et le
+   * paywall tombe dessus, pas trois ecrans plus loin.  9. Les reglages fins
+   * viennent apres la decision.
+   */
   const screens = [
-    <Constat key="con" onNext={n(0)} />,
-    <S1 key="s1" onNext={n(1)} />,
-    <Name key="name" onNext={n(2)} />,
-    <S2 key="s2" onNext={n(3)} />,
-    <S3 key="s3" onNext={n(4)} />,
-    <S4 key="s4" onNext={n(5)} />,
-    <S5 key="s5" onNext={n(6)} />,
-    <S6 key="s6" onNext={n(7)} />,
-    <S6Years key="s6y" onNext={n(8)} />,
-    <S7 key="s7" onNext={n(9)} />,
-    <Distractions key="dis" onNext={n(10)} />,
-    <Essentials key="ess" onNext={n(11)} />,
-    <Permissions key="perm" onDone={n(12)} />,
-    <NotificationsAsk key="notif" onNext={n(13)} />,
-    <PromiseScreen key="pro" onNext={n(14)} />,
-    <Paywall key="pw" onDone={n(15)} />,
-    // Les regles viennent en dernier : une fois le compte pret, elles ont
-    // un sens ; avant, c'est un reglage de plus a subir.
-    <RulesIntro key="ri" onNext={n(16)} />,
+    <S1 key="s1" onNext={n(0)} />,
+    <Name key="name" onNext={n(1)} />,
+    <S3 key="s3" onNext={n(2)} />,
+    <Constat key="con" onNext={n(3)} />,
+    <S5 key="s5" onNext={n(4)} />,
+    <S6 key="s6" onNext={n(5)} />,
+    <S6Years key="s6y" onNext={n(6)} />,
+    <S7 key="s7" onNext={n(7)} />,
+    <S4 key="s4" onNext={n(8)} />,
+    <Distractions key="dis" onNext={n(9)} />,
+    <Essentials key="ess" onNext={n(10)} />,
+    <Permissions key="perm" onDone={n(11)} />,
+    <NotificationsAsk key="notif" onNext={n(12)} />,
+    <PromiseScreen key="pro" onNext={n(13)} />,
+    <Paywall key="pw" onDone={n(14)} />,
+    <RulesIntro key="ri" onNext={n(15)} />,
     <RulesPick key="rp" onNext={finish} />,
   ];
 
@@ -99,7 +111,7 @@ export function OnboardingFlow() {
   );
 }
 
-const TOTAL = 18;
+const TOTAL = 17;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
