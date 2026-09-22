@@ -41,7 +41,7 @@ function Option({
 export function S1({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.s1.cta} onPress={onNext} center>
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3200}>
       <View style={s.mark}>
         <View style={s.ring} />
         <View style={s.bar} />
@@ -124,7 +124,7 @@ export function S3({ onNext }: P) {
 export function S4({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.s4.cta} onPress={onNext} center>
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={2600}>
       <Typewriter text={d.s4.title} variant="displayM" style={s.center} />
       {/* TODO produit : enregistrement d'ecran de l'app a la place de ce cadre. */}
       <Animated.View entering={FadeIn.delay(1200).duration(600)} style={s.videoSlot}>
@@ -225,7 +225,7 @@ export function S7({ onNext }: P) {
   const head = typeDuration(d.brain.title);
 
   return (
-    <Screen cta={d.brain.cta} onPress={onNext}>
+    <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={4200}>
       <Typewriter text={d.brain.title} variant="displayM" />
 
       <View style={{ marginTop: space.xxl }}>

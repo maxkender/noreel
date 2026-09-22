@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { SlideInRight, SlideOutLeft, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
@@ -65,8 +65,8 @@ export function OnboardingFlow() {
         {/* Glissement lateral entre ecrans : on sent la progression. */}
         <Animated.View
           key={step}
-          entering={SlideInRight.springify().damping(22).stiffness(140)}
-          exiting={SlideOutLeft.duration(220)}
+          entering={FadeIn.duration(420)}
+          exiting={FadeOut.duration(200)}
           style={StyleSheet.absoluteFill}
         >
           {screens[step]}

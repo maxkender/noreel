@@ -5,6 +5,8 @@ const NBSP = ' ';
 export const fr = {
   app: { name: 'NoReel' },
 
+  tapHint: 'Touche l’écran pour continuer',
+
   chrome: {
     step: 'Étape {n} sur {total}',
     back: 'Retour',

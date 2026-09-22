@@ -3,6 +3,8 @@ import type { Dict } from './fr';
 export const en: Dict = {
   app: { name: 'NoReel' },
 
+  tapHint: 'Tap anywhere to continue',
+
   chrome: { step: 'Step {n} of {total}', back: 'Back' },
 
   s1: {

@@ -1,6 +1,7 @@
 import { useContext, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Button } from './Button';
@@ -13,7 +14,8 @@ import { ProgressContext } from './ProgressContext';
  * ancre hors du flux : rien ne peut se chevaucher ni sortir de l'ecran.
  */
 export function Screen({
-  children, cta, onPress, disabled, secondary, onSecondary, center = false, tapToContinue,
+  children, cta, onPress, disabled, secondary, onSecondary, center = false,
+  tapToContinue, hintDelay = 1800,
 }: {
   children: ReactNode;
   cta: string;
@@ -25,6 +27,8 @@ export function Screen({
   center?: boolean;
   /** Pas de bouton : tout l'ecran est tactile, avec une invite discrete. */
   tapToContinue?: boolean;
+  /** Retard avant l'invite, en ms. Laisse le temps de lire.  */
+  hintDelay?: number;
 }) {
   const bar = useContext(ProgressContext);
 
@@ -45,9 +49,13 @@ export function Screen({
         </ScrollView>
 
         {tapToContinue ? (
-          <View style={styles.hint}>
+          // L'invite n'apparait qu'apres le texte : le silence fait le suspense.
+          <Animated.View
+            entering={FadeIn.delay(hintDelay).duration(900)}
+            style={styles.hint}
+          >
             <Text variant="label" tone="tertiary">{cta}</Text>
-          </View>
+          </Animated.View>
         ) : (
           <View style={styles.footer}>
             <Button label={cta} onPress={onPress} disabled={disabled} />

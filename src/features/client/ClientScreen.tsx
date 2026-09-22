@@ -48,18 +48,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.bar} edges={['top']}>
-        <Pressable
-          onPress={() => { haptics.tap(); router.back(); }}
-          hitSlop={12}
-          style={styles.close}
-          accessibilityRole="button"
-          accessibilityLabel="Fermer"
-        >
-          <X size={20} strokeWidth={2} color={colors.mist} />
-        </Pressable>
-        <Text variant="label" tone="secondary" style={styles.host}>
-          {LABELS[id]}
-        </Text>
+        {/* Rangee en flux : un bouton en position absolue depassait du parent
+            et ne recevait plus les touches sur iOS. */}
+        <View style={styles.barRow}>
+          <Pressable
+            onPress={() => { haptics.tap(); router.back(); }}
+            hitSlop={16}
+            style={styles.close}
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+          >
+            <X size={20} strokeWidth={2} color={colors.mist} />
+          </Pressable>
+          <Text variant="label" tone="secondary" style={styles.host}>
+            {LABELS[id]}
+          </Text>
+          <View style={styles.closeSpacer} />
+        </View>
       </SafeAreaView>
 
       <WebView
@@ -107,15 +112,18 @@ export function ClientScreen({ id }: { id: ClientId }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
   bar: { backgroundColor: colors.night },
+  barRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: space.lg, paddingVertical: space.md,
+  },
   close: {
-    position: 'absolute', left: space.lg, bottom: space.sm,
-    width: 34, height: 34, borderRadius: 17,
+    width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
-    zIndex: 2,
   },
-  host: { textAlign: 'center', paddingVertical: space.md },
+  closeSpacer: { width: 38 },
+  host: { flex: 1, textAlign: 'center' },
   web: { flex: 1, backgroundColor: colors.night },
   overlay: {
     position: 'absolute', top: 60, left: 0, right: 0, bottom: 0,

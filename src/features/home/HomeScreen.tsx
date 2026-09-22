@@ -16,6 +16,7 @@ import { shield, stats, homeScreen } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { Card, Row, Toggle, Pill } from './parts';
+import { AppCarousel } from './AppCarousel';
 
 type Tab = 'home' | 'block' | 'account';
 
@@ -68,58 +69,48 @@ export function HomeScreen() {
 
 /* ---------------- Accueil ---------------- */
 function HomeTab() {
-  const { d, t } = useT();
-  const router = useRouter();
+  const { d } = useT();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
-  const [week, setWeek] = useState<number[]>([]);
+  const [banner, setBanner] = useState(true);
+  const [added, setAdded] = useState(false);
 
-  useEffect(() => {
-    void stats.today().then(setToday);
-    void stats.week().then(setWeek);
-  }, []);
+  useEffect(() => { void stats.today().then(setToday); }, []);
 
-  const hour = new Date().getHours();
-  const date = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' })
-    .format(new Date());
+  // Repartition indicative tant que le suivi reel n'existe pas.
+  const perApp = {
+    instagram: Math.round(today.reclaimedMinutes * 0.5),
+    tiktok: Math.round(today.reclaimedMinutes * 0.3),
+    youtube: Math.round(today.reclaimedMinutes * 0.2),
+  };
 
   return (
-    <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-      <Animated.View entering={FadeIn.duration(300)}>
-        <Text variant="displayM">{hour >= 5 && hour < 18 ? d.home.morning : d.home.evening}</Text>
-        <Text variant="body" tone="secondary">{date}</Text>
-      </Animated.View>
-
-      <Card style={st.hero}>
-        <Text variant="hero" numberOfLines={1} adjustsFontSizeToFit>
-          {formatHours(today.reclaimedMinutes)}
-        </Text>
-        <Text variant="body" tone="secondary">{d.home.reclaimedToday}</Text>
-        <Text variant="label" tone="tertiary" style={{ marginTop: space.sm }}>
-          {t(d.home.goal, { h: formatHours(today.goalMinutes) })}
-        </Text>
-        <View style={st.week}>
-          {week.map((m, i) => (
-            <View key={i} style={[st.bar, { height: 4 + Math.min(1, m / 150) * 32 }]} />
-          ))}
-        </View>
-      </Card>
-
-      <View style={st.apps}>
-        {([['instagram', 'Instagram', d.home.instaSub],
-           ['tiktok', 'TikTok', d.home.tiktokSub],
-           ['youtube', 'YouTube', d.home.youtubeSub]] as const).map(([app, name, sub]) => (
-          <Pressable
-            key={app}
-            style={st.app}
-            onPress={() => { haptics.press(); router.push(`/client/${app}`); }}
-          >
-            <View style={st.appIcon}><View style={st.appRing} /></View>
-            <Text variant="body">{name}</Text>
-            <Text variant="label" tone="secondary" numberOfLines={2}>{sub}</Text>
-          </Pressable>
-        ))}
+    <View style={{ flex: 1 }}>
+      <View style={st.header}>
+        <Text variant="title">NoReel</Text>
       </View>
-    </ScrollView>
+
+      {banner && !added && (
+        <Pressable
+          style={st.banner}
+          onPress={() => {
+            haptics.tap();
+            void homeScreen.add('instagram').then(() => setAdded(true));
+          }}
+        >
+          <View style={st.bannerIcon} />
+          <Text variant="body" tone="secondary" style={{ flex: 1 }}>
+            {d.block.homeScreen}
+          </Text>
+          <Pressable onPress={() => setBanner(false)} hitSlop={12}>
+            <Text variant="body" tone="tertiary">✕</Text>
+          </Pressable>
+        </Pressable>
+      )}
+
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <AppCarousel minutesByApp={perApp} />
+      </View>
+    </View>
   );
 }
 
@@ -238,6 +229,17 @@ function AccountTab() {
 }
 
 const st = StyleSheet.create({
+  header: { paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.md },
+  banner: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    marginHorizontal: gutter, padding: space.md, borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+  },
+  bannerIcon: {
+    width: 30, height: 30, borderRadius: 9,
+    backgroundColor: withAlpha(colors.accent, 0.25),
+  },
   status: {
     alignItems: 'center', gap: space.md, padding: space.xl, borderRadius: 22,
     borderWidth: 1,
