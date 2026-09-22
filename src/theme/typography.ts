@@ -11,7 +11,7 @@ export type TypeStyle = {
   fontFamily: string;
   fontSize: number;
   lineHeight: number;
-  fontWeight: '400' | '500' | '600';
+  fontWeight: '400' | '500' | '600' | '700';
   letterSpacing: number;
   fontStyle?: 'italic';
 };
@@ -20,15 +20,15 @@ export type TypeStyle = {
 const track = (size: number, pct: number) => (size * pct) / 100;
 
 export const type = {
-  hero:     { fontFamily: 'GeistSemiBold', fontSize: s(56), lineHeight: s(56) * 1.05,  fontWeight: '600', letterSpacing: track(s(56), -3) },
-  displayL: { fontFamily: 'GeistSemiBold', fontSize: s(36), lineHeight: s(36) * 1.12, fontWeight: '600', letterSpacing: track(s(36), -2.5) },
-  displayM: { fontFamily: 'GeistSemiBold', fontSize: s(28), lineHeight: s(28) * 1.2,  fontWeight: '600', letterSpacing: track(s(28), -2) },
-  title:    { fontFamily: 'GeistMedium',   fontSize: s(19), lineHeight: s(19) * 1.3,  fontWeight: '500', letterSpacing: track(s(19), -1) },
-  quote:    { fontFamily: 'Geist',         fontSize: s(19), lineHeight: s(19) * 1.4,  fontWeight: '400', letterSpacing: 0 },
-  lead:     { fontFamily: 'Geist',         fontSize: s(17), lineHeight: s(17) * 1.5,  fontWeight: '400', letterSpacing: track(s(17), -0.5) },
-  body:     { fontFamily: 'Geist',         fontSize: s(15), lineHeight: s(15) * 1.55, fontWeight: '400', letterSpacing: 0 },
-  label:    { fontFamily: 'GeistMedium',   fontSize: s(12), lineHeight: s(12) * 1.35, fontWeight: '500', letterSpacing: track(s(12), 2) },
-  button:   { fontFamily: 'GeistSemiBold', fontSize: s(16), lineHeight: s(16),        fontWeight: '600', letterSpacing: 0 },
+  hero:     { fontFamily: 'SansBold', fontSize: s(52), lineHeight: s(52) * 1.1,  fontWeight: '700', letterSpacing: track(s(52), -2) },
+  displayL: { fontFamily: 'SansBold', fontSize: s(32), lineHeight: s(32) * 1.25, fontWeight: '700', letterSpacing: track(s(32), -1.5) },
+  displayM: { fontFamily: 'SansBold', fontSize: s(26), lineHeight: s(26) * 1.3,  fontWeight: '700', letterSpacing: track(s(26), -1) },
+  title:    { fontFamily: 'SansSemi', fontSize: s(18), lineHeight: s(18) * 1.35, fontWeight: '600', letterSpacing: 0 },
+  quote:    { fontFamily: 'Sans',     fontSize: s(18), lineHeight: s(18) * 1.45, fontWeight: '400', letterSpacing: 0 },
+  lead:     { fontFamily: 'Sans',     fontSize: s(16), lineHeight: s(16) * 1.5,  fontWeight: '400', letterSpacing: 0 },
+  body:     { fontFamily: 'Sans',     fontSize: s(15), lineHeight: s(15) * 1.55, fontWeight: '400', letterSpacing: 0 },
+  label:    { fontFamily: 'SansMedium', fontSize: s(12), lineHeight: s(12) * 1.4, fontWeight: '500', letterSpacing: track(s(12), 1.5) },
+  button:   { fontFamily: 'SansSemi', fontSize: s(16), lineHeight: s(16),        fontWeight: '600', letterSpacing: 0 },
 } satisfies Record<string, TypeStyle>;
 
 export type TypeName = keyof typeof type;

@@ -30,15 +30,33 @@ const COMMON = `
   const __on = (k) => !!(window.__NR && window.__NR[k]);
 
   // Banniere de cookies : on refuse l'optionnel, jamais on n'accepte.
-  // Sans ca, la page reste bloquee derriere le dialogue.
-  const __cookies = () => {
-    const DECLINE = /refuser|decline|only allow essential|essentiels uniquement|reject/i;
-    const nodes = document.querySelectorAll('button, [role="button"], div[tabindex]');
+  // Le MutationObserver seul ne suffisait pas : le dialogue arrive parfois
+  // avant lui, ou son bouton n'est pas un <button>. On insiste 12 s.
+  const DECLINE = /refuser|refuse|decline|reject|essentiels? uniquement|only allow essential|necessary only/i;
+  const ACCEPT  = /autoriser tous|allow all|accept all|tout accepter/i;
+
+  const __clickDecline = () => {
+    const sel = 'button, [role="button"], div[tabindex], span[role="link"], a[role="button"]';
+    const nodes = Array.from(document.querySelectorAll(sel));
+    // 1. Un libelle explicite de refus.
     for (const n of nodes) {
       const t = (n.textContent || '').trim();
-      if (t.length < 60 && DECLINE.test(t)) { n.click(); return; }
+      if (t && t.length < 70 && DECLINE.test(t)) { n.click(); return true; }
     }
+    // 2. Sinon, dans un dialogue : le bouton qui n'accepte pas.
+    const dialog = document.querySelector('[role="dialog"]');
+    if (dialog) {
+      const btns = Array.from(dialog.querySelectorAll(sel))
+        .filter((b) => (b.textContent || '').trim().length > 0);
+      const refuse = btns.find((b) => !ACCEPT.test((b.textContent || '')));
+      if (refuse) { refuse.click(); return true; }
+    }
+    return false;
   };
+
+  let __tries = 0;
+  const __cookies = () => { if (__tries < 40) { __tries += 1; __clickDecline(); } };
+  setInterval(() => { if (__tries < 40) { __tries += 1; __clickDecline(); } }, 300);
 
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
   const __gray = () => {

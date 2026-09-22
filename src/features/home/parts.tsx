@@ -1,14 +1,20 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
+import { Glass } from '@/components/glass/Glass';
 
-export function Card({ children, style }: { children: ReactNode; style?: object }) {
-  return <View style={[st.card, style]}>{children}</View>;
+/** Toutes les cartes sont en verre : c'est la matiere de l'app. */
+export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return (
+    <Glass radius={20} intensity={45} warmEdge="none" style={[st.card, style]}>
+      {children}
+    </Glass>
+  );
 }
 
 export function Row({
@@ -67,11 +73,7 @@ export function Pill({ label, onPress, muted }: { label: string; onPress?: () =>
 }
 
 const st = StyleSheet.create({
-  card: {
-    borderRadius: 18, padding: space.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
-  },
+  card: { padding: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   track: {
     width: 44, height: 26, borderRadius: 13, padding: 3,

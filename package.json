@@ -3,8 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo-google-fonts/geist": "^0.4.2",
-    "@expo-google-fonts/newsreader": "^0.4.1",
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/ui": "~57.0.19",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.24",
@@ -44,6 +43,8 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "jest": "~29.7.0",
     "jest-expo": "~57.0.5",
     "typescript": "~6.0.3"

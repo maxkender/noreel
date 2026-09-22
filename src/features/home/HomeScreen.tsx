@@ -10,6 +10,7 @@ import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
+import { Glass } from '@/components/glass/Glass';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours, locale } from '@/lib/format';
@@ -17,8 +18,7 @@ import { shield, stats, homeScreen } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { Card, Row, Toggle, Pill } from './parts';
-import { AppList } from './AppList';
-import { Rings } from './Rings';
+import { AppSlider } from './AppSlider';
 import { Referral } from './Referral';
 import { Settings } from './Settings';
 import { useSettings } from '@/store/settings';
@@ -59,7 +59,7 @@ export function HomeScreen() {
       {/* Barre flottante en verre : elle survole le contenu, elle ne le pousse pas. */}
       <View style={st.navWrap} pointerEvents="box-none">
         <View style={st.nav}>
-          <BlurView intensity={75} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={95} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={st.navTint} />
           {/* Reflet haut : c'est lui qui donne l'epaisseur du verre. */}
           <LinearGradient
@@ -96,8 +96,6 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
   const [streak, setStreak] = useState(0);
   const goal = useSettings((x) => x.goalMinutes);
-  const [banner, setBanner] = useState(true);
-  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     void stats.today().then(setToday);
@@ -110,7 +108,7 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
     twitter: Math.round(today.reclaimedMinutes * 0.15),
     youtube: Math.round(today.reclaimedMinutes * 0.2),
   };
-  const focus = Math.round((today.reclaimedMinutes / Math.max(goal, 1)) * 100);
+  const focus = Math.min(100, Math.round((today.reclaimedMinutes / Math.max(goal, 1)) * 100));
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
@@ -121,43 +119,36 @@ function HomeTab({ onSettings }: { onSettings: () => void }) {
         </Pressable>
       </View>
 
-      <Rings
-        items={[
-          { label: 'Récupéré', value: today.reclaimedMinutes, max: goal },
-          { label: 'Série', value: streak, max: 7 },
-          { label: 'Objectif', value: focus, max: 100 },
-        ]}
-      />
+      {/* Bandeau de chiffres : la meme information que les anneaux, en une ligne. */}
+      <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
+        <Stat label="Récupéré" value={formatHours(today.reclaimedMinutes)} />
+        <View style={st.stripLine} />
+        <Stat label="Série" value={`${streak} j`} />
+        <View style={st.stripLine} />
+        <Stat label="Objectif" value={`${focus} %`} />
+      </Glass>
 
-      {banner && !added && (
-        <Pressable
-          style={st.banner}
-          onPress={() => { haptics.tap(); void homeScreen.add('instagram').then(() => setAdded(true)); }}
-        >
-          <View style={st.bannerIcon} />
-          <View style={{ flex: 1 }}>
-            <Text variant="body">{d.block.homeScreen}</Text>
-            <Text variant="label" tone="secondary" numberOfLines={2}>{d.block.homeScreenBody}</Text>
-          </View>
-          <Pressable onPress={() => setBanner(false)} hitSlop={12}>
-            <Text variant="body" tone="tertiary">✕</Text>
-          </Pressable>
-        </Pressable>
-      )}
+      <AppSlider minutes={perApp} />
 
-      <Text variant="label" tone="secondary" style={st.section}>Tes apps</Text>
-      <AppList minutes={perApp} />
-
-      <View style={st.idea}>
-        <Text variant="label" tone="secondary">Idée du jour</Text>
+      <Glass radius={22} intensity={45} warmEdge="none" style={st.idea}>
+        <Text variant="label" tone="tertiary">IDÉE DU JOUR</Text>
         <Text variant="body" style={{ marginTop: space.xs }}>
           {t(d.home.idea, {
             h: formatHours(today.reclaimedMinutes),
             n: Math.round((today.reclaimedMinutes * 238) / 275),
           })}
         </Text>
-      </View>
+      </Glass>
     </ScrollView>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={st.stat}>
+      <Text variant="title" color={colors.accent}>{value}</Text>
+      <Text variant="label" tone="tertiary">{label}</Text>
+    </View>
   );
 }
 
@@ -289,10 +280,10 @@ const st = StyleSheet.create({
     borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
   },
   section: { marginTop: space.lg },
-  idea: {
-    padding: space.lg, borderRadius: 18, backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
-  },
+  idea: { padding: space.lg, marginTop: space.lg },
+  strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
+  stat: { flex: 1, alignItems: 'center', gap: 2 },
+  stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(colors.mist, 0.14) },
   header: { paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.md },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
@@ -344,12 +335,12 @@ const st = StyleSheet.create({
   nav: {
     flexDirection: 'row', borderRadius: 28, overflow: 'hidden', padding: 6,
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.3),
-    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 }, elevation: 16,
+    shadowColor: '#000', shadowOpacity: 0.65, shadowRadius: 28,
+    shadowOffset: { width: 0, height: 14 }, elevation: 18,
   },
   navTint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.08),
+    backgroundColor: withAlpha(colors.mist, 0.11),
   },
   navSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
   tab: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8 },
