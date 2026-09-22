@@ -1,7 +1,7 @@
 export type SocialApp = 'instagram' | 'tiktok';
 
 export interface FilteredAppsService {
-  /** TODO produit : ouvre la version NoReel. La webview de ReelsFree ira ici. */
+  /** TODO produit : ouvre la version UnSwipe. La webview de ReelsFree ira ici. */
   open(app: SocialApp): Promise<void>;
 }
 

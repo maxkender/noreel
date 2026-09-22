@@ -26,7 +26,7 @@ export function Widgets() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = async (id: string) => {
-    const link = `noreel://client/${id}`;
+    const link = `unswipe://client/${id}`;
     await Clipboard.setStringAsync(link);
     haptics.success();
     setCopied(id);
@@ -66,7 +66,7 @@ export function Widgets() {
                 <Image source={LOGOS[a.id]} style={st.logo} contentFit="contain" />
                 <View style={{ flex: 1 }}>
                   <Text variant="body">{a.name}</Text>
-                  <Text variant="label" tone="tertiary">noreel://client/{a.id}</Text>
+                  <Text variant="label" tone="tertiary">unswipe://client/{a.id}</Text>
                 </View>
                 {copied === a.id
                   ? <Check size={18} strokeWidth={2.2} color={colors.accent} />
@@ -87,7 +87,7 @@ export function Widgets() {
           )}
 
           <Text variant="label" tone="tertiary" style={{ marginTop: space.xl, lineHeight: 18 }}>
-            Un widget NoReel avec tes chiffres du jour arrive ensuite : il
+            Un widget UnSwipe avec tes chiffres du jour arrive ensuite : il
             demande une extension native, que l’app n’embarque pas encore.
           </Text>
         </ScrollView>

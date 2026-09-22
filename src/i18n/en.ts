@@ -1,7 +1,7 @@
 import type { Dict } from './fr';
 
 export const en: Dict = {
-  app: { name: 'NoReel' },
+  app: { name: 'UnSwipe' },
 
   tapHint: 'Tap anywhere to continue',
 
@@ -20,7 +20,7 @@ export const en: Dict = {
     keep1: 'Your messages',
     keep2: 'Stories and posts from people you follow',
     remove: 'Reels, Explore, For You',
-    pill: 'NoReel version',
+    pill: 'UnSwipe version',
     instagram: 'Instagram',
     tiktok: 'TikTok',
     cta: 'Continue',
@@ -48,7 +48,7 @@ export const en: Dict = {
     title: `That's why we built the ultimate fix.`,
     body: 'Same platforms. Without the features that fry your brain.',
     before: 'Before',
-    after: 'With NoReel',
+    after: 'With UnSwipe',
     note: `A friend sends you a reel? You watch it. That's it.`,
     cta: 'Calculate my time',
   },
@@ -124,20 +124,20 @@ export const en: Dict = {
   },
 
   s9: {
-    title: 'You can add the NoReel apps to your home screen.',
+    title: 'You can add the UnSwipe apps to your home screen.',
     body: 'Put them where the originals were. Same habit, same spot, zero reels.',
-    step1: 'Add NoReel Insta and NoReel TikTok',
+    step1: 'Add UnSwipe Insta and UnSwipe TikTok',
     step2: 'Move the originals into a folder',
     folder: 'Originals',
-    appInsta: 'NoReel Insta',
-    appTiktok: 'NoReel TikTok',
+    appInsta: 'UnSwipe Insta',
+    appTiktok: 'UnSwipe TikTok',
     cta: 'Add to Home Screen',
     later: 'Later',
-    unavailable: `Automatic adding isn't available on this device. You can do it later from NoReel's settings.`,
+    unavailable: `Automatic adding isn't available on this device. You can do it later from UnSwipe's settings.`,
   },
 
   paywall: {
-    kicker: 'NoReel Pro',
+    kicker: 'UnSwipe Pro',
     title: 'Help yourself stick with it.',
     subtitle: 'The first three days are the hardest.',
     free: 'Free',
@@ -167,7 +167,7 @@ export const en: Dict = {
     step2b: 'Your brain turns the volume down to protect itself.',
     step3: 'Nothing lands anymore',
     step3b: 'Feeling pleasure, focusing, falling in love: everything goes flat.',
-    fix: 'With NoReel, you repair your receptors without losing touch with the people you love.',
+    fix: 'With UnSwipe, you repair your receptors without losing touch with the people you love.',
     cta: 'Continue',
   },
 
@@ -177,7 +177,7 @@ export const en: Dict = {
     reclaimedToday: 'reclaimed today',
     goal: 'Goal: {h}',
     yourWeek: 'Your week',
-    dayOne: 'Open NoReel Insta or NoReel TikTok: the time you reclaim will show up here.',
+    dayOne: 'Open UnSwipe Insta or UnSwipe TikTok: the time you reclaim will show up here.',
     instaSub: 'Messages and stories, without Reels',
     tiktokSub: 'Your following feed, no For You',
     youtubeSub: 'Your subscriptions, without Shorts',
@@ -211,7 +211,7 @@ export const en: Dict = {
     screenTimeSoon: 'Coming soon',
     authorize: 'Allow Screen Time',
     homeScreen: 'Put the apps back on your home screen',
-    homeScreenBody: 'Place NoReel Insta and NoReel YouTube where the originals were.',
+    homeScreenBody: 'Place UnSwipe Insta and UnSwipe YouTube where the originals were.',
     add: 'Add',
     redirect: 'Redirect the native apps',
     redirectBody: 'Opening Instagram or TikTok sends you to the filtered version.',
@@ -238,7 +238,7 @@ export const en: Dict = {
     share: 'Share',
     progress: '{n} / 5 friends joined',
     unlocked: 'Pro unlocked for 1 year',
-    shareText: 'I switched to NoReel: Instagram and TikTok without the reels. Use my code {code} for a free week of Pro.',
+    shareText: 'I switched to UnSwipe: Instagram and TikTok without the reels. Use my code {code} for a free week of Pro.',
   },
 
   sources: {

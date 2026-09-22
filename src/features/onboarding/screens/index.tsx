@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Typewriter, typeDuration } from '@/components/type/Typewriter';
+import { Typewriter } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
@@ -14,6 +15,8 @@ import { track } from '@/services';
 import { screenYears, wakingShare } from '../calculations';
 import { TimeSlider } from '../scenes/TimeSlider';
 import { AgeRuler } from '../scenes/AgeRuler';
+
+const MARK = require('@/assets/brand/mark.png');
 
 type P = { onNext: () => void };
 
@@ -41,14 +44,11 @@ function Option({
 export function S1({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3200}>
-      <View style={s.mark}>
-        <View style={s.ring} />
-        <View style={s.bar} />
-      </View>
-      <Typewriter text={d.s1.title1} variant="displayL" style={s.center} />
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400}>
+      <Image source={MARK} style={s.mark} contentFit="contain" />
+      <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       {true && (
-        <Typewriter text={d.s1.title2} variant="displayL" style={s.center} />
+        <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
       )}
       {true && (
         <Animated.View entering={FadeIn.duration(500)}>
@@ -124,8 +124,8 @@ export function S3({ onNext }: P) {
 export function S4({ onNext }: P) {
   const { d } = useT();
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={2600}>
-      <Typewriter text={d.s4.title} variant="displayM" style={s.center} />
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3600}>
+      <Typewriter text={d.s4.title} variant="displayM" speed={40} style={s.center} />
       {/* TODO produit : enregistrement d'ecran de l'app a la place de ce cadre. */}
       <Animated.View entering={FadeIn.delay(1200).duration(600)} style={s.videoSlot}>
         <View style={s.videoInner} />
@@ -179,7 +179,7 @@ export function S6({ onNext }: P) {
   const years = screenYears(minutes);
   const [lit, setLit] = useState(0);
 
-  // 70 ms par case : assez lent pour qu'on voie la part grandir et que ca pese.
+  // 88 ms par case : assez lent pour qu'on voie la part grandir et que ca pese.
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
@@ -187,7 +187,7 @@ export function S6({ onNext }: P) {
       setLit(i);
       if (i % 10 === 0) haptics.tick();
       if (i >= target) clearInterval(id);
-    }, 70);
+    }, 88);
     return () => clearInterval(id);
   }, [target]);
 
@@ -251,11 +251,9 @@ export function S7({ onNext }: P) {
       cta={d.tapHint}
       onPress={() => (last ? onNext() : setI((n) => n + 1))}
       tapToContinue
-      hintDelay={1600}
+      hintDelay={2400}
       center
     >
-      <Text variant="label" tone="tertiary" style={s.center}>{d.brain.title}</Text>
-
       {/* La timeline reste a l'ecran et avance : on voit ou on en est. */}
       <View style={s.dots}>
         {steps.map((_, k) => (
@@ -267,6 +265,7 @@ export function S7({ onNext }: P) {
         <Typewriter
           text={steps[i][0]}
           variant={last ? 'displayM' : 'displayL'}
+          speed={42}
           style={s.center}
         />
         {steps[i][1] ? (
@@ -276,24 +275,6 @@ export function S7({ onNext }: P) {
             </Text>
           </Animated.View>
         ) : null}
-      </Animated.View>
-    </Screen>
-  );
-}
-
-/* ---------- 9 ---------- */
-export function S9({ onNext }: P) {
-  const { d } = useT();
-  return (
-    <Screen cta={d.s9.cta} onPress={onNext} secondary={d.s9.later} onSecondary={onNext} center>
-      <Typewriter text={d.s9.title} variant="displayM" style={s.center} />
-      <Animated.View entering={FadeIn.delay(1600).duration(600)} style={s.apps}>
-        {[d.s9.appInsta, d.s9.appTiktok].map((n) => (
-          <View key={n} style={s.app}>
-            <View style={s.appIcon}><View style={s.appRing} /></View>
-            <Text variant="label" tone="secondary">{n}</Text>
-          </View>
-        ))}
       </Animated.View>
     </Screen>
   );
@@ -322,9 +303,7 @@ const s = StyleSheet.create({
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
   chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
   center: { textAlign: 'center' },
-  mark: { alignItems: 'center', justifyContent: 'center', height: 90, marginBottom: space.xl },
-  ring: { width: 58, height: 58, borderRadius: 29, borderWidth: 5, borderColor: colors.mist },
-  bar: { position: 'absolute', bottom: 22, width: 88, height: 2, backgroundColor: colors.accent },
+  mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },
   keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },

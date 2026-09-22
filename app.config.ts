@@ -12,9 +12,9 @@ const NIGHT = '#08090B';
 const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1';
 
 const config: ExpoConfig = {
-  name: 'NoReel',
+  name: 'UnSwipe',
   slug: 'noreel',
-  scheme: 'noreel',
+  scheme: ['unswipe', 'noreel'],
   version: '1.0.0',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
@@ -43,6 +43,8 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-font',
     'expo-localization',
+    // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
+    './plugins/withoutPushEntitlement',
     ['expo-splash-screen', { backgroundColor: NIGHT, image: './assets/images/splash-icon.png', imageWidth: 180 }],
     ...(FAMILY_CONTROLS
       ? [[

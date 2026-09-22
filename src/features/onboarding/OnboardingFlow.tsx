@@ -2,19 +2,23 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { colors, withAlpha } from '@/theme/colors';
-import { gutter, space } from '@/theme/spacing';
+import { colors } from '@/theme/colors';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
-import { S1, S2, S3, S4, S5, S6, S7, S9 } from './screens';
+import { S1, S2, S3, S4, S5, S6, S7 } from './screens';
+import {
+  Distractions, Essentials, Name, NotificationsAsk, PromiseScreen, RulesIntro, RulesPick,
+} from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Paywall } from './screens/Paywall';
 
-const TOTAL = 10;
-
-
+/**
+ * Le parcours : on accroche, on comprend, on mesure, on parametre, on
+ * autorise, on promet. Chaque etape a son rythme — certaines laissent le
+ * texte respirer, d'autres enchainent.
+ */
 export function OnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -38,31 +42,39 @@ export function OnboardingFlow() {
     track('step_viewed', { step: next });
   }, [finish, persist]);
 
+  const n = (i: number) => () => go(i + 1);
+
+  const screens = [
+    <S1 key="s1" onNext={n(0)} />,
+    <Name key="name" onNext={n(1)} />,
+    <S2 key="s2" onNext={n(2)} />,
+    <S3 key="s3" onNext={n(3)} />,
+    <S4 key="s4" onNext={n(4)} />,
+    <S5 key="s5" onNext={n(5)} />,
+    <S6 key="s6" onNext={n(6)} />,
+    <S7 key="s7" onNext={n(7)} />,
+    <Distractions key="dis" onNext={n(8)} />,
+    <Essentials key="ess" onNext={n(9)} />,
+    <RulesIntro key="ri" onNext={n(10)} />,
+    <RulesPick key="rp" onNext={n(11)} />,
+    <Permissions key="perm" onDone={n(12)} />,
+    <NotificationsAsk key="notif" onNext={n(13)} />,
+    <PromiseScreen key="pro" onNext={n(14)} />,
+    <Paywall key="pw" onDone={finish} />,
+  ];
+
   const bar = step > 0 ? (
     <View style={styles.progress}>
-      {Array.from({ length: TOTAL }, (_, i) => (
-        <View key={i} style={[styles.dot, i <= step && styles.dotOn]} />
+      {screens.map((sc, i) => (
+        <View key={sc.key} style={[styles.dot, i <= step && styles.dotOn]} />
       ))}
     </View>
   ) : undefined;
 
-  const screens = [
-    <S1 key="1" onNext={() => go(1)} />,
-    <S2 key="2" onNext={() => go(2)} />,
-    <S3 key="3" onNext={() => go(3)} />,
-    <S4 key="4" onNext={() => go(4)} />,
-    <S5 key="5" onNext={() => go(5)} />,
-    <S6 key="6" onNext={() => go(6)} />,
-    <S7 key="7" onNext={() => go(7)} />,
-    <S9 key="8" onNext={() => go(8)} />,
-    <Permissions key="p" onDone={() => go(9)} />,
-    <Paywall key="pw" onDone={finish} />,
-  ];
-
   return (
     <View style={styles.root}>
       <ProgressContext.Provider value={bar}>
-        {/* Glissement lateral entre ecrans : on sent la progression. */}
+        {/* Fondu entre ecrans : le changement de page ne saute plus. */}
         <Animated.View
           key={step}
           entering={FadeIn.duration(420)}
@@ -78,9 +90,11 @@ export function OnboardingFlow() {
   );
 }
 
+const TOTAL = 16;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
-  progress: { flexDirection: 'row', gap: 4 },
+  progress: { flexDirection: 'row', gap: 3 },
   dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: colors.line },
   dotOn: { backgroundColor: colors.accent },
 });

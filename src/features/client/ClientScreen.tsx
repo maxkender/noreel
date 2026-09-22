@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { colors } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';

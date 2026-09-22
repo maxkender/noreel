@@ -65,7 +65,11 @@ export function Pill({ label, onPress, muted }: { label: string; onPress?: () =>
       onPress={onPress ? () => { haptics.tap(); onPress(); } : undefined}
       style={[st.pill, muted && st.pillMuted]}
     >
-      <Text variant="label" color={muted ? withAlpha(colors.mist, 0.4) : colors.night}>
+      <Text
+        variant="label"
+        numberOfLines={1}
+        color={muted ? withAlpha(colors.mist, 0.4) : colors.night}
+      >
         {label}
       </Text>
     </Pressable>

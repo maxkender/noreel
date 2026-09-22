@@ -3,7 +3,7 @@ const NNBSP = ' ';
 const NBSP = ' ';
 
 export const fr = {
-  app: { name: 'NoReel' },
+  app: { name: 'UnSwipe' },
 
   tapHint: 'Touche l’écran pour continuer',
 
@@ -25,7 +25,7 @@ export const fr = {
     keep1: 'Tes messages',
     keep2: 'Les stories et posts des gens que tu suis',
     remove: 'Reels, Explorer, Pour toi',
-    pill: 'Version NoReel',
+    pill: 'Version UnSwipe',
     instagram: 'Instagram',
     tiktok: 'TikTok',
     cta: 'Continuer',
@@ -53,7 +53,7 @@ export const fr = {
     title: `C'est pour ça qu'on a construit la solution ultime.`,
     body: 'Les mêmes plateformes. Sans les fonctionnalités qui ruinent ton cerveau.',
     before: 'Avant',
-    after: 'Avec NoReel',
+    after: 'Avec UnSwipe',
     note: `Un pote t'envoie un reel${NNBSP}? Tu le regardes. Et c'est tout.`,
     cta: 'Calculer mon temps',
   },
@@ -129,20 +129,20 @@ export const fr = {
   },
 
   s9: {
-    title: `Tu peux ajouter les apps NoReel sur ton écran d'accueil.`,
+    title: `Tu peux ajouter les apps UnSwipe sur ton écran d'accueil.`,
     body: 'Mets-les à la place des originales. Même réflexe, même endroit, zéro reel.',
-    step1: 'Ajoute NoReel Insta et NoReel TikTok',
+    step1: 'Ajoute UnSwipe Insta et UnSwipe TikTok',
     step2: 'Range les originales dans un dossier',
     folder: 'Originales',
-    appInsta: 'NoReel Insta',
-    appTiktok: 'NoReel TikTok',
+    appInsta: 'UnSwipe Insta',
+    appTiktok: 'UnSwipe TikTok',
     cta: `Ajouter à l'écran d'accueil`,
     later: 'Plus tard',
-    unavailable: `L'ajout automatique n'est pas disponible sur cet appareil. Tu pourras le faire depuis les réglages de NoReel.`,
+    unavailable: `L'ajout automatique n'est pas disponible sur cet appareil. Tu pourras le faire depuis les réglages de UnSwipe.`,
   },
 
   paywall: {
-    kicker: 'NoReel Pro',
+    kicker: 'UnSwipe Pro',
     title: 'Aide-toi à tenir.',
     subtitle: 'Les trois premiers jours sont les plus durs.',
     free: 'Gratuit',
@@ -172,7 +172,7 @@ export const fr = {
     step2b: 'Ton cerveau baisse le volume pour se protéger de l’excès.',
     step3: 'Plus rien ne fait d’effet',
     step3b: 'Ressentir du plaisir, te concentrer, tomber amoureux : tout devient plus fade.',
-    fix: 'Avec NoReel, tu répares tes récepteurs sans perdre contact avec tes proches.',
+    fix: 'Avec UnSwipe, tu répares tes récepteurs sans perdre contact avec tes proches.',
     cta: 'Continuer',
   },
 
@@ -182,7 +182,7 @@ export const fr = {
     reclaimedToday: 'de temps récupéré aujourd’hui',
     goal: 'Objectif{nbsp}: {h}',
     yourWeek: 'Ta semaine',
-    dayOne: `Ouvre NoReel Insta ou NoReel TikTok{nbsp}: ton temps récupéré s'affichera ici.`,
+    dayOne: `Ouvre UnSwipe Insta ou UnSwipe TikTok{nbsp}: ton temps récupéré s'affichera ici.`,
     instaSub: 'Messages et stories, sans les Reels',
     tiktokSub: 'Tes abonnements, sans le fil Pour toi',
     youtubeSub: 'Tes abonnements, sans les Shorts',
@@ -220,7 +220,7 @@ export const fr = {
     screenTimeSoon: 'Bientôt disponible',
     authorize: 'Autoriser Temps d’écran',
     homeScreen: 'Remettre les apps sur l’écran d’accueil',
-    homeScreenBody: 'Place NoReel Insta et NoReel YouTube là où étaient les originales.',
+    homeScreenBody: 'Place UnSwipe Insta et UnSwipe YouTube là où étaient les originales.',
     add: 'Ajouter',
     redirect: 'Rediriger les apps d’origine',
     redirectBody: 'Ouvrir Instagram ou TikTok renvoie vers la version filtrée.',
@@ -247,7 +247,7 @@ export const fr = {
     share: 'Partager',
     progress: '{n} / 5 amis inscrits',
     unlocked: 'Pro débloqué pour 1 an',
-    shareText: 'Je suis passé à NoReel : Instagram et TikTok sans les reels. Prends mon code {code}, tu as une semaine de Pro offerte.',
+    shareText: 'Je suis passé à UnSwipe : Instagram et TikTok sans les reels. Prends mon code {code}, tu as une semaine de Pro offerte.',
   },
 
   sources: {

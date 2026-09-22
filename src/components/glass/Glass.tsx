@@ -55,7 +55,7 @@ export function Glass({
         pointerEvents="none"
       />
 
-      {/* Signature NoReel : le liseré chaud du côté du soleil, donc en bas. */}
+      {/* Signature UnSwipe : le liseré chaud du côté du soleil, donc en bas. */}
       {warmEdge !== 'none' && (
         <LinearGradient
           colors={['transparent', withAlpha(colors.sun, 0.55), 'transparent']}

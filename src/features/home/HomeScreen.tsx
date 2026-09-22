@@ -247,7 +247,13 @@ function BlockTab() {
           onPress={() => { haptics.press(); const v = !on; setOn(v); void shield.setActive(v); }}
           style={[st.statusBtn, armed && st.statusBtnOn]}
         >
-          <Text variant="button" color={armed ? colors.night : colors.mist}>
+          <Text
+            variant="button"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+            color={armed ? colors.night : colors.mist}
+          >
             {armed ? d.block.pause : d.block.activate}
           </Text>
         </Pressable>
@@ -381,7 +387,7 @@ const st = StyleSheet.create({
   statusRingOn: { borderColor: withAlpha(colors.accent, 0.6) },
   statusBtn: {
     alignSelf: 'stretch', height: 48, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
     backgroundColor: colors.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },

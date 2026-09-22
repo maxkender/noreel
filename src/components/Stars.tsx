@@ -4,7 +4,7 @@ import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat,
   withSequence, withTiming,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { colors } from '@/theme/colors';
 
 const COUNT = 44;
 

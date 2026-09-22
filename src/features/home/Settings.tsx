@@ -91,7 +91,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
             <Group title="À propos" />
             <Line
-              label="Réglages iOS de NoReel"
+              label="Réglages iOS de UnSwipe"
               onPress={() => void Linking.openSettings()}
             />
             <Line label="Version" right={

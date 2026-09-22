@@ -60,8 +60,9 @@ export function Intro({ onDone }: { onDone: () => void }) {
     transform: [{ scale: 1 + pulse.value * 0.5 + open.value * 3 }],
   }));
 
+  // La barre traverse l'anneau en diagonale : c'est la marque UnSwipe.
   const bar = useAnimatedStyle(() => ({
-    width: `${line.value * 74}%`,
+    width: line.value * 150,
     opacity: line.value * (1 - open.value),
   }));
 
@@ -91,5 +92,9 @@ const styles = StyleSheet.create({
     position: 'absolute', width: 76, height: 76, borderRadius: 38,
     backgroundColor: withAlpha(colors.accent, 0.35),
   },
-  bar: { position: 'absolute', height: 2, backgroundColor: colors.accent },
+  bar: {
+    position: 'absolute', height: 9, borderRadius: 5,
+    backgroundColor: colors.accent,
+    transform: [{ rotate: '-45deg' }],
+  },
 });

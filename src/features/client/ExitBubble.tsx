@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
@@ -12,7 +12,6 @@ import { Text } from '@/components/type/Text';
 
 const SIZE = 54;
 const MARGIN = 14;
-const SLOP = 6;
 
 /**
  * Sortie de secours posee PAR-DESSUS la WebView.
@@ -69,7 +68,7 @@ export function ExitBubble({ onExit }: { onExit: () => void }) {
           onTouchCancel={() => { moved.current = false; }}
           style={styles.hit}
           accessibilityRole="button"
-          accessibilityLabel="Revenir à NoReel"
+          accessibilityLabel="Revenir à UnSwipe"
         >
           <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={styles.tint} />
