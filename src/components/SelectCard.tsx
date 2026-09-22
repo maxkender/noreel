@@ -1,9 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { Check } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
@@ -15,9 +14,13 @@ import { Text } from './type/Text';
 const A = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Reponse de QCM. Trois choses bougent au doigt et aucune ne deplace quoi
- * que ce soit : l'echelle sous la pression, la teinte du verre, et la
- * pastille qui se remplit. La hauteur, elle, ne change jamais.
+ * Reponse de QCM.
+ *
+ * Tout ce qui bouge est une opacite ou une echelle — aucune couleur n'est
+ * interpolee et aucun flou n'est empile. Les etats selectionnes sont des
+ * calques poses par-dessus qu'on allume : c'est plus leger a l'image, et ca
+ * evite d'animer bordure et fond, les deux proprietes les plus fragiles.
+ * La hauteur, elle, ne change jamais : la liste ne saute pas.
  */
 export function SelectCard({
   label, sub, lead, selected, onPress, shape = 'radio',
@@ -39,33 +42,12 @@ export function SelectCard({
 
   const shell = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - press.value * 0.025 }],
-    borderColor: interpolateColor(
-      on.value,
-      [0, 1],
-      [withAlpha(colors.mist, 0.12), withAlpha(colors.accent, 0.62)]
-    ),
   }));
-
-  const tint = useAnimatedStyle(() => ({ opacity: on.value }));
-
-  const dot = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      on.value, [0, 1], ['#00000000', colors.accent]
-    ),
-    borderColor: interpolateColor(
-      on.value, [0, 1], [withAlpha(colors.mist, 0.28), colors.accent]
-    ),
-    transform: [{ scale: 1 + on.value * 0.06 }],
-  }));
-
+  const lit = useAnimatedStyle(() => ({ opacity: on.value }));
+  const lift = useAnimatedStyle(() => ({ transform: [{ scale: 1 + on.value * 0.12 }] }));
   const tick = useAnimatedStyle(() => ({
     opacity: on.value,
     transform: [{ scale: 0.5 + on.value * 0.5 }],
-  }));
-
-  // Le logo avance d'un cran quand la reponse est retenue.
-  const lift = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + on.value * 0.12 }],
   }));
 
   return (
@@ -77,17 +59,24 @@ export function SelectCard({
       onPress={() => { haptics.tick(); onPress(); }}
       style={[st.shell, shell]}
     >
-      <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={st.base} />
-      {/* La teinte d'accent monte en fondu : pas de saut de couleur. */}
-      <Animated.View style={[StyleSheet.absoluteFill, tint]}>
+      {/* Reflet haut : l'epaisseur du verre, sans flou a calculer. */}
+      <LinearGradient
+        colors={[withAlpha(colors.mist, 0.1), 'transparent']}
+        style={st.sheen}
+        pointerEvents="none"
+      />
+
+      {/* Les deux calques d'etat : teinte puis liseré, allumes ensemble. */}
+      <Animated.View style={[StyleSheet.absoluteFill, lit]} pointerEvents="none">
         <LinearGradient
-          colors={[withAlpha(colors.accent, 0.2), withAlpha(colors.accentWarm, 0.1)]}
+          colors={[withAlpha(colors.accent, 0.22), withAlpha(colors.accentWarm, 0.1)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
+      <Animated.View style={[st.ring, lit]} pointerEvents="none" />
 
       {lead ? <Animated.View style={[st.lead, lift]}>{lead}</Animated.View> : null}
 
@@ -96,11 +85,12 @@ export function SelectCard({
         {sub ? <Text variant="label" tone="tertiary">{sub}</Text> : null}
       </View>
 
-      <Animated.View style={[st.dot, shape === 'check' && st.box, dot]}>
+      <View style={[st.dot, shape === 'check' && st.box]}>
+        <Animated.View style={[StyleSheet.absoluteFill, st.fill, lit]} />
         <Animated.View style={tick}>
           <Check size={13} strokeWidth={3.2} color={colors.night} />
         </Animated.View>
-      </Animated.View>
+      </View>
     </A>
   );
 }
@@ -109,17 +99,25 @@ const st = StyleSheet.create({
   shell: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, paddingVertical: 17,
-    borderRadius: 20, overflow: 'hidden', borderWidth: 1,
+    borderRadius: 20, overflow: 'hidden',
+    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
   },
   base: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.05),
+    backgroundColor: withAlpha(colors.mist, 0.06),
+  },
+  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 22 },
+  ring: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 20, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.65),
   },
   lead: { minWidth: 30, alignItems: 'center' },
   text: { flex: 1, gap: 1 },
   dot: {
-    width: 24, height: 24, borderRadius: 12, borderWidth: 1.5,
+    width: 24, height: 24, borderRadius: 12, overflow: 'hidden',
+    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.28),
     alignItems: 'center', justifyContent: 'center',
   },
   box: { borderRadius: 8 },
+  fill: { backgroundColor: colors.accent },
 });

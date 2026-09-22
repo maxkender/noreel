@@ -41,7 +41,7 @@ export function Screen({
   return (
     <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
       <Glow hue={hue} />
-      <Stars />
+      <Stars count={14} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {bar && <View style={styles.progress}>{bar}</View>}
 

@@ -6,14 +6,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors } from '@/theme/colors';
 
-const COUNT = 44;
-
 /** Poussiere lumineuse en fond : lente, discrete, elle donne la profondeur. */
-export function Stars() {
+export function Stars({ count = 44 }: { count?: number }) {
   const { width, height } = useWindowDimensions();
 
   const seeds = useMemo(
-    () => Array.from({ length: COUNT }, (_, i) => ({
+    () => Array.from({ length: count }, (_, i) => ({
       i,
       x: ((i * 37) % 100) / 100,
       y: ((i * 61) % 100) / 100,
@@ -21,7 +19,7 @@ export function Stars() {
       delay: (i * 230) % 4000,
       drift: 10 + ((i * 7) % 18),
     })),
-    []
+    [count]
   );
 
   return (

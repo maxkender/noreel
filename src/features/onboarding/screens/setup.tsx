@@ -30,7 +30,7 @@ export function Name({ onNext }: P) {
 
   return (
     <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
-      <Typewriter text="Comment on t’appelle ?" variant="displayM" style={st.center} />
+      <Typewriter text="Comment t’appelles-tu ?" variant="displayM" style={st.center} />
       <Animated.View entering={FadeIn.delay(900).duration(600)}>
         <TextInput
           value={name}

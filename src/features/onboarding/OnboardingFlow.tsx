@@ -7,6 +7,7 @@ import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
+import { StepBoundary } from '@/components/StepBoundary';
 import { S1, S2, S3, S4, S5, S6, S7 } from './screens';
 import {
   Distractions, Essentials, Name, NotificationsAsk, PromiseScreen, RulesIntro, RulesPick,
@@ -81,7 +82,10 @@ export function OnboardingFlow() {
           exiting={FadeOut.duration(200)}
           style={StyleSheet.absoluteFill}
         >
-          {screens[step]}
+          {/* Une etape qui plante ne doit pas emporter tout le parcours. */}
+          <StepBoundary key={`b${step}`} onSkip={() => go(step + 1)}>
+            {screens[step]}
+          </StepBoundary>
         </Animated.View>
       </ProgressContext.Provider>
 
