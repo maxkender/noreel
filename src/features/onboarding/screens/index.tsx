@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
+import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { Typewriter } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
@@ -19,26 +20,6 @@ import { AgeRuler } from '../scenes/AgeRuler';
 const MARK = require('@/assets/brand/mark.png');
 
 type P = { onNext: () => void };
-
-/** Liste d'options : pilule sombre, point d'accent quand choisie. */
-function Option({
-  label, icon, selected, onPress,
-}: { label: string; icon?: string; selected?: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={() => { haptics.tick(); onPress(); }}
-      style={[s.option, selected && s.optionOn]}
-    >
-      {icon && <Text variant="title" style={s.optionIcon}>{icon}</Text>}
-      <Text variant="body" tone={selected ? 'primary' : 'secondary'} style={{ flex: 1 }}>
-        {label}
-      </Text>
-      <View style={[s.dot, selected && s.dotOn]} />
-    </Pressable>
-  );
-}
 
 /* ---------- 1 ---------- */
 export function S1({ onNext }: P) {
@@ -107,10 +88,13 @@ export function S3({ onNext }: P) {
     <Screen cta={d.s3.cta} onPress={onNext} disabled={!a}>
       <Typewriter text={d.s3.title} variant="displayM" />
       {true && (
-        <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.sm }}>
+        <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
           {opts.map(([k, icon, label]) => (
-            <Option
-              key={k} icon={icon} label={label} selected={a === k}
+            <SelectCard
+              key={k}
+              label={label}
+              lead={<Text variant="title">{icon}</Text>}
+              selected={a === k}
               onPress={() => { setA(k); setPain(k); track('pain_answered', { answer: k }); }}
             />
           ))}
@@ -307,19 +291,6 @@ const s = StyleSheet.create({
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },
   keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  option: {
-    flexDirection: 'row', alignItems: 'center', gap: space.md,
-    paddingHorizontal: space.lg, paddingVertical: 18, borderRadius: 18,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
-  },
-  optionOn: { borderColor: colors.accent, backgroundColor: withAlpha(colors.accent, 0.08) },
-  optionIcon: { width: 26 },
-  dot: {
-    width: 18, height: 18, borderRadius: 9,
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.25),
-  },
-  dotOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   compare: { flexDirection: 'row', gap: space.md, marginTop: space.xxl },
   col: { flex: 1, gap: space.sm },
   colBarCold: { height: 18, borderRadius: 4, backgroundColor: withAlpha(colors.mist, 0.08) },

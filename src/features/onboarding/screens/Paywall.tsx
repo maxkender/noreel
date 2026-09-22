@@ -3,12 +3,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { Check, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { radii, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
+import { SelectCard } from '@/components/SelectCard';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { useOnboardingStore } from '@/store/onboarding';
@@ -82,18 +83,17 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         </View>
 
         <View style={st.options}>
-          <Option
-            on={trial === 'free7'}
-            title="Gratuit pendant 7 jours"
+          <SelectCard
+            label="Gratuit pendant 7 jours"
             sub="Pas de paiement aujourd’hui"
-            onPress={() => { haptics.tick(); setTrial('free7'); }}
+            selected={trial === 'free7'}
+            onPress={() => setTrial('free7')}
           />
-          <View style={st.optLine} />
-          <Option
-            on={trial === 'paid30'}
-            title="4,99 € pendant 30 jours"
+          <SelectCard
+            label="4,99 € pendant 30 jours"
             sub="Prolonger ton essai"
-            onPress={() => { haptics.tick(); setTrial('paid30'); }}
+            selected={trial === 'paid30'}
+            onPress={() => setTrial('paid30')}
           />
         </View>
       </Glass>
@@ -120,22 +120,6 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   );
 }
 
-function Option({
-  on, title, sub, onPress,
-}: { on: boolean; title: string; sub: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={st.opt} accessibilityRole="radio" accessibilityState={{ selected: on }}>
-      <View style={{ flex: 1 }}>
-        <Text variant="body">{title}</Text>
-        <Text variant="label" tone="tertiary">{sub}</Text>
-      </View>
-      <View style={[st.radio, on && st.radioOn]}>
-        {on && <Check size={14} strokeWidth={3} color={colors.night} />}
-      </View>
-    </Pressable>
-  );
-}
-
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
   lockup: { width: 112, height: 42 },
@@ -148,18 +132,7 @@ const st = StyleSheet.create({
   bar: { width: '100%', borderRadius: 12, overflow: 'hidden' },
   plan: { padding: space.lg, marginTop: space.lg },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  options: {
-    marginTop: space.lg, borderRadius: 16,
-    backgroundColor: withAlpha(colors.mist, 0.05),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.12),
-  },
-  opt: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
-  optLine: { height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.12) },
-  radio: {
-    width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.28),
-  },
-  radioOn: { backgroundColor: colors.mist, borderColor: colors.mist },
+  options: { marginTop: space.lg, gap: space.sm },
   more: {
     alignSelf: 'center', marginTop: space.lg,
     paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: 999,

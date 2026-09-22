@@ -12,6 +12,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
+import { SelectCard } from '@/components/SelectCard';
 import { Typewriter } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
@@ -69,26 +70,18 @@ export function Distractions({ onNext }: P) {
         UnSwipe garde ta sélection sur ton téléphone.
       </Text>
 
-      <Glass radius={22} intensity={45} warmEdge="none" style={st.list}>
-        {PICKABLE.map((a, i) => {
-          const on = picked.includes(a.id);
-          return (
-            <Pressable
-              key={a.id}
-              onPress={() => { haptics.tick(); toggle(a.id); }}
-              style={[st.pick, i > 0 && st.pickLine]}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: on }}
-            >
-              <View style={[st.box, on && st.boxOn]}>
-                {on && <Check size={13} strokeWidth={3} color={colors.night} />}
-              </View>
-              <Image source={LOGOS[a.id]} style={st.pickLogo} contentFit="contain" />
-              <Text variant="body" style={{ flex: 1 }}>{a.name}</Text>
-            </Pressable>
-          );
-        })}
-      </Glass>
+      <View style={st.list}>
+        {PICKABLE.map((a) => (
+          <SelectCard
+            key={a.id}
+            shape="check"
+            label={a.name}
+            lead={<Image source={LOGOS[a.id]} style={st.pickLogo} contentFit="contain" />}
+            selected={picked.includes(a.id)}
+            onPress={() => toggle(a.id)}
+          />
+        ))}
+      </View>
 
       <Text variant="label" tone="tertiary" style={{ marginTop: space.lg, lineHeight: 18 }}>
         Chacune aura sa version filtrée dans UnSwipe, et son app d’origine
@@ -315,15 +308,8 @@ const st = StyleSheet.create({
     backgroundColor: withAlpha(colors.mist, 0.06),
     borderWidth: 1, borderColor: withAlpha(colors.mist, 0.18),
   },
-  list: { marginTop: space.xl, paddingHorizontal: space.lg },
-  pick: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14 },
-  pickLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1) },
-  pickLogo: { width: 34, height: 34 },
-  box: {
-    width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.28),
-  },
-  boxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  list: { marginTop: space.xl, gap: space.md },
+  pickLogo: { width: 30, height: 30 },
   essential: { marginTop: space.xxl, padding: space.lg, gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
