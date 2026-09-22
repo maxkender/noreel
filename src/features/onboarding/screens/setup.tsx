@@ -135,7 +135,14 @@ export function Distractions({ onNext }: P) {
 }
 
 /* ---------- Apps essentielles ---------- */
-const ESSENTIAL = ['Téléphone', 'Messages', 'Plans', 'Santé', 'Réglages'];
+const ESSENTIAL = [
+  { n: 'Messages', src: require('@/assets/essential/messages.png') },
+  { n: 'WhatsApp', src: require('@/assets/essential/whatsapp.png') },
+  { n: 'Plans', src: require('@/assets/essential/maps.png') },
+  { n: 'Calendrier', src: require('@/assets/essential/calendar.png') },
+  { n: 'Gmail', src: require('@/assets/essential/gmail.png') },
+  { n: 'Outlook', src: require('@/assets/essential/outlook.png') },
+] as const;
 
 export function Essentials({ onNext }: P) {
   return (
@@ -146,11 +153,16 @@ export function Essentials({ onNext }: P) {
 
       <Glass radius={26} intensity={50} warmEdge="none" style={st.essential}>
         <Text variant="label" tone="tertiary">TOUJOURS AUTORISÉ</Text>
-        <View style={st.chips}>
-          {ESSENTIAL.map((n) => (
-            <View key={n} style={st.chip}>
-              <Text variant="label" tone="secondary">{n}</Text>
-            </View>
+        <View style={st.essGrid}>
+          {ESSENTIAL.map((a, i) => (
+            <Animated.View
+              key={a.n}
+              entering={FadeIn.delay(160 + i * 90).duration(420)}
+              style={st.essTile}
+            >
+              <Image source={a.src} style={st.essIcon} contentFit="contain" />
+              <Text variant="label" tone="secondary" numberOfLines={1}>{a.n}</Text>
+            </Animated.View>
           ))}
         </View>
       </Glass>
@@ -344,12 +356,13 @@ const st = StyleSheet.create({
   list: { marginTop: space.xl, gap: space.md },
   pickLogo: { width: 30, height: 30 },
   essential: { marginTop: space.xxl, padding: space.lg, gap: space.md },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: {
-    paddingHorizontal: space.md, paddingVertical: 7, borderRadius: 999,
-    backgroundColor: withAlpha(colors.mist, 0.07),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.14),
+  essGrid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    justifyContent: 'space-between', rowGap: space.lg,
   },
+  // Trois par ligne : les six tiennent sur deux rangees sans serrer.
+  essTile: { width: '31%', alignItems: 'center', gap: 6 },
+  essIcon: { width: 52, height: 52 },
   phone: {
     marginTop: space.xxl, alignSelf: 'center', width: 232, borderRadius: 34,
     padding: space.md, paddingTop: space.lg,
