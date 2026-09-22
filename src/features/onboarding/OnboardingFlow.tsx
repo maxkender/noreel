@@ -56,12 +56,14 @@ export function OnboardingFlow() {
     <S7 key="s7" onNext={n(7)} />,
     <Distractions key="dis" onNext={n(8)} />,
     <Essentials key="ess" onNext={n(9)} />,
-    <RulesIntro key="ri" onNext={n(10)} />,
-    <RulesPick key="rp" onNext={n(11)} />,
-    <Permissions key="perm" onDone={n(12)} />,
-    <NotificationsAsk key="notif" onNext={n(13)} />,
-    <PromiseScreen key="pro" onNext={n(14)} />,
-    <Paywall key="pw" onDone={finish} />,
+    <Permissions key="perm" onDone={n(10)} />,
+    <NotificationsAsk key="notif" onNext={n(11)} />,
+    <PromiseScreen key="pro" onNext={n(12)} />,
+    <Paywall key="pw" onDone={n(13)} />,
+    // Les regles viennent en dernier : une fois le compte pret, elles ont
+    // un sens ; avant, c'est un reglage de plus a subir.
+    <RulesIntro key="ri" onNext={n(14)} />,
+    <RulesPick key="rp" onNext={finish} />,
   ];
 
   const bar = step > 0 ? (

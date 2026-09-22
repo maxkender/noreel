@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
@@ -84,8 +83,6 @@ function Cell({
   return (
     <Pressable onPress={() => innerRef.current?.focus()}>
       <Animated.View style={[st.cell, shell]}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={st.cellTint} />
         <Animated.View style={[st.glow, glow]} pointerEvents="none" />
         <Animated.View style={[st.ring, lit]} pointerEvents="none" />
         <TextInput
@@ -108,25 +105,22 @@ const st = StyleSheet.create({
   root: { alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', gap: space.md },
   cell: {
-    width: 92, height: 116, borderRadius: 24, overflow: 'hidden',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.14),
+    width: 68, height: 84, borderRadius: 18, overflow: 'hidden',
+    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.16),
     alignItems: 'center', justifyContent: 'center',
   },
   ring: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 24, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.7),
+    borderRadius: 18, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.7),
   },
-  cellTint: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.05),
-  },
+  // Une lueur tres diluee au focus : la case reste vide, elle ne se remplit pas.
   glow: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.accent, 0.14),
+    backgroundColor: withAlpha(colors.accent, 0.07),
   },
   input: {
     width: '100%', height: '100%', textAlign: 'center',
-    fontFamily: 'SansBold', fontSize: 52, color: colors.mist,
+    fontFamily: 'SansBold', fontSize: 38, color: colors.mist,
   },
   hint: { letterSpacing: 3 },
 });

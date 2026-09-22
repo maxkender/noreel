@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  Easing, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
 import type { LucideIcon } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
@@ -33,12 +33,26 @@ export function NavBar<T extends string>({
   const index = Math.max(0, tabs.findIndex(([k]) => k === value));
 
   const x = useSharedValue(index * cell);
-  useEffect(() => { x.value = withSpring(index * cell, springs.gentle); }, [index, cell, x]);
+  const pop = useSharedValue(0);
+
+  useEffect(() => {
+    x.value = withSpring(index * cell, springs.gentle);
+    // La pastille gonfle puis se repose : le changement de page se voit.
+    pop.value = withSequence(
+      withTiming(1, { duration: 160, easing: Easing.out(Easing.quad) }),
+      withSpring(0, springs.bouncy)
+    );
+  }, [index, cell, x, pop]);
 
   const pill = useAnimatedStyle(() => ({
     width: cell,
-    transform: [{ translateX: x.value }],
+    transform: [
+      { translateX: x.value },
+      { scaleX: 1 + pop.value * 0.06 },
+      { scaleY: 1 + pop.value * 0.12 },
+    ],
   }));
+  const halo = useAnimatedStyle(() => ({ opacity: pop.value * 0.55 }));
 
   return (
     <View style={st.wrap} pointerEvents="box-none">
@@ -68,6 +82,8 @@ export function NavBar<T extends string>({
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
+          {/* Eclat bref au moment du changement. */}
+          <Animated.View style={[StyleSheet.absoluteFill, st.flash, halo]} />
         </Animated.View>
 
         {tabs.map(([key, label, Icon]) => (
@@ -133,5 +149,6 @@ const st = StyleSheet.create({
     borderRadius: 22, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.accent, 0.4),
   },
+  flash: { backgroundColor: withAlpha(colors.mist, 0.3) },
   tab: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: space.sm },
 });

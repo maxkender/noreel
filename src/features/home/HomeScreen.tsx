@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
@@ -23,6 +23,7 @@ import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, Pill } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
+import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
 import { Referral } from './Referral';
 import { Settings } from './Settings';
@@ -49,15 +50,27 @@ export function HomeScreen() {
     <View style={st.root}>
       <Glow />
       <Stars />
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {/* Epinglee : la marque, la serie et le profil ne defilent jamais. */}
-        <Header streak={streak} onProfile={() => { setTab('account'); }} />
+      {/* Le contenu passe SOUS l'en-tete et s'y efface : c'est le fondu qui
+          tient les deux ensemble, pas une barre posee au-dessus. */}
+      <Animated.View
+        key={tab}
+        entering={FadeInDown.duration(340).springify().damping(20)}
+        style={{ flex: 1 }}
+      >
+        {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
+        {tab === 'block' && <BlockTab />}
+        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+      </Animated.View>
 
-        <Animated.View key={tab} entering={FadeIn.duration(260)} style={{ flex: 1 }}>
-          {tab === 'home' && <HomeTab streak={streak} onSettings={() => setSettings(true)} />}
-          {tab === 'block' && <BlockTab />}
-          {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
-        </Animated.View>
+      <LinearGradient
+        colors={[colors.night, colors.night, withAlpha(colors.night, 0.9), 'transparent']}
+        locations={[0, 0.55, 0.78, 1]}
+        style={st.veil}
+        pointerEvents="none"
+      />
+
+      <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
+        <Header streak={streak} onProfile={() => { setTab('account'); }} />
       </SafeAreaView>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -90,7 +103,9 @@ function HomeTab({ streak, onSettings }: { streak: number; onSettings: () => voi
 
   return (
     <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-      {/* Bandeau de chiffres : la meme information que les anneaux, en une ligne. */}
+      <ScreenTime minutes={perApp} />
+
+      {/* Bandeau de chiffres : serie et objectif, en une ligne. */}
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
         <Stat label="Récupéré" value={formatHours(today.reclaimedMinutes)} />
         <View style={st.stripLine} />
@@ -354,5 +369,8 @@ const st = StyleSheet.create({
   },
   statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   root: { flex: 1, backgroundColor: colors.night },
-  scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
+  // La marge haute laisse passer le contenu sous l'en-tete flottante.
+  scroll: { paddingHorizontal: gutter, paddingTop: 108, paddingBottom: 130, gap: space.md },
+  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 132 },
+  headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

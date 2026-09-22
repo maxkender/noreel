@@ -21,7 +21,8 @@ export const colors = {
   fog: '#6B7280',
   accentSoft: '#B9C0F52E',   // halo haut, tres dilue
   accentFaint: '#B9C0F512',
-  danger: '#FF5A5F',      // le temps perdu, uniquement ici
+  danger: '#FF5A5F',       // le temps perdu, uniquement ici
+  ember: '#FF8A4C',        // orange : le halo des deux ecrans qui pesent
   ground: '#000000',
 } as const;
 

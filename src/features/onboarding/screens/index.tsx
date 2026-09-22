@@ -180,7 +180,7 @@ export function S6({ onNext }: P) {
   const done = lit >= target;
 
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done} hue="danger">
+    <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!done} hue="ember">
       <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
       <View style={s.hundredWrap}>
@@ -191,14 +191,23 @@ export function S6({ onNext }: P) {
         </View>
       </View>
 
-      <Text variant="hero" style={[s.center, s.pct]} numberOfLines={1} adjustsFontSizeToFit>
+      <Text
+        variant="hero"
+        color={colors.danger}
+        style={[s.center, s.pct]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
         {lit} %
       </Text>
 
       {done && (
-        <Animated.View entering={FadeIn.duration(900)}>
+        <Animated.View entering={FadeIn.duration(900)} style={s.years}>
+          <Text variant="displayL" color={colors.danger} style={s.center}>
+            {t(d.s6.years, { y: Math.round(years) })}
+          </Text>
           <Text variant="body" tone="secondary" style={s.center}>
-            {t(d.s6.body, { y: Math.round(years) })}
+            {d.s6.bodyShort}
           </Text>
         </Animated.View>
       )}
@@ -223,16 +232,17 @@ export function S7({ onNext }: P) {
   const { d } = useT();
   const [i, setI] = useState(0);
 
-  const steps = [
-    [d.brain.intro, d.brain.introSub],
+  // Trois symptomes, un fait qui frappe, une sortie. Pas d'ecran d'accroche
+  // et pas de rappel des etapes passees : la ligne de temps du haut suffit.
+  const steps: [string, string, string?][] = [
     [d.brain.step1, d.brain.step1b],
     [d.brain.step2, d.brain.step2b],
     [d.brain.step3, d.brain.step3b],
-    [d.brain.fix, ''],
+    [d.brain.love, d.brain.loveSub, d.brain.loveCite],
+    [d.brain.fix, d.brain.loveEnd],
   ];
   const last = i >= steps.length - 1;
-  // Le rouge monte a chaque symptome, puis retombe quand arrive la sortie.
-  const harm = last ? 0 : i / (steps.length - 1);
+  const harm = last ? 0 : (i + 1) / steps.length;
 
   return (
     <Screen
@@ -241,25 +251,9 @@ export function S7({ onNext }: P) {
       tapToContinue
       hintDelay={2400}
       center
-      hue="danger"
+      hue="ember"
     >
       <Harm level={harm} on={last} />
-
-      {/* La trace de ce qui precede reste visible, en petit et en rouge :
-          une seule ligne de temps, celle du haut de l'ecran. */}
-      <View style={s.trace}>
-        {steps.slice(0, i).map(([t], k) => (
-          <Animated.View key={t} entering={FadeIn.duration(400)}>
-            <Text
-              variant="label"
-              color={withAlpha(last ? colors.accent : colors.danger, 0.3 + k * 0.12)}
-              numberOfLines={1}
-            >
-              {t}
-            </Text>
-          </Animated.View>
-        ))}
-      </View>
 
       <Animated.View key={i} entering={FadeIn.duration(500)}>
         <Typewriter
@@ -275,12 +269,19 @@ export function S7({ onNext }: P) {
             </Text>
           </Animated.View>
         ) : null}
+        {steps[i][2] ? (
+          <Animated.View entering={FadeIn.delay(1500).duration(500)}>
+            <Text variant="label" tone="tertiary" style={[s.center, { marginTop: space.lg }]}>
+              {steps[i][2]}
+            </Text>
+          </Animated.View>
+        ) : null}
       </Animated.View>
     </Screen>
   );
 }
 
-/** Halo rouge qui grandit avec les degats, et vire a l'accent a la fin. */
+/** Halo orange qui grandit avec les degats, et s'eteint a la sortie. */
 function Harm({ level, on }: { level: number; on: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => {
@@ -292,7 +293,7 @@ function Harm({ level, on }: { level: number; on: boolean }) {
   return (
     <Animated.View style={[s.harm, style]} pointerEvents="none">
       <LinearGradient
-        colors={[withAlpha(colors.danger, 0.34), withAlpha(colors.danger, 0.08), 'transparent']}
+        colors={[withAlpha(colors.ember, 0.36), withAlpha(colors.danger, 0.1), 'transparent']}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -314,13 +315,13 @@ const s = StyleSheet.create({
   },
   square: { width: 20.5, height: 20.5, borderRadius: 4 },
   pct: { marginTop: 0, marginBottom: space.sm },
+  years: { alignItems: 'center', gap: space.xs },
   squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
   chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
   center: { textAlign: 'center' },
-  trace: { alignItems: 'center', gap: 2, marginBottom: space.xl, minHeight: 60 },
   harm: { position: 'absolute', top: -200, left: -60, right: -60, height: 460 },
   mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },

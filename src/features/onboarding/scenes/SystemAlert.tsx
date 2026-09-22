@@ -11,16 +11,22 @@ import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 
 // Geometrie d'une UIAlertController sur iPhone : 270 pt de large, centree
-// dans la fenetre, boutons de 44 pt cote a cote. Ces valeurs ne dependent
-// pas du modele — c'est ce qui permet de poser la maquette exactement la
-// ou la vraie alerte apparaitra, sur n'importe quel telephone.
+// dans la fenetre, boutons de 44 pt cote a cote, separateurs fins, titre a
+// 17 pt et message a 13 pt. Ces valeurs ne dependent pas du modele — c'est
+// ce qui permet de poser la maquette exactement la ou la vraie alerte
+// apparaitra, sur n'importe quel telephone.
 const W = 270;
 const BTN_H = 44;
+const IOS_BLUE = '#0A84FF';   // couleur des actions en mode sombre
 
 /**
- * Maquette de l'alerte systeme. Le bouton a presser est ici au pixel pres
- * la ou sera celui de la vraie alerte : le doigt n'a pas a se deplacer, et
- * personne ne tape le bouton bleu par reflexe.
+ * Maquette de l'alerte systeme, au plus pres de celle d'Apple : meme
+ * largeur, meme materiau, memes tailles de texte, et les DEUX actions en
+ * bleu — c'est ainsi qu'iOS les dessine.
+ *
+ * Comme rien ne distingue alors le bon bouton, une pulsation et une fleche
+ * le designent. Le doigt se pose au bon endroit avant meme que la vraie
+ * alerte s'ouvre, et elle s'ouvre exactement dessous.
  */
 export function SystemAlert({
   title, body, good, bad, goodSide = 'left', onGood, onBad,
@@ -36,17 +42,22 @@ export function SystemAlert({
   const pulse = useSharedValue(0);
 
   useEffect(() => {
-    pulse.value = withDelay(900, withRepeat(
+    pulse.value = withDelay(800, withRepeat(
       withSequence(
-        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0, { duration: 900, easing: Easing.inOut(Easing.sin) })
+        withTiming(1, { duration: 620, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 40 }),
+        withTiming(0, { duration: 520 })
       ), -1, false
     ));
   }, [pulse]);
 
-  const ring = useAnimatedStyle(() => ({
-    opacity: 0.35 + pulse.value * 0.55,
-    transform: [{ scale: 1 + pulse.value * 0.03 }],
+  // L'onde part du bouton et s'evanouit : le geste est montre, pas decrit.
+  const ripple = useAnimatedStyle(() => ({
+    opacity: (1 - pulse.value) * 0.5,
+    transform: [{ scale: 0.6 + pulse.value * 0.55 }],
+  }));
+  const lift = useAnimatedStyle(() => ({
+    opacity: 0.25 + (1 - pulse.value) * 0.35,
   }));
 
   const buttons: { label: string; on: boolean }[] = goodSide === 'left'
@@ -55,13 +66,13 @@ export function SystemAlert({
 
   return (
     <View style={st.layer} pointerEvents="box-none">
-      <Animated.View entering={FadeIn.delay(350).duration(520)} style={st.alert}>
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={st.tint} />
+      <Animated.View entering={FadeIn.delay(300).duration(520)} style={st.alert}>
+        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={st.material} />
 
         <View style={st.copy}>
           <Text variant="title" style={st.title}>{title}</Text>
-          <Text variant="body" tone="secondary" style={st.body}>{body}</Text>
+          <Text variant="body" style={st.body} tone="primary">{body}</Text>
         </View>
 
         <View style={st.sep} />
@@ -69,6 +80,14 @@ export function SystemAlert({
           {buttons.map((b, i) => (
             <View key={b.label} style={st.cell}>
               {i === 1 && <View style={st.vsep} />}
+
+              {b.on && (
+                <>
+                  <Animated.View style={[st.ripple, ripple]} pointerEvents="none" />
+                  <Animated.View style={[st.lift, lift]} pointerEvents="none" />
+                </>
+              )}
+
               <Pressable
                 onPress={() => { haptics.press(); (b.on ? onGood : onBad ?? onGood)(); }}
                 style={st.btn}
@@ -79,22 +98,19 @@ export function SystemAlert({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.7}
-                  color={b.on ? colors.mist : withAlpha('#5A8CFF', 0.65)}
+                  color={IOS_BLUE}
+                  style={st.action}
                 >
                   {b.label}
                 </Text>
               </Pressable>
-              {/* Le halo ne designe que le bon bouton. */}
-              {b.on && (
-                <Animated.View style={[st.ring, ring]} pointerEvents="none" />
-              )}
             </View>
           ))}
         </View>
       </Animated.View>
 
       <Animated.View
-        entering={FadeIn.delay(1200).duration(600)}
+        entering={FadeIn.delay(1100).duration(600)}
         style={[st.arrow, goodSide === 'right' && st.arrowRight]}
         pointerEvents="none"
       >
@@ -112,28 +128,32 @@ const st = StyleSheet.create({
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
   },
-  alert: {
-    width: W, borderRadius: 14, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.1),
-  },
-  tint: {
+  alert: { width: W, borderRadius: 14, overflow: 'hidden' },
+  // Le materiau d'iOS en mode sombre : presque opaque, legerement froid.
+  material: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(38,38,42,0.86)',
+    backgroundColor: 'rgba(30,30,32,0.82)',
   },
-  copy: { paddingHorizontal: 16, paddingTop: 19, paddingBottom: 16, gap: 4 },
-  title: { textAlign: 'center' },
-  body: { textAlign: 'center', lineHeight: 18 },
-  sep: { height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.18) },
+  copy: { paddingHorizontal: 16, paddingTop: 19, paddingBottom: 18, gap: 4 },
+  title: { textAlign: 'center', fontSize: 17, lineHeight: 22 },
+  body: { textAlign: 'center', fontSize: 13, lineHeight: 17 },
+  sep: { height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.22) },
   row: { flexDirection: 'row', height: BTN_H },
-  cell: { flex: 1 },
+  cell: { flex: 1, overflow: 'hidden' },
   vsep: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.18),
+    width: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.22),
     zIndex: 2,
   },
   btn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  ring: {
-    position: 'absolute', top: 2, left: 4, right: 4, bottom: 2, borderRadius: 10,
+  action: { fontSize: 17, lineHeight: 22 },
+  lift: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(colors.accent, 0.2),
+  },
+  ripple: {
+    position: 'absolute', alignSelf: 'center', top: -22,
+    width: 88, height: 88, borderRadius: 44,
     borderWidth: 2, borderColor: colors.accent,
   },
   // Sous l'alerte, pointant vers le bouton de gauche.

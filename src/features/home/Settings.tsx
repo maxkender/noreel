@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, View,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { SlideInDown } from 'react-native-reanimated';
@@ -13,6 +15,10 @@ import { formatHours, lang } from '@/lib/format';
 import { useSettings } from '@/store/settings';
 import { useOnboardingStore } from '@/store/onboarding';
 import { Toggle } from './parts';
+import {
+  FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
+  type AuthState,
+} from '@/services/shield.real';
 
 const GOALS = [60, 90, 120, 180, 240];
 
@@ -23,6 +29,9 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const s = useSettings();
   const reset = useOnboardingStore((x) => x.reset);
   const [cleared, setCleared] = useState(false);
+  const [auth, setAuth] = useState<AuthState>('notDetermined');
+
+  useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -40,6 +49,32 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+            <Group title="Blocage" />
+            <Line
+              label="Temps d’écran"
+              sub={auth === 'approved'
+                ? 'Autorisé. UnSwipe peut mettre les apps en pause.'
+                : 'Nécessaire pour bloquer les apps d’origine.'}
+              right={
+                <Text variant="label" color={auth === 'approved' ? colors.accent : colors.mist}>
+                  {auth === 'approved' ? 'OK' : 'Activer'}
+                </Text>
+              }
+              onPress={auth === 'approved' || !FAMILY_CONTROLS_ENABLED
+                ? () => void Linking.openSettings()
+                : () => { void requestAuthorization().then(setAuth); }}
+            />
+            <Line
+              label="Apps toujours autorisées"
+              sub="Téléphone, Plans, Santé : jamais bloquées."
+              onPress={() => void Linking.openSettings()}
+            />
+            <Line
+              label="Notifications"
+              sub="Le résumé hebdomadaire."
+              onPress={() => void Linking.openSettings()}
+            />
+
             <Group title="Objectif quotidien" />
             <View style={st.chips}>
               {GOALS.map((g) => {
@@ -93,6 +128,21 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             <Line
               label="Réglages iOS de UnSwipe"
               onPress={() => void Linking.openSettings()}
+            />
+
+            <Group title="À propos" />
+            <Line
+              label="Partager UnSwipe"
+              sub="Ton code de parrainage est dans l’onglet Compte."
+              onPress={() => {
+                void Share.share({
+                  message: 'UnSwipe : Instagram, TikTok, X et YouTube sans les reels.',
+                });
+              }}
+            />
+            <Line
+              label="Confidentialité"
+              sub="Rien ne quitte ton téléphone. Aucun compte, aucun serveur."
             />
             <Line label="Version" right={
               <Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>

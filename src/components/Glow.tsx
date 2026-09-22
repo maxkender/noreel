@@ -3,16 +3,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 
-export type Hue = 'accent' | 'deep' | 'warm' | 'danger';
+export type Hue = 'accent' | 'deep' | 'warm' | 'danger' | 'ember';
 
-// Les trois teintes de la marque, plus le rouge reserve au moment qui fait
-// mal. Changer de teinte d'un ecran a l'autre casse la monotonie sans
-// sortir de la palette.
+// Les trois teintes de la marque, plus le rouge et l'orange reserves aux
+// moments qui pesent. Changer de teinte d'un ecran a l'autre casse la
+// monotonie sans sortir de la palette.
 const HUES: Record<Hue, string> = {
   accent: colors.accent,
   deep: colors.accentDeep,
   warm: colors.accentWarm,
   danger: colors.danger,
+  ember: colors.ember,
 };
 
 /** Halo haut en degrade. Sans Skia : rien a compiler, rien qui puisse tomber. */

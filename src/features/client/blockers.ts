@@ -10,21 +10,31 @@ export function buildScript(base: string, settings: Record<string, boolean>): st
 }
 
 const COMMON = `
-  let __q = false;
+  /**
+   * Instagram remanie son DOM en permanence. Avec un requestAnimationFrame,
+   * le nettoyage repassait SOIXANTE fois par seconde sur toute la page :
+   * le fil devenait injouable, plus rien ne repondait au doigt. On attend
+   * desormais 300 ms de calme avant de repasser, et une erreur dans le
+   * nettoyage n'arrete plus le reste.
+   */
+  let __t = null;
   const __schedule = (fn) => {
-    if (__q) return;
-    __q = true;
-    requestAnimationFrame(() => { __q = false; fn(); });
+    if (__t) return;
+    __t = setTimeout(() => {
+      __t = null;
+      try { fn(); } catch (e) { /* une passe ratee n'est pas grave */ }
+    }, 300);
   };
   const __watch = (fn) => {
     new MutationObserver(() => __schedule(fn))
-      .observe(document.documentElement, { childList: true, subtree: true });
+      .observe(document.body || document.documentElement, { childList: true, subtree: true });
     for (const m of ['pushState', 'replaceState']) {
       const o = history[m];
       history[m] = function (...a) { const r = o.apply(this, a); __schedule(fn); return r; };
     }
     addEventListener('popstate', () => __schedule(fn));
-    __schedule(fn);
+    // La premiere passe est immediate : pas de flash de contenu.
+    try { fn(); } catch (e) { /* idem */ }
   };
   const __hide = (el) => el && el.style.setProperty('display', 'none', 'important');
   const __on = (k) => !!(window.__NR && window.__NR[k]);
@@ -68,8 +78,15 @@ const COMMON = `
   };
 
   // On insiste 12 s : le dialogue arrive parfois apres le premier rendu.
-  const __cookies = () => { if (__tries < 40) { __tries += 1; __clickDecline(); } };
-  setInterval(__cookies, 300);
+  // Passe ce delai l'intervalle est COUPE — le laisser tourner pour ne rien
+  // faire, c'est du travail inutile soixante fois par minute.
+  let __ci = 0;
+  const __cookies = () => {
+    if (__tries >= 40) { if (__ci) { clearInterval(__ci); __ci = 0; } return; }
+    __tries += 1;
+    try { __clickDecline(); } catch (e) { /* on reessaiera */ }
+  };
+  __ci = setInterval(__cookies, 300);
 
   // On ne redirige JAMAIS pendant un parcours de connexion : le faire
   // casse le formulaire, et l'utilisateur ne reste jamais connecte.

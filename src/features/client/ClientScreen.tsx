@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Platform, Pressable, StyleSheet, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
+import { RotateCw, X } from 'lucide-react-native';
 import { colors } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
@@ -45,6 +45,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Chien de garde : si la page n'a rien rendu au bout de 12 s, on propose
+  // de recharger plutot que de laisser l'utilisateur devant un ecran mort.
+  const [stuck, setStuck] = useState(false);
+
+  useEffect(() => {
+    if (ready) { setStuck(false); return; }
+    const id = setTimeout(() => setStuck(true), 12000);
+    return () => clearTimeout(id);
+  }, [ready]);
+
+  const reload = useCallback(() => {
+    haptics.tap();
+    setError(null);
+    setReady(false);
+    setStuck(false);
+    web.current?.reload();
+  }, []);
 
   /**
    * Sortie unique. `router.back()` seul ne fait RIEN quand la pile n'a pas
@@ -94,7 +111,15 @@ export function ClientScreen({ id }: { id: ClientId }) {
           <Text variant="label" tone="secondary" style={styles.host}>
             {LABELS[id]}
           </Text>
-          <View style={styles.closeSpacer} />
+          <Pressable
+            onPress={reload}
+            hitSlop={20}
+            style={styles.icon}
+            accessibilityRole="button"
+            accessibilityLabel="Recharger"
+          >
+            <RotateCw size={17} strokeWidth={2.2} color={colors.mist} />
+          </Pressable>
         </View>
       </SafeAreaView>
 
@@ -126,6 +151,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
+
+      {stuck && !error && (
+        <Pressable style={styles.stuck} onPress={reload}>
+          <RotateCw size={15} strokeWidth={2.2} color={colors.night} />
+          <Text variant="label" color={colors.night}>Ça bloque ? Recharger</Text>
+        </Pressable>
+      )}
 
       {!ready && !error && (
         <View style={styles.overlay} pointerEvents="none">
@@ -160,7 +192,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },
-  closeSpacer: { width: 92 },
+  icon: {
+    width: 38, height: 38, borderRadius: 19,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+  },
+  stuck: {
+    position: 'absolute', bottom: 108, alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    backgroundColor: colors.accent,
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
   host: { flex: 1, textAlign: 'center' },
   web: { flex: 1, backgroundColor: colors.night },
   overlay: {
