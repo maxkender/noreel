@@ -75,10 +75,10 @@ function Cell({
   const on = useSharedValue(active ? 1 : 0);
   useEffect(() => { on.value = withSpring(active ? 1 : 0, springs.snappy); }, [active, on]);
 
-  const shell = useAnimatedStyle(() => ({
-    borderColor: active ? withAlpha(colors.accent, 0.7) : withAlpha(colors.mist, 0.14),
-    transform: [{ scale: 1 + on.value * 0.03 }],
-  }));
+  // Aucune couleur animee : le liseré actif est un calque qu'on allume.
+  // Animer borderColor faisait quitter l'app a l'arrivee sur cet ecran.
+  const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 + on.value * 0.03 }] }));
+  const lit = useAnimatedStyle(() => ({ opacity: on.value }));
   const glow = useAnimatedStyle(() => ({ opacity: on.value * 0.5 }));
 
   return (
@@ -87,6 +87,7 @@ function Cell({
         <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={st.cellTint} />
         <Animated.View style={[st.glow, glow]} pointerEvents="none" />
+        <Animated.View style={[st.ring, lit]} pointerEvents="none" />
         <TextInput
           ref={innerRef}
           value={value}
@@ -108,7 +109,12 @@ const st = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.md },
   cell: {
     width: 92, height: 116, borderRadius: 24, overflow: 'hidden',
-    borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.14),
+    alignItems: 'center', justifyContent: 'center',
+  },
+  ring: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 24, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.7),
   },
   cellTint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,

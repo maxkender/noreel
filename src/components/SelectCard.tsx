@@ -85,10 +85,12 @@ export function SelectCard({
         {sub ? <Text variant="label" tone="tertiary">{sub}</Text> : null}
       </View>
 
-      <View style={[st.dot, shape === 'check' && st.box]}>
-        <Animated.View style={[StyleSheet.absoluteFill, st.fill, lit]} />
+      {/* Toujours rond, jamais rogne : le disque plein est un calque pose
+          dessous, la coche vit au-dessus sans etre coupee. */}
+      <View style={st.dot}>
+        <Animated.View style={[st.fill, lit]} pointerEvents="none" />
         <Animated.View style={tick}>
-          <Check size={13} strokeWidth={3.2} color={colors.night} />
+          <Check size={15} strokeWidth={3} color={colors.night} />
         </Animated.View>
       </View>
     </A>
@@ -114,10 +116,12 @@ const st = StyleSheet.create({
   lead: { minWidth: 30, alignItems: 'center' },
   text: { flex: 1, gap: 1 },
   dot: {
-    width: 24, height: 24, borderRadius: 12, overflow: 'hidden',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.28),
+    width: 26, height: 26, borderRadius: 13,
+    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.26),
     alignItems: 'center', justifyContent: 'center',
   },
-  box: { borderRadius: 8 },
-  fill: { backgroundColor: colors.accent },
+  fill: {
+    position: 'absolute', top: -1.5, left: -1.5, right: -1.5, bottom: -1.5,
+    borderRadius: 13, backgroundColor: colors.accent,
+  },
 });
