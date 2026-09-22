@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Animated, {
-  FadeInDown, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
+  FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
 } from 'react-native-reanimated';
 import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
@@ -42,9 +43,12 @@ export function HomeScreen() {
   // Le fondu n'existe que lorsqu'il y a quelque chose a masquer.
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
-  const veil = useAnimatedStyle(() => ({
-    opacity: Math.min(1, Math.max(0, y.value / 36)),
-  }));
+  const veil = useAnimatedStyle(() => {
+    // Rampe adoucie : une simple division donnait un depart sec et une fin
+    // brutale. Ici l'apparition demarre doucement et se pose.
+    const t = Math.min(1, Math.max(0, y.value / 70));
+    return { opacity: t * t * (3 - 2 * t) };
+  });
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
 
@@ -62,7 +66,7 @@ export function HomeScreen() {
           tient les deux ensemble, pas une barre posee au-dessus. */}
       <Animated.View
         key={tab}
-        entering={FadeInDown.duration(340).springify().damping(20)}
+        entering={FadeIn.duration(220)}
         style={{ flex: 1 }}
       >
         {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} onSettings={() => setSettings(true)} />}
@@ -71,11 +75,10 @@ export function HomeScreen() {
       </Animated.View>
 
       <Animated.View style={[st.veil, veil]} pointerEvents="none">
-        <LinearGradient
-          colors={[colors.night, colors.night, withAlpha(colors.night, 0.9), 'transparent']}
-          locations={[0, 0.55, 0.78, 1]}
-          style={StyleSheet.absoluteFill}
-        />
+        {/* Le flou fait le lien, le degrade efface la couture. Sept paliers
+            au lieu de quatre : en dessous, la fin du degrade se voyait comme
+            une bande. */}
+        <MaskedFade />
       </Animated.View>
 
       <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
@@ -86,7 +89,14 @@ export function HomeScreen() {
 
       {/* Le contenu se dissout avant d'atteindre la barre. */}
       <LinearGradient
-        colors={['transparent', withAlpha(colors.night, 0.85), colors.night]}
+        colors={[
+          'transparent',
+          withAlpha(colors.night, 0.14),
+          withAlpha(colors.night, 0.46),
+          withAlpha(colors.night, 0.8),
+          colors.night,
+        ]}
+        locations={[0, 0.2, 0.45, 0.72, 1]}
         style={st.hem}
         pointerEvents="none"
       />
@@ -96,6 +106,28 @@ export function HomeScreen() {
       {/* La lame de verre passe a chaque changement d'onglet. */}
       <GlassSweep key={tab} />
     </View>
+  );
+}
+
+/** Flou + degrade a sept paliers : la transition ne laisse aucune couture. */
+function MaskedFade() {
+  return (
+    <>
+      <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={[
+          colors.night,
+          colors.night,
+          withAlpha(colors.night, 0.94),
+          withAlpha(colors.night, 0.76),
+          withAlpha(colors.night, 0.44),
+          withAlpha(colors.night, 0.14),
+          'transparent',
+        ]}
+        locations={[0, 0.4, 0.54, 0.68, 0.8, 0.91, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+    </>
   );
 }
 
@@ -406,7 +438,7 @@ const st = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },
   // La marge haute laisse passer le contenu sous l'en-tete flottante.
   scroll: { paddingHorizontal: gutter, paddingTop: 108, paddingBottom: 130, gap: space.md },
-  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 132 },
+  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 176 },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
   headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

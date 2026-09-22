@@ -10,6 +10,19 @@ export function buildScript(base: string, settings: Record<string, boolean>): st
 }
 
 const COMMON = `
+  const __post = (o) => {
+    try { window.ReactNativeWebView.postMessage(JSON.stringify(o)); } catch (e) {}
+  };
+  addEventListener('error', (e) => __post({
+    t: 'err',
+    m: String((e && e.message) || e),
+    src: String((e && e.filename) || ''),
+    l: (e && e.lineno) || 0,
+  }));
+  addEventListener('unhandledrejection', (e) => __post({
+    t: 'rej', m: String((e && e.reason && e.reason.message) || (e && e.reason) || ''),
+  }));
+
   /**
    * Instagram remanie son DOM en permanence. Avec un requestAnimationFrame,
    * le nettoyage repassait SOIXANTE fois par seconde sur toute la page :
@@ -118,14 +131,12 @@ export const INSTAGRAM_BLOCKER = `
   'use strict';
   ${COMMON}
 
-  // Reels et Explorer sont coupes en permanence : c'est la promesse de l'app,
-  // les deux interrupteurs correspondants sont verrouilles cote reglages.
+  // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
+  // masque : lui couper l'icone emportait aussi la recherche, et le site
+  // paraissait casse.
   const css = \`
-    a[href^="/reels"], a[href$="/reels/"], a[href^="/explore"],
-    svg[aria-label="Reels" i],
-    svg[aria-label="Explorer" i], svg[aria-label="Explore" i],
-    svg[aria-label="Rechercher et explorer" i],
-    svg[aria-label="Search and explore" i] { display: none !important; }
+    a[href^="/reels"], a[href$="/reels/"],
+    svg[aria-label="Reels" i] { display: none !important; }
   \`;
   const style = document.createElement('style');
   style.textContent = css;

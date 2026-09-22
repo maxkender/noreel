@@ -48,6 +48,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // Chien de garde : si la page n'a rien rendu au bout de 12 s, on propose
   // de recharger plutot que de laisser l'utilisateur devant un ecran mort.
   const [stuck, setStuck] = useState(false);
+  // Mode degrade : la page servie telle quelle, sans notre script. C'est la
+  // sortie quand le filtre casse le site, et le test qui dit lequel des deux
+  // est en cause.
+  const [raw, setRaw] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (ready) { setStuck(false); return; }
@@ -61,6 +66,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
     setReady(false);
     setStuck(false);
     web.current?.reload();
+  }, []);
+
+  const toggleRaw = useCallback(() => {
+    haptics.press();
+    setPageError(null);
+    setReady(false);
+    setStuck(false);
+    setRaw((v) => !v);
   }, []);
 
   /**
@@ -78,12 +91,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
     try {
       const { hostname, pathname } = new URL(req.url);
       if (hostname.endsWith(client.host) && client.blocked(pathname)) {
-        // On renvoie vers la page saine plutot que `history.back()` : sans
-        // historique, revenir en arriere ne menait nulle part et laissait
-        // un ecran blanc dont on ne pouvait plus sortir.
-        web.current?.injectJavaScript(
-          `location.replace(${JSON.stringify(client.url)}); true;`
-        );
+        // On annule la navigation, point. Rien d'autre.
+        //
+        // La version precedente rechargeait la page saine : sur Instagram,
+        // ou la moitie du fil mene a /reel/xxx, chaque appui renvoyait donc
+        // l'utilisateur en haut d'un fil fraichement recharge. L'app avait
+        // l'air cassee. Un reel qu'on n'ouvre pas doit simplement ne pas
+        // s'ouvrir.
         return false;
       }
     } catch {
@@ -109,7 +123,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             <Text variant="label">Quitter</Text>
           </Pressable>
           <Text variant="label" tone="secondary" style={styles.host}>
-            {LABELS[id]}
+            {raw ? 'Sans filtre' : LABELS[id]}
           </Text>
           <Pressable
             onPress={reload}
@@ -124,10 +138,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
       </SafeAreaView>
 
       <WebView
+        key={raw ? 'raw' : 'filtered'}
         ref={web}
         source={{ uri: client.url }}
         userAgent={UA}
-        injectedJavaScriptBeforeContentLoaded={script}
+        injectedJavaScriptBeforeContentLoaded={raw ? 'true;' : script}
+        onMessage={(e) => {
+          try {
+            const m = JSON.parse(e.nativeEvent.data);
+            if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
+              setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
+            }
+          } catch {
+            /* message qui ne vient pas de nous */
+          }
+        }}
         onShouldStartLoadWithRequest={guard}
         onLoadEnd={() => setReady(true)}
         onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
@@ -139,7 +164,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
         domStorageEnabled
         javaScriptEnabled
         allowsBackForwardNavigationGestures
-        pullToRefreshEnabled
+        // Sur iOS il entre en conflit avec le defilement des pages lourdes :
+        // le bouton recharger de la barre fait le meme travail sans risque.
+        pullToRefreshEnabled={Platform.OS !== 'ios'}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
         setSupportMultipleWindows={false}
@@ -152,11 +179,25 @@ export function ClientScreen({ id }: { id: ClientId }) {
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
 
-      {stuck && !error && (
-        <Pressable style={styles.stuck} onPress={reload}>
-          <RotateCw size={15} strokeWidth={2.2} color={colors.night} />
-          <Text variant="label" color={colors.night}>Ça bloque ? Recharger</Text>
-        </Pressable>
+      {(stuck || raw) && !error && (
+        <View style={styles.rescue} pointerEvents="box-none">
+          <View style={styles.rescueRow}>
+            <Pressable style={styles.stuck} onPress={reload}>
+              <RotateCw size={15} strokeWidth={2.2} color={colors.night} />
+              <Text variant="label" color={colors.night}>Recharger</Text>
+            </Pressable>
+            <Pressable style={styles.plain} onPress={toggleRaw}>
+              <Text variant="label" color={colors.mist}>
+                {raw ? 'Remettre le filtre' : 'Sans filtre'}
+              </Text>
+            </Pressable>
+          </View>
+          {pageError && (
+            <Text variant="label" tone="tertiary" numberOfLines={2} style={styles.diag}>
+              {pageError}
+            </Text>
+          )}
+        </View>
       )}
 
       {!ready && !error && (
@@ -198,13 +239,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
   },
+  rescue: { position: 'absolute', bottom: 104, left: 0, right: 0, alignItems: 'center', gap: 8 },
+  rescueRow: { flexDirection: 'row', gap: 8 },
   stuck: {
-    position: 'absolute', bottom: 108, alignSelf: 'center',
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
     backgroundColor: colors.accent,
     shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
+  },
+  plain: {
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+    backgroundColor: colors.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+  },
+  diag: {
+    maxWidth: '86%', textAlign: 'center',
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
+    backgroundColor: colors.surface,
   },
   host: { flex: 1, textAlign: 'center' },
   web: { flex: 1, backgroundColor: colors.night },
