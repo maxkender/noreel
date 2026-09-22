@@ -17,6 +17,20 @@ export type LifeStats = {
   wakingShare: number;
 };
 
+/**
+ * Part du temps EVEILLE passee sur un ecran, et son equivalent en annees de vie.
+ * On raisonne sur 16 h eveillees : dire « 12 % de ta journee » quand on dort
+ * un tiers du temps sous-estime ce que ca represente vraiment.
+ */
+export function wakingShare(minutesPerDay: number): number {
+  return Math.min(1, minutesPerDay / 60 / WAKING_HOURS);
+}
+
+/** Annees de vie eveillee passees sur un ecran, sur une vie de 80 ans. */
+export function screenYears(minutesPerDay: number): number {
+  return (minutesPerDay / 60) * 365 * LIFE_YEARS / (WAKING_HOURS * 365);
+}
+
 export function lifeStats(minutesPerDay: number, age: number): LifeStats {
   const hoursPerDay = minutesPerDay / 60;
   const totalMonths = LIFE_YEARS * MONTHS_PER_YEAR;

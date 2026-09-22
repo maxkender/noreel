@@ -72,12 +72,12 @@ export const fr = {
 
   s6: {
     pill: '{h} par jour, {n} ans',
-    title: 'Voici ta vie.',
+    title: 'Voici la part de ton {temps éveillé} passée sur un écran.',
     subtitle: `Un carreau, c'est un mois.`,
     legendLived: 'vécu',
     legendLost: 'sur ton téléphone',
     legendAhead: 'devant toi',
-    body: `sur ton téléphone d'ici tes 80 ans. Jour et nuit, sans pause. Soit {p}{nbsp}% de ton temps éveillé.`,
+    body: 'Sur une vie de 80 ans, ça représente {y} ans passés devant un écran, les yeux ouverts.',
     cta1: 'Récupérer ce temps',
     afterTitle: 'Chaque année, tu passes {h} sur Insta et TikTok. Avec ce temps, tu pourrais{nbsp}:',
     estimates: 'Estimations indicatives.',

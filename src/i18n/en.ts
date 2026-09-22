@@ -67,12 +67,12 @@ export const en: Dict = {
 
   s6: {
     pill: '{h} a day, {n} years old',
-    title: 'This is your life.',
+    title: 'Here’s the share of your {waking hours} spent on a screen.',
     subtitle: 'One square is one month.',
     legendLived: 'lived',
     legendLost: 'on your phone',
     legendAhead: 'ahead of you',
-    body: `on your phone by the time you're 80. Day and night, non-stop. That's {p}% of your waking time.`,
+    body: 'Over an 80-year life, that’s {y} years spent in front of a screen, eyes open.',
     cta1: 'Take this time back',
     afterTitle: 'Every year, you spend {h} on Insta and TikTok. With that time, you could:',
     estimates: 'Rough estimates.',

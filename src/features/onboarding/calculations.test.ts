@@ -1,5 +1,6 @@
 import {
   ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats,
+  screenYears, wakingShare,
 } from './calculations';
 
 describe('lifeStats — les six cas de référence du §9', () => {
@@ -53,5 +54,24 @@ describe('activités, pour 1 095 h/an', () => {
 
   it('les soirées sont plafonnées à 7', () => {
     expect(friendEveningsPerWeek(100)).toBe(7);
+  });
+});
+
+describe('part du temps eveille (16 h/jour)', () => {
+  it.each([
+    [60, 6],    // 1 h  -> 6 %
+    [180, 19],  // 3 h  -> 19 %
+    [480, 50],  // 8 h  -> 50 %
+    [960, 100], // 16 h -> plafonne a 100 %
+  ])('%i min/jour -> %i %% du temps eveille', (min, pct) => {
+    expect(Math.round(wakingShare(min) * 100)).toBe(pct);
+  });
+
+  it('3 h par jour = 15 ans de vie eveillee sur 80 ans', () => {
+    expect(Math.round(screenYears(180))).toBe(15);
+  });
+
+  it('4 h par jour = 20 ans', () => {
+    expect(Math.round(screenYears(240))).toBe(20);
   });
 });

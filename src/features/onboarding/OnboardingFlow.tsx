@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { SlideInRight, SlideOutLeft, FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
+import { Intro } from '@/components/Intro';
 import { S1, S2, S3, S4, S5, S6, S7, S9 } from './screens';
 import { Permissions } from './screens/Permissions';
 import { Paywall } from './screens/Paywall';
@@ -16,6 +18,7 @@ const TOTAL = 10;
 export function OnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [intro, setIntro] = useState(true);
   const persist = useOnboardingStore((s) => s.setStep);
   const complete = useOnboardingStore((s) => s.complete);
   const start = useOnboardingStore((s) => s.start);
@@ -59,8 +62,18 @@ export function OnboardingFlow() {
   return (
     <View style={styles.root}>
       <ProgressContext.Provider value={bar}>
-        {screens[step]}
+        {/* Glissement lateral entre ecrans : on sent la progression. */}
+        <Animated.View
+          key={step}
+          entering={SlideInRight.springify().damping(22).stiffness(140)}
+          exiting={SlideOutLeft.duration(220)}
+          style={StyleSheet.absoluteFill}
+        >
+          {screens[step]}
+        </Animated.View>
       </ProgressContext.Provider>
+
+      {intro && <Intro onDone={() => setIntro(false)} />}
     </View>
   );
 }

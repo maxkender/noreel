@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { springs } from '@/theme/motion';
@@ -10,8 +9,9 @@ import { Text } from './type/Text';
 const A = Animated.createAnimatedComponent(Pressable);
 
 /**
- * La lueur est DERRIERE le bouton, floue et debordante — pas une bande dessinee
- * a l'interieur. C'est ce qui fait la difference avec un bouton plat.
+ * Verre sombre, filet clair, et une ombre coloree diffuse — pas de barre
+ * dessinee : la version precedente posait un rectangle vert sous la pilule,
+ * qui se voyait comme une ligne.
  */
 export function Button({
   label, onPress, disabled, variant = 'primary',
@@ -33,21 +33,7 @@ export function Button({
   }
 
   return (
-    <View style={styles.wrap}>
-      {!disabled && (
-        <>
-          {/* Halo diffus sous le bouton : deux couches, l'une large, l'une serree. */}
-          <LinearGradient
-            colors={[withAlpha(colors.accent, 0.5), withAlpha('#6E8BFF', 0.35), 'transparent']}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.haloWide}
-            pointerEvents="none"
-          />
-          <View style={styles.haloTight} pointerEvents="none" />
-        </>
-      )}
-
+    <View style={[styles.wrap, !disabled && styles.lift]}>
       <A
         accessibilityRole="button"
         accessibilityState={{ disabled }}
@@ -57,11 +43,11 @@ export function Button({
         onPress={onPress}
         style={[styles.pill, anim, disabled && styles.off]}
       >
-        <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={styles.tint} />
+        <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[styles.tint, disabled && styles.tintOff]} />
         <Text
           variant="button"
-          color={disabled ? withAlpha(colors.mist, 0.28) : colors.mist}
+          color={disabled ? withAlpha(colors.mist, 0.3) : colors.mist}
           style={styles.label}
         >
           {label}
@@ -73,27 +59,26 @@ export function Button({
 
 const H = 58;
 const styles = StyleSheet.create({
-  wrap: { height: H },
-  haloWide: {
-    position: 'absolute', left: 14, right: 14, bottom: -6, height: H,
-    borderRadius: H / 2, opacity: 0.55,
-  },
-  haloTight: {
-    position: 'absolute', left: 40, right: 40, bottom: 2, height: 16,
-    borderRadius: 8, backgroundColor: withAlpha(colors.accent, 0.5),
-    shadowColor: colors.accent, shadowOpacity: 0.9, shadowRadius: 18,
-    shadowOffset: { width: 0, height: 0 },
+  wrap: { height: H, borderRadius: H / 2 },
+  // L'ombre coloree remplace la barre : elle deborde sans jamais dessiner de ligne.
+  lift: {
+    shadowColor: colors.accent,
+    shadowOpacity: 0.45,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
   },
   pill: {
     height: H, borderRadius: H / 2, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.28),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.35),
   },
   tint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.09),
+    backgroundColor: withAlpha(colors.mist, 0.12),
   },
+  tintOff: { backgroundColor: withAlpha(colors.mist, 0.04) },
   label: { textAlign: 'center' },
-  off: { borderColor: withAlpha(colors.mist, 0.1) },
+  off: { borderColor: withAlpha(colors.mist, 0.12) },
   ghost: { alignSelf: 'center', paddingVertical: 14 },
 });

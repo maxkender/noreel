@@ -28,12 +28,14 @@ export function TimeSlider({
     }
   };
 
+  // La poignee suit le doigt au pixel ; seule la VALEUR est arrondie au quart
+  // d'heure. Arrondir la position faisait sauter le curseur.
   const pan = Gesture.Pan()
+    .minDistance(0)
     .onChange((e) => {
       x.value = Math.min(track, Math.max(0, x.value + e.changeX));
       runOnJS(commit)(x.value);
-    })
-    .onEnd(() => { x.value = withSpring(x.value, springs.snappy); });
+    });
 
   const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const filled = useAnimatedStyle(() => ({ width: x.value + 16 }));

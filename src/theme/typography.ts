@@ -20,7 +20,7 @@ export type TypeStyle = {
 const track = (size: number, pct: number) => (size * pct) / 100;
 
 export const type = {
-  hero:     { fontFamily: 'GeistSemiBold', fontSize: s(64), lineHeight: s(64) * 1.0,  fontWeight: '600', letterSpacing: track(s(64), -3) },
+  hero:     { fontFamily: 'GeistSemiBold', fontSize: s(56), lineHeight: s(56) * 1.05,  fontWeight: '600', letterSpacing: track(s(56), -3) },
   displayL: { fontFamily: 'GeistSemiBold', fontSize: s(36), lineHeight: s(36) * 1.12, fontWeight: '600', letterSpacing: track(s(36), -2.5) },
   displayM: { fontFamily: 'GeistSemiBold', fontSize: s(28), lineHeight: s(28) * 1.2,  fontWeight: '600', letterSpacing: track(s(28), -2) },
   title:    { fontFamily: 'GeistMedium',   fontSize: s(19), lineHeight: s(19) * 1.3,  fontWeight: '500', letterSpacing: track(s(19), -1) },

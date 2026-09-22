@@ -7,14 +7,11 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
-import { useT, plural } from '@/i18n';
+import { useT } from '@/i18n';
 import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
-import { formatHours, formatLifeDuration } from '@/lib/format';
+import { formatHours } from '@/lib/format';
 import { track } from '@/services';
-import {
-  ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats,
-} from '../calculations';
-import { LifeGrid } from '../scenes/LifeGrid';
+import { screenYears, wakingShare } from '../calculations';
 import { TimeSlider } from '../scenes/TimeSlider';
 import { AgeRuler } from '../scenes/AgeRuler';
 
@@ -129,16 +126,9 @@ export function S4({ onNext }: P) {
   return (
     <Screen cta={d.s4.cta} onPress={onNext} center>
       <Typewriter text={d.s4.title} variant="displayM" style={s.center} />
-      <Animated.View entering={FadeIn.delay(1400).duration(600)} style={s.compare}>
-        <View style={s.col}>
-          <Text variant="label" tone="tertiary">{d.s4.before}</Text>
-          {[0, 1, 2, 3].map((i) => <View key={i} style={s.colBarCold} />)}
-        </View>
-        <View style={s.col}>
-          <Text variant="label" color={colors.accent}>{d.s4.after}</Text>
-          <View style={s.colBarWarm} />
-          <View style={[s.colBarWarm, { width: '55%' }]} />
-        </View>
+      {/* TODO produit : enregistrement d'ecran de l'app a la place de ce cadre. */}
+      <Animated.View entering={FadeIn.delay(1200).duration(600)} style={s.videoSlot}>
+        <View style={s.videoInner} />
       </Animated.View>
     </Screen>
   );
@@ -152,7 +142,6 @@ export function S5({ onNext }: P) {
   const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
   const age = useOnboardingStore((x) => x.age);
   const setAge = useOnboardingStore((x) => x.setAge);
-  const st = lifeStats(minutes, age);
 
   if (phase === 'time') {
     return (
@@ -165,7 +154,7 @@ export function S5({ onNext }: P) {
           <TimeSlider minutes={minutes} onChange={setMinutes} />
         </View>
         <Text variant="body" tone="secondary" style={s.center}>
-          {t(d.s5.liveShare, { p: Math.round(st.wakingShare * 100) })}
+          {t(d.s5.liveShare, { p: Math.round(wakingShare(minutes) * 100) })}
         </Text>
       </Screen>
     );
@@ -185,67 +174,42 @@ export function S5({ onNext }: P) {
 /* ---------- 6 ---------- */
 export function S6({ onNext }: P) {
   const { d, t } = useT();
-  const { width } = useWindowDimensions();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
-  const age = useOnboardingStore((x) => x.age);
-  const st = lifeStats(minutes, age);
-  const [taken, setTaken] = useState(false);
+  const share = wakingShare(minutes);
+  const years = screenYears(minutes);
+  const target = Math.round(share * 100);
+  const [lit, setLit] = useState(0);
 
-  const [running, setRunning] = useState(false);
-
+  // Remplissage visible : un carre tous les 26 ms, on voit la part monter.
   useEffect(() => {
-    const id = setTimeout(() => setRunning(true), 500);
-    return () => clearTimeout(id);
-  }, []);
-
-  const take = () => {
-    setTaken(true);
-    track('life_reclaimed');
-    haptics.success();
-
-  };
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setLit(i);
+      if (i >= target) clearInterval(id);
+    }, 26);
+    return () => clearInterval(id);
+  }, [target]);
 
   return (
-    <Screen cta={taken ? d.s6.cta2 : d.s6.cta1} onPress={taken ? onNext : take}>
+    <Screen cta={d.s6.cta2} onPress={onNext}>
       <Typewriter text={d.s6.title} variant="displayM" />
 
-      <View style={{ marginTop: space.xl }}>
-        <LifeGrid
-          width={width - 48}
-          lived={st.livedMonths} lost={st.lostMonths} total={st.totalMonths}
-          running={running} reclaiming={taken}
-        />
+      <View style={s.hundred}>
+        {Array.from({ length: 100 }, (_, i) => (
+          <View
+            key={i}
+            style={[s.square, i < lit ? s.squareOn : s.squareOff]}
+          />
+        ))}
       </View>
 
       <Text variant="hero" style={s.value} numberOfLines={1} adjustsFontSizeToFit>
-        {formatLifeDuration(st.lostMonths)}
+        {lit} %
       </Text>
       <Text variant="body" tone="secondary">
-        {t(d.s6.body, { p: Math.round(st.wakingShare * 100) })}
+        {t(d.s6.body, { y: Math.round(years) })}
       </Text>
-
-      {taken && (
-        <Animated.View entering={FadeIn.delay(1200).duration(500)} style={{ marginTop: space.xl }}>
-          {ACTIVITIES.map((act) => {
-            const n = Math.floor(activityCount(st.hoursPerYear, act.costHours));
-            const a = d.s6.activities[act.id as keyof typeof d.s6.activities];
-            return (
-              <View key={act.id} style={s.activity}>
-                <Text variant="title" color={colors.accent}>{n}</Text>
-                <Text variant="body" tone="secondary" style={{ flex: 1 }}>{plural(n, a)}</Text>
-              </View>
-            );
-          })}
-          <View style={s.activity}>
-            <Text variant="title" color={colors.accent}>
-              {friendEveningsPerWeek(st.hoursPerWeek)}
-            </Text>
-            <Text variant="body" tone="secondary" style={{ flex: 1 }}>
-              {plural(friendEveningsPerWeek(st.hoursPerWeek), d.s6.activities.friends)}
-            </Text>
-          </View>
-        </Animated.View>
-      )}
     </Screen>
   );
 }
@@ -309,6 +273,19 @@ export function S9({ onNext }: P) {
 }
 
 const s = StyleSheet.create({
+  videoSlot: {
+    marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: colors.surface,
+  },
+  videoInner: { flex: 1, borderRadius: 20, backgroundColor: colors.surfaceHi },
+  hundred: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 6,
+    marginTop: space.xl, marginBottom: space.lg,
+  },
+  square: { width: '8%', aspectRatio: 1, borderRadius: 3 },
+  squareOn: { backgroundColor: colors.accent },
+  squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
@@ -317,7 +294,7 @@ const s = StyleSheet.create({
   mark: { alignItems: 'center', justifyContent: 'center', height: 90, marginBottom: space.xl },
   ring: { width: 58, height: 58, borderRadius: 29, borderWidth: 5, borderColor: colors.mist },
   bar: { position: 'absolute', bottom: 22, width: 88, height: 2, backgroundColor: colors.accent },
-  value: { marginVertical: space.lg },
+  value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },
   keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   option: {
