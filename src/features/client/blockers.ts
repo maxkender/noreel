@@ -34,6 +34,13 @@ const COMMON = `
   // avant lui, ou son bouton n'est pas un <button>. On insiste 12 s.
   const DECLINE = /refuser|refuse|decline|reject|essentiels? uniquement|only allow essential|necessary only/i;
   const ACCEPT  = /autoriser tous|allow all|accept all|tout accepter/i;
+  const COOKIE  = /cookie|temoins de connexion/i;
+
+  let __tries = 0;
+  let __fallback = false;
+  // Un meme bouton n'est jamais clique deux fois : sans ca, un « Refuser »
+  // present ailleurs dans la page serait martele pendant 12 s.
+  const __seen = new WeakSet();
 
   const __clickDecline = () => {
     const sel = 'button, [role="button"], div[tabindex], span[role="link"], a[role="button"]';
@@ -41,22 +48,28 @@ const COMMON = `
     // 1. Un libelle explicite de refus.
     for (const n of nodes) {
       const t = (n.textContent || '').trim();
-      if (t && t.length < 70 && DECLINE.test(t)) { n.click(); return true; }
+      if (t && t.length < 70 && DECLINE.test(t) && !__seen.has(n)) {
+        __seen.add(n); __fallback = true; n.click(); return true;
+      }
     }
-    // 2. Sinon, dans un dialogue : le bouton qui n'accepte pas.
-    const dialog = document.querySelector('[role="dialog"]');
-    if (dialog) {
-      const btns = Array.from(dialog.querySelectorAll(sel))
-        .filter((b) => (b.textContent || '').trim().length > 0);
-      const refuse = btns.find((b) => !ACCEPT.test((b.textContent || '')));
-      if (refuse) { refuse.click(); return true; }
+    // 2. Repli, une seule fois, et seulement dans un dialogue qui parle
+    //    vraiment de cookies : sans ce garde-fou on cliquait au hasard dans
+    //    la premiere boite venue — « Se connecter », par exemple.
+    if (__tries > 8 && !__fallback) {
+      const dialog = document.querySelector('[role="dialog"]');
+      if (dialog && COOKIE.test(dialog.textContent || '')) {
+        const btns = Array.from(dialog.querySelectorAll(sel))
+          .filter((b) => (b.textContent || '').trim().length > 0);
+        const refuse = btns.find((b) => !ACCEPT.test(b.textContent || '') && !__seen.has(b));
+        if (refuse) { __fallback = true; __seen.add(refuse); refuse.click(); return true; }
+      }
     }
     return false;
   };
 
-  let __tries = 0;
+  // On insiste 12 s : le dialogue arrive parfois apres le premier rendu.
   const __cookies = () => { if (__tries < 40) { __tries += 1; __clickDecline(); } };
-  setInterval(() => { if (__tries < 40) { __tries += 1; __clickDecline(); } }, 300);
+  setInterval(__cookies, 300);
 
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
   const __gray = () => {
@@ -70,21 +83,59 @@ export const INSTAGRAM_BLOCKER = `
   'use strict';
   ${COMMON}
 
+  // Reels et Explorer sont coupes en permanence : c'est la promesse de l'app,
+  // les deux interrupteurs correspondants sont verrouilles cote reglages.
   const css = \`
-    a[href^="/reels"], a[href$="/reels/"] { display: none !important; }
-    svg[aria-label="Reels" i] { display: none !important; }
+    a[href^="/reels"], a[href$="/reels/"], a[href^="/explore"],
+    svg[aria-label="Reels" i],
+    svg[aria-label="Explorer" i], svg[aria-label="Explore" i],
+    svg[aria-label="Rechercher et explorer" i],
+    svg[aria-label="Search and explore" i] { display: none !important; }
   \`;
   const style = document.createElement('style');
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
 
+  const SUGGEST = /suggestions? pour vous|suggested for you|publications sugg|suggested posts/i;
+
+  // Le carrousel de stories n'a pas d'attribut a lui : on remonte depuis un
+  // lien /stories/ jusqu'au premier parent qui en contient plusieurs.
+  const __tray = () => {
+    const a = document.querySelector('main a[href^="/stories/"]');
+    if (!a) return null;
+    let n = a.parentElement;
+    for (let i = 0; i < 8 && n; i += 1) {
+      if (n.querySelectorAll('a[href^="/stories/"]').length >= 3) return n;
+      n = n.parentElement;
+    }
+    return null;
+  };
+
   __watch(() => {
+    __gray();
+    __cookies();
+
     // Un reel du fil est un <article> contenant un lien /reel/xxx ;
     // dans l'explore c'est une simple tuile.
     document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
       __hide(a.closest('article') || a);
     });
+
+    if (__on('suggested')) {
+      document.querySelectorAll('main article').forEach((art) => {
+        if (SUGGEST.test((art.textContent || '').slice(0, 240))) __hide(art);
+      });
+    }
+
+    if (__on('stories') || __on('feed')) __hide(__tray());
+    if (__on('feed')) document.querySelectorAll('main article').forEach(__hide);
+
+    if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
+      location.replace('/direct/inbox/');
+      return;
+    }
     if (/^\\/reels?(\\/|$)/.test(location.pathname)) location.replace('/');
+    if (location.pathname.startsWith('/explore')) location.replace('/');
   });
 })();
 true;
