@@ -10,7 +10,6 @@ export const en: Dict = {
   s1: {
     title1: 'The same apps.',
     title2: 'Without the {algorithm}.',
-    subtitle: 'Instagram and TikTok. Without the void.',
     cta: 'Get started',
   },
 
@@ -45,7 +44,7 @@ export const en: Dict = {
   },
 
   s4: {
-    title: 'Now we set everything up for you, so you can use your apps without losing three hours a day.',
+    title: 'We set everything up for you.',
     body: 'Same platforms. Without the features that fry your brain.',
     before: 'Before',
     after: 'With UnSwipe',
@@ -54,7 +53,7 @@ export const en: Dict = {
   },
 
   s5: {
-    titleA: 'How much time do you spend on Insta and TikTok a day?',
+    titleA: 'How much time do you spend on your phone a day?',
     unit: 'a day',
     liveShare: `That's {p}% of your waking day.`,
     liveWeek: '{h} a week.',
@@ -78,18 +77,17 @@ export const en: Dict = {
     years: '{y} years',
     bodyShort: 'spent in front of a screen, eyes open.',
     cta1: 'Take this time back',
-    afterTitle: 'Every year, you spend {h} on Insta and TikTok. With that time, you could:',
+    afterTitle: 'You never found the time. You spent {h} on your phone this year — enough to…',
     estimates: 'Rough estimates.',
     sources: 'Sources and method',
     cta2: 'Continue',
     a11y: 'Your life in months: {lived} months lived, {lost} months on your phone, {ahead} months ahead of you.',
     activities: {
-      books: { one: 'book read', other: 'books read', detail: '≈ 6 h per book' },
-      language: { one: 'new language at B2 level', other: 'new languages at B2 level', detail: '≈ 550 h for B2 level' },
-      instrument: { one: 'instrument learned', other: 'instruments learned', detail: '≈ 200 h to play your favourite songs' },
-      marathon: { one: 'marathon trained for', other: 'marathons trained for', detail: '≈ 100 h of training each' },
-      code: { one: 'full coding bootcamp', other: 'full coding bootcamps', detail: '≈ 450 h, like an intensive bootcamp' },
-      friends: { one: 'extra evening with friends, every week', other: 'extra evenings with friends, every week', detail: 'based on your weekly time' },
+      books: { one: 'read a book', other: 'read {n} books', detail: '≈ 6 h per book' },
+      chinese: { one: 'learn Chinese', other: 'learn Chinese {n} times over', detail: '≈ 1,000 h to hold a conversation' },
+      instrument: { one: 'learn an instrument', other: 'learn {n} instruments', detail: '≈ 200 h to play your favourite songs' },
+      marathon: { one: 'train for a marathon', other: 'train for {n} marathons', detail: '≈ 100 h of training each' },
+      code: { one: 'take a full coding course', other: 'take {n} full coding courses', detail: '≈ 450 h, like an intensive bootcamp' },
     },
     progress: '{p}% of the way',
   },

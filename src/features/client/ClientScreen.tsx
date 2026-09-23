@@ -16,8 +16,6 @@ import { CLIENTS, buildScript, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { NavBar, type NavAction } from './NavBar';
 import { GlassSweep } from '@/components/GlassSweep';
-import { Coach } from '@/components/Coach';
-import { CLIENT_TOUR } from './tour';
 import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
 
@@ -75,8 +73,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
   const [wall, setWall] = useState(false);
-  const toured = useSettings((x) => x.toured);
-  const setSetting = useSettings((x) => x.set);
 
   /**
    * Un interrupteur agit TOUT DE SUITE.
@@ -255,12 +251,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
             'location.assign(' + JSON.stringify(url) + '); true;'
           );
         }}
-      />
-
-      <Coach
-        steps={CLIENT_TOUR}
-        visible={ready && !toured.client}
-        onDone={() => setSetting('toured', { ...toured, client: true })}
       />
 
       {(stuck || raw) && !error && (

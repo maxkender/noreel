@@ -109,13 +109,14 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
         <Open id={app.id} minutes={minutes[app.id] ?? 0} />
       </Animated.View>
 
-      <View style={st.dots}>
-        {APPS.map((a, k) => (
-          <View key={a.id} style={[st.dot, k === i && st.dotOn]} />
-        ))}
-      </View>
-
-      <Animated.View key={`p${app.id}`} entering={FadeIn.duration(260)}>
+      {/*
+        Le panneau n'est plus REMONTE a chaque app.
+        Il portait une cle liee a l'app : changer d'icone detruisait le
+        panneau et son flou pour en reconstruire un identique, en plein
+        geste. C'est ce qui accrochait. Son contenu change, son enveloppe
+        reste.
+      */}
+      <Animated.View entering={FadeIn.duration(260)}>
         <Glass radius={26} intensity={60} warmEdge="none" style={st.panel}>
           <View style={st.panelHead}>
             <Text variant="label" tone="tertiary">RÉGLAGES {app.name.toUpperCase()}</Text>
@@ -150,7 +151,7 @@ function Tile({
       transform: [
         { perspective: 700 },
         { scale: interpolate(a, [0, 1, 2], [1, 0.62, 0.5], Extrapolation.CLAMP) },
-        { rotateY: `${interpolate(d, [-2, 0, 2], [-30, 0, 30], Extrapolation.CLAMP)}deg` },
+        { rotateY: `${interpolate(d, [-2, 0, 2], [-20, 0, 20], Extrapolation.CLAMP)}deg` },
       ],
     };
   }, [item]);
@@ -226,9 +227,6 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: withAlpha(c.accent, 0.12),
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.35),
   },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.lg },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.18) },
-  dotOn: { width: 22, backgroundColor: c.accent },
   panel: { marginTop: space.lg, paddingHorizontal: space.lg, paddingBottom: space.sm },
   panelHead: { paddingTop: space.lg, paddingBottom: space.xs },
   line: {

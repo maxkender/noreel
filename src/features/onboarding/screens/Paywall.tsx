@@ -23,6 +23,10 @@ type Plan = 'annual' | 'weekly';
 // doivent coller a ceux d'App Store Connect, sinon l'ecran ment pendant la
 // seconde de chargement.
 const FALLBACK = { annual: '44,99 €', weekly: '4,99 €' };
+// L'essai n'existe que sur l'annuel, et il est porte par App Store Connect :
+// c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
+// fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
+const TRIAL_DAYS = 3;
 const ANNUAL_EUR = 44.99;
 const WEEKLY_EUR = 4.99;
 // 52 semaines, pas 12 mois : c'est la comparaison honnete face a un
@@ -86,7 +90,9 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
   return (
     <Screen
-      cta={busy ? 'Un instant…' : 'Passer en Pro'}
+      cta={busy ? 'Un instant…' : plan === 'annual'
+        ? `Essayer ${TRIAL_DAYS} jours gratuitement`
+        : 'Passer en Pro'}
       onPress={() => { void go(); }}
       disabled={busy}
       secondary="Continuer sans Pro"
@@ -135,7 +141,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         <PlanCard
           label="Annuel"
           price={price(annual, FALLBACK.annual)}
-          note={`${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} € par jour`}
+          note={`${TRIAL_DAYS} jours offerts, puis ${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} € par jour`}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
@@ -151,7 +157,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
       <Text variant="label" tone="tertiary" style={st.terms}>
         {plan === 'annual'
-          ? `${price(annual, FALLBACK.annual)} par an, renouvelé automatiquement.`
+          ? `${TRIAL_DAYS} jours gratuits, puis ${price(annual, FALLBACK.annual)} par an, renouvelé automatiquement.`
           : `${price(weekly, FALLBACK.weekly)} par semaine, renouvelé automatiquement.`}
         {' Annule quand tu veux.'}
       </Text>

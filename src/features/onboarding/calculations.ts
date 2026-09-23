@@ -52,7 +52,10 @@ export function lifeStats(minutesPerDay: number, age: number): LifeStats {
 
 export const ACTIVITIES = [
   { id: 'books', costHours: 6 },
-  { id: 'language', costHours: 550 },
+  // Le chinois plutot qu'« une langue » : un objectif qu'on se represente
+  // vaut mieux qu'une categorie. 1 000 h, c'est l'ordre de grandeur pour
+  // tenir une conversation.
+  { id: 'chinese', costHours: 1000 },
   { id: 'instrument', costHours: 200 },
   { id: 'marathon', costHours: 100 },
   { id: 'code', costHours: 450 },

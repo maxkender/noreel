@@ -33,16 +33,7 @@ export function S1({ onNext }: P) {
     <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} hue="accent">
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
-      {true && (
-        <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
-      )}
-      {true && (
-        <Animated.View entering={FadeIn.duration(500)}>
-          <Text variant="lead" tone="secondary" style={[s.center, { marginTop: space.lg }]}>
-            {d.s1.subtitle}
-          </Text>
-        </Animated.View>
-      )}
+      <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
     </Screen>
   );
 }

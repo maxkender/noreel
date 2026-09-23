@@ -1,0 +1,83 @@
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
+import { space } from '@/theme/spacing';
+import { Screen } from '@/components/Screen';
+import { Text } from '@/components/type/Text';
+import { useT } from '@/i18n';
+import { useOnboardingStore } from '@/store/onboarding';
+import { ACTIVITIES, activityCount } from '../calculations';
+
+type P = { onNext: () => void };
+
+/**
+ * Ce que l'annee ecoulee aurait pu contenir.
+ *
+ * Le chiffre brut — « 1 095 heures » — ne veut rien dire : personne ne sait
+ * a quoi ressemblent mille heures. Converti en choses qu'on se represente,
+ * il redevient une perte qu'on sent. Les activites sont classees par ordre
+ * decroissant, et celles qu'on n'a pas tout a fait atteintes sont dites en
+ * part du chemin plutot que tues : rater le chinois de trente pour cent
+ * pese plus lourd que de ne pas le voir du tout.
+ */
+export function Activities({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const { d, t } = useT();
+  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const hours = (minutes * 365) / 60;
+
+  const rows = ACTIVITIES
+    .map((a) => ({ id: a.id, n: activityCount(hours, a.costHours) }))
+    .sort((x, y) => y.n - x.n);
+
+  return (
+    <Screen cta={d.s6.cta2} onPress={onNext} hue="ember" hueLevel={0.5}>
+      <Text variant="displayM" style={st.title}>
+        {t('s6.afterTitle', { h: `${Math.round(hours)} heures` })}
+      </Text>
+
+      <View style={st.list}>
+        {rows.map((r, i) => {
+          const a = d.s6.activities[r.id];
+          const whole = Math.floor(r.n);
+          const line = whole >= 2 ? a.other.replace('{n}', String(whole))
+            : whole === 1 ? a.one
+            : a.one;
+          return (
+            <Animated.View
+              key={r.id}
+              entering={FadeIn.delay(320 + i * 160).duration(520)}
+              style={st.row}
+            >
+              <View style={st.bullet} />
+              <View style={{ flex: 1, gap: 3 }}>
+                <Text variant="lead">{line}</Text>
+                <Text variant="label" tone="tertiary">
+                  {whole >= 1
+                    ? a.detail
+                    : t('s6.progress', { p: String(Math.round(r.n * 100)) })}
+                </Text>
+              </View>
+            </Animated.View>
+          );
+        })}
+      </View>
+
+      <Text variant="label" tone="tertiary" style={st.note}>{d.s6.estimates}</Text>
+    </Screen>
+  );
+}
+
+const sheet = (c: Palette) => StyleSheet.create({
+  title: { textAlign: 'center' },
+  list: { marginTop: space.xl, gap: space.lg },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  bullet: {
+    width: 7, height: 7, borderRadius: 4, marginTop: 8,
+    backgroundColor: withAlpha(c.ember, 0.9),
+  },
+  note: { marginTop: space.xl, textAlign: 'center' },
+});

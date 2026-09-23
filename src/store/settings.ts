@@ -21,8 +21,6 @@ type State = {
   selection: string | null;
   /** Identifiant Apple, opaque et propre a cette app. */
   appleUser: string | null;
-  /** Visites guidees deja vues, par cle. */
-  toured: Record<string, boolean>;
   /** Clair, sombre, ou celui du telephone. */
   theme: ThemeName;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
@@ -38,7 +36,6 @@ export const useSettings = create<State>()(
       blocking: false,
       selection: null,
       appleUser: null,
-      toured: {},
       // Sombre par defaut : c'est la matiere de l'app. Le clair existe pour
       // qui le demande, dans les reglages.
       theme: 'dark',
@@ -62,8 +59,8 @@ export const useSettings = create<State>()(
         if (from < 2) return { ...s, theme: 'dark' as ThemeName };
         return s;
       },
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, theme }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, theme }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

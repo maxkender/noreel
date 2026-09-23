@@ -18,6 +18,7 @@ import {
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
 import { BarDemo } from './screens/BarDemo';
+import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
@@ -94,17 +95,18 @@ export function OnboardingFlow() {
     <S5 key="s5" onNext={n(4)} />,
     <S6 key="s6" onNext={n(5)} />,
     <S6Years key="s6y" onNext={n(6)} />,
-    <S7 key="s7" onNext={n(7)} />,
-    <Manifesto key="man" onNext={n(8)} />,
-    <S4 key="s4" onNext={n(9)} />,
-    <Tune key="tune" onNext={n(10)} />,
-    <BarDemo key="bar" onNext={n(11)} />,
+    <Activities key="act" onNext={n(7)} />,
+    <S7 key="s7" onNext={n(8)} />,
+    <Manifesto key="man" onNext={n(9)} />,
+    <S4 key="s4" onNext={n(10)} />,
+    <Tune key="tune" onNext={n(11)} />,
     <Distractions key="dis" onNext={n(12)} />,
     <Essentials key="ess" onNext={n(13)} />,
     <Permissions key="perm" onDone={n(14)} />,
     <NotificationsAsk key="notif" onNext={n(15)} />,
-    <HomeShortcuts key="short" onNext={n(16)} />,
-    <PromiseScreen key="pro" onNext={n(17)} />,
+    <BarDemo key="bar" onNext={n(16)} />,
+    <HomeShortcuts key="short" onNext={n(17)} />,
+    <PromiseScreen key="pro" onNext={n(18)} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

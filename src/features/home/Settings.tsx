@@ -211,7 +211,10 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
     paddingHorizontal: space.lg, paddingBottom: space.xxl,
   },
-  tint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0B0D11F2' },
+  tint: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(c.night, 0.95),
+  },
   head: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.lg },
   done: {
     width: 44, height: 32, borderRadius: 16,

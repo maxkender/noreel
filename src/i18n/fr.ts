@@ -15,7 +15,6 @@ export const fr = {
   s1: {
     title1: 'Les mêmes applis.',
     title2: 'Sans {algorithme}.',
-    subtitle: 'Instagram et TikTok. Sans le vide.',
     cta: 'Commencer',
   },
 
@@ -50,7 +49,7 @@ export const fr = {
   },
 
   s4: {
-    title: 'Maintenant on installe tout pour toi, pour que tu utilises tes applis sans y perdre trois heures par jour.',
+    title: 'On installe tout pour toi.',
     body: 'Les mêmes plateformes. Sans les fonctionnalités qui ruinent ton cerveau.',
     before: 'Avant',
     after: 'Avec UnSwipe',
@@ -59,7 +58,7 @@ export const fr = {
   },
 
   s5: {
-    titleA: `Combien de temps passes-tu sur Insta et TikTok par jour${NNBSP}?`,
+    titleA: `Combien de temps passes-tu sur ton téléphone par jour${NNBSP}?`,
     unit: 'par jour',
     liveShare: 'Soit {p}{nbsp}% de ta journée éveillée.',
     liveWeek: '{h} par semaine.',
@@ -83,18 +82,17 @@ export const fr = {
     years: '{y} ans',
     bodyShort: 'passés devant un écran, les yeux ouverts.',
     cta1: 'Récupérer ce temps',
-    afterTitle: 'Chaque année, tu passes {h} sur Insta et TikTok. Avec ce temps, tu pourrais{nbsp}:',
+    afterTitle: 'Tu n’as jamais trouvé le temps. Tu as passé {h} sur ton téléphone cette année{nbsp}: de quoi{nbsp}…',
     estimates: 'Estimations indicatives.',
     sources: 'Sources et méthode',
     cta2: 'Continuer',
     a11y: 'Ta vie en mois{nbsp}: {lived} mois vécus, {lost} mois sur ton téléphone, {ahead} mois devant toi.',
     activities: {
-      books: { one: 'livre lu', other: 'livres lus', detail: `≈ 6${NBSP}h par livre` },
-      language: { one: 'nouvelle langue au niveau B2', other: 'nouvelles langues au niveau B2', detail: `≈ 550${NBSP}h pour le niveau B2` },
-      instrument: { one: 'instrument appris', other: 'instruments appris', detail: `≈ 200${NBSP}h pour jouer tes morceaux préférés` },
-      marathon: { one: 'marathon préparé', other: 'marathons préparés', detail: `≈ 100${NBSP}h d'entraînement chacun` },
-      code: { one: 'formation complète au code', other: 'formations complètes au code', detail: `≈ 450${NBSP}h, comme un bootcamp intensif` },
-      friends: { one: 'soirée de plus avec tes potes, chaque semaine', other: 'soirées de plus avec tes potes, chaque semaine', detail: 'calculé sur ton temps hebdomadaire' },
+      books: { one: 'lire un livre', other: 'lire {n} livres', detail: `≈ 6${NBSP}h par livre` },
+      chinese: { one: 'apprendre le chinois', other: 'apprendre le chinois {n} fois', detail: `≈ 1 000${NBSP}h pour tenir une conversation` },
+      instrument: { one: 'apprendre un instrument', other: 'apprendre {n} instruments', detail: `≈ 200${NBSP}h pour jouer tes morceaux préférés` },
+      marathon: { one: 'préparer un marathon', other: 'préparer {n} marathons', detail: `≈ 100${NBSP}h d'entraînement chacun` },
+      code: { one: 'suivre une formation au code', other: 'suivre {n} formations au code', detail: `≈ 450${NBSP}h, comme un bootcamp intensif` },
     },
     progress: '{p}{nbsp}% du chemin',
   },
