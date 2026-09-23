@@ -7,7 +7,7 @@ import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import { Ban, RotateCw } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
@@ -34,6 +34,7 @@ const UA =
 
 export function ClientScreen({ id }: { id: ClientId }) {
   const c = useColors();
+  const theme = useResolvedTheme();
   const styles = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const client = CLIENTS[id];
@@ -53,7 +54,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // chargement de la page, changer la propriete ensuite ne change rien.
   // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
   const script = useMemo(
-    () => buildScript(client.script, active),
+    () => buildScript(client.script, active, theme),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]
   );
@@ -87,6 +88,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
       `window.__nrApply && window.__nrApply(${JSON.stringify(active)}); true;`
     );
   }, [active]);
+
+  // Le theme voyage comme les reglages : la page est deja chargee, on ne
+  // peut plus remplacer le script, mais on peut lui parler.
+  useEffect(() => {
+    web.current?.injectJavaScript(
+      `window.__nrApplyTheme && window.__nrApplyTheme(${JSON.stringify(theme)}); true;`
+    );
+  }, [theme]);
 
   useEffect(() => {
     if (ready) { setStuck(false); return; }
@@ -339,7 +348,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: c.surface,
   },
   host: { flex: 1, textAlign: 'center' },
-  web: { flex: 1, backgroundColor: '#FFFFFF' },
+  web: { flex: 1, backgroundColor: c.night === '#08090B' ? '#0B0D11' : '#FFFFFF' },
   overlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',

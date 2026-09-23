@@ -46,9 +46,18 @@ export const colors = {
   /** Multiplicateurs : le fond clair ne supporte pas la meme dose. */
   glowAlpha: 1,
   dustAlpha: 1,
+  /*
+   * L'opacite des deux tons secondaires, par palette.
+   *
+   * Une meme opacite ne donne pas le meme contraste des deux cotes : blanc
+   * a 38 % sur du presque-noir rend 3,4:1, noir a 38 % sur du creme n'en
+   * rend que 2,3. Le mode clair paraissait delave pour cette seule raison —
+   * ce n'etait pas la teinte, c'etait la dose. Les valeurs claires sont
+   * calculees pour retomber sur les memes rapports.
+   */
+  textSecondary: 0.6,
+  textTertiary: 0.38,
 } as const;
-
-export const textAlpha = { primary: 1, secondary: 0.6, tertiary: 0.38 } as const;
 
 export const withAlpha = (hex: string, alpha: number): string => {
   const a = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16).padStart(2, '0');

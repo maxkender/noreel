@@ -5,8 +5,14 @@
  */
 
 /** Construit le script final en y injectant les reglages actifs. */
-export function buildScript(base: string, settings: Record<string, boolean>): string {
-  return `window.__NR = ${JSON.stringify(settings)};\n` + base;
+export function buildScript(
+  base: string,
+  settings: Record<string, boolean>,
+  theme: 'light' | 'dark' = 'dark'
+): string {
+  return `window.__NR = ${JSON.stringify(settings)};\n`
+    + `window.__nrTheme = ${JSON.stringify(theme)};\n`
+    + base;
 }
 
 const COMMON = `
@@ -162,6 +168,40 @@ const COMMON = `
       const t = (el.textContent || '').trim();
       if (t.length < 60 && OPEN.test(t) && el.children.length < 6) __hide(el);
     });
+  };
+
+  /**
+   * Le site suit le theme de l'app.
+   *
+   * WKWebView se regle sur l'apparence du SYSTEME, pas sur la notre : passer
+   * UnSwipe en clair laissait les quatre sites en sombre, et on basculait
+   * d'un fond creme a un fond noir en ouvrant Instagram.
+   *
+   * La propriete color-scheme suffit pour ce que le navigateur dessine
+   * lui-meme : champs, barres de defilement, fond par defaut. Pour le
+   * reste, chaque site garde sa propre marque, qu'il faut poser a la main.
+   */
+  const __scheme = () => {
+    const dark = window.__nrTheme !== 'light';
+    const html = document.documentElement;
+    html.style.setProperty('color-scheme', dark ? 'dark' : 'light');
+
+    // YouTube : un attribut sur <html>, rien de plus.
+    if (location.hostname.indexOf('youtube') >= 0) {
+      if (dark) html.setAttribute('dark', '');
+      else html.removeAttribute('dark');
+    }
+    // Meta : les classes que Facebook et Instagram partagent.
+    if (location.hostname.indexOf('instagram') >= 0) {
+      html.classList.toggle('__fb-dark-mode', dark);
+      html.classList.toggle('__fb-light-mode', !dark);
+    }
+  };
+
+  // L'app pousse un theme sans recharger la page.
+  window.__nrApplyTheme = (t) => {
+    window.__nrTheme = t;
+    try { __scheme(); } catch (e) { /* le site n'a pas de theme a nous */ }
   };
 
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
@@ -330,6 +370,7 @@ export const INSTAGRAM_BLOCKER = `
 
   __watch(() => {
     __restore();
+    __scheme();
     __gray();
     __cookies();
     __native();
@@ -428,6 +469,7 @@ export const YOUTUBE_BLOCKER = `
 
   __watch(() => {
     __restore();
+    __scheme();
     __gray();
     __cookies();
     __native();
@@ -497,6 +539,7 @@ export const TIKTOK_BLOCKER = `
 
   __watch(() => {
     __restore();
+    __scheme();
     __gray();
     __cookies();
     __native();
@@ -547,6 +590,7 @@ export const TWITTER_BLOCKER = `
     });
     if (following && following.getAttribute('aria-selected') === 'false') following.click();
     __restore();
+    __scheme();
     __gray();
     __cookies();
     __native();

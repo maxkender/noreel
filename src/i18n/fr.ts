@@ -242,17 +242,6 @@ export const fr = {
     version: 'Version',
   },
 
-  referral: {
-    title: 'Invite 5 amis, gagne 1 an de Pro',
-    body: 'Chaque ami qui entre ton code te rapproche. À cinq, tu passes Pro gratuitement pendant un an.',
-    yourCode: 'Ton code',
-    copied: 'Copié',
-    copy: 'Copier',
-    share: 'Partager',
-    progress: '{n} / 5 amis inscrits',
-    unlocked: 'Pro débloqué pour 1 an',
-    shareText: 'Je suis passé à UnSwipe : Instagram et TikTok sans les reels. Prends mon code {code}, tu as une semaine de Pro offerte.',
-  },
 
   sources: {
     title: 'Sources et méthode',

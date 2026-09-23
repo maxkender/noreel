@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { textAlpha, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { radii } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
@@ -53,7 +53,7 @@ export function GlassButton({
         />
         <Text
           variant="button"
-          color={withAlpha(c.mist, disabled ? textAlpha.tertiary : 1)}
+          color={withAlpha(c.mist, disabled ? c.textTertiary : 1)}
         >
           {label}
         </Text>

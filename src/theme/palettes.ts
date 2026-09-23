@@ -48,6 +48,10 @@ export const light: Palette = {
   shadowTint: '#6B5E45',
   shadowAlpha: 0.1,
   glowAlpha: 0.4,
+  // 0,76 et 0,52 : mesures pour rendre 7,1:1 et 3,4:1 sur le creme, soit
+  // exactement ce que 0,60 et 0,38 rendent sur le noir.
+  textSecondary: 0.76,
+  textTertiary: 0.52,
   // Pas de poussiere lumineuse sur fond clair : la meme poussiere y devient
   // une constellation de points noirs, autrement dit de la salete.
   dustAlpha: 0,

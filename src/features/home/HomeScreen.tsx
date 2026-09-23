@@ -26,7 +26,6 @@ import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
-import { Referral } from './Referral';
 import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
@@ -403,8 +402,6 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
       scrollEventThrottle={16}
     >
       <Text variant="displayM">{d.account.title}</Text>
-
-      <Referral />
 
       <Text variant="label" tone="secondary" style={st.section}>Ton abonnement</Text>
       <Card><AppleSignIn /></Card>
