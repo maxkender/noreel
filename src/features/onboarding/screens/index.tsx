@@ -10,6 +10,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
+import { Receptors } from '../scenes/Receptors';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
@@ -327,6 +328,7 @@ export function S7({ onNext }: P) {
             </Text>
           </Animated.View>
         ) : null}
+        {i === 1 ? <Receptors /> : null}
         {steps[i][2] ? (
           <Animated.View entering={FadeIn.delay(1500).duration(500)}>
             <Text variant="label" tone="tertiary" style={[s.center, { marginTop: space.lg }]}>

@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
@@ -9,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, X,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
@@ -30,7 +29,6 @@ export function NavBar({
   onAction,
 }: { onAction: (a: NavAction) => void }) {
   const c = useColors();
-  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const { width, height } = useWindowDimensions();
   const x = useSharedValue(width - SIZE - MARGIN);
@@ -91,8 +89,6 @@ export function NavBar({
           style={styles.barWrap}
         >
           <View style={styles.bar}>
-            <BlurView intensity={70} tint={tint} style={StyleSheet.absoluteFill} />
-            <View style={styles.barTint} />
             <Key icon={ChevronLeft} label="Retour" onPress={() => act('back')} />
             <Key icon={House} label="Accueil du site" onPress={() => act('home')} />
             <Key icon={RotateCw} label="Recharger" onPress={() => act('reload')} />
@@ -112,8 +108,6 @@ export function NavBar({
           accessibilityRole="button"
           accessibilityLabel={open ? 'Fermer la navigation' : 'Ouvrir la navigation'}
         >
-          <BlurView intensity={40} tint={tint} style={StyleSheet.absoluteFill} />
-          <View style={styles.tint} />
           <View style={styles.grip}>
             <View style={styles.line} />
             <View style={styles.line} />
@@ -136,7 +130,6 @@ function Key({
 }) {
   const scale = useSharedValue(1);
   const c = useColors();
-  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const tap = Gesture.Tap()
@@ -151,8 +144,6 @@ function Key({
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        {big && <BlurView intensity={50} tint={tint} style={StyleSheet.absoluteFill} />}
-        {big && <View style={styles.tint} />}
         <Icon size={big ? 22 : 20} strokeWidth={2} color={colour ?? c.mist} />
       </Animated.View>
     </GestureDetector>
@@ -161,9 +152,14 @@ function Key({
 
 const sheet = (c: Palette) => StyleSheet.create({
   barWrap: { position: 'absolute', left: 0, right: 0, bottom: 118, alignItems: 'center', zIndex: 99 },
+  // Opaque, pas floue. Le flou n'a de sens que devant un fond qu'on
+  // controle ; ici la page est blanche, grise ou noire selon le site, et un
+  // voile sombre translucide y donnait une bouillie differente a chaque
+  // fois. Une barre pleine se lit partout, toujours pareil.
   bar: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 30, overflow: 'hidden',
+    backgroundColor: c.night,
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.28),
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -176,21 +172,17 @@ const sheet = (c: Palette) => StyleSheet.create({
   quitWrap: { marginTop: 10 },
   quit: {
     width: 52, height: 52, borderRadius: 26, overflow: 'hidden',
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.night,
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.3),
   },
   handle: {
     position: 'absolute', top: 0, left: 0,
     width: SIZE, height: SIZE, borderRadius: SIZE / 2, overflow: 'hidden',
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.night,
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.45),
     shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 }, elevation: 16,
     zIndex: 100,
-  },
-  tint: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(c.night, 0.6),
   },
   grip: { gap: 4 },
   line: { width: 18, height: 2, borderRadius: 1, backgroundColor: c.mist },

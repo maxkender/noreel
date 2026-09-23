@@ -29,14 +29,25 @@ export function Activities({ onNext }: P) {
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const hours = (minutes * 365) / 60;
 
-  const rows = ACTIVITIES
-    .map((a) => ({ id: a.id, n: activityCount(hours, a.costHours) }))
-    .sort((x, y) => y.n - x.n);
+  /*
+    Trois lignes, pas cinq.
+    Une liste de cinq equivalences se lit comme un tableau de conversion et
+    ne frappe plus : l'oeil les compare au lieu de les recevoir. Le chinois
+    est garde quoi qu'il arrive — c'est l'exemple qu'on retient — et on lui
+    adjoint les deux plus gros chiffres.
+  */
+  const all = ACTIVITIES.map((a) => ({ id: a.id, n: activityCount(hours, a.costHours) }));
+  const chinese = all.find((a) => a.id === 'chinese')!;
+  const rows = [
+    chinese,
+    ...all.filter((a) => a.id !== 'chinese').sort((x, y) => y.n - x.n).slice(0, 2),
+  ];
 
   return (
     <Screen cta={d.s6.cta2} onPress={onNext} hue="ember" hueLevel={0.5}>
-      <Text variant="displayM" style={st.title}>
-        {t('s6.afterTitle', { h: `${Math.round(hours)} heures` })}
+      <Text variant="displayM" style={st.title}>{d.s6.afterTitle}</Text>
+      <Text variant="lead" tone="secondary" style={[st.title, st.body]}>
+        {t('s6.afterBody', { h: String(Math.round(hours)) })}
       </Text>
 
       <View style={st.list}>
@@ -73,7 +84,8 @@ export function Activities({ onNext }: P) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   title: { textAlign: 'center' },
-  list: { marginTop: space.xl, gap: space.lg },
+  body: { marginTop: space.md },
+  list: { marginTop: space.xxl, gap: space.xl },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   bullet: {
     width: 7, height: 7, borderRadius: 4, marginTop: 8,

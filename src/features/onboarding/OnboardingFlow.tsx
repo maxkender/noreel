@@ -17,7 +17,6 @@ import {
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
-import { BarDemo } from './screens/BarDemo';
 import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Finale } from './Finale';
@@ -104,9 +103,8 @@ export function OnboardingFlow() {
     <Essentials key="ess" onNext={n(13)} />,
     <Permissions key="perm" onDone={n(14)} />,
     <NotificationsAsk key="notif" onNext={n(15)} />,
-    <BarDemo key="bar" onNext={n(16)} />,
-    <HomeShortcuts key="short" onNext={n(17)} />,
-    <PromiseScreen key="pro" onNext={n(18)} />,
+    <HomeShortcuts key="short" onNext={n(16)} />,
+    <PromiseScreen key="pro" onNext={n(17)} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

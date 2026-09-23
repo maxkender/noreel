@@ -339,9 +339,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: c.surface,
   },
   host: { flex: 1, textAlign: 'center' },
-  web: { flex: 1, backgroundColor: c.night },
+  web: { flex: 1, backgroundColor: '#FFFFFF' },
   overlay: {
-    position: 'absolute', top: 60, left: 0, right: 0, bottom: 0,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: c.night, paddingHorizontal: 40, gap: space.md,
   },

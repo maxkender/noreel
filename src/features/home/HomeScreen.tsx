@@ -13,6 +13,7 @@ import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
 import { Glass } from '@/components/glass/Glass';
 import { GlassSweep } from '@/components/GlassSweep';
+import { Stars } from '@/components/Stars';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours } from '@/lib/format';
@@ -41,10 +42,6 @@ export function HomeScreen() {
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
-  // Mesuree, pas devinee : l'encoche et la taille de police la font varier
-  // d'un telephone a l'autre, et le contenu doit commencer exactement
-  // dessous.
-  const [headH, setHeadH] = useState(96);
   const onScroll = useAnimatedScrollHandler(() => {});
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
@@ -58,39 +55,24 @@ export function HomeScreen() {
 
   return (
     <View style={st.root}>
-      <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
-        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} top={headH} />}
-        {tab === 'block' && <BlockTab onScroll={onScroll} top={headH} />}
-        {tab === 'account' && <AccountTab onScroll={onScroll} top={headH} />}
-      </Animated.View>
-
-      {/*
-        Pourquoi ce fondu marche enfin.
-        Les essais precedents peignaient un voile « vers le noir » par-dessus
-        un fond qui n'etait PAS noir : le halo passait derriere l'en-tete, si
-        bien qu'aucun degre de ce degrade ne tombait juste et qu'une bordure
-        restait visible. Ici le fond derriere l'en-tete est d'une seule
-        couleur, celle de l'app, et le voile est fait de cette couleur
-        exacte : il n'y a plus rien a faire coincider. Le halo, lui, est
-        descendu DANS le contenu, ou il defile et se dissout avec le reste.
-      */}
-      <SafeAreaView
-        edges={['top']}
-        style={st.headWrap}
-        onLayout={(e) => setHeadH(e.nativeEvent.layout.height)}
-      >
+      <Glow />
+      <Stars />
+      {/* L'en-tete est DANS le flux, opaque, et le contenu commence dessous.
+          Trois effets ont ete essayes pour la faire flotter — degrade, flou,
+          filet — et chacun laissait une bordure qui se voit. Ici il n'y a
+          plus de bordure a rater : rien ne passe derriere. */}
+      <SafeAreaView edges={['top']} style={st.headWrap}>
         <Header
           onSettings={() => setSettings(true)}
           onProfile={() => setTab('account')}
         />
       </SafeAreaView>
 
-      <LinearGradient
-        colors={[c.night, withAlpha(c.night, 0.86), withAlpha(c.night, 0.4), 'transparent']}
-        locations={[0, 0.35, 0.7, 1]}
-        style={[st.headFade, { top: headH }]}
-        pointerEvents="none"
-      />
+      <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
+        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} />}
+        {tab === 'block' && <BlockTab onScroll={onScroll} />}
+        {tab === 'account' && <AccountTab onScroll={onScroll} />}
+      </Animated.View>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
 
@@ -120,7 +102,7 @@ export function HomeScreen() {
 /* ---------------- Accueil ---------------- */
 type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
 
-function HomeTab({ streak, onScroll, top }: { streak: number; onScroll: Scroll; top: number }) {
+function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
@@ -141,15 +123,11 @@ function HomeTab({ streak, onScroll, top }: { streak: number; onScroll: Scroll; 
 
   return (
     <Animated.ScrollView
-      contentContainerStyle={[st.scroll, { paddingTop: top + space.sm }]}
+      contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
-      {/* Le halo vit DANS le contenu : il monte avec lui et se dissout dans
-          le fondu, au lieu de trainer derriere l'en-tete. */}
-      <View style={st.halo} pointerEvents="none"><Glow /></View>
-
       {/* Les apps d'abord : c'est ce qu'on vient chercher. */}
       <AppSlider minutes={perApp} />
 
@@ -248,7 +226,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /* ---------------- Blocage ---------------- */
-function BlockTab({ onScroll, top }: { onScroll: Scroll; top: number }) {
+function BlockTab({ onScroll }: { onScroll: Scroll }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
@@ -266,7 +244,7 @@ function BlockTab({ onScroll, top }: { onScroll: Scroll; top: number }) {
 
   return (
     <Animated.ScrollView
-      contentContainerStyle={[st.scroll, { paddingTop: top + space.sm }]}
+      contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
@@ -354,7 +332,7 @@ function BlockTab({ onScroll, top }: { onScroll: Scroll; top: number }) {
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab({ onScroll, top }: { onScroll: Scroll; top: number }) {
+function AccountTab({ onScroll }: { onScroll: Scroll }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [sources, setSources] = useState(false);
@@ -366,7 +344,7 @@ function AccountTab({ onScroll, top }: { onScroll: Scroll; top: number }) {
 
   return (
     <Animated.ScrollView
-      contentContainerStyle={[st.scroll, { paddingTop: top + space.sm }]}
+      contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
@@ -451,12 +429,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   statusBtnOn: { backgroundColor: c.accent, borderColor: c.accent },
   root: { flex: 1, backgroundColor: c.night },
-  halo: { position: 'absolute', top: 0, left: -gutter, right: -gutter, height: 420 },
-  scroll: { paddingHorizontal: gutter, paddingBottom: 130, gap: space.md },
-  headWrap: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5,
-    backgroundColor: c.night,
-  },
-  headFade: { position: 'absolute', left: 0, right: 0, height: 52, zIndex: 4 },
+  scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
+  headWrap: { backgroundColor: c.night },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
 });
