@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +9,7 @@ import Animated, {
   FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
 } from 'react-native-reanimated';
 import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
-import { blend, colors, withAlpha } from '@/theme/colors';
+import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
@@ -33,11 +33,6 @@ import { Settings } from './Settings';
 
 const STREAK_PNG = require('@/assets/brand/streak.png');
 
-// Couleur reelle du fond en haut de l'ecran : le noir plus le halo.
-// C'est elle que le voile doit porter, sinon il se voit comme une tache
-// sombre posee sur un fond teinte.
-const TOP = blend(colors.night, colors.accent, 0.16);
-
 type Tab = 'home' | 'block' | 'account';
 
 export function HomeScreen() {
@@ -48,12 +43,11 @@ export function HomeScreen() {
   // Le fondu n'existe que lorsqu'il y a quelque chose a masquer.
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
-  const veil = useAnimatedStyle(() => {
-    // Rampe longue et adoucie : sur 110 pt, avec une courbe en S. En dessous
-    // l'apparition se voyait arriver d'un bloc.
-    const t = Math.min(1, Math.max(0, y.value / 110));
-    return { opacity: t * t * (3 - 2 * t) };
-  });
+  const insets = useSafeAreaInsets();
+  // Court, comme iOS : la barre devient opaque en 24 pt de defilement.
+  const veil = useAnimatedStyle(() => ({
+    opacity: Math.min(1, Math.max(0, y.value / 24)),
+  }));
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
 
@@ -79,11 +73,18 @@ export function HomeScreen() {
         {tab === 'account' && <AccountTab onScroll={onScroll} onSettings={() => setSettings(true)} />}
       </Animated.View>
 
-      <Animated.View style={[st.veil, veil]} pointerEvents="none">
-        {/* Le flou fait le lien, le degrade efface la couture. Sept paliers
-            au lieu de quatre : en dessous, la fin du degrade se voyait comme
-            une bande. */}
-        <MaskedFade />
+      {/* Une barre, pas un fondu.
+          Trois versions de degrade ont echoue pour la meme raison : un
+          degrade a forcement une fin, et cette fin se voit. Ici il n'y en a
+          pas — un flou qui s'arrete net sur un filet d'un pixel, comme la
+          barre de navigation d'iOS. */}
+      <Animated.View
+        style={[st.veil, { height: insets.top + 56 }, veil]}
+        pointerEvents="none"
+      >
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={st.veilTint} />
+        <View style={st.veilLine} />
       </Animated.View>
 
       <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
@@ -111,30 +112,6 @@ export function HomeScreen() {
       {/* La lame de verre passe a chaque changement d'onglet. */}
       <GlassSweep key={tab} />
     </View>
-  );
-}
-
-/** Flou + degrade a sept paliers : la transition ne laisse aucune couture. */
-function MaskedFade() {
-  return (
-    <>
-      <BlurView intensity={34} tint="dark" style={StyleSheet.absoluteFill} />
-      <LinearGradient
-        colors={[
-          TOP,
-          TOP,
-          withAlpha(TOP, 0.95),
-          withAlpha(TOP, 0.84),
-          withAlpha(TOP, 0.64),
-          withAlpha(TOP, 0.4),
-          withAlpha(TOP, 0.18),
-          withAlpha(TOP, 0.05),
-          'transparent',
-        ]}
-        locations={[0, 0.3, 0.44, 0.56, 0.68, 0.78, 0.87, 0.94, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-    </>
   );
 }
 
@@ -197,7 +174,13 @@ function HomeTab({
         </Text>
         <Pressable
           style={st.detoxBtn}
-          onPress={() => { haptics.press(); const v = !detox; setDetox(v); void shield.setActive(v); }}
+          onPress={() => {
+            haptics.press();
+            const v = !detox;
+            setDetox(v);
+            useSettings.getState().set('blocking', v);
+            void shield.setActive(v);
+          }}
         >
           <LinearGradient
             colors={[withAlpha(colors.accent, 0.35), withAlpha(colors.accentDeep, 0.28), withAlpha(colors.accentWarm, 0.22)]}
@@ -290,7 +273,13 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
           {armed ? d.block.shieldOn : d.block.shieldOff}
         </Text>
         <Pressable
-          onPress={() => { haptics.press(); const v = !on; setOn(v); void shield.setActive(v); }}
+          onPress={() => {
+            haptics.press();
+            const v = !on;
+            setOn(v);
+            useSettings.getState().set('blocking', v);
+            void shield.setActive(v);
+          }}
           style={[st.statusBtn, armed && st.statusBtnOn]}
         >
           <Text
@@ -444,8 +433,16 @@ const st = StyleSheet.create({
   statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   root: { flex: 1, backgroundColor: colors.night },
   // La marge haute laisse passer le contenu sous l'en-tete flottante.
-  scroll: { paddingHorizontal: gutter, paddingTop: 108, paddingBottom: 130, gap: space.md },
-  veil: { position: 'absolute', top: 0, left: 0, right: 0, height: 210 },
+  scroll: { paddingHorizontal: gutter, paddingTop: 96, paddingBottom: 130, gap: space.md },
+  veil: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
+  veilTint: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: withAlpha(colors.night, 0.55),
+  },
+  veilLine: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.14),
+  },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
   headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

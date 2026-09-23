@@ -12,6 +12,8 @@ import { Poppins_600SemiBold } from '@expo-google-fonts/poppins/600SemiBold';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins/700Bold';
 import { colors } from '@/theme/colors';
 import { useProStore } from '@/store/pro';
+import { useSettings } from '@/store/settings';
+import { shield } from '@/services';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
@@ -27,6 +29,16 @@ export default function RootLayout() {
 
   // RevenueCat se configure au demarrage, une seule fois.
   useEffect(() => { void useProStore.getState().start(); }, []);
+
+  // Le blocage se rearme seul : iOS le lache au redemarrage, et le
+  // retrouver eteint apres chaque lancement le rendait inutile.
+  useEffect(() => {
+    const unsub = useSettings.persist?.onFinishHydration?.((s) => {
+      if (s?.blocking) void shield.setActive(true);
+    });
+    if (useSettings.getState().blocking) void shield.setActive(true);
+    return unsub;
+  }, []);
 
   useEffect(() => {
     // On masque le splash aussi en cas d'échec : mieux vaut du texte système

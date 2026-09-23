@@ -7,7 +7,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
@@ -139,8 +139,17 @@ export function S6({ onNext }: P) {
   const target = Math.round(wakingShare(minutes) * 100);
   const [lit, setLit] = useState(0);
 
-  // 88 ms par case : assez lent pour qu'on voie la part grandir et que ca pese.
+  // La grille attend que le titre soit ecrit : les deux en meme temps, on
+  // ne lisait ni l'un ni l'autre.
+  const [go, setGo] = useState(false);
   useEffect(() => {
+    const id = setTimeout(() => setGo(true), typeDuration(d.s6.title, 32, 0) + 300);
+    return () => clearTimeout(id);
+  }, [d.s6.title]);
+
+  // 88 ms par case : assez lent qu'on voie la part grandir et que ca pese.
+  useEffect(() => {
+    if (!go) return;
     let i = 0;
     const id = setInterval(() => {
       i += 1;
@@ -149,7 +158,7 @@ export function S6({ onNext }: P) {
       if (i >= target) clearInterval(id);
     }, 88);
     return () => clearInterval(id);
-  }, [target]);
+  }, [target, go]);
 
   const done = lit >= target;
 

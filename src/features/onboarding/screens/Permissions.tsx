@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Check, ShieldAlert } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { radii, space } from '@/theme/spacing';
@@ -51,19 +52,11 @@ export function Permissions({ onDone }: { onDone: () => void }) {
     );
   }
 
+  // Accorde : on confirme une seconde et on enchaine seul. Un ecran de plus
+  // avec un bouton a presser, apres une alerte systeme deja pressee, ne
+  // disait rien que la coche ne dise mieux.
   if (state === 'approved') {
-    return (
-      <Screen cta="Continuer" onPress={onDone} center hue="accent">
-        <View style={st.okRing}>
-          <Check size={34} strokeWidth={2.4} color={colors.accent} />
-        </View>
-        <Text variant="displayM" style={st.center}>C’est fermé.</Text>
-        <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
-          UnSwipe peut mettre les apps d’origine en pause. Rien ne quitte ton
-          téléphone.
-        </Text>
-      </Screen>
-    );
+    return <Granted onDone={onDone} />;
   }
 
   // Le bouton bleu a ete presse : on repare, on ne culpabilise pas.
@@ -116,6 +109,25 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   );
 }
 
+/** Confirmation breve, puis la suite. Aucun geste demande. */
+function Granted({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const id = setTimeout(onDone, 1500);
+    return () => clearTimeout(id);
+  }, [onDone]);
+
+  return (
+    <View style={st.ok}>
+      <Animated.View entering={FadeIn.duration(320)} style={st.okRing}>
+        <Check size={34} strokeWidth={2.4} color={colors.accent} />
+      </Animated.View>
+      <Animated.View entering={FadeIn.delay(220).duration(420)}>
+        <Text variant="title" style={st.center}>Temps d’écran connecté</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
 function Path({ n, text }: { n: string; text: string }) {
   return (
     <View style={st.step}>
@@ -137,9 +149,13 @@ const st = StyleSheet.create({
     width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.accent,
   },
+  ok: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    gap: space.lg, backgroundColor: colors.night,
+  },
   okRing: {
-    alignSelf: 'center', width: 78, height: 78, borderRadius: 39,
-    alignItems: 'center', justifyContent: 'center', marginBottom: space.xl,
+    width: 78, height: 78, borderRadius: 39,
+    alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: withAlpha(colors.accent, 0.5),
     backgroundColor: withAlpha(colors.accent, 0.1),
   },

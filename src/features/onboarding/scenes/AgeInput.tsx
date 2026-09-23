@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
@@ -46,6 +46,10 @@ export function AgeInput({
     next[i] = c;
     setD(next);
     if (c && i === 0) { second.current?.focus(); setFocus(1); }
+    // Deuxieme chiffre pose : le clavier se retire pour laisser voir le
+    // bouton, sans avancer d'office — une faute de frappe doit rester
+    // corrigeable.
+    if (c && i === 1) { Keyboard.dismiss(); setFocus(-1); }
     haptics.tick();
   };
 

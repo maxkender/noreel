@@ -132,8 +132,7 @@ export const INSTAGRAM_BLOCKER = `
   ${COMMON}
 
   // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
-  // masque : lui couper l'icone emportait aussi la recherche, et le site
-  // paraissait casse.
+  // masque : lui couper l'icone emportait aussi la recherche.
   const css = \`
     a[href^="/reels"], a[href$="/reels/"],
     svg[aria-label="Reels" i] { display: none !important; }
@@ -142,15 +141,22 @@ export const INSTAGRAM_BLOCKER = `
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
 
+  // On reconnait un bloc a son TEXTE, jamais a ses classes : Instagram les
+  // regenere a chaque deploiement, un selecteur de classe ne tient pas une
+  // semaine.
   const SUGGEST = /suggestions? pour vous|suggested for you|publications sugg|suggested posts/i;
+  const AD = /sponsoris|sponsored|publicit|paid partnership|partenariat r|en savoir plus sur cette/i;
+
+  const posts = () => document.querySelectorAll('article');
 
   // Le carrousel de stories n'a pas d'attribut a lui : on remonte depuis un
-  // lien /stories/ jusqu'au premier parent qui en contient plusieurs.
+  // lien /stories/ jusqu'au premier parent qui en contient plusieurs. Sans
+  // exiger <main> : selon les pages, le fil n'est pas dedans.
   const __tray = () => {
-    const a = document.querySelector('main a[href^="/stories/"]');
+    const a = document.querySelector('a[href^="/stories/"]');
     if (!a) return null;
     let n = a.parentElement;
-    for (let i = 0; i < 8 && n; i += 1) {
+    for (let i = 0; i < 12 && n; i += 1) {
       if (n.querySelectorAll('a[href^="/stories/"]').length >= 3) return n;
       n = n.parentElement;
     }
@@ -167,14 +173,23 @@ export const INSTAGRAM_BLOCKER = `
       __hide(a.closest('article') || a);
     });
 
+    // La mention « Sponsorise » est dans l'en-tete du post : on ne lit que
+    // le debut, sinon un commentaire contenant le mot ferait disparaitre un
+    // post ordinaire.
+    if (__on('ads')) {
+      posts().forEach((art) => {
+        if (AD.test((art.textContent || '').slice(0, 160))) __hide(art);
+      });
+    }
+
     if (__on('suggested')) {
-      document.querySelectorAll('main article').forEach((art) => {
+      posts().forEach((art) => {
         if (SUGGEST.test((art.textContent || '').slice(0, 240))) __hide(art);
       });
     }
 
     if (__on('stories') || __on('feed')) __hide(__tray());
-    if (__on('feed')) document.querySelectorAll('main article').forEach(__hide);
+    if (__on('feed')) posts().forEach(__hide);
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
       __go('/direct/inbox/');

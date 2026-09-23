@@ -38,7 +38,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const script = useMemo(() => {
     const active: Record<string, boolean> = {};
     for (const t of APP_TOGGLES[id]) {
-      active[t.key] = t.locked ? true : !!settingsMap[`${id}.${t.key}`];
+      // Meme regle que le magasin : verrouille, sinon le choix de
+      // l'utilisateur, sinon la valeur par defaut du reglage.
+      active[t.key] = t.locked ? true : (settingsMap[`${id}.${t.key}`] ?? !!t.on);
     }
     return buildScript(client.script, active);
   }, [id, client.script, settingsMap]);

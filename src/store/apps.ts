@@ -4,13 +4,21 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { ClientId } from '@/features/client/blockers';
 
 /** Reglages par app. Les entrees `locked` sont toujours actives. */
-export type AppToggle = { key: string; label: string; locked?: boolean };
+export type AppToggle = {
+  key: string;
+  label: string;
+  /** Toujours actif, non debrayable. */
+  locked?: boolean;
+  /** Actif tant que l'utilisateur n'a rien touche. */
+  on?: boolean;
+};
 
 export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
     { key: 'reels', label: 'Bloquer les Reels', locked: true },
     { key: 'explore', label: 'Bloquer Explorer', locked: true },
-    { key: 'suggested', label: 'Masquer les posts suggérés' },
+    { key: 'ads', label: 'Masquer les publicités', on: true },
+    { key: 'suggested', label: 'Masquer les posts suggérés', on: true },
     { key: 'stories', label: 'Bloquer les stories' },
     { key: 'feed', label: 'Bloquer le fil' },
     { key: 'dmsOnly', label: 'Messages uniquement' },
@@ -54,9 +62,11 @@ export const useAppsStore = create<State>()(
       toggle: (app, key, value) =>
         set((s) => ({ settings: { ...s.settings, [`${app}.${key}`]: value } })),
       isOn: (app, key) => {
-        const locked = APP_TOGGLES[app].find((t) => t.key === key)?.locked;
-        if (locked) return true;
-        return get().settings[`${app}.${key}`] ?? false;
+        const t = APP_TOGGLES[app].find((x) => x.key === key);
+        if (t?.locked) return true;
+        // `?? t.on` et pas `?? false` : un reglage actif par defaut le reste
+        // tant que personne ne l'a touche, et redevient touchable ensuite.
+        return get().settings[`${app}.${key}`] ?? !!t?.on;
       },
     }),
     {

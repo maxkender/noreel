@@ -25,56 +25,110 @@ type P = { onNext: () => void };
 
 /* ---------- Le constat ---------- */
 
+type Step =
+  | { kind: 'ask'; q: string; options: { label: string; reply: string }[] }
+  | { kind: 'say'; q: string; sub?: string };
+
+const CONSTAT: Step[] = [
+  {
+    kind: 'ask',
+    q: 'Combien de reels vus cette semaine saurais-tu me {raconter} ?',
+    options: [
+      { label: 'Aucun', reply: 'Aucun. Tu en as pourtant vu des centaines.' },
+      { label: 'Un ou deux', reply: 'Deux, sur les centaines qui ont défilé.' },
+      { label: 'Je ne sais plus', reply: 'Personne ne sait. C’est exactement le problème.' },
+    ],
+  },
+  {
+    kind: 'ask',
+    q: 'Ta mémoire, ta concentration, ton plaisir : tu les sens {flancher} ?',
+    options: [
+      { label: 'Oui, nettement', reply: 'Tu l’as senti avant de savoir pourquoi.' },
+      { label: 'Parfois', reply: 'Ça commence toujours par « parfois ».' },
+      { label: 'Non', reply: 'Alors regarde la suite. Tu jugeras après.' },
+    ],
+  },
+  {
+    kind: 'say',
+    q: 'La {dopamine} est au centre de ce qui te rend heureux.',
+    sub: 'C’est elle qui donne du goût à tout le reste.',
+  },
+  {
+    kind: 'say',
+    q: 'Le réflexe de scroller abîme ta mémoire, à court comme à long terme.',
+    sub: 'Les dégâts peuvent durer. Mais il n’est pas trop tard.',
+  },
+];
+
 /**
- * Premier ecran apres la marque. Quatre constats qu'on avance au doigt :
- * on ne vend rien, on demande seulement de se souvenir.
+ * Premier ecran apres la marque. On ne raconte rien avant d'avoir demande :
+ * les deux premiers temps attendent une reponse, et c'est la reponse de la
+ * personne — pas notre affirmation — qui fait le constat.
  */
 export function Constat({ onNext }: P) {
   const [i, setI] = useState(0);
+  const [answer, setAnswer] = useState<number | null>(null);
 
-  const steps: [string, string?][] = [
-    [
-      'De combien de reels te souviens-tu, ces derniers jours ?',
-      'Arriverais-tu à en citer un seul ?',
-    ],
-    [
-      'As-tu senti ta mémoire flancher ? Ta concentration ? Ton plaisir ?',
-    ],
-    [
-      'La {dopamine} est au centre de ce qui te rend heureux.',
-      'C’est elle qui donne du goût à tout le reste.',
-    ],
-    [
-      'Ce réflexe abîme ta mémoire, à court comme à long terme.',
-      'Les dégâts peuvent durer. Mais il n’est pas trop tard.',
-    ],
-  ];
-  const last = i >= steps.length - 1;
+  const step = CONSTAT[i];
+  const last = i >= CONSTAT.length - 1;
+  const answered = step.kind === 'say' || answer !== null;
+
+  const advance = () => {
+    if (last) { onNext(); return; }
+    setAnswer(null);
+    setI((n) => n + 1);
+  };
 
   return (
     <Screen
-      cta="Appuie pour continuer"
-      onPress={() => (last ? onNext() : setI((n) => n + 1))}
-      tapToContinue
-      hintDelay={2600}
+      cta={answered ? 'Continuer' : ''}
+      onPress={answered ? advance : undefined}
+      disabled={!answered}
       center
       hue={i >= 2 ? 'ember' : 'deep'}
     >
       <Animated.View key={i} entering={FadeIn.duration(520)}>
-        <Typewriter text={steps[i][0]} variant="displayM" speed={44} style={st.center} />
-        {steps[i][1] ? (
+        <Typewriter text={step.q} variant="displayM" speed={44} style={st.center} />
+
+        {step.kind === 'say' && step.sub ? (
           <Animated.View entering={FadeIn.delay(1100).duration(520)}>
             <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.lg }]}>
-              {steps[i][1]}
+              {step.sub}
             </Text>
           </Animated.View>
         ) : null}
+
+        {step.kind === 'ask' && (
+          <Animated.View
+            entering={FadeIn.delay(900).duration(520)}
+            style={{ marginTop: space.xl, gap: space.md }}
+          >
+            {step.options.map((o, k) => (
+              <SelectCard
+                key={o.label}
+                label={o.label}
+                selected={answer === k}
+                onPress={() => setAnswer(k)}
+              />
+            ))}
+          </Animated.View>
+        )}
+
+        {/* La replique ne tombe qu'une fois la reponse donnee : c'est ce qui
+            la rend difficile a balayer. */}
+        {step.kind === 'ask' && answer !== null && (
+          <Animated.View entering={FadeIn.duration(520)}>
+            <Text variant="lead" color={colors.ember} style={[st.center, { marginTop: space.xl }]}>
+              {step.options[answer].reply}
+            </Text>
+          </Animated.View>
+        )}
       </Animated.View>
     </Screen>
   );
 }
 
-/* ---------- Prenom ---------- */
+/* ---------- Prenom ---------- *//* ---------- Prenom ---------- */
 export function Name({ onNext }: P) {
   const name = useOnboardingStore((x) => x.firstName);
   const setName = useOnboardingStore((x) => x.setFirstName);
