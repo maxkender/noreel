@@ -55,7 +55,11 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>()(
       setStep: (step) => set({ step }),
       setMinutesPerDay: (minutesPerDay) => set({ minutesPerDay }),
       setAge: (age) => set({ age }),
-      setFirstName: (firstName) => set({ firstName }),
+      // La majuscule est posee ici, pas a l'affichage : sinon chaque ecran
+      // doit y penser, et un seul oubli se voit.
+      setFirstName: (n) => set({
+        firstName: n.trim().replace(/^./, (x) => x.toLocaleUpperCase('fr')),
+      }),
       toggleDistraction: (id) => set((s) => ({
         distractions: s.distractions.includes(id)
           ? s.distractions.filter((x) => x !== id)

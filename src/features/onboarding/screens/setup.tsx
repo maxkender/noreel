@@ -38,6 +38,7 @@ const CONSTAT: Step[] = [
     options: [
       { label: 'Aucun', reply: 'Aucun. Tu en as pourtant vu des centaines.' },
       { label: 'Un ou deux', reply: 'Deux, sur les centaines qui ont défilé.' },
+      { label: 'Quelques-uns', reply: 'Quelques-uns. Tu en as vu des centaines.' },
       { label: 'Je ne sais plus', reply: 'Personne ne sait. C’est exactement le problème.' },
     ],
   },
@@ -120,14 +121,20 @@ export function Constat({ onNext }: P) {
           </Animated.View>
         )}
 
-        {/* La replique ne tombe qu'une fois la reponse donnee : c'est ce qui
-            la rend difficile a balayer. */}
-        {step.kind === 'ask' && answer !== null && (
-          <Animated.View entering={FadeIn.duration(520)}>
-            <Text variant="lead" color={colors.ember} style={[st.center, { marginTop: space.xl }]}>
-              {step.options[answer].reply}
-            </Text>
-          </Animated.View>
+        {/* La replique ne tombe qu'une fois la reponse donnee. Sa place est
+            reservee des le depart — la version precedente l'inserait dans le
+            flux, ce qui poussait les boutons vers le haut au moment meme ou
+            le doigt s'y posait. */}
+        {step.kind === 'ask' && (
+          <View style={st.reply}>
+            {answer !== null && (
+              <Animated.View entering={FadeIn.duration(420)}>
+                <Text variant="lead" color={colors.ember} style={st.center}>
+                  {step.options[answer].reply}
+                </Text>
+              </Animated.View>
+            )}
+          </View>
         )}
       </Animated.View>
     </Screen>
@@ -336,50 +343,43 @@ export function NotificationsAsk({ onNext }: P) {
 export function PromiseScreen({ onNext }: P) {
   const name = useOnboardingStore((x) => x.firstName);
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
+
+  // Le chiffre vient de SON temps d'ecran : trente pour cent repris sur les
+  // annees qu'il y laisse. Un nombre rond invente ne vaut rien ici.
   const years = Math.max(1, Math.round(screenYears(minutes) * 0.3));
-  const target = Math.round(minutes * 0.7);
-  const days = Math.round((minutes * 0.3 * 365) / 60 / 24);
+  const hours = Math.round((minutes * 0.3 * 365) / 60);
 
   return (
     <Screen cta="👊  C’est parti" onPress={onNext} hue="accent">
       <Text variant="displayM" style={st.center}>
-        {name ? `${name},\n` : ''}UnSwipe te rendra{' '}
-        <Text variant="displayM" color={colors.accent}>{years} ans</Text> de ta vie
+        {name ? `${name}, ` : ''}UnSwipe te rendra{' '}
+        <Text variant="displayM" color={colors.accent}>{years} ans</Text>
+        {' de ta vie'}
       </Text>
 
-      <View style={{ marginTop: space.xxl, gap: space.xl }}>
-        <PromiseRow
-          title="30 % de temps d’écran en moins"
-          body={`Passe de ${Math.round(minutes / 60)} h à ${Math.floor(target / 60)} h ${target % 60} par jour.`}
-        />
-        <PromiseRow
-          title="Un sommeil plus profond"
-          body="Moins d’écran avant de dormir, tu t’endors plus vite."
-        />
-        <PromiseRow
-          title={`${days} jours récupérés cette année`}
-          body="Du temps qui revient à toi, pas à un algorithme."
-        />
+      <View style={{ marginTop: space.xxl, gap: space.lg }}>
+        <PromiseRow title="Rétablissement de tes récepteurs de dopamine" />
+        <PromiseRow title="Du temps libre pour faire ce que tu veux : lire, écrire, apprendre une langue" />
+        <PromiseRow title={`${hours} heures récupérées dès cette année`} />
       </View>
     </Screen>
   );
 }
 
-/** Une promesse : une pastille violette, un titre, une ligne. */
-function PromiseRow({ title, body }: { title: string; body: string }) {
+/** Une promesse : une pastille, une ligne. Rien dessous. */
+function PromiseRow({ title }: { title: string }) {
   return (
     <View style={st.promise}>
       <View style={st.pip} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="title">{title}</Text>
-        <Text variant="body" tone="secondary">{body}</Text>
-      </View>
+      <Text variant="title" style={{ flex: 1 }}>{title}</Text>
     </View>
   );
 }
 
 const st = StyleSheet.create({
   center: { textAlign: 'center' },
+  // Hauteur fixe : la plus longue replique tient sur deux lignes.
+  reply: { minHeight: 58, justifyContent: 'center', marginTop: space.xl },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.
   faded: { textAlign: 'center', opacity: 0.55 },

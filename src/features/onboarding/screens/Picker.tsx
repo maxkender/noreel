@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { AlertTriangle } from 'lucide-react-native';
@@ -10,7 +10,9 @@ import { Text } from '@/components/type/Text';
 // donc sans risque, et il evite un require() au milieu du rendu.
 import DeviceActivitySelectionView from 'react-native-device-activity/build/DeviceActivitySelectionView';
 import { useSettings } from '@/store/settings';
-import { FAMILY_CONTROLS_ENABLED } from '@/services/shield.real';
+import {
+  FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
+} from '@/services/shield.real';
 import { applySelection } from '@/services/selection';
 
 type P = { onNext: () => void };
@@ -27,6 +29,29 @@ export function Picker({ onNext }: P) {
   const saved = useSettings((s) => s.selection);
   const set = useSettings((s) => s.set);
   const [counts, setCounts] = useState({ apps: 0, cats: 0, whole: false });
+  // Sans autorisation Temps d'ecran, le selecteur d'Apple s'affiche VIDE :
+  // on voyait un cadre gris et rien d'autre, sans savoir pourquoi.
+  const [auth, setAuth] = useState<string>('notDetermined');
+  useEffect(() => { void authorizationStatus().then(setAuth); }, []);
+
+  if (FAMILY_CONTROLS_ENABLED && Platform.OS === 'ios' && auth !== 'approved') {
+    return (
+      <Screen
+        cta="Autoriser Temps d’écran"
+        onPress={() => { void requestAuthorization().then(setAuth); }}
+        secondary="Plus tard"
+        onSecondary={onNext}
+        center
+        hue="accent"
+      >
+        <Text variant="displayM" style={st.center}>Choisis ce qu’on met en pause.</Text>
+        <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
+          Le sélecteur d’apps appartient à iOS. Il lui faut l’accès à Temps
+          d’écran pour t’afficher tes apps — sans lui, il reste vide.
+        </Text>
+      </Screen>
+    );
+  }
 
   if (!FAMILY_CONTROLS_ENABLED || Platform.OS !== 'ios') {
     return (

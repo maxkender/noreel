@@ -130,6 +130,14 @@ const COMMON = `
     ).forEach(__hide);
     // La banniere d'App Store des sites mobiles.
     document.querySelectorAll('meta[name="apple-itunes-app"]').forEach((m) => m.remove());
+
+    // Le bandeau « Utiliser l'application », qui revient par le texte meme
+    // quand ses liens ont saute. On remonte jusqu'au bloc qui le porte.
+    const OPEN = /utiliser l.application|use the app|ouvrir dans l.application|open in app|continuer dans l.application/i;
+    document.querySelectorAll('div, section, aside').forEach((el) => {
+      const t = (el.textContent || '').trim();
+      if (t.length < 60 && OPEN.test(t) && el.children.length < 6) __hide(el);
+    });
   };
 
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
@@ -185,6 +193,15 @@ export const INSTAGRAM_BLOCKER = `
     __gray();
     __cookies();
     __native();
+
+    // « Pour vous » est le fil algorithmique : on prend « Abonnements ».
+    // Le selecteur est un menu en haut du fil, pas un onglet.
+    document.querySelectorAll('[role="menuitem"], [role="tab"], button').forEach((b) => {
+      const t = (b.textContent || '').trim().toLowerCase();
+      if (/^(abonnements|following)$/.test(t) && b.getAttribute('aria-selected') !== 'true') {
+        b.click();
+      }
+    });
 
     // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans
     // l'explore c'est une tuile. Les deux partent, et le post entier avec.

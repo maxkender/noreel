@@ -74,15 +74,15 @@ function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
         <View style={styles.tint} />
 
         {step.mark ? <View style={styles.mark}>{step.mark}</View> : null}
-        <Text variant="title" style={styles.title}>{step.title}</Text>
+        <Text variant="title" color="#15171C" style={styles.title}>{step.title}</Text>
         {step.body ? (
-          <Text variant="body" tone="secondary" style={styles.body}>{step.body}</Text>
+          <Text variant="body" color="#4A4E57" style={styles.body}>{step.body}</Text>
         ) : null}
 
         {step.cta ? (
           <View style={styles.cta}><Button label={step.cta} onPress={next} /></View>
         ) : (
-          <Text variant="label" tone="tertiary" style={styles.hint}>
+          <Text variant="label" color="#8A8E97" style={styles.hint}>
             Appuie n’importe où pour continuer
           </Text>
         )}
@@ -95,7 +95,7 @@ function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
       </Animated.View>
 
       <Pressable style={styles.skip} onPress={() => { haptics.tap(); onDone(); }} hitSlop={12}>
-        <Text variant="label" tone="tertiary">Passer</Text>
+        <Text variant="label" color={withAlpha(c.mist, 0.7)}>Passer</Text>
       </Pressable>
     </Animated.View>
   );
@@ -109,13 +109,14 @@ const sheet = (c: Palette) => StyleSheet.create({
   bubble: {
     position: 'absolute', left: gutter, right: gutter,
     borderRadius: 24, overflow: 'hidden', padding: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.22),
-    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24,
+    shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 26,
     shadowOffset: { width: 0, height: 12 },
   },
+  // Claire sur fond sombre comme sur fond clair : c'est le contraste avec
+  // la page, pas la couleur, qui la fait lire.
   tint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(c.night, 0.7),
+    backgroundColor: '#F7F7F5F2',
   },
   mark: { alignItems: 'center', marginBottom: space.md },
   title: { textAlign: 'center' },
@@ -123,7 +124,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   cta: { marginTop: space.lg },
   hint: { textAlign: 'center', marginTop: space.lg },
   dots: { flexDirection: 'row', gap: 5, justifyContent: 'center', marginTop: space.lg },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.2) },
-  dotOn: { width: 16, backgroundColor: c.accent },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#C9CBD1' },
+  dotOn: { width: 16, backgroundColor: '#4B63D8' },
   skip: { position: 'absolute', top: 60, right: gutter, padding: space.sm },
 });

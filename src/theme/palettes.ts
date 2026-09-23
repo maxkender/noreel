@@ -13,20 +13,24 @@ export type Palette = { [K in keyof typeof dark]: string };
 
 export const light: Palette = {
   ...dark,
-  night: '#F6F5F2',        // fond, presque blanc
-  surface: '#FFFFFF',      // cartes
-  surfaceHi: '#EFEDE8',    // cartes en relief
-  line: '#0000000F',       // filet 6 %
-  lineStrong: '#00000022',
-  mist: '#16181D',         // texte principal
-  sun: '#000000',          // action principale
-  accent: '#4B63D8',       // bleu profond : lisible sur blanc
-  accentDeep: '#6B4FD8',   // violet
-  accentWarm: '#C2568E',   // rose soutenu
-  screenGlow: '#4B63D8',
-  accentSoft: '#4B63D81A',
-  accentFaint: '#4B63D80D',
-  ground: '#FFFFFF',
+  // Un fond creme, pas du blanc pur : le blanc pur sur un ecran de telephone
+  // fatigue l'oeil, surtout le soir, et fait ressortir chaque bord.
+  night: '#EFEDE7',        // fond
+  surface: '#F8F6F1',      // cartes
+  surfaceHi: '#E4E1D9',    // cartes en relief
+  line: '#00000012',       // filet 7 %
+  lineStrong: '#00000026',
+  mist: '#1A1C21',         // texte principal
+  sun: '#111318',          // action principale
+  accent: '#3F57C9',       // bleu profond : lisible sur creme
+  accentDeep: '#6046C4',   // violet
+  accentWarm: '#B04B82',   // rose soutenu
+  screenGlow: '#3F57C9',
+  accentSoft: '#3F57C918',
+  accentFaint: '#3F57C90A',
+  danger: '#C0392F',       // le rouge sombre tient sur fond clair
+  ember: '#C2611E',
+  ground: '#F8F6F1',
 };
 
 export const palettes = { dark, light } as const;

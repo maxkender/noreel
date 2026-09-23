@@ -39,7 +39,8 @@ export const useSettings = create<State>()(
       selection: null,
       appleUser: null,
       toured: {},
-      theme: 'dark',
+      // Clair par defaut : c'est le theme que l'app montre en premier.
+      theme: 'light',
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.

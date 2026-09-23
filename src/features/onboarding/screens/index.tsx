@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn, useAnimatedStyle, useSharedValue, withDelay, withTiming,
+} from 'react-native-reanimated';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
@@ -195,14 +197,52 @@ export function S6({ onNext }: P) {
   );
 }
 
+/** Chaque case s'allume en fondu : le remplissage devient une vague. */
+function Cell({ on, index }: { on: boolean; index: number }) {
+  return on ? (
+    <Animated.View
+      entering={FadeIn.duration(420)}
+      style={[s.square, { backgroundColor: colors.danger }]}
+    />
+  ) : (
+    <View key={index} style={[s.square, s.squareOff]} />
+  );
+}
+
 /**
  * Le verdict a son propre ecran : pose sous la grille, le nombre d'annees
  * se lisait comme une legende. Seul, il se prend en pleine figure.
+ *
+ * Les deux chiffres montent au lieu de s'afficher : on les regarde grimper,
+ * et c'est ce trajet qui fait mal, pas la valeur finale.
  */
 export function S6Years({ onNext }: P) {
   const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const years = Math.round(screenYears(minutes));
+  const share = Math.round(wakingShare(minutes) * 100);
+
+  const [y, setY] = useState(0);
+  const [p, setP] = useState(0);
+  const bar = useSharedValue(0);
+
+  useEffect(() => {
+    // 1,6 s pour les deux, quel que soit le chiffre : un petit nombre ne
+    // doit pas defiler plus vite qu'un grand.
+    const steps = 34;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setY(Math.round((years * i) / steps));
+      setP(Math.round((share * i) / steps));
+      if (i % 8 === 0) haptics.tick();
+      if (i >= steps) clearInterval(id);
+    }, 1600 / steps);
+    bar.value = withDelay(200, withTiming(share / 100, { duration: 1400 }));
+    return () => clearInterval(id);
+  }, [years, share, bar]);
+
+  const fill = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
 
   return (
     <Screen cta="Récupérer ce temps" onPress={onNext} center hue="ember">
@@ -215,25 +255,27 @@ export function S6Years({ onNext }: P) {
           numberOfLines={1}
           adjustsFontSizeToFit
         >
-          {t(d.s6.years, { y: years })}
+          {t(d.s6.years, { y })}
         </Text>
         <Text variant="lead" tone="secondary" style={s.center}>
           {d.s6.bodyShort}
         </Text>
       </Animated.View>
-    </Screen>
-  );
-}
 
-/** Chaque case s'allume en fondu : le remplissage devient une vague, pas un saut. */
-function Cell({ on, index }: { on: boolean; index: number }) {
-  return on ? (
-    <Animated.View
-      entering={FadeIn.duration(420)}
-      style={[s.square, { backgroundColor: colors.danger }]}
-    />
-  ) : (
-    <View key={index} style={[s.square, s.squareOff]} />
+      <View style={s.split} />
+
+      <Animated.View entering={FadeIn.delay(500).duration(700)} style={s.share}>
+        <View style={s.shareRow}>
+          <Text variant="displayL" color={colors.ember}>{p} %</Text>
+          <Text variant="body" tone="secondary" style={{ flex: 1 }}>
+            de ton temps éveillé, chaque jour
+          </Text>
+        </View>
+        <View style={s.track}>
+          <Animated.View style={[s.fill, fill]} />
+        </View>
+      </Animated.View>
+    </Screen>
   );
 }
 
@@ -306,6 +348,17 @@ const s = StyleSheet.create({
   square: { width: 20.5, height: 20.5, borderRadius: 4 },
   pct: { marginTop: 0, marginBottom: space.sm },
   years: { alignItems: 'center', gap: space.xs },
+  split: {
+    height: StyleSheet.hairlineWidth, alignSelf: 'stretch',
+    marginVertical: space.xl, backgroundColor: withAlpha(colors.mist, 0.14),
+  },
+  share: { alignSelf: 'stretch', gap: space.md },
+  shareRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  track: {
+    height: 8, borderRadius: 4, overflow: 'hidden',
+    backgroundColor: withAlpha(colors.mist, 0.08),
+  },
+  fill: { height: 8, borderRadius: 4, backgroundColor: colors.ember },
   squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },

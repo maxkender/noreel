@@ -50,7 +50,7 @@ export const fr = {
   },
 
   s4: {
-    title: `C'est pour ça qu'on a construit la solution ultime.`,
+    title: 'Maintenant on installe tout pour toi, pour que tu utilises tes applis sans y perdre trois heures par jour.',
     body: 'Les mêmes plateformes. Sans les fonctionnalités qui ruinent ton cerveau.',
     before: 'Avant',
     after: 'Avec UnSwipe',
@@ -69,7 +69,7 @@ export const fr = {
     titleB: `Et tu as quel âge${NNBSP}?`,
     bodyB: 'Pour voir ce que ça représente sur ta vie.',
     ageValue: '{n} ans',
-    ctaB: 'Voir ma vie en carreaux',
+    ctaB: 'Continuer',
   },
 
   s6: {

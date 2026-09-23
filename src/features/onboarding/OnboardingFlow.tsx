@@ -15,6 +15,7 @@ import {
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
+import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -81,7 +82,8 @@ export function OnboardingFlow() {
     <Essentials key="ess" onNext={n(12)} />,
     <Permissions key="perm" onDone={n(13)} />,
     <NotificationsAsk key="notif" onNext={n(14)} />,
-    <PromiseScreen key="pro" onNext={n(15)} />,
+    <HomeShortcuts key="short" onNext={n(15)} />,
+    <PromiseScreen key="pro" onNext={n(16)} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 
@@ -116,7 +118,7 @@ export function OnboardingFlow() {
   );
 }
 
-const TOTAL = 16;
+const TOTAL = 17;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },

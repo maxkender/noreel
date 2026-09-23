@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Ban, RotateCw, X } from 'lucide-react-native';
+import { Ban, RotateCw } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -153,33 +153,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.bar} edges={['top']}>
-        {/* Rangee en flux : un bouton en position absolue depassait du parent
-            et ne recevait plus les touches sur iOS. */}
-        <View style={styles.barRow}>
-          <Pressable
-            onPress={exit}
-            hitSlop={20}
-            style={styles.close}
-            accessibilityRole="button"
-            accessibilityLabel="Quitter"
-          >
-            <X size={19} strokeWidth={2.4} color={c.mist} />
-            <Text variant="label">Quitter</Text>
-          </Pressable>
-          <Text variant="label" tone="secondary" style={styles.host}>
-            {raw ? 'Sans filtre' : LABELS[id]}
-          </Text>
-          <Pressable
-            onPress={reload}
-            hitSlop={20}
-            style={styles.icon}
-            accessibilityRole="button"
-            accessibilityLabel="Recharger"
-          >
-            <RotateCw size={17} strokeWidth={2.2} color={c.mist} />
-          </Pressable>
-        </View>
+      <SafeAreaView edges={['top']} style={styles.tag} pointerEvents="none">
+        <Text variant="label" color={withAlpha(c.mist, 0.45)}>
+          {raw ? 'SANS FILTRE' : LABELS[id]}
+        </Text>
       </SafeAreaView>
 
       <WebView
@@ -290,6 +267,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
+  // Le nom de l'app, discret, sur l'encoche : il rassure sans voler de
+  // place a la page.
+  tag: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    alignItems: 'center', paddingTop: 6, zIndex: 3,
+  },
   bar: { backgroundColor: c.night },
   barRow: {
     flexDirection: 'row', alignItems: 'center',

@@ -45,7 +45,7 @@ export const en: Dict = {
   },
 
   s4: {
-    title: `That's why we built the ultimate fix.`,
+    title: 'Now we set everything up for you, so you can use your apps without losing three hours a day.',
     body: 'Same platforms. Without the features that fry your brain.',
     before: 'Before',
     after: 'With UnSwipe',
@@ -64,7 +64,7 @@ export const en: Dict = {
     titleB: 'And how old are you?',
     bodyB: 'So we can see what it means for your life.',
     ageValue: '{n} years old',
-    ctaB: 'See my life in squares',
+    ctaB: 'Continue',
   },
 
   s6: {
