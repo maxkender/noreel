@@ -33,7 +33,7 @@ const T = {
   drain: 260,     // ecart entre deux decolorations
   settle: 420,    // repos une fois tout gris
   zoom: 760,      // l'anneau s'ouvre
-  flash: 520,     // le voile se retire
+  flash: 520,     // la lumiere monte, et couvre
 };
 const T_DRAIN = T.in + T.hold;
 const T_ZOOM = T_DRAIN + APPS.length * T.drain + T.settle;
@@ -49,7 +49,14 @@ const T_END = T_ZOOM + T.zoom + T.flash;
 export function Finale({ onDone }: { onDone: () => void }) {
   const born = useSharedValue(0);
   const zoom = useSharedValue(0);
-  const veil = useSharedValue(1);
+  // La lumiere MONTE au lieu que le plan s'efface.
+  //
+  // Elle s'appelait `veil` et tombait a zero : le dernier plan devenait
+  // transparent, et ce qu'il y avait dessous — le paywall, l'ecran d'ou l'on
+  // vient — reapparaissait en grand pendant une demi-seconde avant la
+  // bascule. On finit donc COUVERT, et c'est l'accueil qui se revele par
+  // en dessous une fois la navigation faite.
+  const bloom = useSharedValue(0);
   // Un par app, declares un a un : un hook dans une boucle tient tant que
   // la liste ne bouge pas, mais ca ne se voit pas en lisant.
   const d0 = useSharedValue(0);
@@ -67,7 +74,7 @@ export function Finale({ onDone }: { onDone: () => void }) {
     });
 
     zoom.value = withDelay(T_ZOOM, withTiming(1, { duration: T.zoom, easing: Easing.in(Easing.cubic) }));
-    veil.value = withDelay(T_ZOOM + T.zoom * 0.7, withTiming(0, { duration: T.flash }));
+    bloom.value = withDelay(T_ZOOM + T.zoom * 0.7, withTiming(1, { duration: T.flash }));
 
     const taps = APPS.map((_, i) =>
       setTimeout(() => haptics.tick(), T_DRAIN + i * T.drain)
@@ -77,14 +84,14 @@ export function Finale({ onDone }: { onDone: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const root = useAnimatedStyle(() => ({ opacity: veil.value }));
+  const light = useAnimatedStyle(() => ({ opacity: bloom.value }));
   const ring = useAnimatedStyle(() => ({
     opacity: born.value * (1 - zoom.value),
     transform: [{ scale: (0.82 + born.value * 0.18) * (1 + zoom.value * 2.4) }],
   }));
 
   return (
-    <Animated.View style={[styles.root, root]} pointerEvents="none">
+    <View style={styles.root} pointerEvents="none">
       <Animated.View style={[styles.ring, ring]}>
         {APPS.map((id, i) => {
           const a = (i / APPS.length) * Math.PI * 2 - Math.PI / 2;
@@ -99,7 +106,11 @@ export function Finale({ onDone }: { onDone: () => void }) {
           );
         })}
       </Animated.View>
-    </Animated.View>
+
+      {/* L'anneau s'ouvre, la lumiere prend toute la place. L'ecran suivant
+          arrive derriere elle, jamais devant. */}
+      <Animated.View style={[StyleSheet.absoluteFill, styles.bloom, light]} />
+    </View>
   );
 }
 
@@ -140,6 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   icon: { width: ICON, height: ICON },
+  bloom: { backgroundColor: colors.night },
   glow: {
     position: 'absolute', width: ICON * 1.5, height: ICON * 1.5,
     borderRadius: ICON, backgroundColor: withAlpha(colors.accent, 0.3),
