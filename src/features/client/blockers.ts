@@ -147,8 +147,10 @@ export const INSTAGRAM_BLOCKER = `
   // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
   // masque : lui couper l'icone emportait aussi la recherche.
   const css = \`
-    a[href^="/reels"], a[href$="/reels/"],
-    svg[aria-label="Reels" i] { display: none !important; }
+    a[href^="/reels"], a[href$="/reels/"], a[href*="/reel/"],
+    svg[aria-label="Reels" i],
+    [aria-label="Reels" i], [aria-label*="Reels" i],
+    section[aria-labelledby*="reel" i] { display: none !important; }
   \`;
   const style = document.createElement('style');
   style.textContent = css;
@@ -159,6 +161,9 @@ export const INSTAGRAM_BLOCKER = `
   // semaine.
   const SUGGEST = /suggestions? pour vous|suggested for you|publications sugg|suggested posts/i;
   const AD = /sponsoris|sponsored|publicit|paid partnership|partenariat r|en savoir plus sur cette/i;
+  // La signature d'un reel dans le fil : le format court ne s'annonce pas
+  // autrement une fois les classes obfusquees.
+  const REEL = /\\breels?\\b|son original|original audio|audio original/i;
 
   const posts = () => document.querySelectorAll('article');
 
@@ -181,10 +186,16 @@ export const INSTAGRAM_BLOCKER = `
     __cookies();
     __native();
 
-    // Un reel du fil est un <article> contenant un lien /reel/xxx ;
-    // dans l'explore c'est une simple tuile.
+    // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans
+    // l'explore c'est une tuile. Les deux partent, et le post entier avec.
     document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
       __hide(a.closest('article') || a);
+    });
+
+    // Filet de securite : un post qui porte la mention d'un son original
+    // ou le mot Reel est un reel, meme sans lien /reel/ visible.
+    posts().forEach((art) => {
+      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(art);
     });
 
     // La mention « Sponsorise » est dans l'en-tete du post : on ne lit que
@@ -224,9 +235,12 @@ export const YOUTUBE_BLOCKER = `
   const css = \`
     ytd-reel-shelf-renderer,
     ytd-rich-shelf-renderer[is-shorts],
+    ytd-reel-item-renderer,
+    ytm-reel-shelf-renderer,
+    ytm-shorts-lockup-view-model,
     ytd-guide-entry-renderer a[title="Shorts"],
     ytm-pivot-bar-item-renderer[tab-identifier="FEshorts"],
-    a[href^="/shorts"] { display: none !important; }
+    a[href^="/shorts"], a[href*="/shorts/"] { display: none !important; }
   \`;
   const style = document.createElement('style');
   style.textContent = css;
