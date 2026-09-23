@@ -50,6 +50,17 @@ export const useSettings = create<State>()(
     {
       name: 'noreel.settings',
       storage: createJSONStorage(() => AsyncStorage),
+      // Le clair devient le theme par defaut. Le changer dans l'etat initial
+      // ne suffit pas : un telephone qui a deja lance l'app garde SA valeur
+      // enregistree, et serait reste en sombre pour toujours. Cette montee
+      // de version la remet une fois, sans toucher au reste ; ensuite le
+      // choix de l'utilisateur tient.
+      version: 1,
+      migrate: (state, from) => {
+        const s = state as Partial<State> | undefined;
+        if (from < 1 && s) return { ...s, theme: 'light' as ThemeName };
+        return s;
+      },
       partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }) =>
         ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }),
       onRehydrateStorage: () => (s) => {

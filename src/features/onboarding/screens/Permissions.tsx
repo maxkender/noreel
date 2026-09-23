@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Check, ShieldAlert } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { radii, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
@@ -20,6 +21,8 @@ import {
  * pour lui.
  */
 export function Permissions({ onDone }: { onDone: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const [state, setState] = useState<AuthState>('notDetermined');
 
   useEffect(() => { void authorizationStatus().then(setState); }, []);
@@ -69,7 +72,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
         onSecondary={onDone}
       >
         <View style={st.warnRing}>
-          <ShieldAlert size={26} strokeWidth={2} color={colors.danger} />
+          <ShieldAlert size={26} strokeWidth={2} color={c.danger} />
         </View>
         <Text variant="displayM" style={{ marginTop: space.lg }}>
           Le bouton bleu, c’était le refus.
@@ -111,6 +114,8 @@ export function Permissions({ onDone }: { onDone: () => void }) {
 
 /** Confirmation breve, puis la suite. Aucun geste demande. */
 function Granted({ onDone }: { onDone: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   useEffect(() => {
     const id = setTimeout(onDone, 1500);
     return () => clearTimeout(id);
@@ -119,7 +124,7 @@ function Granted({ onDone }: { onDone: () => void }) {
   return (
     <View style={st.ok}>
       <Animated.View entering={FadeIn.duration(320)} style={st.okRing}>
-        <Check size={34} strokeWidth={2.4} color={colors.accent} />
+        <Check size={34} strokeWidth={2.4} color={c.accent} />
       </Animated.View>
       <Animated.View entering={FadeIn.delay(220).duration(420)}>
         <Text variant="title" style={st.center}>Temps d’écran connecté</Text>
@@ -129,40 +134,42 @@ function Granted({ onDone }: { onDone: () => void }) {
 }
 
 function Path({ n, text }: { n: string; text: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.step}>
-      <View style={st.badge}><Text variant="label" color={colors.night}>{n}</Text></View>
+      <View style={st.badge}><Text variant="label" color={c.night}>{n}</Text></View>
       <Text variant="body" style={{ flex: 1 }}>{text}</Text>
     </View>
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   card: {
     marginTop: space.xl, padding: space.lg, borderRadius: radii.panel, gap: space.md,
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
-    backgroundColor: withAlpha(colors.mist, 0.04),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
+    backgroundColor: withAlpha(c.mist, 0.04),
   },
   center: { textAlign: 'center' },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: {
     width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
   },
   ok: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    gap: space.lg, backgroundColor: colors.night,
+    gap: space.lg, backgroundColor: c.night,
   },
   okRing: {
     width: 78, height: 78, borderRadius: 39,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: withAlpha(colors.accent, 0.5),
-    backgroundColor: withAlpha(colors.accent, 0.1),
+    borderWidth: 2, borderColor: withAlpha(c.accent, 0.5),
+    backgroundColor: withAlpha(c.accent, 0.1),
   },
   warnRing: {
     width: 56, height: 56, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.danger, 0.5),
-    backgroundColor: withAlpha(colors.danger, 0.1),
+    borderWidth: 1.5, borderColor: withAlpha(c.danger, 0.5),
+    backgroundColor: withAlpha(c.danger, 0.1),
   },
 });

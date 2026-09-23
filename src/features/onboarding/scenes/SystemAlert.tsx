@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Svg, { Path } from 'react-native-svg';
@@ -6,7 +6,8 @@ import Animated, {
   Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withRepeat,
   withSequence, withTiming,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 
@@ -39,6 +40,8 @@ export function SystemAlert({
   onGood: () => void;
   onBad?: () => void;
 }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const pulse = useSharedValue(0);
 
   useEffect(() => {
@@ -115,15 +118,15 @@ export function SystemAlert({
         pointerEvents="none"
       >
         <Svg width={120} height={92} viewBox="0 0 120 92">
-          <Path d="M96 84 C 72 66, 40 58, 22 18" stroke={colors.accent} strokeWidth={3} fill="none" strokeLinecap="round" />
-          <Path d="M22 18 L 20 38 M22 18 L 40 26" stroke={colors.accent} strokeWidth={3} fill="none" strokeLinecap="round" />
+          <Path d="M96 84 C 72 66, 40 58, 22 18" stroke={c.accent} strokeWidth={3} fill="none" strokeLinecap="round" />
+          <Path d="M22 18 L 20 38 M22 18 L 40 26" stroke={c.accent} strokeWidth={3} fill="none" strokeLinecap="round" />
         </Svg>
       </Animated.View>
     </View>
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   layer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
@@ -137,24 +140,24 @@ const st = StyleSheet.create({
   copy: { paddingHorizontal: 16, paddingTop: 19, paddingBottom: 18, gap: 4 },
   title: { textAlign: 'center', fontSize: 17, lineHeight: 22 },
   body: { textAlign: 'center', fontSize: 13, lineHeight: 17 },
-  sep: { height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.22) },
+  sep: { height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(c.mist, 0.22) },
   row: { flexDirection: 'row', height: BTN_H },
   cell: { flex: 1, overflow: 'hidden' },
   vsep: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.22),
+    width: StyleSheet.hairlineWidth, backgroundColor: withAlpha(c.mist, 0.22),
     zIndex: 2,
   },
   btn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   action: { fontSize: 17, lineHeight: 22 },
   lift: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.accent, 0.2),
+    backgroundColor: withAlpha(c.accent, 0.2),
   },
   ripple: {
     position: 'absolute', alignSelf: 'center', top: -22,
     width: 88, height: 88, borderRadius: 44,
-    borderWidth: 2, borderColor: colors.accent,
+    borderWidth: 2, borderColor: c.accent,
   },
   // Sous l'alerte, pointant vers le bouton de gauche.
   arrow: { position: 'absolute', marginTop: 250, marginLeft: -110 },

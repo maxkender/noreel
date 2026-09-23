@@ -40,17 +40,25 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const router = useRouter();
   const client = CLIENTS[id];
 
-  // Les reglages sont injectes dans le script : les changer et rouvrir suffit.
   const settingsMap = useAppsStore((st) => st.settings);
-  const script = useMemo(() => {
-    const active: Record<string, boolean> = {};
+  const active = useMemo(() => {
+    const m: Record<string, boolean> = {};
     for (const t of APP_TOGGLES[id]) {
       // Meme regle que le magasin : verrouille, sinon le choix de
       // l'utilisateur, sinon la valeur par defaut du reglage.
-      active[t.key] = t.locked ? true : (settingsMap[`${id}.${t.key}`] ?? !!t.on);
+      m[t.key] = t.locked ? true : (settingsMap[`${id}.${t.key}`] ?? !!t.on);
     }
-    return buildScript(client.script, active);
-  }, [id, client.script, settingsMap]);
+    return m;
+  }, [id, settingsMap]);
+
+  // Le script lui-meme est fige au premier rendu : il est injecte AVANT le
+  // chargement de la page, changer la propriete ensuite ne change rien.
+  // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
+  const script = useMemo(
+    () => buildScript(client.script, active),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [client.script]
+  );
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +77,20 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [wall, setWall] = useState(false);
   const toured = useSettings((x) => x.toured);
   const setSetting = useSettings((x) => x.set);
+
+  /**
+   * Un interrupteur agit TOUT DE SUITE.
+   *
+   * Avant, le panneau disait « recharge la page » — ce que personne ne
+   * faisait, si bien que bloquer les stories ou les posts suggeres semblait
+   * ne rien faire du tout. On pousse maintenant la table de reglages dans
+   * la page, qui repasse aussitot et rend ce qu'elle ne doit plus cacher.
+   */
+  useEffect(() => {
+    web.current?.injectJavaScript(
+      `window.__nrApply && window.__nrApply(${JSON.stringify(active)}); true;`
+    );
+  }, [active]);
 
   useEffect(() => {
     if (ready) { setStuck(false); return; }
@@ -171,6 +193,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
             if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
               setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
             }
+            // Un format court reconnu a sa forme : la page est deja repartie
+            // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
+            if (m && m.t === 'short') {
+              setWall(true);
+              setTimeout(() => setWall(false), 2000);
+            }
           } catch {
             /* message qui ne vient pas de nous */
           }
@@ -217,7 +245,17 @@ export function ClientScreen({ id }: { id: ClientId }) {
         </View>
       )}
 
-      <ClientSettings id={id} visible={panel} onClose={() => setPanel(false)} />
+      <ClientSettings
+        id={id}
+        visible={panel}
+        onClose={() => setPanel(false)}
+        onGo={(url) => {
+          setPanel(false);
+          web.current?.injectJavaScript(
+            'location.assign(' + JSON.stringify(url) + '); true;'
+          );
+        }}
+      />
 
       <Coach
         steps={CLIENT_TOUR}

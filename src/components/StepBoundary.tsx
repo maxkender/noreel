@@ -1,6 +1,6 @@
-import { Component, type ReactNode } from 'react';
+import { Component, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from './type/Text';
 import { Button } from './Button';
@@ -30,25 +30,36 @@ export class StepBoundary extends Component<Props, State> {
     if (!this.state.failed) return this.props.children;
 
     return (
+      <Fallback onSkip={() => { this.setState({ failed: false }); this.props.onSkip(); }} />
+    );
+  }
+}
+
+/**
+ * La vue de repli, a part : une classe ne peut pas lire le theme par un
+ * crochet, et un fond fige sur la palette sombre donnait un panneau noir
+ * sous du texte devenu sombre.
+ */
+function Fallback({ onSkip }: { onSkip: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+
+  return (
       <View style={st.root}>
         <Text variant="displayM">Cette étape a calé.</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Rien n’est perdu, on passe à la suivante.
         </Text>
         <View style={st.cta}>
-          <Button
-            label="Continuer"
-            onPress={() => { this.setState({ failed: false }); this.props.onSkip(); }}
-          />
+          <Button label="Continuer" onPress={onSkip} />
         </View>
       </View>
-    );
-  }
+  );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   root: {
-    flex: 1, backgroundColor: colors.night,
+    flex: 1, backgroundColor: c.night,
     paddingHorizontal: gutter, justifyContent: 'center',
   },
   cta: { marginTop: space.xxl },

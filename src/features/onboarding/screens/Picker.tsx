@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { AlertTriangle } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
@@ -26,6 +27,8 @@ type P = { onNext: () => void };
  * emporte des apps auxquelles personne ne pense.
  */
 export function Picker({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const saved = useSettings((s) => s.selection);
   const set = useSettings((s) => s.set);
   const [counts, setCounts] = useState({ apps: 0, cats: 0, whole: false });
@@ -97,8 +100,8 @@ export function Picker({ onNext }: P) {
 
       {counts.cats > 0 && (
         <Animated.View entering={FadeIn.duration(320)} style={st.warn}>
-          <AlertTriangle size={16} strokeWidth={2.2} color={colors.danger} />
-          <Text variant="label" color={colors.danger} style={{ flex: 1, lineHeight: 17 }}>
+          <AlertTriangle size={16} strokeWidth={2.2} color={c.danger} />
+          <Text variant="label" color={c.danger} style={{ flex: 1, lineHeight: 17 }}>
             Sélectionner une catégorie entière peut bloquer des apps
             auxquelles tu ne penses pas. Déplie-la pour choisir une par une.
           </Text>
@@ -114,16 +117,16 @@ export function Picker({ onNext }: P) {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   picker: {
     height: 380, marginTop: space.lg, borderRadius: 20, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.14),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
   },
   warn: {
     flexDirection: 'row', alignItems: 'flex-start', gap: space.sm,
     marginTop: space.md, padding: space.md, borderRadius: 14,
-    backgroundColor: withAlpha(colors.danger, 0.1),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.danger, 0.35),
+    backgroundColor: withAlpha(c.danger, 0.1),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.danger, 0.35),
   },
 });

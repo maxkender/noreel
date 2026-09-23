@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 
 const COLS = 24;
 
@@ -15,6 +16,8 @@ export function LifeGrid({
   width: number; lived: number; lost: number; total: number;
   running: boolean; reclaiming: boolean;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const [lit, setLit] = useState(0);
   const [back, setBack] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval>>(undefined);
@@ -58,10 +61,10 @@ export function LifeGrid({
       {cells.map((i) => {
         const isLost = i >= lived && i < lived + lost;
         const k = i - lived;
-        let bg = withAlpha(colors.mist, 0.05);          // devant toi
-        if (i < lived) bg = withAlpha(colors.mist, 0.13); // vecu
-        else if (isLost && k < back) bg = colors.mist;    // recupere
-        else if (isLost && k < lit) bg = colors.accent;   // sur ton telephone
+        let bg = withAlpha(c.mist, 0.05);          // devant toi
+        if (i < lived) bg = withAlpha(c.mist, 0.13); // vecu
+        else if (isLost && k < back) bg = c.mist;    // recupere
+        else if (isLost && k < lit) bg = c.accent;   // sur ton telephone
         return (
           <View
             key={i}
@@ -76,6 +79,6 @@ export function LifeGrid({
   );
 }
 
-const styles = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
 });

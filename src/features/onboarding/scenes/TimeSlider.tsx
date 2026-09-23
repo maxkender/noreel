@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -5,7 +6,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS, useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 
@@ -16,6 +18,8 @@ const KNOB = 38;
 export function TimeSlider({
   minutes, onChange,
 }: { minutes: number; onChange: (m: number) => void }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
   const track = width - 48 - KNOB;        // marges d'ecran + demi-poignees
   const ratio = (minutes - MIN) / (MAX - MIN);
@@ -66,7 +70,7 @@ export function TimeSlider({
 
         <Animated.View style={[styles.filledWrap, filled]}>
           <LinearGradient
-            colors={[colors.accent, colors.accentDeep, colors.accentWarm]}
+            colors={[c.accent, c.accentDeep, c.accentWarm]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}
@@ -79,13 +83,13 @@ export function TimeSlider({
         <Animated.View style={[styles.knob, knob]}>
           <BlurView intensity={75} tint="light" style={StyleSheet.absoluteFill} />
           <LinearGradient
-            colors={[withAlpha(colors.mist, 0.4), withAlpha(colors.accentDeep, 0.35), withAlpha(colors.accentWarm, 0.3)]}
+            colors={[withAlpha(c.mist, 0.4), withAlpha(c.accentDeep, 0.35), withAlpha(c.accentWarm, 0.3)]}
             start={{ x: 0.2, y: 0 }}
             end={{ x: 0.8, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
           <LinearGradient
-            colors={['transparent', withAlpha(colors.mist, 0.9), 'transparent']}
+            colors={['transparent', withAlpha(c.mist, 0.9), 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.knobSheen}
@@ -96,15 +100,15 @@ export function TimeSlider({
   );
 }
 
-const styles = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   root: { height: 52, justifyContent: 'center' },
   track: {
     height: 10, borderRadius: 5, marginHorizontal: KNOB / 2, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.16),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.16),
   },
   trackTint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.mist, 0.06),
+    backgroundColor: withAlpha(c.mist, 0.06),
   },
   filledWrap: {
     position: 'absolute', left: KNOB / 2 - 1, height: 10, borderRadius: 5,
@@ -112,13 +116,13 @@ const styles = StyleSheet.create({
   },
   halo: {
     position: 'absolute', left: 0, width: KNOB, height: KNOB,
-    borderRadius: KNOB / 2, backgroundColor: colors.accent,
+    borderRadius: KNOB / 2, backgroundColor: c.accent,
   },
   knob: {
     position: 'absolute', left: 0, width: KNOB, height: KNOB, borderRadius: KNOB / 2,
     overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.55),
-    shadowColor: colors.accentDeep, shadowRadius: 16,
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.55),
+    shadowColor: c.accentDeep, shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
   },
   knobSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },

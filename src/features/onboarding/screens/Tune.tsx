@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Lock } from 'lucide-react-native';
 import Animated, {
   FadeIn, useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
 import { Screen } from '@/components/Screen';
@@ -46,7 +47,9 @@ const STEP = 420;
  * que ce soit — personne ne parametre une app qu'il ne connait pas encore.
  */
 export function Tune({ onNext }: P) {
-  const total = CARDS.reduce((n, c) => n + c.rows.filter((r) => !r.locked).length, 0);
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const total = CARDS.reduce((n, card) => n + card.rows.filter((r) => !r.locked).length, 0);
   const [lit, setLit] = useState(0);
 
   useEffect(() => {
@@ -69,15 +72,15 @@ export function Tune({ onNext }: P) {
       <Text variant="displayM" style={st.title}>Règle tout, ligne par ligne.</Text>
 
       <View style={{ gap: space.md, marginTop: space.xl }}>
-        {CARDS.map((c, ci) => (
-          <Animated.View key={c.id} entering={FadeIn.delay(180 + ci * 160).duration(460)}>
+        {CARDS.map((card, ci) => (
+          <Animated.View key={card.id} entering={FadeIn.delay(180 + ci * 160).duration(460)}>
             <Glass radius={22} intensity={45} warmEdge="none" style={st.card}>
               <View style={st.head}>
-                <Image source={LOGOS[c.id]} style={st.logo} contentFit="contain" />
-                <Text variant="title">{c.name}</Text>
+                <Image source={LOGOS[card.id]} style={st.logo} contentFit="contain" />
+                <Text variant="title">{card.name}</Text>
               </View>
 
-              {c.rows.map((r) => {
+              {card.rows.map((r) => {
                 const idx = r.locked ? -1 : seen++;
                 return (
                   <View key={r.label} style={st.row}>
@@ -87,7 +90,7 @@ export function Tune({ onNext }: P) {
                     {r.locked
                       ? (
                         <View style={st.lockPill}>
-                          <Lock size={11} strokeWidth={2.4} color={withAlpha(colors.mist, 0.5)} />
+                          <Lock size={11} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />
                           <Text variant="label" tone="tertiary">Toujours</Text>
                         </View>
                       )
@@ -105,6 +108,8 @@ export function Tune({ onNext }: P) {
 
 /** Le meme interrupteur que dans l'app, mais personne ne le touche ici. */
 function Switch({ on }: { on: boolean }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const v = useSharedValue(0);
   useEffect(() => { v.value = withSpring(on ? 1 : 0, springs.snappy); }, [on, v]);
 
@@ -121,7 +126,7 @@ function Switch({ on }: { on: boolean }) {
 
 type P = { onNext: () => void };
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   title: { textAlign: 'center' },
   card: { paddingHorizontal: space.lg, paddingBottom: space.sm },
   head: {
@@ -131,18 +136,18 @@ const st = StyleSheet.create({
   logo: { width: 30, height: 30 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1),
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),
   },
   lockPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999,
-    backgroundColor: withAlpha(colors.mist, 0.07),
+    backgroundColor: withAlpha(c.mist, 0.07),
   },
   track: {
     width: 44, height: 26, borderRadius: 13, padding: 3, overflow: 'hidden',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
-  trackOn: { backgroundColor: colors.accent, borderRadius: 13 },
-  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.mist },
+  trackOn: { backgroundColor: c.accent, borderRadius: 13 },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: c.mist },
 });

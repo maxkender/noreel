@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeOut, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { colors } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
+import { easings } from '@/theme/motion';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
@@ -26,6 +27,8 @@ import { Paywall } from './screens/Paywall';
  */
 export function OnboardingFlow() {
   const router = useRouter();
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const [step, setStep] = useState(0);
   const [intro, setIntro] = useState(true);
   // Le dernier plan, joue une fois le parcours fini.
@@ -98,11 +101,18 @@ export function OnboardingFlow() {
   return (
     <View style={styles.root}>
       <ProgressContext.Provider value={bar}>
-        {/* Fondu entre ecrans : le changement de page ne saute plus. */}
+        {/*
+          L'ecran suivant monte de quelques points en se revelant PAR-DESSUS
+          le precedent, qui tient sa couleur plus longtemps qu'il ne met a
+          apparaitre. C'est ce decalage qui compte : avec deux fondus de
+          meme duree, la somme des deux opacites passe sous 1 au milieu du
+          croisement et le fond nu apparait une fraction de seconde — le
+          clignotement noir qu'on voyait a chaque page.
+        */}
         <Animated.View
           key={step}
-          entering={FadeIn.duration(420)}
-          exiting={FadeOut.duration(200)}
+          entering={rise}
+          exiting={FadeOut.duration(460)}
           style={StyleSheet.absoluteFill}
         >
           {/* Une etape qui plante ne doit pas emporter tout le parcours. */}
@@ -120,9 +130,29 @@ export function OnboardingFlow() {
 
 const TOTAL = 17;
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.night },
+/**
+ * L'arrivee d'un ecran : il monte de 14 points en se revelant.
+ *
+ * Ecrit a la main plutot qu'avec `FadeInDown`, pour que l'opacite finisse
+ * AVANT le mouvement — l'ecran est lisible pendant qu'il finit de se poser,
+ * au lieu de se poser puis de devenir lisible.
+ */
+function rise() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: 14 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 300, easing: easings.out }),
+      transform: [{ translateY: withTiming(0, { duration: 460, easing: easings.out }) }],
+    },
+  };
+}
+
+const sheet = (c: Palette) => StyleSheet.create({
+  // Le fond du parcours suit le theme. Fige sur la palette sombre, il
+  // apparaissait en noir sous chaque croisement d'ecrans en mode clair.
+  root: { flex: 1, backgroundColor: c.night },
   progress: { flexDirection: 'row', gap: 3 },
-  dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: colors.line },
-  dotOn: { backgroundColor: colors.accent },
+  dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: c.line },
+  dotOn: { backgroundColor: c.accent },
 });

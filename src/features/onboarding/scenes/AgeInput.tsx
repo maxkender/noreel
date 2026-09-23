@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
@@ -19,6 +20,8 @@ const MIN = 10, MAX = 99;
 export function AgeInput({
   age, onChange, onReady,
 }: { age: number; onChange: (v: number) => void; onReady?: (ok: boolean) => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   // Vides au depart : afficher un age par defaut, c'est repondre a la place
   // de l'utilisateur.
   const [d, setD] = useState<[string, string]>(['', '']);
@@ -85,6 +88,8 @@ function Cell({
   onChange: (v: string) => void;
   onBack: () => void;
 }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const on = useSharedValue(active ? 1 : 0);
   useEffect(() => { on.value = withSpring(active ? 1 : 0, springs.snappy); }, [active, on]);
 
@@ -105,7 +110,7 @@ function Cell({
           onKeyPress={(e) => { if (e.nativeEvent.key === 'Backspace') onBack(); }}
           keyboardType="number-pad"
           maxLength={1}
-          selectionColor={colors.accent}
+          selectionColor={c.accent}
           style={st.input}
         />
       </Animated.View>
@@ -113,21 +118,21 @@ function Cell({
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   root: { alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', gap: space.md },
   cell: {
     width: 68, height: 84, borderRadius: 18, overflow: 'hidden',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.16),
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.16),
     alignItems: 'center', justifyContent: 'center',
   },
   ring: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 18, borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.7),
+    borderRadius: 18, borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.7),
   },
   input: {
     width: '100%', height: '100%', textAlign: 'center',
-    fontFamily: 'SansBold', fontSize: 38, color: colors.mist,
+    fontFamily: 'SansBold', fontSize: 38, color: c.mist,
   },
   hint: { letterSpacing: 3 },
 });

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type TextStyle } from 'react-native';
-import { colors } from '@/theme/colors';
+import { useColors } from '@/theme/useColors';
 import { Text } from './Text';
 import type { TypeName } from '@/theme/typography';
 
@@ -25,6 +25,7 @@ export function Typewriter({
   style?: TextStyle;
   cursor?: boolean;
 }) {
+  const c = useColors();
   const [n, setN] = useState(0);
   const [blink, setBlink] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -54,7 +55,7 @@ export function Typewriter({
   const parts = (chunks: string[]) =>
     chunks.map((p, i) =>
       p.startsWith('{')
-        ? <Text key={i} variant={variant} color={colors.accent}>{p.replace(/[{}]/g, '')}</Text>
+        ? <Text key={i} variant={variant} color={c.accent}>{p.replace(/[{}]/g, '')}</Text>
         : p
     );
 
@@ -64,7 +65,7 @@ export function Typewriter({
       <Text variant={variant} style={[style, StyleSheet.absoluteFill]}>
         {parts(shown)}
         {cursor && !done && (
-          <Text variant={variant} color={blink ? colors.accent : 'transparent'}>|</Text>
+          <Text variant={variant} color={blink ? c.accent : 'transparent'}>|</Text>
         )}
       </Text>
     </View>

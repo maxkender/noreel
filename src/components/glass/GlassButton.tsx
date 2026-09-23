@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { colors, textAlpha, withAlpha } from '@/theme/colors';
+import { textAlpha, withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { radii } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
@@ -20,6 +22,8 @@ export function GlassButton({
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -43,13 +47,13 @@ export function GlassButton({
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: withAlpha(disabled ? colors.mist : colors.sun, 0.14) },
+            { backgroundColor: withAlpha(disabled ? c.mist : c.sun, 0.14) },
           ]}
           pointerEvents="none"
         />
         <Text
           variant="button"
-          color={withAlpha(colors.mist, disabled ? textAlpha.tertiary : 1)}
+          color={withAlpha(c.mist, disabled ? textAlpha.tertiary : 1)}
         >
           {label}
         </Text>
@@ -58,6 +62,6 @@ export function GlassButton({
   );
 }
 
-const styles = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   shell: { height: 56, alignItems: 'center', justifyContent: 'center' },
 });

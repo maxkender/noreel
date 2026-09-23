@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as Notifications from 'expo-notifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
@@ -59,6 +60,8 @@ const CONSTAT: Step[] = [
  * personne — pas notre affirmation — qui fait le constat.
  */
 export function Constat({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const [i, setI] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
@@ -129,7 +132,7 @@ export function Constat({ onNext }: P) {
           <View style={st.reply}>
             {answer !== null && (
               <Animated.View entering={FadeIn.duration(420)}>
-                <Text variant="lead" color={colors.ember} style={st.center}>
+                <Text variant="lead" color={c.ember} style={st.center}>
                   {step.options[answer].reply}
                 </Text>
               </Animated.View>
@@ -161,6 +164,8 @@ const LAST = 'Bienvenue dans {UnSwipe}.';
 const SPEED = 26;
 
 export function Manifesto({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   // Chaque ligne part quand la precedente est finie.
   const starts: number[] = [];
   let t = 260;
@@ -208,6 +213,8 @@ export function Manifesto({ onNext }: P) {
 
 /* ---------- Prenom ---------- */
 export function Name({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const setName = useOnboardingStore((x) => x.setFirstName);
 
@@ -219,7 +226,7 @@ export function Name({ onNext }: P) {
           value={name}
           onChangeText={setName}
           placeholder="Ton prénom"
-          placeholderTextColor={withAlpha(colors.mist, 0.28)}
+          placeholderTextColor={withAlpha(c.mist, 0.28)}
           autoCapitalize="words"
           autoCorrect={false}
           returnKeyType="done"
@@ -240,6 +247,8 @@ const PICKABLE = [
 ] as const;
 
 export function Distractions({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const picked = useOnboardingStore((x) => x.distractions);
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
 
@@ -277,6 +286,8 @@ const ESSENTIAL = [
 ] as const;
 
 export function Essentials({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <Screen cta="Continuer" onPress={onNext} center hue="warm">
       <Text variant="displayM" style={st.center}>
@@ -341,6 +352,8 @@ export function NotificationsAsk({ onNext }: P) {
 
 /* ---------- La promesse ---------- */
 export function PromiseScreen({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
 
@@ -353,7 +366,7 @@ export function PromiseScreen({ onNext }: P) {
     <Screen cta="👊  C’est parti" onPress={onNext} hue="accent">
       <Text variant="displayM" style={st.center}>
         {name ? `${name}, ` : ''}UnSwipe te rendra{' '}
-        <Text variant="displayM" color={colors.accent}>{years} ans</Text>
+        <Text variant="displayM" color={c.accent}>{years} ans</Text>
         {' de ta vie'}
       </Text>
 
@@ -368,6 +381,8 @@ export function PromiseScreen({ onNext }: P) {
 
 /** Une promesse : une pastille, une ligne. Rien dessous. */
 function PromiseRow({ title }: { title: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.promise}>
       <View style={st.pip} />
@@ -376,7 +391,7 @@ function PromiseRow({ title }: { title: string }) {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   // Hauteur fixe : la plus longue replique tient sur deux lignes.
   reply: { minHeight: 58, justifyContent: 'center', marginTop: space.xl },
@@ -385,9 +400,9 @@ const st = StyleSheet.create({
   faded: { textAlign: 'center', opacity: 0.55 },
   input: {
     marginTop: space.xl, height: 62, borderRadius: 20, textAlign: 'center',
-    color: colors.mist, fontFamily: 'SansSemi', fontSize: 22,
-    backgroundColor: withAlpha(colors.mist, 0.06),
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.18),
+    color: c.mist, fontFamily: 'SansSemi', fontSize: 22,
+    backgroundColor: withAlpha(c.mist, 0.06),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
   },
   list: { marginTop: space.xl, gap: space.md },
   pickLogo: { width: 30, height: 30 },
@@ -402,37 +417,37 @@ const st = StyleSheet.create({
   phone: {
     marginTop: space.xxl, alignSelf: 'center', width: 232, borderRadius: 34,
     padding: space.md, paddingTop: space.lg,
-    backgroundColor: withAlpha(colors.mist, 0.04),
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.14),
+    backgroundColor: withAlpha(c.mist, 0.04),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.14),
   },
   notch: {
     alignSelf: 'center', width: 62, height: 6, borderRadius: 3,
-    backgroundColor: withAlpha(colors.mist, 0.16), marginBottom: space.lg,
+    backgroundColor: withAlpha(c.mist, 0.16), marginBottom: space.lg,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   gridIcon: { width: 42, height: 42, borderRadius: 11 },
   gridGhost: {
     width: 42, height: 42, borderRadius: 11,
-    backgroundColor: withAlpha(colors.mist, 0.05),
+    backgroundColor: withAlpha(c.mist, 0.05),
   },
   ruleCard: { marginTop: space.lg, padding: space.md, gap: 4 },
   ruleHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rule: {
     width: 216, height: 292, padding: space.lg, gap: 4, overflow: 'hidden',
   },
-  ruleOn: { borderColor: withAlpha(colors.accent, 0.55) },
+  ruleOn: { borderColor: withAlpha(c.accent, 0.55) },
   tick: {
     position: 'absolute', right: space.lg, bottom: space.lg,
     width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.3),
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.3),
   },
-  tickOn: { backgroundColor: colors.mist, borderColor: colors.mist },
+  tickOn: { backgroundColor: c.mist, borderColor: c.mist },
   dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.lg },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(colors.mist, 0.18) },
-  dotOn: { width: 20, backgroundColor: colors.accent },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.18) },
+  dotOn: { width: 20, backgroundColor: c.accent },
   promise: { flexDirection: 'row', gap: space.md },
   pip: {
     width: 10, height: 10, borderRadius: 5, marginTop: 6,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
   },
 });

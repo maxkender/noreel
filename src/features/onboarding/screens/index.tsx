@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   FadeIn, useAnimatedStyle, useSharedValue, withDelay, withTiming,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
@@ -25,6 +26,8 @@ type P = { onNext: () => void };
 
 /* ---------- 1 ---------- */
 export function S1({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   return (
     <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} hue="accent">
@@ -78,6 +81,8 @@ export function S3({ onNext }: P) {
 
 /* ---------- 4 ---------- */
 export function S4({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   return (
     <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3600} hue="deep">
@@ -92,6 +97,8 @@ export function S4({ onNext }: P) {
 
 /* ---------- 5 ---------- */
 export function S5({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const [phase, setPhase] = useState<'time' | 'age'>('time');
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
@@ -136,6 +143,8 @@ export function S5({ onNext }: P) {
 
 /* ---------- 6 ---------- */
 export function S6({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const target = Math.round(wakingShare(minutes) * 100);
@@ -185,7 +194,7 @@ export function S6({ onNext }: P) {
 
       <Text
         variant="hero"
-        color={colors.danger}
+        color={c.danger}
         style={[s.center, s.pct]}
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -199,10 +208,12 @@ export function S6({ onNext }: P) {
 
 /** Chaque case s'allume en fondu : le remplissage devient une vague. */
 function Cell({ on, index }: { on: boolean; index: number }) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   return on ? (
     <Animated.View
       entering={FadeIn.duration(420)}
-      style={[s.square, { backgroundColor: colors.danger }]}
+      style={[s.square, { backgroundColor: c.danger }]}
     />
   ) : (
     <View key={index} style={[s.square, s.squareOff]} />
@@ -217,6 +228,8 @@ function Cell({ on, index }: { on: boolean; index: number }) {
  * et c'est ce trajet qui fait mal, pas la valeur finale.
  */
 export function S6Years({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const years = Math.round(screenYears(minutes));
@@ -250,7 +263,7 @@ export function S6Years({ onNext }: P) {
         <Text variant="label" tone="tertiary">SUR UNE VIE DE 80 ANS</Text>
         <Text
           variant="hero"
-          color={colors.danger}
+          color={c.danger}
           style={s.center}
           numberOfLines={1}
           adjustsFontSizeToFit
@@ -266,7 +279,7 @@ export function S6Years({ onNext }: P) {
 
       <Animated.View entering={FadeIn.delay(500).duration(700)} style={s.share}>
         <View style={s.shareRow}>
-          <Text variant="displayL" color={colors.ember}>{p} %</Text>
+          <Text variant="displayL" color={c.ember}>{p} %</Text>
           <Text variant="body" tone="secondary" style={{ flex: 1 }}>
             de ton temps éveillé, chaque jour
           </Text>
@@ -281,6 +294,8 @@ export function S6Years({ onNext }: P) {
 
 /* ---------- 7 ---------- */
 export function S7({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const [i, setI] = useState(0);
 
@@ -333,13 +348,13 @@ export function S7({ onNext }: P) {
   );
 }
 
-const s = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   videoSlot: {
     marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
-    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
+    backgroundColor: c.surface,
   },
-  videoInner: { flex: 1, borderRadius: 20, backgroundColor: colors.surfaceHi },
+  videoInner: { flex: 1, borderRadius: 20, backgroundColor: c.surfaceHi },
   hundredWrap: { alignItems: 'center', marginVertical: space.xl },
   hundred: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 5,
@@ -350,20 +365,20 @@ const s = StyleSheet.create({
   years: { alignItems: 'center', gap: space.xs },
   split: {
     height: StyleSheet.hairlineWidth, alignSelf: 'stretch',
-    marginVertical: space.xl, backgroundColor: withAlpha(colors.mist, 0.14),
+    marginVertical: space.xl, backgroundColor: withAlpha(c.mist, 0.14),
   },
   share: { alignSelf: 'stretch', gap: space.md },
   shareRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   track: {
     height: 8, borderRadius: 4, overflow: 'hidden',
-    backgroundColor: withAlpha(colors.mist, 0.08),
+    backgroundColor: withAlpha(c.mist, 0.08),
   },
-  fill: { height: 8, borderRadius: 4, backgroundColor: colors.ember },
-  squareOff: { backgroundColor: withAlpha(colors.mist, 0.07) },
+  fill: { height: 8, borderRadius: 4, backgroundColor: c.ember },
+  squareOff: { backgroundColor: withAlpha(c.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },
-  chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 },
-  chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(colors.accent, 0.3) },
+  chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent, marginTop: 6 },
+  chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(c.accent, 0.3) },
   center: { textAlign: 'center' },
   mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
@@ -372,18 +387,18 @@ const s = StyleSheet.create({
   keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   compare: { flexDirection: 'row', gap: space.md, marginTop: space.xxl },
   col: { flex: 1, gap: space.sm },
-  colBarCold: { height: 18, borderRadius: 4, backgroundColor: withAlpha(colors.mist, 0.08) },
-  colBarWarm: { height: 18, borderRadius: 4, backgroundColor: withAlpha(colors.accent, 0.35) },
+  colBarCold: { height: 18, borderRadius: 4, backgroundColor: withAlpha(c.mist, 0.08) },
+  colBarWarm: { height: 18, borderRadius: 4, backgroundColor: withAlpha(c.accent, 0.35) },
   activity: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line,
   },
   apps: { flexDirection: 'row', gap: space.xl, justifyContent: 'center', marginTop: space.xxl },
   app: { alignItems: 'center', gap: space.sm },
   appIcon: {
     width: 62, height: 62, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
-  appRing: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: colors.mist },
+  appRing: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: c.mist },
 });

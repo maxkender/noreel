@@ -56,13 +56,34 @@ export default function RootLayout() {
       <SafeAreaProvider>
         {/* Le texte de la barre d'etat suit le fond, sinon il disparait. */}
         <StatusBar style={c.night === colors.night ? 'light' : 'dark'} />
+        {/*
+          Les ecrans glissent, et le doigt peut ramener en arriere.
+          `animation: 'none'` coupait net a chaque passage : l'app paraissait
+          sauter d'une image a l'autre. Ces animations-la sont jouees par
+          iOS, pas par JavaScript — elles tiennent les 60 images par seconde
+          meme quand l'ecran d'arrivee a du travail a faire.
+        */}
         <Stack
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: c.night },
-            animation: 'none',
+            animation: 'slide_from_right',
+            animationDuration: 320,
+            gestureEnabled: true,
           }}
         >
+          {/* Une redirection ne s'anime pas : elle n'a rien a montrer. */}
+          <Stack.Screen name="index" options={{ animation: 'none' }} />
+          {/* Entrer dans le parcours ou en sortir est un changement de lieu,
+              pas un pas de plus : un fondu, et aucun retour au doigt. */}
+          <Stack.Screen
+            name="onboarding"
+            options={{ animation: 'fade', animationDuration: 420, gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="home"
+            options={{ animation: 'fade', animationDuration: 420, gestureEnabled: false }}
+          />
           <Stack.Screen
             name="client/[id]"
             options={{

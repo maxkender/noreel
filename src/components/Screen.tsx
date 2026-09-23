@@ -1,9 +1,9 @@
-import { useContext, type ReactNode } from 'react';
+import { useContext, useMemo, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { colors } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Button } from './Button';
 import { Text } from './type/Text';
@@ -38,6 +38,8 @@ export function Screen({
   hueLevel?: number;
 }) {
   const bar = useContext(ProgressContext);
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
 
   const Root: React.ElementType = tapToContinue ? Pressable : View;
 
@@ -56,10 +58,10 @@ export function Screen({
           {children}
         </ScrollView>
 
-        {/* Le contenu se dissout dans le noir avant d'atteindre le bouton :
+        {/* Le contenu se dissout dans le fond avant d'atteindre le bouton :
             sans ce fondu, le pied de page coupait le texte d'un trait net. */}
         <LinearGradient
-          colors={['transparent', colors.night]}
+          colors={['transparent', c.night]}
           style={styles.hem}
           pointerEvents="none"
         />
@@ -91,8 +93,11 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.night },
+// Le fond de chaque ecran du parcours suit le theme. Fige sur la palette
+// sombre, il donnait un fond noir sous du texte devenu sombre en mode
+// clair : plus une ligne de lisible.
+const sheet = (c: Palette) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: c.night },
   safe: { flex: 1 },
   progress: { paddingHorizontal: gutter, paddingTop: space.sm },
   scroll: { flex: 1 },

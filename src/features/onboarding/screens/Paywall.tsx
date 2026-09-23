@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Check, Minus, X } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
@@ -49,6 +50,8 @@ const COL = 74;
  * les deux sorties menent a l'app.
  */
 export function Paywall({ onDone }: { onDone: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const [plan, setPlan] = useState<Plan>('annual');
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
@@ -94,13 +97,13 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
         <View style={{ flex: 1 }} />
         <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close}>
-          <X size={19} strokeWidth={2.2} color={withAlpha(colors.mist, 0.55)} />
+          <X size={19} strokeWidth={2.2} color={withAlpha(c.mist, 0.55)} />
         </Pressable>
       </View>
 
       <Text variant="displayM" style={st.title}>
         {name ? `${name}, reprends ` : 'Reprends '}
-        <Text variant="displayM" color={colors.accent}>le contrôle total</Text>
+        <Text variant="displayM" color={c.accent}>le contrôle total</Text>
         {' de ton temps aujourd’hui.'}
       </Text>
 
@@ -108,7 +111,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         {/* La colonne Pro est une bande continue, posee sous les lignes :
             c'est elle qui porte le regard jusqu'en bas. */}
         <LinearGradient
-          colors={[withAlpha(colors.accent, 0.16), withAlpha(colors.accentWarm, 0.06)]}
+          colors={[withAlpha(c.accent, 0.16), withAlpha(c.accentWarm, 0.06)]}
           style={st.proBand}
           pointerEvents="none"
         />
@@ -116,7 +119,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         <View style={st.row}>
           <View style={{ flex: 1 }} />
           <Text variant="label" tone="tertiary" style={st.cell}>GRATUIT</Text>
-          <Text variant="label" color={colors.accent} style={st.cell}>PRO</Text>
+          <Text variant="label" color={c.accent} style={st.cell}>PRO</Text>
         </View>
 
         {ROWS.map((r, i) => (
@@ -164,20 +167,21 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
 /** Une case : coche, tiret, ou une valeur courte. */
 function Mark({ value, pro }: { value: string | null; pro?: boolean }) {
+  const c = useColors();
   if (value === null) {
-    return <Minus size={15} strokeWidth={2.4} color={withAlpha(colors.mist, 0.22)} />;
+    return <Minus size={15} strokeWidth={2.4} color={withAlpha(c.mist, 0.22)} />;
   }
   if (value === '') {
     return (
       <Check
         size={16}
         strokeWidth={2.8}
-        color={pro ? colors.accent : withAlpha(colors.mist, 0.45)}
+        color={pro ? c.accent : withAlpha(c.mist, 0.45)}
       />
     );
   }
   return (
-    <Text variant="label" color={pro ? colors.accent : withAlpha(colors.mist, 0.45)}>
+    <Text variant="label" color={pro ? c.accent : withAlpha(c.mist, 0.45)}>
       {value}
     </Text>
   );
@@ -194,6 +198,8 @@ function PlanCard({
   on: boolean;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <Pressable
       onPress={onPress}
@@ -203,7 +209,7 @@ function PlanCard({
     >
       {on && (
         <LinearGradient
-          colors={[withAlpha(colors.accent, 0.16), withAlpha(colors.accentWarm, 0.06)]}
+          colors={[withAlpha(c.accent, 0.16), withAlpha(c.accentWarm, 0.06)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -211,7 +217,7 @@ function PlanCard({
       )}
 
       <View style={[st.tick, on && st.tickOn]}>
-        {on && <Check size={13} strokeWidth={3} color={colors.night} />}
+        {on && <Check size={13} strokeWidth={3} color={c.night} />}
       </View>
 
       <View style={{ flex: 1, gap: 2 }}>
@@ -223,32 +229,32 @@ function PlanCard({
 
       {badge && (
         <View style={st.badge}>
-          <Text variant="label" color={colors.night}>{badge}</Text>
+          <Text variant="label" color={c.night}>{badge}</Text>
         </View>
       )}
     </Pressable>
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.xl },
   lockup: { width: 100, height: 38 },
   close: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   title: { textAlign: 'center' },
 
   table: {
     marginTop: space.xxl, borderRadius: 22, overflow: 'hidden',
     paddingHorizontal: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.14),
-    backgroundColor: withAlpha(colors.mist, 0.03),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
+    backgroundColor: withAlpha(c.mist, 0.03),
   },
   proBand: { position: 'absolute', top: 0, bottom: 0, right: 0, width: COL + space.lg },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13 },
-  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1) },
+  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1) },
   cell: { width: COL, alignItems: 'center', textAlign: 'center' },
 
   plans: { marginTop: space.xl, gap: space.sm },
@@ -256,20 +262,20 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, paddingVertical: 16,
     borderRadius: 20, overflow: 'hidden',
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
   },
-  planOn: { borderColor: withAlpha(colors.accent, 0.6) },
+  planOn: { borderColor: withAlpha(c.accent, 0.6) },
   tick: {
     width: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.mist, 0.26),
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.26),
   },
-  tickOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  tickOn: { backgroundColor: c.accent, borderColor: c.accent },
   badge: {
     position: 'absolute', top: -1, right: 74,
     paddingHorizontal: 8, paddingVertical: 3,
     borderBottomLeftRadius: 8, borderBottomRightRadius: 8,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
   },
   terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
   restore: { alignSelf: 'center', marginTop: space.sm, paddingVertical: space.sm },
