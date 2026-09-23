@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
-import { Check, Infinity as Infin, Moon, ShieldCheck, Sparkles, X } from 'lucide-react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { Check, Minus, X } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
-import { formatHours } from '@/lib/format';
-import { screenYears } from '../calculations';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering } from '@/services/purchases';
@@ -28,22 +26,27 @@ const ANNUAL_EUR = 39.99;
 const MONTHLY_EUR = 8.99;
 const SAVING = Math.round((1 - ANNUAL_EUR / (MONTHLY_EUR * 12)) * 100);
 
-const PERKS = [
-  { icon: Sparkles, t: 'Les quatre apps, filtrées', s: 'Instagram, TikTok, X, YouTube' },
-  { icon: ShieldCheck, t: 'Blocage des apps d’origine', s: 'La porte de derrière reste fermée' },
-  { icon: Moon, t: 'Règles horaires', s: 'Nuit calme, matin clair, bloc concentré' },
-  { icon: Infin, t: 'Tout ce qui arrive ensuite', s: 'Compris, sans supplément' },
+/** Ce que chaque cote donne. `free` a null quand la ligne est refusee. */
+const ROWS: { label: string; free: string | null; pro: string | null }[] = [
+  { label: 'Instagram sans Reels', free: '', pro: '' },
+  { label: 'TikTok, X et YouTube filtrés', free: null, pro: '' },
+  { label: 'Blocage des apps d’origine', free: null, pro: '' },
+  { label: 'Règles horaires', free: null, pro: '' },
+  { label: 'Réglages app par app', free: null, pro: '' },
+  { label: 'Historique', free: '7 j', pro: 'Illimité' },
 ];
+
+const COL = 74;
 
 /**
  * Le paywall.
  *
- * Il arrive au sommet du parcours, juste apres la promesse chiffree. Trois
+ * Epure : un titre, un tableau, deux forfaits. Pas de graphe ni de liste a
+ * puces — le tableau dit la meme chose et se lit d'un coup d'oeil. Trois
  * regles tenues : le prix est dit en entier, la croix est toujours la, et
- * les deux sorties menent a l'app. Jamais de mur.
+ * les deux sorties menent a l'app.
  */
 export function Paywall({ onDone }: { onDone: () => void }) {
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const name = useOnboardingStore((x) => x.firstName);
   const [plan, setPlan] = useState<Plan>('annual');
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
@@ -63,13 +66,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const annual = find('$rc_annual');
   const monthly = find('$rc_monthly');
   const chosen = plan === 'annual' ? annual : monthly;
-
-  const years = Math.max(1, Math.round(screenYears(minutes) * 0.3));
-  const weeks = [
-    Math.round(minutes * 0.62), Math.round(minutes * 1.02),
-    Math.round(minutes * 0.86), Math.round(minutes * 0.7),
-  ];
-  const top = Math.max(...weeks);
+  const price = (p?: PurchasesPackage, f?: string) => p?.product.priceString ?? f ?? '';
 
   const go = async () => {
     // Sans achat configure, le bouton continue vers l'app : jamais de mur.
@@ -100,56 +97,39 @@ export function Paywall({ onDone }: { onDone: () => void }) {
       </View>
 
       <Text variant="displayM" style={st.title}>
-        {name ? `${name}, récupère ` : 'Récupère '}
-        <Text variant="displayM" color={colors.accent}>{years} ans</Text>
-        {' de ta vie'}
+        {name ? `${name}, reprends ` : 'Reprends '}
+        <Text variant="displayM" color={colors.accent}>le contrôle total</Text>
+        {' de ton temps aujourd’hui.'}
       </Text>
 
-      {/* Le graphe dit la promesse mieux qu'une phrase : la derniere barre
-          est celle qu'on s'engage a obtenir. */}
-      <View style={st.chart}>
-        {weeks.map((m, i) => {
-          const last = i === weeks.length - 1;
-          return (
-            <View key={i} style={st.col}>
-              <Text variant="label" color={last ? colors.accent : withAlpha(colors.mist, 0.35)}>
-                {formatHours(m)}
-              </Text>
-              <Animated.View
-                entering={FadeInUp.delay(140 + i * 110).duration(600)}
-                style={[st.bar, { height: 26 + (m / top) * 104 }]}
-              >
-                <LinearGradient
-                  colors={last
-                    ? [colors.accent, colors.accentDeep, colors.accentWarm]
-                    : [withAlpha(colors.mist, 0.14), withAlpha(colors.mist, 0.04)]}
-                  style={StyleSheet.absoluteFill}
-                />
-              </Animated.View>
-              <Text variant="label" tone="tertiary">S{i + 1}</Text>
-            </View>
-          );
-        })}
-      </View>
+      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
+        {/* La colonne Pro est une bande continue, posee sous les lignes :
+            c'est elle qui porte le regard jusqu'en bas. */}
+        <LinearGradient
+          colors={[withAlpha(colors.accent, 0.16), withAlpha(colors.accentWarm, 0.06)]}
+          style={st.proBand}
+          pointerEvents="none"
+        />
 
-      <View style={st.perks}>
-        {PERKS.map((p, i) => (
-          <Animated.View key={p.t} entering={FadeIn.delay(300 + i * 90).duration(420)} style={st.perk}>
-            <View style={st.perkIcon}>
-              <p.icon size={16} strokeWidth={2} color={colors.accent} />
-            </View>
-            <View style={{ flex: 1, gap: 1 }}>
-              <Text variant="body">{p.t}</Text>
-              <Text variant="label" tone="tertiary">{p.s}</Text>
-            </View>
-          </Animated.View>
+        <View style={st.row}>
+          <View style={{ flex: 1 }} />
+          <Text variant="label" tone="tertiary" style={st.cell}>GRATUIT</Text>
+          <Text variant="label" color={colors.accent} style={st.cell}>PRO</Text>
+        </View>
+
+        {ROWS.map((r, i) => (
+          <View key={r.label} style={[st.row, i > 0 && st.line]}>
+            <Text variant="body" style={{ flex: 1 }} numberOfLines={2}>{r.label}</Text>
+            <View style={st.cell}><Mark value={r.free} /></View>
+            <View style={st.cell}><Mark value={r.pro} pro /></View>
+          </View>
         ))}
-      </View>
+      </Animated.View>
 
       <View style={st.plans}>
         <PlanCard
           label="Annuel"
-          price={annual?.product.priceString ?? FALLBACK.annual}
+          price={price(annual, FALLBACK.annual)}
           note={`${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} € par jour`}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
@@ -157,7 +137,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         />
         <PlanCard
           label="Mensuel"
-          price={monthly?.product.priceString ?? FALLBACK.monthly}
+          price={price(monthly, FALLBACK.monthly)}
           note="Sans engagement"
           on={plan === 'monthly'}
           onPress={() => { haptics.tick(); setPlan('monthly'); }}
@@ -166,19 +146,38 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
       <Text variant="label" tone="tertiary" style={st.terms}>
         {plan === 'annual'
-          ? `${annual?.product.priceString ?? FALLBACK.annual} par an, renouvelé automatiquement. Annule quand tu veux.`
-          : `${monthly?.product.priceString ?? FALLBACK.monthly} par mois, renouvelé automatiquement. Annule quand tu veux.`}
+          ? `${price(annual, FALLBACK.annual)} par an, renouvelé automatiquement.`
+          : `${price(monthly, FALLBACK.monthly)} par mois, renouvelé automatiquement.`}
+        {' Annule quand tu veux.'}
       </Text>
 
-      <Pressable
-        onPress={() => { haptics.tap(); void restorePro(); }}
-        style={st.restore}
-      >
+      <Pressable onPress={() => { haptics.tap(); void restorePro(); }} style={st.restore}>
         <Text variant="label" tone="tertiary">
           {PURCHASES_ENABLED ? 'Restaurer mes achats' : 'Gratuit pendant la bêta'}
         </Text>
       </Pressable>
     </Screen>
+  );
+}
+
+/** Une case : coche, tiret, ou une valeur courte. */
+function Mark({ value, pro }: { value: string | null; pro?: boolean }) {
+  if (value === null) {
+    return <Minus size={15} strokeWidth={2.4} color={withAlpha(colors.mist, 0.22)} />;
+  }
+  if (value === '') {
+    return (
+      <Check
+        size={16}
+        strokeWidth={2.8}
+        color={pro ? colors.accent : withAlpha(colors.mist, 0.45)}
+      />
+    );
+  }
+  return (
+    <Text variant="label" color={pro ? colors.accent : withAlpha(colors.mist, 0.45)}>
+      {value}
+    </Text>
   );
 }
 
@@ -202,7 +201,7 @@ function PlanCard({
     >
       {on && (
         <LinearGradient
-          colors={[withAlpha(colors.accent, 0.18), withAlpha(colors.accentWarm, 0.08)]}
+          colors={[withAlpha(colors.accent, 0.16), withAlpha(colors.accentWarm, 0.06)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -230,7 +229,7 @@ function PlanCard({
 }
 
 const st = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
+  head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.xl },
   lockup: { width: 100, height: 38 },
   close: {
     width: 34, height: 34, borderRadius: 17,
@@ -238,27 +237,24 @@ const st = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
   },
   title: { textAlign: 'center' },
-  chart: {
-    flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
-    gap: space.sm, marginTop: space.xl,
+
+  table: {
+    marginTop: space.xxl, borderRadius: 22, overflow: 'hidden',
+    paddingHorizontal: space.lg,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.14),
+    backgroundColor: withAlpha(colors.mist, 0.03),
   },
-  col: { flex: 1, alignItems: 'center', gap: 6 },
-  bar: { width: '100%', borderRadius: 10, overflow: 'hidden' },
-  perks: { marginTop: space.xl, gap: space.md },
-  perk: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  perkIcon: {
-    width: 32, height: 32, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha(colors.accent, 0.12),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.accent, 0.28),
-  },
+  proBand: { position: 'absolute', top: 0, bottom: 0, right: 0, width: COL + space.lg },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13 },
+  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1) },
+  cell: { width: COL, alignItems: 'center', textAlign: 'center' },
+
   plans: { marginTop: space.xl, gap: space.sm },
   plan: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, paddingVertical: 16,
     borderRadius: 20, overflow: 'hidden',
     borderWidth: 1, borderColor: withAlpha(colors.mist, 0.12),
-    backgroundColor: withAlpha(colors.mist, 0.04),
   },
   planOn: { borderColor: withAlpha(colors.accent, 0.6) },
   tick: {
