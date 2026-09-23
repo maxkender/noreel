@@ -21,7 +21,7 @@ import { shield, stats } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Pill } from './parts';
+import { Card, Row, Pill, Toggle } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
@@ -30,6 +30,7 @@ import { Referral } from './Referral';
 import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
+import { HardMode, HardModeIntro } from './HardMode';
 
 const STREAK_PNG = require('@/assets/brand/streak.png');
 
@@ -233,6 +234,22 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
   const router = useRouter();
   const [on, setOn] = useState(true);
   const [auth, setAuth] = useState<string>('notDetermined');
+  const hard = useSettings((x) => x.hardMode);
+  const setSetting = useSettings((x) => x.set);
+  const [gate, setGate] = useState(false);
+  const [intro, setIntro] = useState(false);
+
+  /**
+   * Le seul endroit ou le blocage se rend.
+   *
+   * Avec le mode strict arme, on n'eteint pas : on ouvre la porte. C'est
+   * elle qui rappellera au bout de trois minutes.
+   */
+  const disarm = () => {
+    setOn(false);
+    useSettings.getState().set('blocking', false);
+    void shield.setActive(false, useSettings.getState().selection);
+  };
 
   useEffect(() => {
     void shield.isActive().then(setOn);
@@ -262,10 +279,14 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
         <Pressable
           onPress={() => {
             haptics.press();
-            const v = !on;
-            setOn(v);
-            useSettings.getState().set('blocking', v);
-            void shield.setActive(v, useSettings.getState().selection);
+            if (on) {
+              if (hard) { setGate(true); return; }
+              disarm();
+              return;
+            }
+            setOn(true);
+            useSettings.getState().set('blocking', true);
+            void shield.setActive(true, useSettings.getState().selection);
           }}
           style={[st.statusBtn, armed && st.statusBtnOn]}
         >
@@ -280,6 +301,38 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
           </Text>
         </Pressable>
       </View>
+
+      <Card>
+        <Row
+          title="Mode strict"
+          body={hard
+            ? 'Rendre le blocage demande une minute, une phrase et trois calculs.'
+            : 'Rend la désactivation volontairement pénible. Environ trois minutes.'}
+          right={
+            <Toggle
+              on={hard}
+              onChange={(v) => {
+                if (v) { setIntro(true); return; }
+                // On ne DESARME pas le mode strict d'un doigt : ce serait la
+                // porte de service qu'il est cense fermer.
+                setGate(true);
+              }}
+            />
+          }
+        />
+      </Card>
+
+      <HardModeIntro
+        visible={intro}
+        onCancel={() => setIntro(false)}
+        onConfirm={() => { setIntro(false); setSetting('hardMode', true); }}
+      />
+
+      <HardMode
+        visible={gate}
+        onCancel={() => setGate(false)}
+        onPass={() => { setGate(false); setSetting('hardMode', false); disarm(); }}
+      />
 
       <Card>
         <Row

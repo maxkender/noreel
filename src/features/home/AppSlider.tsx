@@ -3,7 +3,6 @@ import {
   Pressable, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeIn, Extrapolation, interpolate, runOnJS, useAnimatedReaction,
@@ -11,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChevronRight, Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
@@ -47,7 +46,6 @@ const TILE = 168;
  */
 export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
   const c = useColors();
-  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
   const item = Math.round(width * 0.48);
@@ -92,15 +90,6 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
           ))}
         </Animated.ScrollView>
 
-        {/* Les voisines passent SOUS un verre depoli : visibles assez pour
-            qu'on sache qu'elles sont la, jamais assez pour tirer l'oeil hors
-            du centre. */}
-        <View style={[st.veil, { left: 0, width: side }]} pointerEvents="none">
-          <BlurView intensity={16} tint={tint} style={StyleSheet.absoluteFill} />
-        </View>
-        <View style={[st.veil, { right: 0, width: side }]} pointerEvents="none">
-          <BlurView intensity={16} tint={tint} style={StyleSheet.absoluteFill} />
-        </View>
       </View>
 
       <Animated.View key={app.id} entering={FadeIn.duration(220)} style={st.legend}>
@@ -219,7 +208,6 @@ const sheet = (c: Palette) => StyleSheet.create({
     width: TILE, height: TILE, alignItems: 'center', justifyContent: 'center',
   },
   logo: { width: TILE * 0.66, height: TILE * 0.66 },
-  veil: { position: 'absolute', top: 0, bottom: 0 },
   legend: { alignItems: 'center', gap: 4, marginTop: space.md },
   open: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.md,

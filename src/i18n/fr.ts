@@ -95,7 +95,7 @@ export const fr = {
       marathon: { one: 'préparer un marathon', other: 'préparer {n} marathons', detail: `≈ 100${NBSP}h d'entraînement chacun` },
       code: { one: 'suivre une formation au code', other: 'suivre {n} formations au code', detail: `≈ 450${NBSP}h, comme un bootcamp intensif` },
     },
-    progress: '{p}{nbsp}% du chemin',
+    progress: 'faire {p}{nbsp}% du chemin pour {what}',
   },
 
   s7: {

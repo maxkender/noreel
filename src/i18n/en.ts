@@ -90,7 +90,7 @@ export const en: Dict = {
       marathon: { one: 'train for a marathon', other: 'train for {n} marathons', detail: '≈ 100 h of training each' },
       code: { one: 'take a full coding course', other: 'take {n} full coding courses', detail: '≈ 450 h, like an intensive bootcamp' },
     },
-    progress: '{p}% of the way',
+    progress: 'get {p}% of the way to {what}',
   },
 
   s7: {

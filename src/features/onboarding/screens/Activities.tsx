@@ -54,9 +54,15 @@ export function Activities({ onNext }: P) {
         {rows.map((r, i) => {
           const a = d.s6.activities[r.id];
           const whole = Math.floor(r.n);
+          // Une ligne, pas deux.
+          //
+          // Chaque entree portait sous elle son bareme — « ≈ 6 h par livre ».
+          // Trois lignes de note sous trois lignes de texte : l'oeil lisait
+          // le bas de page au lieu du chiffre. Ce qui n'est pas atteint se
+          // dit dans la phrase elle-meme, pas en dessous.
           const line = whole >= 2 ? a.other.replace('{n}', String(whole))
             : whole === 1 ? a.one
-            : a.one;
+            : t('s6.progress', { p: String(Math.round(r.n * 100)), what: a.one });
           return (
             <Animated.View
               key={r.id}
@@ -64,14 +70,7 @@ export function Activities({ onNext }: P) {
               style={st.row}
             >
               <View style={st.bullet} />
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text variant="lead">{line}</Text>
-                <Text variant="label" tone="tertiary">
-                  {whole >= 1
-                    ? a.detail
-                    : t('s6.progress', { p: String(Math.round(r.n * 100)) })}
-                </Text>
-              </View>
+              <Text variant="lead" style={{ flex: 1 }}>{line}</Text>
             </Animated.View>
           );
         })}

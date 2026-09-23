@@ -18,6 +18,7 @@ import {
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
 import { Activities } from './screens/Activities';
+import { PromoCode } from './screens/PromoCode';
 import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
@@ -105,6 +106,7 @@ export function OnboardingFlow() {
     <NotificationsAsk key="notif" onNext={n(15)} />,
     <HomeShortcuts key="short" onNext={n(16)} />,
     <PromiseScreen key="pro" onNext={n(17)} />,
+    <PromoCode key="promo" onNext={n(18)} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

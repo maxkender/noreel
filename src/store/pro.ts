@@ -10,6 +10,8 @@ type ProState = {
   start: () => Promise<void>;
   setPro: (v: boolean) => void;
   restore: () => Promise<boolean>;
+  /** Relit le statut apres un achat fait hors de l'app (code promo). */
+  refresh: () => Promise<void>;
 };
 
 /**
@@ -28,6 +30,10 @@ export const useProStore = create<ProState>()((set) => ({
     set({ pro: isPro(await customerInfo()), checked: true });
     // Un achat fait ailleurs (autre appareil, renouvellement) arrive ici.
     onCustomerInfo((pro) => set({ pro }));
+  },
+  refresh: async () => {
+    if (!PURCHASES_ENABLED) return;
+    set({ pro: isPro(await customerInfo()) });
   },
   restore: async () => {
     const ok = await restore();

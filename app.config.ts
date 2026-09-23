@@ -44,6 +44,13 @@ const config: ExpoConfig = {
     'expo-font',
     'expo-localization',
     'expo-apple-authentication',
+    // Enregistrer les icones de raccourci dans la photothèque. On ne demande
+    // QUE l'ajout : l'app n'a aucune raison de lire les photos de qui que
+    // ce soit, et Apple refuse une permission plus large que l'usage.
+    ['expo-media-library', {
+      savePhotosPermission: 'UnSwipe enregistre les icônes de raccourci dans tes photos, pour que tu puisses les choisir dans Raccourcis.',
+      isAccessMediaLocationEnabled: false,
+    }],
     // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
     './plugins/withoutPushEntitlement',
     // Pas d'image : l'icone apparaissait une fraction de seconde avant

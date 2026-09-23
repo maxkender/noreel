@@ -78,6 +78,26 @@ export async function buy(pack: PurchasesPackage): Promise<BuyResult> {
   }
 }
 
+/**
+ * Ouvre la feuille de codes d'Apple.
+ *
+ * Un code promo d'abonnement n'est PAS une chaine qu'on verifie soi-meme :
+ * c'est Apple qui le detient, l'echange contre un droit, et previent
+ * RevenueCat. Un champ de texte maison ne pourrait rien valider — il
+ * donnerait l'illusion d'un code accepte sans qu'aucun abonnement n'existe.
+ * On ouvre donc la feuille du systeme, et le statut revient par le canal
+ * habituel.
+ */
+export async function redeemCode(): Promise<boolean> {
+  if (!KEY || Platform.OS !== 'ios') return false;
+  try {
+    await Purchases.presentCodeRedemptionSheet();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function restore(): Promise<boolean> {
   if (!KEY) return false;
   try {

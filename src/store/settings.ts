@@ -10,6 +10,11 @@ type State = {
   goalMinutes: number;
   strictMode: boolean;
   /**
+   * Mode strict : rendre le blocage demande de traverser une porte.
+   * Distinct de `strictMode`, qui ne fait qu'afficher un mur sur un reel.
+   */
+  hardMode: boolean;
+  /**
    * Le blocage VOULU par l'utilisateur, garde sur le disque.
    *
    * iOS lache les restrictions au redemarrage de l'app ou du telephone :
@@ -33,6 +38,7 @@ export const useSettings = create<State>()(
       reduceMotion: false,
       goalMinutes: 120,
       strictMode: false,
+      hardMode: false,
       blocking: false,
       selection: null,
       appleUser: null,
@@ -59,8 +65,8 @@ export const useSettings = create<State>()(
         if (from < 2) return { ...s, theme: 'dark' as ThemeName };
         return s;
       },
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, theme }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, theme }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, blocking, selection, appleUser, theme }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, blocking, selection, appleUser, theme }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },
