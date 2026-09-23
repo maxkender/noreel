@@ -30,6 +30,8 @@ import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
 import { Referral } from './Referral';
 import { AppleSignIn } from './AppleSignIn';
+import { Coach } from '@/components/Coach';
+import { HOME_TOUR } from './tours';
 import { Settings } from './Settings';
 
 const STREAK_PNG = require('@/assets/brand/streak.png');
@@ -51,6 +53,10 @@ export function HomeScreen() {
   }));
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
+
+  // La visite ne se joue qu'a la premiere ouverture, et se souvient.
+  const toured = useSettings((x) => x.toured);
+  const setSetting = useSettings((x) => x.set);
 
   const tabs: [Tab, string, typeof HomeIcon][] = [
     ['home', d.nav.home, HomeIcon],
@@ -112,6 +118,12 @@ export function HomeScreen() {
 
       {/* La lame de verre passe a chaque changement d'onglet. */}
       <GlassSweep key={tab} />
+
+      <Coach
+        steps={HOME_TOUR}
+        visible={!toured.home}
+        onDone={() => setSetting('toured', { ...toured, home: true })}
+      />
     </View>
   );
 }

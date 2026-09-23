@@ -20,6 +20,8 @@ type State = {
   selection: string | null;
   /** Identifiant Apple, opaque et propre a cette app. */
   appleUser: string | null;
+  /** Visites guidees deja vues, par cle. */
+  toured: Record<string, boolean>;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -33,6 +35,7 @@ export const useSettings = create<State>()(
       blocking: false,
       selection: null,
       appleUser: null,
+      toured: {},
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.
@@ -42,8 +45,8 @@ export const useSettings = create<State>()(
     {
       name: 'noreel.settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

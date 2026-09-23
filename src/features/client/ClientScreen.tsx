@@ -15,6 +15,9 @@ import { CLIENTS, buildScript, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { ExitBubble } from './ExitBubble';
 import { GlassSweep } from '@/components/GlassSweep';
+import { Coach } from '@/components/Coach';
+import { CLIENT_TOUR } from './tour';
+import { useSettings } from '@/store/settings';
 
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
@@ -55,6 +58,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // est en cause.
   const [raw, setRaw] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const toured = useSettings((x) => x.toured);
+  const setSetting = useSettings((x) => x.set);
 
   useEffect(() => {
     if (ready) { setStuck(false); return; }
@@ -180,6 +185,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
+
+      <Coach
+        steps={CLIENT_TOUR}
+        visible={ready && !toured.client}
+        onDone={() => setSetting('toured', { ...toured, client: true })}
+      />
 
       {(stuck || raw) && !error && (
         <View style={styles.rescue} pointerEvents="box-none">
