@@ -8,8 +8,8 @@ export const en: Dict = {
   chrome: { step: 'Step {n} of {total}', back: 'Back' },
 
   s1: {
-    title1: 'Keep your {friends}.',
-    title2: 'Lose the reels.',
+    title1: 'The same apps.',
+    title2: 'Without the {algorithm}.',
     subtitle: 'Instagram and TikTok. Without the void.',
     cta: 'Get started',
   },

@@ -13,8 +13,8 @@ export const fr = {
   },
 
   s1: {
-    title1: 'Garde tes {potes}.',
-    title2: 'Vire les reels.',
+    title1: 'Les mêmes applis.',
+    title2: 'Sans {algorithme}.',
     subtitle: 'Instagram et TikTok. Sans le vide.',
     cta: 'Commencer',
   },

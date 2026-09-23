@@ -13,7 +13,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { SelectCard } from '@/components/SelectCard';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
@@ -128,7 +128,71 @@ export function Constat({ onNext }: P) {
   );
 }
 
-/* ---------- Prenom ---------- *//* ---------- Prenom ---------- */
+/* ---------- Le manifeste ---------- */
+
+/**
+ * Cinq lignes qui s'ecrivent l'une apres l'autre, la derniere en grand.
+ *
+ * Chaque ligne demarre quand la precedente a fini : les delais se calculent
+ * a partir de la duree de frappe, ils ne sont pas devines. Les lignes deja
+ * ecrites s'effacent d'un cran pour que l'oeil suive celle qui s'ecrit.
+ */
+const LINES = [
+  'On s’est frayé un chemin dans l’algorithme.',
+  'Tu gardes le contact avec tes amis,',
+  'sans y laisser la moitié de ton temps libre.',
+  'Tu peux suivre tes passions, lire, bouger, retenir ce que tu vois.',
+];
+const LAST = 'Bienvenue dans {UnSwipe}.';
+const SPEED = 26;
+
+export function Manifesto({ onNext }: P) {
+  // Chaque ligne part quand la precedente est finie.
+  const starts: number[] = [];
+  let t = 260;
+  for (const l of LINES) {
+    starts.push(t);
+    t = typeDuration(l, SPEED, t);
+  }
+  const lastStart = t + 260;
+
+  return (
+    <Screen
+      cta="Appuie pour continuer"
+      onPress={onNext}
+      hintDelay={lastStart + 900}
+      tapToContinue
+      center
+      hue="accent"
+    >
+      <View style={{ gap: space.md }}>
+        {LINES.map((l, i) => (
+          <Typewriter
+            key={l}
+            text={l}
+            variant="lead"
+            speed={SPEED}
+            delay={starts[i]}
+            cursor={false}
+            style={st.faded}
+          />
+        ))}
+
+        <View style={{ height: space.lg }} />
+
+        <Typewriter
+          text={LAST}
+          variant="displayM"
+          speed={SPEED + 14}
+          delay={lastStart}
+          style={st.center}
+        />
+      </View>
+    </Screen>
+  );
+}
+
+/* ---------- Prenom ---------- */
 export function Name({ onNext }: P) {
   const name = useOnboardingStore((x) => x.firstName);
   const setName = useOnboardingStore((x) => x.setFirstName);
@@ -401,6 +465,9 @@ function PromiseRow({ title, body }: { title: string; body: string }) {
 
 const st = StyleSheet.create({
   center: { textAlign: 'center' },
+  // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
+  // s'ecrit, sans perdre ce qui precede.
+  faded: { textAlign: 'center', opacity: 0.55 },
   input: {
     marginTop: space.xl, height: 62, borderRadius: 20, textAlign: 'center',
     color: colors.mist, fontFamily: 'SansSemi', fontSize: 22,
