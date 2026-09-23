@@ -65,8 +65,8 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       <Screen
         cta="Ouvrir Réglages"
         onPress={() => { void Linking.openSettings(); }}
-        secondary="Réessayer"
-        onSecondary={() => { void ask(); }}
+        secondary="Continuer sans activer Temps d’écran"
+        onSecondary={onDone}
       >
         <View style={st.warnRing}>
           <ShieldAlert size={26} strokeWidth={2} color={colors.danger} />

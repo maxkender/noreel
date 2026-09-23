@@ -49,11 +49,19 @@ export const realShield: ShieldService = {
       return false;
     }
   },
-  async setActive(active: boolean) {
+  /**
+   * Arme ou desarme le blocage.
+   *
+   * S'il y a une selection, c'est ELLE qu'on bloque. Sans selection, on
+   * bloquait tout — l'interrupteur et le selecteur se contredisaient donc :
+   * choisir trois apps puis armer les bloquait toutes.
+   */
+  async setActive(active: boolean, selection?: string | null) {
     if (!FAMILY_CONTROLS_ENABLED) return;
     try {
-      if (active) DA.enableBlockAllMode();
-      else DA.resetBlocks();
+      if (!active) { DA.resetBlocks(); return; }
+      if (selection) DA.blockSelection({ activitySelectionToken: selection });
+      else DA.enableBlockAllMode();
     } catch {
       /* le blocage n'est pas critique pour le reste de l'app */
     }

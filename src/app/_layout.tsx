@@ -36,9 +36,10 @@ export default function RootLayout() {
   // retrouver eteint apres chaque lancement le rendait inutile.
   useEffect(() => {
     const unsub = useSettings.persist?.onFinishHydration?.((s) => {
-      if (s?.blocking) void shield.setActive(true);
+      if (s?.blocking) void shield.setActive(true, s.selection);
     });
-    if (useSettings.getState().blocking) void shield.setActive(true);
+    const st = useSettings.getState();
+    if (st.blocking) void shield.setActive(true, st.selection);
     return unsub;
   }, []);
 

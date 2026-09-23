@@ -173,7 +173,7 @@ function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
             const v = !detox;
             setDetox(v);
             useSettings.getState().set('blocking', v);
-            void shield.setActive(v);
+            void shield.setActive(v, useSettings.getState().selection);
           }}
         >
           <LinearGradient
@@ -275,7 +275,7 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
             const v = !on;
             setOn(v);
             useSettings.getState().set('blocking', v);
-            void shield.setActive(v);
+            void shield.setActive(v, useSettings.getState().selection);
           }}
           style={[st.statusBtn, armed && st.statusBtnOn]}
         >

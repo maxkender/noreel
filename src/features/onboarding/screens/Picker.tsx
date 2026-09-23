@@ -63,7 +63,9 @@ export function Picker({ onNext }: P) {
               whole: v.includeEntireCategory,
             });
             set('selection', v.familyActivitySelection);
-            applySelection(v.familyActivitySelection);
+            // On n'applique que si le blocage est deja arme : choisir des
+            // apps ne doit pas les bloquer a l'insu de l'utilisateur.
+            if (useSettings.getState().blocking) applySelection(v.familyActivitySelection);
           }}
         />
       </View>

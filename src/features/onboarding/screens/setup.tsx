@@ -50,16 +50,6 @@ const CONSTAT: Step[] = [
       { label: 'Non', reply: 'Alors regarde la suite. Tu jugeras après.' },
     ],
   },
-  {
-    kind: 'say',
-    q: 'La {dopamine} est au centre de ce qui te rend heureux.',
-    sub: 'C’est elle qui donne du goût à tout le reste.',
-  },
-  {
-    kind: 'say',
-    q: 'Le réflexe de scroller abîme ta mémoire, à court comme à long terme.',
-    sub: 'Les dégâts peuvent durer. Mais il n’est pas trop tard.',
-  },
 ];
 
 /**
