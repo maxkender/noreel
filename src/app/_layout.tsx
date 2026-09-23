@@ -91,13 +91,20 @@ export default function RootLayout() {
             name="home"
             options={{ animation: 'fade', animationDuration: 420, gestureEnabled: false }}
           />
+          {/*
+            L'app filtree prend tout l'ecran et ne se balaie pas.
+            Presentee en `modal` avec un geste vertical, elle se refermait
+            d'un doigt vers le bas — or c'est precisement le geste qu'on
+            fait sans y penser dans Instagram. On sortait de l'app filtree
+            en croyant faire defiler. La sortie passe par la croix de la
+            barre, qui est un choix, pas un reflexe.
+          */}
           <Stack.Screen
             name="client/[id]"
             options={{
-              presentation: 'modal',
+              presentation: 'fullScreenModal',
               animation: 'slide_from_bottom',
-              gestureEnabled: true,
-              gestureDirection: 'vertical',
+              gestureEnabled: false,
             }}
           />
         </Stack>
