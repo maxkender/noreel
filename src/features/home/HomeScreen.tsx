@@ -430,6 +430,8 @@ const sheet = (c: Palette) => StyleSheet.create({
   statusBtnOn: { backgroundColor: c.accent, borderColor: c.accent },
   root: { flex: 1, backgroundColor: c.night },
   scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
-  headWrap: { backgroundColor: c.night },
+  // Sans fond : pose sur le halo, un rectangle plein dessinait une bande
+  // nette en travers du degrade. Le haut de l'ecran redevient continu.
+  headWrap: {},
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
 });

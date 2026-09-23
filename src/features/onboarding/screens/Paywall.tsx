@@ -90,12 +90,14 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
   return (
     <Screen
+      // L'essai n'existe que sur l'annuel : promettre « gratuit » sur
+      // l'hebdomadaire serait faux, et Apple facturerait aussitot.
       cta={busy ? 'Un instant…' : plan === 'annual'
-        ? `Essayer ${TRIAL_DAYS} jours gratuitement`
-        : 'Passer en Pro'}
+        ? `Commencer mes ${TRIAL_DAYS} jours gratuits`
+        : 'Continuer'}
       onPress={() => { void go(); }}
       disabled={busy}
-      secondary="Continuer sans Pro"
+      secondary="Plus tard"
       onSecondary={onDone}
       hue="warm"
     >
@@ -108,9 +110,13 @@ export function Paywall({ onDone }: { onDone: () => void }) {
       </View>
 
       <Text variant="displayM" style={st.title}>
-        {name ? `${name}, reprends ` : 'Reprends '}
-        <Text variant="displayM" color={c.accent}>le contrôle total</Text>
-        {' de ton temps aujourd’hui.'}
+        {name ? `${name}, essaie ` : 'Essaie '}
+        <Text variant="displayM" color={c.accent}>{TRIAL_DAYS} jours</Text>
+        {' gratuitement.'}
+      </Text>
+      <Text variant="lead" tone="secondary" style={[st.title, st.sub]}>
+        Tout est débloqué tout de suite. Tu ne paies rien avant la fin des
+        {` ${TRIAL_DAYS} jours, et tu peux arrêter avant.`}
       </Text>
 
       <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
@@ -124,8 +130,8 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 
         <View style={st.row}>
           <View style={{ flex: 1 }} />
-          <Text variant="label" tone="tertiary" style={st.cell}>GRATUIT</Text>
-          <Text variant="label" color={c.accent} style={st.cell}>PRO</Text>
+          <Text variant="label" tone="tertiary" style={st.cell}>SANS</Text>
+          <Text variant="label" color={c.accent} style={st.cell}>AVEC</Text>
         </View>
 
         {ROWS.map((r, i) => (
@@ -250,6 +256,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
+  sub: { marginTop: space.md },
   title: { textAlign: 'center' },
 
   table: {

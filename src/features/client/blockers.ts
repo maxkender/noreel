@@ -353,7 +353,8 @@ export const INSTAGRAM_BLOCKER = `
     if (__on('ads')) __byLabel(AD, 'ads');
     if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
 
-    if (__on('stories') || __on('feed')) __hide(__tray(), 'stories');
+    if (__on('stories')) __hide(__tray(), 'stories');
+    else if (__on('feed')) __hide(__tray(), 'feed');
     if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
@@ -457,8 +458,10 @@ export const TWITTER_BLOCKER = `
   'use strict';
   ${COMMON}
 
+  // Seules les tendances sont ici : elles sont verrouillees. « Explorer »
+  // est reglable, donc il se masque a la passe, ou on peut le rendre.
   const css = \`
-    a[href="/explore"], a[href^="/i/trends"],
+    a[href^="/i/trends"],
     [data-testid="trend"], [aria-label="Timeline: Trending now" i] { display: none !important; }
   \`;
   const style = document.createElement('style');
@@ -479,10 +482,14 @@ export const TWITTER_BLOCKER = `
     __gray();
     __cookies();
     __native();
+    if (__on('explore')) {
+      document.querySelectorAll('a[href="/explore"]')
+        .forEach((el) => __hide(el, 'explore'));
+    }
     if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
       __go('/messages');
     }
-    if (location.pathname.startsWith('/explore')) __go('/home');
+    if (__on('explore') && location.pathname.startsWith('/explore')) __go('/home');
   });
 })();
 true;
