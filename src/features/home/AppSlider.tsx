@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Pressable, StyleSheet, View, useWindowDimensions,
   type NativeScrollEvent, type NativeSyntheticEvent,
@@ -10,7 +10,8 @@ import Animated, {
   useAnimatedStyle, useSharedValue, type SharedValue,
 } from 'react-native-reanimated';
 import { ChevronRight, Lock } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
@@ -40,6 +41,8 @@ const TILE = 208;
  * affichee sont juste en dessous : on ne quitte jamais l'accueil.
  */
 export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
   const [i, setI] = useState(0);
   const x = useSharedValue(0);
@@ -99,6 +102,8 @@ function Slide({
   minutes: number;
 }) {
   const router = useRouter();
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
 
   // La diapositive voisine recule et s'efface : la profondeur vient de la,
   // pas d'une ombre posee a plat.
@@ -132,16 +137,18 @@ function Slide({
         style={st.open}
         onPress={() => { haptics.press(); router.push(`/client/${app.id}`); }}
       >
-        <Text variant="label" color={colors.accent}>
+        <Text variant="label" color={c.accent}>
           {minutes > 0 ? `${minutes} min aujourd’hui · Ouvrir` : 'Ouvrir'}
         </Text>
-        <ChevronRight size={15} strokeWidth={2.2} color={colors.accent} />
+        <ChevronRight size={15} strokeWidth={2.2} color={c.accent} />
       </Pressable>
     </Animated.View>
   );
 }
 
 function Toggles({ app }: { app: ClientId }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
   useAppsStore((s) => s.settings); // re-rend a chaque changement
@@ -150,7 +157,7 @@ function Toggles({ app }: { app: ClientId }) {
     <View>
       {APP_TOGGLES[app].map((t) => (
         <View key={t.key} style={st.line}>
-          {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(colors.mist, 0.3)} />}
+          {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
           <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
           <Toggle
             on={t.locked ? true : isOn(app, t.key)}
@@ -162,7 +169,7 @@ function Toggles({ app }: { app: ClientId }) {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   page: { alignItems: 'center', gap: 6, paddingVertical: space.md },
   tile: {
     width: TILE, height: TILE, alignItems: 'center', justifyContent: 'center',
@@ -173,16 +180,16 @@ const st = StyleSheet.create({
   open: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.md,
     paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: 999,
-    backgroundColor: withAlpha(colors.accent, 0.12),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.accent, 0.35),
+    backgroundColor: withAlpha(c.accent, 0.12),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.35),
   },
   dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.lg },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(colors.mist, 0.18) },
-  dotOn: { width: 22, backgroundColor: colors.accent },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.18) },
+  dotOn: { width: 22, backgroundColor: c.accent },
   panel: { marginTop: space.lg, paddingHorizontal: space.lg, paddingBottom: space.sm },
   panelHead: { paddingTop: space.lg, paddingBottom: space.xs },
   line: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 13,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1),
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),
   },
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, View,
 } from 'react-native';
@@ -6,7 +6,8 @@ import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette, type ThemeName } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -21,9 +22,14 @@ import {
 } from '@/services/shield.real';
 
 const GOALS = [60, 90, 120, 180, 240];
+const THEMES: [ThemeName, string][] = [
+  ['system', 'Système'], ['dark', 'Sombre'], ['light', 'Clair'],
+];
 
 /** Feuille de reglages : tout ce qu'il y a dedans agit reellement. */
 export function Settings({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const router = useRouter();
   const s = useSettings();
@@ -44,7 +50,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             <View style={{ width: 44 }} />
             <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>Paramètres</Text>
             <Pressable onPress={onClose} style={st.done} hitSlop={10}>
-              <Text variant="label" color={colors.night}>OK</Text>
+              <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
 
@@ -56,7 +62,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 ? 'Autorisé. UnSwipe peut mettre les apps en pause.'
                 : 'Nécessaire pour bloquer les apps d’origine.'}
               right={
-                <Text variant="label" color={auth === 'approved' ? colors.accent : colors.mist}>
+                <Text variant="label" color={auth === 'approved' ? c.accent : c.mist}>
                   {auth === 'approved' ? 'OK' : 'Activer'}
                 </Text>
               }
@@ -75,6 +81,24 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               onPress={() => void Linking.openSettings()}
             />
 
+            <Group title="Apparence" />
+            <View style={st.chips}>
+              {THEMES.map(([k, label]) => {
+                const on = s.theme === k;
+                return (
+                  <Pressable
+                    key={k}
+                    onPress={() => { haptics.tick(); s.set('theme', k); }}
+                    style={[st.chip, on && st.chipOn]}
+                  >
+                    <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             <Group title="Objectif quotidien" />
             <View style={st.chips}>
               {GOALS.map((g) => {
@@ -85,7 +109,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                     onPress={() => { haptics.tick(); s.set('goalMinutes', g); }}
                     style={[st.chip, on && st.chipOn]}
                   >
-                    <Text variant="label" color={on ? colors.night : withAlpha(colors.mist, 0.7)}>
+                    <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
                       {formatHours(g)}
                     </Text>
                   </Pressable>
@@ -158,17 +182,21 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 }
 
 function Group({ title }: { title: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return <Text variant="label" tone="tertiary" style={st.group}>{title}</Text>;
 }
 
 function Line({
   label, sub, right, onPress, danger,
 }: { label: string; sub?: string; right?: React.ReactNode; onPress?: () => void; danger?: boolean }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const Wrap: React.ElementType = onPress ? Pressable : View;
   return (
     <Wrap onPress={onPress ? () => { haptics.tap(); onPress(); } : undefined} style={st.line}>
       <View style={{ flex: 1 }}>
-        <Text variant="body" color={danger ? colors.danger : undefined}>{label}</Text>
+        <Text variant="body" color={danger ? c.danger : undefined}>{label}</Text>
         {sub && <Text variant="label" tone="secondary">{sub}</Text>}
       </View>
       {right ?? (onPress ? <Text variant="body" tone="tertiary">›</Text> : null)}
@@ -176,7 +204,7 @@ function Line({
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   scrim: { flex: 1, backgroundColor: '#000000C0', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
@@ -186,18 +214,18 @@ const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.lg },
   done: {
     width: 44, height: 32, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent,
   },
   group: { marginTop: space.lg, marginBottom: space.xs },
   line: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
-  chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipOn: { backgroundColor: c.accent, borderColor: c.accent },
   foot: { marginTop: space.lg },
 });

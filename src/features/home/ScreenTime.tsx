@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
@@ -16,6 +18,8 @@ import { APPS, LOGOS } from './AppSlider';
  * barres de travers des qu'une valeur changeait.
  */
 export function ScreenTime({ minutes }: { minutes: Record<string, number> }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const rows = APPS.map((a) => ({ ...a, m: minutes[a.id] ?? 0 }))
     .sort((x, y) => y.m - x.m);
   const total = rows.reduce((n, r) => n + r.m, 0);
@@ -32,7 +36,7 @@ export function ScreenTime({ minutes }: { minutes: Record<string, number> }) {
         {rows.map((r) => {
           const pct = Math.max(3, Math.round((r.m / top) * 100));
           const heavy = total > 0 && r.m > total / 3;
-          const c = heavy ? colors.danger : colors.accent;
+          const tint = heavy ? c.danger : c.accent;
           return (
             <View key={r.id} style={st.row}>
               <Image source={LOGOS[r.id]} style={st.logo} contentFit="contain" />
@@ -41,12 +45,12 @@ export function ScreenTime({ minutes }: { minutes: Record<string, number> }) {
                   <Text variant="label" tone="secondary" numberOfLines={1} style={{ flex: 1 }}>
                     {r.name}
                   </Text>
-                  <Text variant="label" color={c}>{formatHours(r.m)}</Text>
+                  <Text variant="label" color={tint}>{formatHours(r.m)}</Text>
                 </View>
                 <View style={st.track}>
                   <View style={[st.fill, { width: `${pct}%` }]}>
                     <LinearGradient
-                      colors={[withAlpha(c, 0.5), c]}
+                      colors={[withAlpha(tint, 0.5), tint]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={StyleSheet.absoluteFill}
@@ -62,7 +66,7 @@ export function ScreenTime({ minutes }: { minutes: Record<string, number> }) {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   card: { padding: space.md, paddingHorizontal: space.lg },
   head: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -75,7 +79,7 @@ const st = StyleSheet.create({
   labels: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   track: {
     height: 4, borderRadius: 2, overflow: 'hidden',
-    backgroundColor: withAlpha(colors.mist, 0.08),
+    backgroundColor: withAlpha(c.mist, 0.08),
   },
   fill: { height: 4, borderRadius: 2, overflow: 'hidden' },
 });

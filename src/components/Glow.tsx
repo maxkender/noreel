@@ -4,20 +4,14 @@ import { useEffect } from 'react';
 import Animated, {
   Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors } from '@/theme/useColors';
 
 export type Hue = 'accent' | 'deep' | 'warm' | 'danger' | 'ember';
 
 // Les trois teintes de la marque, plus le rouge et l'orange reserves aux
-// moments qui pesent. Changer de teinte d'un ecran a l'autre casse la
-// monotonie sans sortir de la palette.
-const HUES: Record<Hue, string> = {
-  accent: colors.accent,
-  deep: colors.accentDeep,
-  warm: colors.accentWarm,
-  danger: colors.danger,
-  ember: colors.ember,
-};
+// moments qui pesent. Elles viennent de la palette active, donc le halo
+// suit le theme.
 
 /**
  * Halo haut en degrade. Sans Skia : rien a compiler, rien qui puisse tomber.
@@ -28,7 +22,12 @@ const HUES: Record<Hue, string> = {
  */
 export function Glow({ hue = 'accent', level = 0 }: { hue?: Hue; level?: number }) {
   const { width } = useWindowDimensions();
-  const c = HUES[hue];
+  const p = useColors();
+  const c = hue === 'accent' ? p.accent
+    : hue === 'deep' ? p.accentDeep
+    : hue === 'warm' ? p.accentWarm
+    : hue === 'danger' ? p.danger
+    : p.ember;
   const t = useSharedValue(level);
 
   useEffect(() => {

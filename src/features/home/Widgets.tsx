@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Copy, Check } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
@@ -22,6 +23,8 @@ import { APPS, LOGOS } from './AppSlider';
  * trois gestes, rien de plus.
  */
 export function Widgets() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -40,7 +43,7 @@ export function Widgets() {
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <View style={st.head}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={st.back}>
-            <ChevronLeft size={20} strokeWidth={2} color={colors.mist} />
+            <ChevronLeft size={20} strokeWidth={2} color={c.mist} />
           </Pressable>
           <Text variant="title">Écran d’accueil</Text>
           <View style={st.back} />
@@ -65,8 +68,8 @@ export function Widgets() {
                   <Text variant="label" tone="tertiary">unswipe://client/{a.id}</Text>
                 </View>
                 {copied === a.id
-                  ? <Check size={18} strokeWidth={2.2} color={colors.accent} />
-                  : <Copy size={17} strokeWidth={1.8} color={withAlpha(colors.mist, 0.45)} />}
+                  ? <Check size={18} strokeWidth={2.2} color={c.accent} />
+                  : <Copy size={17} strokeWidth={1.8} color={withAlpha(c.mist, 0.45)} />}
               </Pressable>
             ))}
           </View>
@@ -89,16 +92,18 @@ export function Widgets() {
 }
 
 function Step({ n, text }: { n: string; text: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.step}>
-      <View style={st.badge}><Text variant="label" color={colors.night}>{n}</Text></View>
+      <View style={st.badge}><Text variant="label" color={c.night}>{n}</Text></View>
       <Text variant="body" style={{ flex: 1 }}>{text}</Text>
     </View>
   );
 }
 
-const st = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.night },
+const sheet = (c: Palette) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: c.night },
   head: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: gutter, paddingBottom: space.sm,
@@ -109,18 +114,18 @@ const st = StyleSheet.create({
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: {
     width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
   },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
-    padding: space.md, borderRadius: 18, backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    padding: space.md, borderRadius: 18, backgroundColor: c.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
   },
   logo: { width: 40, height: 40 },
   open: {
     height: 52, borderRadius: 26, marginTop: space.xl,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
-    backgroundColor: withAlpha(colors.accent, 0.16),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.accent, 0.4),
+    backgroundColor: withAlpha(c.accent, 0.16),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
   },
 });

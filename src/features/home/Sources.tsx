@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { SlideInDown } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -27,6 +29,8 @@ const REFS = [
  * viennent. La ligne des sources ouvrait sur rien.
  */
 export function Sources({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
@@ -37,7 +41,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
           <View style={st.head}>
             <Text variant="title" style={{ flex: 1 }}>Sources et méthode</Text>
             <Pressable onPress={() => { haptics.tap(); onClose(); }} style={st.done} hitSlop={10}>
-              <Text variant="label" color={colors.night}>OK</Text>
+              <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
 
@@ -54,7 +58,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
             {REFS.map((r) => (
               <View key={r.t} style={st.ref}>
                 <Text variant="body">{r.t}</Text>
-                <Text variant="label" color={colors.accent}>{r.a}</Text>
+                <Text variant="label" color={c.accent}>{r.a}</Text>
                 <Text variant="label" tone="tertiary" style={{ lineHeight: 17 }}>{r.d}</Text>
               </View>
             ))}
@@ -70,7 +74,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   scrim: { flex: 1, backgroundColor: '#000000B8', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
@@ -80,12 +84,12 @@ const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.lg },
   done: {
     width: 44, height: 32, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent,
   },
   group: { marginTop: space.lg, marginBottom: space.sm },
   body: { lineHeight: 21 },
   ref: {
     gap: 3, paddingVertical: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1),
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),
   },
 });

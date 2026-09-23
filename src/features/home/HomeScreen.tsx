@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -9,7 +9,8 @@ import Animated, {
   FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
 } from 'react-native-reanimated';
 import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glow } from '@/components/Glow';
@@ -40,6 +41,8 @@ const STREAK_PNG = require('@/assets/brand/streak.png');
 type Tab = 'home' | 'block' | 'account';
 
 export function HomeScreen() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
@@ -108,10 +111,10 @@ export function HomeScreen() {
       <LinearGradient
         colors={[
           'transparent',
-          withAlpha(colors.night, 0.14),
-          withAlpha(colors.night, 0.46),
-          withAlpha(colors.night, 0.8),
-          colors.night,
+          withAlpha(c.night, 0.14),
+          withAlpha(c.night, 0.46),
+          withAlpha(c.night, 0.8),
+          c.night,
         ]}
         locations={[0, 0.2, 0.45, 0.72, 1]}
         style={st.hem}
@@ -136,6 +139,8 @@ export function HomeScreen() {
 type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
 
 function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const router = useRouter();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
@@ -198,7 +203,7 @@ function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
           }}
         >
           <LinearGradient
-            colors={[withAlpha(colors.accent, 0.35), withAlpha(colors.accentDeep, 0.28), withAlpha(colors.accentWarm, 0.22)]}
+            colors={[withAlpha(c.accent, 0.35), withAlpha(c.accentDeep, 0.28), withAlpha(c.accentWarm, 0.22)]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -246,9 +251,11 @@ function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.stat}>
-      <Text variant="title" color={colors.accent}>{value}</Text>
+      <Text variant="title" color={c.accent}>{value}</Text>
       <Text variant="label" tone="tertiary">{label}</Text>
     </View>
   );
@@ -256,6 +263,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /* ---------------- Blocage ---------------- */
 function BlockTab({ onScroll }: { onScroll: Scroll }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const router = useRouter();
   const [on, setOn] = useState(true);
@@ -281,7 +290,7 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
       {/* Carte d'etat : le statut se lit d'un coup d'oeil, l'action est dessous. */}
       <View style={[st.status, armed ? st.statusOn : st.statusOff]}>
         <View style={[st.statusRing, armed && st.statusRingOn]}>
-          <Shield size={26} strokeWidth={1.8} color={armed ? colors.accent : withAlpha(colors.mist, 0.5)} />
+          <Shield size={26} strokeWidth={1.8} color={armed ? c.accent : withAlpha(c.mist, 0.5)} />
         </View>
         <Text variant="title" style={{ textAlign: 'center' }}>
           {armed ? d.block.shieldOn : d.block.shieldOff}
@@ -301,7 +310,7 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.85}
-            color={armed ? colors.night : colors.mist}
+            color={armed ? c.night : c.mist}
           >
             {armed ? d.block.pause : d.block.activate}
           </Text>
@@ -351,6 +360,8 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
 
 /* ---------------- Compte ---------------- */
 function AccountTab({ onScroll }: { onScroll: Scroll }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const [sources, setSources] = useState(false);
   const { d } = useT();
   const router = useRouter();
@@ -396,17 +407,17 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   score: {
     width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
+    borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.5),
   },
   section: { marginTop: space.lg },
   idea: { padding: space.lg, marginTop: space.lg },
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
-  stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(colors.mist, 0.14) },
+  stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(c.mist, 0.14) },
   cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     padding: space.lg, marginTop: space.lg,
@@ -415,46 +426,46 @@ const st = StyleSheet.create({
   detoxBtn: {
     height: 48, borderRadius: 24, marginTop: space.lg, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.28),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.28),
   },
   egg: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center' },
   eggFlame: { position: 'absolute', width: 54, height: 54, opacity: 0.9 },
-  eggN: { color: colors.night, marginTop: 8 },
+  eggN: { color: c.night, marginTop: 8 },
   shortcut: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: space.lg, paddingVertical: space.md, paddingHorizontal: space.lg,
-    borderRadius: 18, backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    borderRadius: 18, backgroundColor: c.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
   },
   status: {
     alignItems: 'center', gap: space.md, padding: space.xl, borderRadius: 22,
     borderWidth: 1,
   },
-  statusOn: { borderColor: withAlpha(colors.accent, 0.5), backgroundColor: withAlpha(colors.accent, 0.07) },
-  statusOff: { borderColor: colors.lineStrong, backgroundColor: colors.surface },
+  statusOn: { borderColor: withAlpha(c.accent, 0.5), backgroundColor: withAlpha(c.accent, 0.07) },
+  statusOff: { borderColor: c.lineStrong, backgroundColor: c.surface },
   statusRing: {
     width: 62, height: 62, borderRadius: 31, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: colors.lineStrong,
+    borderWidth: 1.5, borderColor: c.lineStrong,
   },
-  statusRingOn: { borderColor: withAlpha(colors.accent, 0.6) },
+  statusRingOn: { borderColor: withAlpha(c.accent, 0.6) },
   statusBtn: {
     alignSelf: 'stretch', height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
-  statusBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  root: { flex: 1, backgroundColor: colors.night },
+  statusBtnOn: { backgroundColor: c.accent, borderColor: c.accent },
+  root: { flex: 1, backgroundColor: c.night },
   // La marge haute laisse passer le contenu sous l'en-tete flottante.
   scroll: { paddingHorizontal: gutter, paddingTop: 96, paddingBottom: 130, gap: space.md },
   veil: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
   veilTint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.night, 0.55),
+    backgroundColor: withAlpha(c.night, 0.55),
   },
   veilLine: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
-    height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(colors.mist, 0.14),
+    height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(c.mist, 0.14),
   },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
   headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },

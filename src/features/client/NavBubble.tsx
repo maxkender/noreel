@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -8,7 +8,8 @@ import Animated, {
 import {
   ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, X,
 } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
@@ -28,6 +29,8 @@ export type NavAction = 'back' | 'home' | 'reload' | 'forward' | 'settings' | 'e
 export function NavBubble({
   onAction,
 }: { onAction: (a: NavAction) => void }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const { width, height } = useWindowDimensions();
   const x = useSharedValue(width - SIZE - MARGIN);
   const y = useSharedValue(height * 0.56);
@@ -93,7 +96,7 @@ export function NavBubble({
             <Key icon={House} label="Accueil du site" onPress={() => act('home')} />
             <Key icon={RotateCw} label="Recharger" onPress={() => act('reload')} />
             <Key icon={ChevronRight} label="Suivant" onPress={() => act('forward')} />
-            <Key icon={Gear} label="Réglages" onPress={() => act('settings')} tint={colors.accent} />
+            <Key icon={Gear} label="Réglages" onPress={() => act('settings')} tint={c.accent} />
           </View>
 
           <Animated.View entering={FadeIn.delay(80).duration(220)} style={styles.quitWrap}>
@@ -131,6 +134,8 @@ function Key({
   big?: boolean;
 }) {
   const scale = useSharedValue(1);
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const tap = Gesture.Tap()
     .onBegin(() => { scale.value = withTiming(0.88, { duration: 80 }); })
@@ -146,52 +151,52 @@ function Key({
       >
         {big && <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />}
         {big && <View style={styles.tint} />}
-        <Icon size={big ? 22 : 20} strokeWidth={2} color={tint ?? colors.mist} />
+        <Icon size={big ? 22 : 20} strokeWidth={2} color={tint ?? c.mist} />
       </Animated.View>
     </GestureDetector>
   );
 }
 
-const styles = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   barWrap: { position: 'absolute', left: 0, right: 0, bottom: 118, alignItems: 'center', zIndex: 99 },
   bar: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 30, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.28),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.28),
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
   },
   barTint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.night, 0.55),
+    backgroundColor: withAlpha(c.night, 0.55),
   },
   key: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   quitWrap: { marginTop: 10 },
   quit: {
     width: 52, height: 52, borderRadius: 26, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.3),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.3),
   },
   bubble: {
     position: 'absolute', top: 0, left: 0,
     width: SIZE, height: SIZE, borderRadius: SIZE / 2, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: withAlpha(colors.mist, 0.45),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.45),
     shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 }, elevation: 16,
     zIndex: 100,
   },
   tint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.night, 0.6),
+    backgroundColor: withAlpha(c.night, 0.6),
   },
   grip: { gap: 4 },
-  line: { width: 18, height: 2, borderRadius: 1, backgroundColor: colors.mist },
+  line: { width: 18, height: 2, borderRadius: 1, backgroundColor: c.mist },
   hint: {
     position: 'absolute', bottom: 40, alignSelf: 'center',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-    backgroundColor: withAlpha(colors.night, 0.88),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: withAlpha(c.night, 0.88),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
     zIndex: 99,
   },
 });

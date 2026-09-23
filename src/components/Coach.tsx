@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useMemo } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from './type/Text';
 import { Button } from './Button';
@@ -40,6 +41,8 @@ export function Coach({
 }
 
 function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const { height } = useWindowDimensions();
   const [i, setI] = useState(0);
 
@@ -97,21 +100,21 @@ function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   layer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.ground, 0.55), zIndex: 200,
+    backgroundColor: withAlpha(c.ground, 0.55), zIndex: 200,
   },
   bubble: {
     position: 'absolute', left: gutter, right: gutter,
     borderRadius: 24, overflow: 'hidden', padding: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.22),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.22),
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
   },
   tint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(colors.night, 0.7),
+    backgroundColor: withAlpha(c.night, 0.7),
   },
   mark: { alignItems: 'center', marginBottom: space.md },
   title: { textAlign: 'center' },
@@ -119,7 +122,7 @@ const styles = StyleSheet.create({
   cta: { marginTop: space.lg },
   hint: { textAlign: 'center', marginTop: space.lg },
   dots: { flexDirection: 'row', gap: 5, justifyContent: 'center', marginTop: space.lg },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: withAlpha(colors.mist, 0.2) },
-  dotOn: { width: 16, backgroundColor: colors.accent },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.2) },
+  dotOn: { width: 16, backgroundColor: c.accent },
   skip: { position: 'absolute', top: 60, right: gutter, padding: space.sm },
 });

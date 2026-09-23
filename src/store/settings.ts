@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { setHapticsEnabled } from '@/lib/haptics';
+import type { ThemeName } from '@/theme/palettes';
 
 type State = {
   haptics: boolean;
@@ -22,6 +23,8 @@ type State = {
   appleUser: string | null;
   /** Visites guidees deja vues, par cle. */
   toured: Record<string, boolean>;
+  /** Clair, sombre, ou celui du telephone. */
+  theme: ThemeName;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -36,6 +39,7 @@ export const useSettings = create<State>()(
       selection: null,
       appleUser: null,
       toured: {},
+      theme: 'dark',
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.
@@ -45,8 +49,8 @@ export const useSettings = create<State>()(
     {
       name: 'noreel.settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, blocking, selection, appleUser, toured, theme }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

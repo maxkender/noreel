@@ -11,6 +11,7 @@ import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
 import { Poppins_600SemiBold } from '@expo-google-fonts/poppins/600SemiBold';
 import { Poppins_700Bold } from '@expo-google-fonts/poppins/700Bold';
 import { colors } from '@/theme/colors';
+import { useColors } from '@/theme/useColors';
 import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
 import { shield } from '@/services';
@@ -19,6 +20,7 @@ void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
 
 export default function RootLayout() {
+  const c = useColors();
   // Les alias sans suffixe de graisse sont ceux qu'attend `typography.ts`.
   const [loaded, error] = useFonts({
     Sans: Poppins_400Regular,
@@ -49,13 +51,14 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.night }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: c.night }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        {/* Le texte de la barre d'etat suit le fond, sinon il disparait. */}
+        <StatusBar style={c.night === colors.night ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: colors.night },
+            contentStyle: { backgroundColor: c.night },
             animation: 'none',
           }}
         >

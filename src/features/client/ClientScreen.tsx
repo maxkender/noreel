@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import { RotateCw, X } from 'lucide-react-native';
-import { colors } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
@@ -34,6 +34,8 @@ const UA =
   'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 
 export function ClientScreen({ id }: { id: ClientId }) {
+  const c = useColors();
+  const styles = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const client = CLIENTS[id];
 
@@ -59,7 +61,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // est en cause.
   const [raw, setRaw] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
-  const [sheet, setSheet] = useState(false);
+  const [panel, setPanel] = useState(false);
   const toured = useSettings((x) => x.toured);
   const setSetting = useSettings((x) => x.set);
 
@@ -108,7 +110,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
           `location.assign(${JSON.stringify(client.url)}); true;`
         );
         break;
-      case 'settings': setSheet(true); break;
+      case 'settings': setPanel(true); break;
       case 'exit': exit(); break;
     }
   }, [client.url, exit, reload]);
@@ -145,7 +147,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             accessibilityRole="button"
             accessibilityLabel="Quitter"
           >
-            <X size={19} strokeWidth={2.4} color={colors.mist} />
+            <X size={19} strokeWidth={2.4} color={c.mist} />
             <Text variant="label">Quitter</Text>
           </Pressable>
           <Text variant="label" tone="secondary" style={styles.host}>
@@ -158,7 +160,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             accessibilityRole="button"
             accessibilityLabel="Recharger"
           >
-            <RotateCw size={17} strokeWidth={2.2} color={colors.mist} />
+            <RotateCw size={17} strokeWidth={2.2} color={c.mist} />
           </Pressable>
         </View>
       </SafeAreaView>
@@ -206,7 +208,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
 
-      <ClientSettings id={id} visible={sheet} onClose={() => setSheet(false)} />
+      <ClientSettings id={id} visible={panel} onClose={() => setPanel(false)} />
 
       <Coach
         steps={CLIENT_TOUR}
@@ -218,11 +220,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
         <View style={styles.rescue} pointerEvents="box-none">
           <View style={styles.rescueRow}>
             <Pressable style={styles.stuck} onPress={reload}>
-              <RotateCw size={15} strokeWidth={2.2} color={colors.night} />
-              <Text variant="label" color={colors.night}>Recharger</Text>
+              <RotateCw size={15} strokeWidth={2.2} color={c.night} />
+              <Text variant="label" color={c.night}>Recharger</Text>
             </Pressable>
             <Pressable style={styles.plain} onPress={toggleRaw}>
-              <Text variant="label" color={colors.mist}>
+              <Text variant="label" color={c.mist}>
                 {raw ? 'Remettre le filtre' : 'Sans filtre'}
               </Text>
             </Pressable>
@@ -237,7 +239,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {!ready && !error && (
         <View style={styles.overlay} pointerEvents="none">
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={c.accent} />
         </View>
       )}
 
@@ -254,9 +256,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.night },
-  bar: { backgroundColor: colors.night },
+const sheet = (c: Palette) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: c.night },
+  bar: { backgroundColor: c.night },
   barRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: space.lg, paddingVertical: space.md,
@@ -265,40 +267,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 38, borderRadius: 19, paddingHorizontal: 14,
     justifyContent: 'center',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
   icon: {
     width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
   rescue: { position: 'absolute', bottom: 104, left: 0, right: 0, alignItems: 'center', gap: 8 },
   rescueRow: { flexDirection: 'row', gap: 8 },
   stuck: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
   },
   plain: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
-    backgroundColor: colors.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.lineStrong,
+    backgroundColor: c.surfaceHi,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
   diag: {
     maxWidth: '86%', textAlign: 'center',
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
   },
   host: { flex: 1, textAlign: 'center' },
-  web: { flex: 1, backgroundColor: colors.night },
+  web: { flex: 1, backgroundColor: c.night },
   overlay: {
     position: 'absolute', top: 60, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.night, paddingHorizontal: 40, gap: space.md,
+    backgroundColor: c.night, paddingHorizontal: 40, gap: space.md,
   },
   errText: { textAlign: 'center' },
 });

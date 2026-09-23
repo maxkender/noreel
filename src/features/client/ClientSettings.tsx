@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { Lock } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -22,6 +24,8 @@ import type { ClientId } from './blockers';
 export function ClientSettings({
   id, visible, onClose,
 }: { id: ClientId; visible: boolean; onClose: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
   useAppsStore((s) => s.settings);
@@ -39,14 +43,14 @@ export function ClientSettings({
             <Image source={LOGOS[id]} style={st.logo} contentFit="contain" />
             <Text variant="title" style={{ flex: 1 }}>{name}</Text>
             <Pressable onPress={() => { haptics.tap(); onClose(); }} style={st.done} hitSlop={10}>
-              <Text variant="label" color={colors.night}>OK</Text>
+              <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
 
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
             {APP_TOGGLES[id].map((t) => (
               <View key={t.key} style={st.line}>
-                {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(colors.mist, 0.3)} />}
+                {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
                 <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
                 <Toggle
                   on={t.locked ? true : isOn(id, t.key)}
@@ -65,7 +69,7 @@ export function ClientSettings({
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   scrim: { flex: 1, backgroundColor: '#000000B8', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
@@ -76,11 +80,11 @@ const st = StyleSheet.create({
   logo: { width: 34, height: 34 },
   done: {
     width: 44, height: 32, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent,
   },
   line: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 13,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(colors.mist, 0.1),
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),
   },
   note: { marginTop: space.lg, lineHeight: 17 },
 });

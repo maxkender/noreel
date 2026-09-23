@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Settings as SettingsIcon } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { haptics } from '@/lib/haptics';
 
@@ -18,6 +20,8 @@ const PROFILE = require('@/assets/brand/profile.png');
 export function Header({
   onSettings, onProfile,
 }: { onSettings: () => void; onProfile: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.root}>
       <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
@@ -31,7 +35,7 @@ export function Header({
         accessibilityRole="button"
         accessibilityLabel="Réglages"
       >
-        <SettingsIcon size={18} strokeWidth={1.8} color={withAlpha(colors.mist, 0.8)} />
+        <SettingsIcon size={18} strokeWidth={1.8} color={withAlpha(c.mist, 0.8)} />
       </Pressable>
 
       <Pressable
@@ -46,7 +50,7 @@ export function Header({
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   root: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: gutter, paddingBottom: space.sm,
@@ -55,7 +59,7 @@ const st = StyleSheet.create({
   icon: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   profile: { width: 38, height: 38 },
 });
