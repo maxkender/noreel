@@ -16,15 +16,17 @@ import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
 
-type Plan = 'annual' | 'monthly';
+type Plan = 'annual' | 'weekly';
 
 // Prix de secours, affiches tant que le magasin n'a pas repondu. Ils
 // doivent coller a ceux d'App Store Connect, sinon l'ecran ment pendant la
 // seconde de chargement.
-const FALLBACK = { annual: '39,99 €', monthly: '8,99 €' };
-const ANNUAL_EUR = 39.99;
-const MONTHLY_EUR = 8.99;
-const SAVING = Math.round((1 - ANNUAL_EUR / (MONTHLY_EUR * 12)) * 100);
+const FALLBACK = { annual: '44,99 €', weekly: '4,99 €' };
+const ANNUAL_EUR = 44.99;
+const WEEKLY_EUR = 4.99;
+// 52 semaines, pas 12 mois : c'est la comparaison honnete face a un
+// hebdomadaire, et c'est elle qui rend l'annuel evident.
+const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
 
 /** Ce que chaque cote donne. `free` a null quand la ligne est refusee. */
 const ROWS: { label: string; free: string | null; pro: string | null }[] = [
@@ -64,8 +66,8 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   // l'ordre se change au tableau de bord sans prevenir.
   const find = (k: string) => packs.find((x) => x.identifier === k);
   const annual = find('$rc_annual');
-  const monthly = find('$rc_monthly');
-  const chosen = plan === 'annual' ? annual : monthly;
+  const weekly = find('$rc_weekly');
+  const chosen = plan === 'annual' ? annual : weekly;
   const price = (p?: PurchasesPackage, f?: string) => p?.product.priceString ?? f ?? '';
 
   const go = async () => {
@@ -136,18 +138,18 @@ export function Paywall({ onDone }: { onDone: () => void }) {
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
         <PlanCard
-          label="Mensuel"
-          price={price(monthly, FALLBACK.monthly)}
-          note="Sans engagement"
-          on={plan === 'monthly'}
-          onPress={() => { haptics.tick(); setPlan('monthly'); }}
+          label="Hebdomadaire"
+          price={price(weekly, FALLBACK.weekly)}
+          note="Sans engagement, annule quand tu veux"
+          on={plan === 'weekly'}
+          onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
       </View>
 
       <Text variant="label" tone="tertiary" style={st.terms}>
         {plan === 'annual'
           ? `${price(annual, FALLBACK.annual)} par an, renouvelé automatiquement.`
-          : `${price(monthly, FALLBACK.monthly)} par mois, renouvelé automatiquement.`}
+          : `${price(weekly, FALLBACK.weekly)} par semaine, renouvelé automatiquement.`}
         {' Annule quand tu veux.'}
       </Text>
 
