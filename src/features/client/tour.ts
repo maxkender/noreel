@@ -12,13 +12,19 @@ export const CLIENT_TOUR: CoachStep[] = [
   {
     mark: '👆',
     title: 'Appuie sur la bulle',
-    body: 'Elle ouvre ta sortie. Tu peux la déplacer n’importe où sur l’écran — elle reste là où tu la laisses.',
+    body: 'Elle ouvre ta barre de navigation. Tu peux la déplacer n’importe où sur l’écran — elle reste là où tu la laisses.',
     at: 'top',
   },
   {
+    mark: '⚙️',
+    title: 'Les réglages sont dans la barre',
+    body: 'Reels, stories, publicités, fil : tu changes tout sans quitter la page. Recharge ensuite pour appliquer.',
+    at: 'middle',
+  },
+  {
     mark: '🏠',
-    title: 'Elle te ramène à UnSwipe',
-    body: 'La croix en haut fait la même chose. Deux sorties, toujours accessibles.',
+    title: 'Accueil te ramène en haut du site',
+    body: 'Et la croix, comme celle de la barre du haut, te ramène à UnSwipe. Deux sorties, toujours accessibles.',
     at: 'middle',
   },
 ];

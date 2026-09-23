@@ -1,23 +1,23 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Settings as SettingsIcon } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
-import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
-const STREAK = require('@/assets/brand/streak.png');
 const PROFILE = require('@/assets/brand/profile.png');
 
 /**
- * En-tete epinglee : elle ne defile jamais. Marque a gauche, serie au
- * centre, profil a droite — les trois en PNG, comme demande.
+ * En-tete epinglee : elle ne defile jamais.
+ *
+ * L'engrenage y monte au lieu de vivre dans le contenu, ou il passait sous
+ * l'en-tete flottante des qu'on ouvrait le compte — on ne pouvait plus
+ * atteindre les reglages.
  */
 export function Header({
-  streak, onProfile, onStreak,
-}: { streak: number; onProfile: () => void; onStreak?: () => void }) {
+  onSettings, onProfile,
+}: { onSettings: () => void; onProfile: () => void }) {
   return (
     <View style={st.root}>
       <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
@@ -25,23 +25,21 @@ export function Header({
       <View style={{ flex: 1 }} />
 
       <Pressable
-        style={st.pill}
-        onPress={() => { haptics.tap(); onStreak?.(); }}
+        onPress={() => { haptics.tap(); onSettings(); }}
+        hitSlop={12}
+        style={st.icon}
         accessibilityRole="button"
-        accessibilityLabel={`Série de ${streak} jours`}
+        accessibilityLabel="Réglages"
       >
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-        <LinearGradient
-          colors={[withAlpha(colors.accent, 0.14), withAlpha(colors.accentWarm, 0.1)]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <Image source={STREAK} style={st.flame} contentFit="contain" />
-        <Text variant="label">{streak}</Text>
+        <SettingsIcon size={18} strokeWidth={1.8} color={withAlpha(colors.mist, 0.8)} />
       </Pressable>
 
-      <Pressable onPress={() => { haptics.tap(); onProfile(); }} hitSlop={10}>
+      <Pressable
+        onPress={() => { haptics.tap(); onProfile(); }}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Compte"
+      >
         <Image source={PROFILE} style={st.profile} contentFit="contain" />
       </Pressable>
     </View>
@@ -53,14 +51,11 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: gutter, paddingBottom: space.sm,
   },
-  // Ratio du fichier : 1024 x 389. A 26 pt de haut, le mot reste lisible.
   lockup: { width: 106, height: 40 },
-  // Compacte : la serie est une information, pas un bouton d'action.
-  pill: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 4, height: 30, paddingHorizontal: 10, borderRadius: 15, overflow: 'hidden',
+  icon: {
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: 'center', justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(colors.mist, 0.18),
   },
-  flame: { width: 14, height: 14 },
-  profile: { width: 40, height: 40 },
+  profile: { width: 38, height: 38 },
 });

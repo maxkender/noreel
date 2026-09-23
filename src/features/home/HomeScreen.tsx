@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import Animated, {
   FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
 } from 'react-native-reanimated';
-import { Home as HomeIcon, Settings as SettingsIcon, Shield, User } from 'lucide-react-native';
+import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
@@ -19,16 +19,17 @@ import { Stars } from '@/components/Stars';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours } from '@/lib/format';
-import { shield, stats, homeScreen } from '@/services';
+import { shield, stats } from '@/services';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Toggle, Pill } from './parts';
+import { Card, Row, Pill } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
 import { Referral } from './Referral';
+import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Coach } from '@/components/Coach';
 import { HOME_TOUR } from './tours';
@@ -75,9 +76,9 @@ export function HomeScreen() {
         entering={FadeIn.duration(220)}
         style={{ flex: 1 }}
       >
-        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} onSettings={() => setSettings(true)} />}
+        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} />}
         {tab === 'block' && <BlockTab onScroll={onScroll} />}
-        {tab === 'account' && <AccountTab onScroll={onScroll} onSettings={() => setSettings(true)} />}
+        {tab === 'account' && <AccountTab onScroll={onScroll} />}
       </Animated.View>
 
       {/* Une barre, pas un fondu.
@@ -95,7 +96,10 @@ export function HomeScreen() {
       </Animated.View>
 
       <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
-        <Header streak={streak} onProfile={() => { setTab('account'); }} />
+        <Header
+          onSettings={() => setSettings(true)}
+          onProfile={() => setTab('account')}
+        />
       </SafeAreaView>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -131,9 +135,7 @@ export function HomeScreen() {
 /* ---------------- Accueil ---------------- */
 type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
 
-function HomeTab({
-  streak, onScroll, onSettings,
-}: { streak: number; onScroll: Scroll; onSettings: () => void }) {
+function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
   const { d, t } = useT();
   const router = useRouter();
   const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
@@ -176,7 +178,7 @@ function HomeTab({
             Plans, Uber, tes apps de santé : elles ne seront jamais bloquées.
           </Text>
         </View>
-        <Pill label="Configurer" onPress={() => { haptics.tap(); onSettings(); }} />
+        <Pill label="Configurer" onPress={() => { haptics.tap(); void Linking.openSettings(); }} />
       </Glass>
 
       {/* Detox : le geste fort, mis en avant. */}
@@ -255,10 +257,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 /* ---------------- Blocage ---------------- */
 function BlockTab({ onScroll }: { onScroll: Scroll }) {
   const { d } = useT();
+  const router = useRouter();
   const [on, setOn] = useState(true);
-  const [redirect, setRedirect] = useState(false);
   const [auth, setAuth] = useState<string>('notDetermined');
-  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     void shield.isActive().then(setOn);
@@ -323,13 +324,16 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
         />
       </Card>
 
+      {/* Les deux lignes suivantes menaient a un interrupteur sans effet et
+          a un service muet. iOS n'expose aucune API pour rediriger une app
+          ni pour poser une icone : le seul chemin qui marche passe par
+          Raccourcis, et c'est la qu'elles menent maintenant. */}
       <Card>
         <Row
           title={d.block.redirect}
-          body={d.block.redirectBody}
-          right={ready
-            ? <Toggle on={redirect} onChange={setRedirect} />
-            : <Pill label={d.block.screenTimeSoon} muted />}
+          body="Un raccourci ouvre la version filtrée à la place de l’app d’origine."
+          onPress={() => router.push('/widgets')}
+          right={<Text variant="body" tone="tertiary">›</Text>}
         />
       </Card>
 
@@ -337,13 +341,8 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
         <Row
           title={d.block.homeScreen}
           body={d.block.homeScreenBody}
-          right={
-            <Pill
-              label={added ? '✓' : d.block.add}
-              muted={added}
-              onPress={added ? undefined : () => { void homeScreen.add('instagram').then(() => setAdded(true)); }}
-            />
-          }
+          onPress={() => router.push('/widgets')}
+          right={<Text variant="body" tone="tertiary">›</Text>}
         />
       </Card>
     </Animated.ScrollView>
@@ -351,7 +350,8 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab({ onScroll, onSettings }: { onScroll: Scroll; onSettings: () => void }) {
+function AccountTab({ onScroll }: { onScroll: Scroll }) {
+  const [sources, setSources] = useState(false);
   const { d } = useT();
   const router = useRouter();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
@@ -365,12 +365,7 @@ function AccountTab({ onScroll, onSettings }: { onScroll: Scroll; onSettings: ()
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
-      <View style={st.topRow}>
-        <Text variant="displayM">{d.account.title}</Text>
-        <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.score} hitSlop={10}>
-          <SettingsIcon size={18} strokeWidth={1.8} color={colors.accent} />
-        </Pressable>
-      </View>
+      <Text variant="displayM">{d.account.title}</Text>
 
       <Referral />
 
@@ -391,10 +386,12 @@ function AccountTab({ onScroll, onSettings }: { onScroll: Scroll; onSettings: ()
       <Text variant="label" tone="secondary" style={st.section}>Assistance</Text>
       <Card>
         <Row title="Apps sur l’écran d’accueil" onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.sources.title} onPress={() => {}} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
       </Card>
+
+      <Sources visible={sources} onClose={() => setSources(false)} />
     </Animated.ScrollView>
   );
 }

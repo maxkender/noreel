@@ -13,10 +13,11 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
-import { ExitBubble } from './ExitBubble';
+import { NavBubble, type NavAction } from './NavBubble';
 import { GlassSweep } from '@/components/GlassSweep';
 import { Coach } from '@/components/Coach';
 import { CLIENT_TOUR } from './tour';
+import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
 
 const LABELS: Record<ClientId, string> = {
@@ -58,6 +59,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // est en cause.
   const [raw, setRaw] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [sheet, setSheet] = useState(false);
   const toured = useSettings((x) => x.toured);
   const setSetting = useSettings((x) => x.set);
 
@@ -93,6 +95,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
     if (router.canGoBack()) router.back();
     else router.replace('/home');
   }, [router]);
+
+  const onNav = useCallback((a: NavAction) => {
+    switch (a) {
+      case 'back': web.current?.goBack(); break;
+      case 'forward': web.current?.goForward(); break;
+      case 'reload': reload(); break;
+      // « Accueil » est celui du SITE : on revient a la page saine, pas a
+      // l'app. C'est la croix et « Quitter » qui ramenent a UnSwipe.
+      case 'home':
+        web.current?.injectJavaScript(
+          `location.assign(${JSON.stringify(client.url)}); true;`
+        );
+        break;
+      case 'settings': setSheet(true); break;
+      case 'exit': exit(); break;
+    }
+  }, [client.url, exit, reload]);
 
   const guard = useCallback((req: { url: string }) => {
     try {
@@ -180,11 +199,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
         style={styles.web}
       />
 
-      {/* Sortie de secours : elle flotte au-dessus de la WebView. */}
-      <ExitBubble onExit={exit} />
+      {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
+          voler les touches. */}
+      <NavBubble onAction={onNav} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
+
+      <ClientSettings id={id} visible={sheet} onClose={() => setSheet(false)} />
 
       <Coach
         steps={CLIENT_TOUR}
