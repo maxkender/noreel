@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Check, Minus, X } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -33,17 +33,26 @@ const WEEKLY_EUR = 4.99;
 // hebdomadaire, et c'est elle qui rend l'annuel evident.
 const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
 
-/** Ce que chaque cote donne. `free` a null quand la ligne est refusee. */
-const ROWS: { label: string; free: string | null; pro: string | null }[] = [
-  { label: 'Instagram sans Reels', free: '', pro: '' },
-  { label: 'TikTok, X et YouTube filtrés', free: null, pro: '' },
-  { label: 'Blocage des apps d’origine', free: null, pro: '' },
-  { label: 'Règles horaires', free: null, pro: '' },
-  { label: 'Réglages app par app', free: null, pro: '' },
-  { label: 'Historique', free: '7 j', pro: 'Illimité' },
+/**
+ * Ce qu'on obtient — et rien sur ce qu'on n'a pas.
+ *
+ * Il y avait ici un tableau a deux colonnes, gratuit contre payant, avec une
+ * croix sur chaque ligne refusee. On vendait donc d'abord un manque : l'oeil
+ * compte les croix avant de lire les titres. Une liste ne dit que ce qu'on
+ * recoit.
+ */
+const ROWS = [
+  'Instagram, TikTok, X et YouTube filtrés',
+  'Reels, Shorts et « Pour toi » coupés partout',
+  'Réglages app par app, appliqués tout de suite',
+  'Blocage des apps d’origine, avec mode strict',
+  'Ton temps mesuré, jour après jour',
 ];
 
-const COL = 74;
+// La croix n'apparait qu'apres cinq secondes : le temps de lire ce qu'on
+// propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
+// est un piege, et l'App Store le refuse.
+const EXIT_AFTER = 5000;
 
 /**
  * Le paywall.
@@ -58,6 +67,12 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const [plan, setPlan] = useState<Plan>('annual');
+  const [canExit, setCanExit] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setCanExit(true), EXIT_AFTER);
+    return () => clearTimeout(t);
+  }, []);
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
   const setPro = useProStore((x) => x.setPro);
@@ -92,21 +107,21 @@ export function Paywall({ onDone }: { onDone: () => void }) {
     <Screen
       // L'essai n'existe que sur l'annuel : promettre « gratuit » sur
       // l'hebdomadaire serait faux, et Apple facturerait aussitot.
-      cta={busy ? 'Un instant…' : plan === 'annual'
-        ? `Commencer mes ${TRIAL_DAYS} jours gratuits`
-        : 'Continuer'}
+      cta={busy ? 'Un instant…' : 'Continuer'}
       onPress={() => { void go(); }}
       disabled={busy}
-      secondary="Plus tard"
-      onSecondary={onDone}
       hue="warm"
     >
       <View style={st.head}>
         <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
         <View style={{ flex: 1 }} />
-        <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close}>
-          <X size={19} strokeWidth={2.2} color={withAlpha(c.mist, 0.55)} />
-        </Pressable>
+        {canExit && (
+          <Animated.View entering={FadeIn.duration(420)}>
+            <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close}>
+              <X size={19} strokeWidth={2.2} color={withAlpha(c.mist, 0.55)} />
+            </Pressable>
+          </Animated.View>
+        )}
       </View>
 
       <Text variant="displayM" style={st.title}>
@@ -119,27 +134,16 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         {` ${TRIAL_DAYS} jours, et tu peux arrêter avant.`}
       </Text>
 
-      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
-        {/* La colonne Pro est une bande continue, posee sous les lignes :
-            c'est elle qui porte le regard jusqu'en bas. */}
-        <LinearGradient
-          colors={[withAlpha(c.accent, 0.16), withAlpha(c.accentWarm, 0.06)]}
-          style={st.proBand}
-          pointerEvents="none"
-        />
-
-        <View style={st.row}>
-          <View style={{ flex: 1 }} />
-          <Text variant="label" tone="tertiary" style={st.cell}>SANS</Text>
-          <Text variant="label" color={c.accent} style={st.cell}>AVEC</Text>
-        </View>
-
-        {ROWS.map((r, i) => (
-          <View key={r.label} style={[st.row, i > 0 && st.line]}>
-            <Text variant="body" style={{ flex: 1 }} numberOfLines={2}>{r.label}</Text>
-            <View style={st.cell}><Mark value={r.free} /></View>
-            <View style={st.cell}><Mark value={r.pro} pro /></View>
-          </View>
+      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
+        {ROWS.map((label, i) => (
+          <Animated.View
+            key={label}
+            entering={FadeIn.delay(260 + i * 90).duration(420)}
+            style={st.line}
+          >
+            <Check size={15} strokeWidth={3} color={c.accent} />
+            <Text variant="body" style={{ flex: 1 }}>{label}</Text>
+          </Animated.View>
         ))}
       </Animated.View>
 
@@ -178,27 +182,6 @@ export function Paywall({ onDone }: { onDone: () => void }) {
 }
 
 /** Une case : coche, tiret, ou une valeur courte. */
-function Mark({ value, pro }: { value: string | null; pro?: boolean }) {
-  const c = useColors();
-  if (value === null) {
-    return <Minus size={15} strokeWidth={2.4} color={withAlpha(c.mist, 0.22)} />;
-  }
-  if (value === '') {
-    return (
-      <Check
-        size={16}
-        strokeWidth={2.8}
-        color={pro ? c.accent : withAlpha(c.mist, 0.45)}
-      />
-    );
-  }
-  return (
-    <Text variant="label" color={pro ? c.accent : withAlpha(c.mist, 0.45)}>
-      {value}
-    </Text>
-  );
-}
-
 /** Un forfait. Le choix se voit au liseré et à la pastille, pas à la taille. */
 function PlanCard({
   label, price, note, badge, on, onPress,
@@ -257,19 +240,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   sub: { marginTop: space.md },
+  list: { marginTop: space.xl, gap: space.md },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   title: { textAlign: 'center' },
-
-  table: {
-    marginTop: space.xxl, borderRadius: 22, overflow: 'hidden',
-    paddingHorizontal: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
-    backgroundColor: withAlpha(c.mist, 0.03),
-  },
-  proBand: { position: 'absolute', top: 0, bottom: 0, right: 0, width: COL + space.lg },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13 },
-  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1) },
-  cell: { width: COL, alignItems: 'center', textAlign: 'center' },
-
   plans: { marginTop: space.xl, gap: space.sm },
   plan: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

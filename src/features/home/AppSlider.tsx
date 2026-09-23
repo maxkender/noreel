@@ -9,7 +9,7 @@ import Animated, {
   useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { ChevronDown, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -20,6 +20,17 @@ import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import type { ClientId } from '@/features/client/blockers';
 import { Toggle } from './parts';
 import { LockedPill } from './LockedPill';
+import { ProGate } from './ProGate';
+import { useProStore } from '@/store/pro';
+
+/**
+ * Ce que la version gratuite ouvre.
+ *
+ * Instagram entier, et rien d'autre. Le cadenas est POSE sur l'icone plutot
+ * que l'icone retiree : on doit voir ce qu'on n'a pas, sinon l'offre ne veut
+ * rien dire.
+ */
+const FREE: ClientId = 'instagram';
 
 export const LOGOS = {
   instagram: require('@/assets/apps/instagram.png'),
@@ -58,6 +69,8 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
   const side = (width - item) / 2;
   const [i, setI] = useState(0);
   const [open, setOpen] = useState(false);
+  const [gate, setGate] = useState(false);
+  const pro = useProStore((p) => p.pro);
   const x = useSharedValue(0);
   const turn = useSharedValue(0);
   const chevron = useAnimatedStyle(() => ({
@@ -102,7 +115,16 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
           contentContainerStyle={{ paddingHorizontal: side }}
         >
           {APPS.map((a, k) => (
-            <Tile key={a.id} app={a} index={k} x={x} item={item} tile={tile} />
+            <Tile
+              key={a.id}
+              app={a}
+              index={k}
+              x={x}
+              item={item}
+              tile={tile}
+              locked={!pro && a.id !== FREE}
+              onLocked={() => setGate(true)}
+            />
           ))}
         </Animated.ScrollView>
 
@@ -111,7 +133,12 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
       <Animated.View key={app.id} entering={FadeIn.duration(220)} style={st.legend}>
         <Text variant="displayM">{app.name}</Text>
         <Text variant="label" tone="secondary">{app.sub}</Text>
-        <Open id={app.id} minutes={minutes[app.id] ?? 0} />
+        <Open
+          id={app.id}
+          minutes={minutes[app.id] ?? 0}
+          locked={!pro && app.id !== FREE}
+          onLocked={() => setGate(true)}
+        />
       </Animated.View>
 
       {/*
@@ -136,22 +163,26 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
               <ChevronDown size={16} strokeWidth={2.2} color={withAlpha(c.mist, 0.5)} />
             </Animated.View>
           </Pressable>
-          {open && <Toggles app={app.id} />}
+          {open && <Toggles app={app.id} locked={!pro} onLocked={() => setGate(true)} />}
         </Glass>
       </Animated.View>
+
+      <ProGate visible={gate} onClose={() => setGate(false)} />
     </View>
   );
 }
 
 /** Une icone de la roue. Elle recule, s'efface et se tourne de biais. */
 function Tile({
-  app, index, x, item, tile,
+  app, index, x, item, tile, locked, onLocked,
 }: {
   app: (typeof APPS)[number];
   index: number;
   x: SharedValue<number>;
   item: number;
   tile: number;
+  locked: boolean;
+  onLocked: () => void;
 }) {
   const router = useRouter();
   const c = useColors();
@@ -177,19 +208,30 @@ function Tile({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ouvrir ${app.name}`}
-        onPress={() => { haptics.press(); router.push(`/client/${app.id}`); }}
+        onPress={() => {
+          haptics.press();
+          if (locked) { onLocked(); return; }
+          router.push(`/client/${app.id}`);
+        }}
       >
         <Image
           source={LOGOS[app.id]}
-          style={{ width: tile, height: tile }}
+          style={{ width: tile, height: tile, opacity: locked ? 0.38 : 1 }}
           contentFit="contain"
         />
+        {locked && (
+          <View style={st.lockBadge}>
+            <Lock size={20} strokeWidth={2.2} color={c.mist} />
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
 }
 
-function Open({ id, minutes }: { id: ClientId; minutes: number }) {
+function Open({
+  id, minutes, locked, onLocked,
+}: { id: ClientId; minutes: number; locked: boolean; onLocked: () => void }) {
   const router = useRouter();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -198,17 +240,23 @@ function Open({ id, minutes }: { id: ClientId; minutes: number }) {
     <Pressable
       style={st.open}
       accessibilityRole="button"
-      onPress={() => { haptics.press(); router.push(`/client/${id}`); }}
+      onPress={() => {
+        haptics.press();
+        if (locked) { onLocked(); return; }
+        router.push(`/client/${id}`);
+      }}
     >
       <Text variant="label" color={c.accent}>
-        {minutes > 0 ? `${minutes} min aujourd’hui · Ouvrir` : 'Ouvrir'}
+        {locked ? 'Débloquer' : minutes > 0 ? `${minutes} min aujourd’hui · Ouvrir` : 'Ouvrir'}
       </Text>
       <ChevronRight size={15} strokeWidth={2.2} color={c.accent} />
     </Pressable>
   );
 }
 
-function Toggles({ app }: { app: ClientId }) {
+function Toggles({
+  app, locked, onLocked,
+}: { app: ClientId; locked: boolean; onLocked: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const isOn = useAppsStore((s) => s.isOn);
@@ -228,7 +276,9 @@ function Toggles({ app }: { app: ClientId }) {
           </Text>
           {t.locked
             ? <LockedPill />
-            : <Toggle on={isOn(app, t.key)} onChange={(v) => toggle(app, t.key, v)} />}
+            : locked
+              ? <LockedPill label="Pro" onPress={onLocked} />
+              : <Toggle on={isOn(app, t.key)} onChange={(v) => toggle(app, t.key, v)} />}
         </View>
       ))}
     </View>
@@ -237,6 +287,10 @@ function Toggles({ app }: { app: ClientId }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   slot: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.md },
+  lockBadge: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+  },
   legend: { alignItems: 'center', gap: 4, marginTop: space.md },
   open: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.md,

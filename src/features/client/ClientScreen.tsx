@@ -19,6 +19,8 @@ import { GlassSweep } from '@/components/GlassSweep';
 import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
 import { record } from '@/services/usage';
+import { useProStore } from '@/store/pro';
+import { ProGate } from '@/features/home/ProGate';
 
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
@@ -36,6 +38,14 @@ const UA =
 export function ClientScreen({ id }: { id: ClientId }) {
   const c = useColors();
   const theme = useResolvedTheme();
+  const pro = useProStore((p) => p.pro);
+  /*
+    Le verrou est ici AUSSI, pas seulement sur l'icone.
+    On arrive dans cet ecran par la roue, mais aussi par un raccourci de
+    l'ecran d'accueil ou un lien profond : un verrou pose uniquement sur
+    l'icone se contournerait en gardant l'ancien raccourci.
+  */
+  const barred = !pro && id !== 'instagram';
 
   /*
     La seance est mesuree ici, et nulle part ailleurs.
@@ -190,6 +200,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
     }
     return true;
   }, [client, strict]);
+
+  if (barred) {
+    return (
+      <View style={styles.root}>
+        <ProGate visible onClose={exit} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>

@@ -12,6 +12,7 @@ import { haptics } from '@/lib/haptics';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { Toggle } from '@/features/home/parts';
 import { LockedPill } from '@/features/home/LockedPill';
+import { useProStore } from '@/store/pro';
 import { LOGOS, APPS } from '@/features/home/AppSlider';
 import type { ClientId } from './blockers';
 
@@ -60,6 +61,7 @@ export function ClientSettings({
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
+  const pro = useProStore((p) => p.pro);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
   useAppsStore((s) => s.settings);
@@ -88,7 +90,9 @@ export function ClientSettings({
                 <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
                 {t.locked
                   ? <LockedPill />
-                  : <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />}
+                  : pro
+                    ? <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />
+                    : <LockedPill label="Pro" />}
               </View>
             ))}
 

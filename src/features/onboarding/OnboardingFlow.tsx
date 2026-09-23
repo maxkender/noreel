@@ -10,7 +10,7 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { S1, S3, S4, S5, S6, S6Years, S7 } from './screens';
+import { S1, S3, S5, S6, S6Years, S7 } from './screens';
 import {
   Constat, Distractions, Essentials, Manifesto, Name, NotificationsAsk,
   PromiseScreen,
@@ -70,7 +70,15 @@ export function OnboardingFlow() {
     track('step_viewed', { step: next });
   }, [finish, persist]);
 
-  const n = (i: number) => () => go(i + 1);
+  /*
+    Un seul « suivant », et sans numero.
+    Chaque ecran portait son propre indice — n(0), n(1), n(2)… — qu'il
+    fallait renumeroter a la main des qu'on en inserait ou retirait un. Ca
+    vient de deriver d'un cran en supprimant un ecran, et un ecran se
+    trouvait saute. Le handler part maintenant de l'etape AFFICHEE : seul
+    l'ecran monte peut l'appeler, donc il ne peut pas se tromper de place.
+  */
+  const next = useCallback(() => go(step + 1), [go, step]);
 
   /**
    * L'ordre suit un arc, pas une liste de reglages.
@@ -88,25 +96,24 @@ export function OnboardingFlow() {
    * viennent apres la decision.
    */
   const screens = [
-    <S1 key="s1" onNext={n(0)} />,
-    <Name key="name" onNext={n(1)} />,
-    <S3 key="s3" onNext={n(2)} />,
-    <Constat key="con" onNext={n(3)} />,
-    <S5 key="s5" onNext={n(4)} />,
-    <S6 key="s6" onNext={n(5)} />,
-    <S6Years key="s6y" onNext={n(6)} />,
-    <Activities key="act" onNext={n(7)} />,
-    <S7 key="s7" onNext={n(8)} />,
-    <Manifesto key="man" onNext={n(9)} />,
-    <S4 key="s4" onNext={n(10)} />,
-    <Tune key="tune" onNext={n(11)} />,
-    <Distractions key="dis" onNext={n(12)} />,
-    <Essentials key="ess" onNext={n(13)} />,
-    <Permissions key="perm" onDone={n(14)} />,
-    <NotificationsAsk key="notif" onNext={n(15)} />,
-    <HomeShortcuts key="short" onNext={n(16)} />,
-    <PromiseScreen key="pro" onNext={n(17)} />,
-    <PromoCode key="promo" onNext={n(18)} />,
+    <S1 key="s1" onNext={next} />,
+    <Name key="name" onNext={next} />,
+    <S3 key="s3" onNext={next} />,
+    <Constat key="con" onNext={next} />,
+    <S5 key="s5" onNext={next} />,
+    <S6 key="s6" onNext={next} />,
+    <S6Years key="s6y" onNext={next} />,
+    <Activities key="act" onNext={next} />,
+    <S7 key="s7" onNext={next} />,
+    <Manifesto key="man" onNext={next} />,
+    <Tune key="tune" onNext={next} />,
+    <Distractions key="dis" onNext={next} />,
+    <Essentials key="ess" onNext={next} />,
+    <Permissions key="perm" onDone={next} />,
+    <NotificationsAsk key="notif" onNext={next} />,
+    <HomeShortcuts key="short" onNext={next} />,
+    <PromiseScreen key="pro" onNext={next} />,
+    <PromoCode key="promo" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

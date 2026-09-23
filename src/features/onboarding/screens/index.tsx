@@ -71,22 +71,6 @@ export function S3({ onNext }: P) {
   );
 }
 
-/* ---------- 4 ---------- */
-export function S4({ onNext }: P) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={3600} hue="deep">
-      <Typewriter text={d.s4.title} variant="displayM" speed={40} style={s.center} />
-      {/* TODO produit : enregistrement d'ecran de l'app a la place de ce cadre. */}
-      <Animated.View entering={FadeIn.delay(1200).duration(600)} style={s.videoSlot}>
-        <View style={s.videoInner} />
-      </Animated.View>
-    </Screen>
-  );
-}
-
 /* ---------- 5 ---------- */
 export function S5({ onNext }: P) {
   const c = useColors();

@@ -77,7 +77,7 @@ export const en: Dict = {
     years: '{y} years',
     bodyShort: 'spent in front of a screen, eyes open.',
     cta1: 'Take this time back',
-    afterTitle: 'With that time, you could have:',
+    afterTitle: 'With that time this year, you could have:',
     estimates: 'Rough estimates.',
     sources: 'Sources and method',
     cta2: 'Continue',

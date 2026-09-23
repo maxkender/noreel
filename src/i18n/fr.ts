@@ -82,7 +82,7 @@ export const fr = {
     years: '{y} ans',
     bodyShort: 'passés devant un écran, les yeux ouverts.',
     cta1: 'Récupérer ce temps',
-    afterTitle: 'Avec ce temps, tu aurais pu{nbsp}:',
+    afterTitle: `Avec ce temps, cette année tu aurais pu${NBSP}:`,
     estimates: 'Estimations indicatives.',
     sources: 'Sources et méthode',
     cta2: 'Continuer',

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -13,14 +13,24 @@ import { Text } from '@/components/type/Text';
  * appuyait, rien ne bougeait, et rien ne disait pourquoi : la meme forme
  * promettait un choix qui n'existait pas. Un cadenas ne promet rien.
  */
-export function LockedPill() {
+export function LockedPill(
+  { onPress, label = 'Toujours' }: { onPress?: () => void; label?: string } = {}
+) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  // Sans destination, ce n'est pas un bouton : le cadenas explique, il
+  // n'emmene nulle part.
+  const Wrap: React.ElementType = onPress ? Pressable : View;
   return (
-    <View style={st.pill} accessibilityLabel="Toujours actif, non modifiable">
+    <Wrap
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      style={st.pill}
+      accessibilityLabel="Toujours actif, non modifiable"
+    >
       <Lock size={11} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />
-      <Text variant="label" tone="tertiary">Toujours</Text>
-    </View>
+      <Text variant="label" tone="tertiary">{label}</Text>
+    </Wrap>
   );
 }
 
