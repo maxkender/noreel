@@ -11,6 +11,7 @@ import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { Toggle } from '@/features/home/parts';
+import { LockedPill } from '@/features/home/LockedPill';
 import { LOGOS, APPS } from '@/features/home/AppSlider';
 import type { ClientId } from './blockers';
 
@@ -85,10 +86,9 @@ export function ClientSettings({
               <View key={t.key} style={st.line}>
                 {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
                 <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
-                <Toggle
-                  on={t.locked ? true : isOn(id, t.key)}
-                  onChange={(v) => (t.locked ? haptics.tap() : toggle(id, t.key, v))}
-                />
+                {t.locked
+                  ? <LockedPill />
+                  : <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />}
               </View>
             ))}
 

@@ -18,6 +18,7 @@ import { NavBar, type NavAction } from './NavBar';
 import { GlassSweep } from '@/components/GlassSweep';
 import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
+import { record } from '@/services/usage';
 
 const LABELS: Record<ClientId, string> = {
   instagram: 'Instagram · sans reels',
@@ -35,6 +36,18 @@ const UA =
 export function ClientScreen({ id }: { id: ClientId }) {
   const c = useColors();
   const theme = useResolvedTheme();
+
+  /*
+    La seance est mesuree ici, et nulle part ailleurs.
+    C'est le seul temps qu'on puisse observer honnetement : celui passe dans
+    NOS ecrans. Le temps passe dans l'Instagram d'origine ne nous est pas
+    accessible, et l'inventer serait mentir sur le chiffre meme que la
+    personne vient verifier.
+  */
+  useEffect(() => {
+    const t0 = Date.now();
+    return () => { void record(id, Date.now() - t0); };
+  }, [id]);
   const styles = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const client = CLIENTS[id];
@@ -180,8 +193,15 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={styles.tag} pointerEvents="none">
-        <Text variant="label" color={withAlpha(c.mist, 0.45)}>
+      {/*
+        Un bandeau plein, de la couleur de l'app.
+        Sans lui la page demarrait sous l'encoche : l'heure et le reseau se
+        posaient sur le contenu du site, et la premiere ligne etait illisible.
+        Il suit le theme — un bandeau fige en sombre ferait une barre noire
+        au-dessus d'une page claire.
+      */}
+      <SafeAreaView edges={['top']} style={styles.bar}>
+        <Text variant="label" color={withAlpha(c.mist, 0.5)} style={styles.barText}>
           {raw ? 'SANS FILTRE' : LABELS[id]}
         </Text>
       </SafeAreaView>
@@ -304,13 +324,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
-  // Le nom de l'app, discret, sur l'encoche : il rassure sans voler de
-  // place a la page.
-  tag: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    alignItems: 'center', paddingTop: 6, zIndex: 3,
-  },
   bar: { backgroundColor: c.night },
+  barText: { textAlign: 'center', paddingBottom: 8, paddingTop: 2 },
   barRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: space.lg, paddingVertical: space.md,

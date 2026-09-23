@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Pressable, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
@@ -6,9 +6,10 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeIn, Extrapolation, interpolate, runOnJS, useAnimatedReaction,
-  useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type SharedValue,
+  useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
-import { ChevronRight, Lock } from 'lucide-react-native';
+import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -18,6 +19,7 @@ import { haptics } from '@/lib/haptics';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import type { ClientId } from '@/features/client/blockers';
 import { Toggle } from './parts';
+import { LockedPill } from './LockedPill';
 
 export const LOGOS = {
   instagram: require('@/assets/apps/instagram.png'),
@@ -33,7 +35,10 @@ export const APPS: { id: ClientId; name: string; sub: string }[] = [
   { id: 'youtube', name: 'YouTube', sub: 'Sans Shorts' },
 ];
 
-const TILE = 168;
+// L'icone occupe presque tout son emplacement : c'est ce qu'on vient
+// chercher, elle n'a pas a partager la place avec du vide.
+const RATIO = 0.62;   // part de la largeur donnee a une app
+const FILL = 0.94;    // part de cet emplacement occupee par l'icone
 
 /**
  * Une roue d'icones : celle du milieu en grand, ses voisines de biais.
@@ -48,10 +53,16 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
-  const item = Math.round(width * 0.48);
+  const item = Math.round(width * RATIO);
+  const tile = Math.round(item * FILL);
   const side = (width - item) / 2;
   const [i, setI] = useState(0);
+  const [open, setOpen] = useState(false);
   const x = useSharedValue(0);
+  const turn = useSharedValue(0);
+  const chevron = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.value * 180}deg` }],
+  }));
 
   const onScroll = useAnimatedScrollHandler((e) => { x.value = e.contentOffset.x; });
 
@@ -59,6 +70,11 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
     haptics.tick();
     setI(next);
   }, []);
+
+  // Le chevron suit l'etat du panneau, sans le piloter.
+  useEffect(() => {
+    turn.value = withTiming(open ? 1 : 0, { duration: 220 });
+  }, [open, turn]);
 
   // Le nom change des que la roue passe le milieu, pas quand elle s'arrete :
   // attendre la fin du geste donnait une legende en retard sur l'icone.
@@ -86,7 +102,7 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
           contentContainerStyle={{ paddingHorizontal: side }}
         >
           {APPS.map((a, k) => (
-            <Tile key={a.id} app={a} index={k} x={x} item={item} />
+            <Tile key={a.id} app={a} index={k} x={x} item={item} tile={tile} />
           ))}
         </Animated.ScrollView>
 
@@ -107,10 +123,20 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
       */}
       <Animated.View entering={FadeIn.duration(260)}>
         <Glass radius={26} intensity={60} warmEdge="none" style={st.panel}>
-          <View style={st.panelHead}>
-            <Text variant="label" tone="tertiary">RÉGLAGES {app.name.toUpperCase()}</Text>
-          </View>
-          <Toggles app={app.id} />
+          <Pressable
+            style={st.panelHead}
+            onPress={() => { haptics.tap(); setOpen((v) => !v); }}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: open }}
+          >
+            <Text variant="label" tone="tertiary" style={{ flex: 1 }}>
+              RÉGLAGES {app.name.toUpperCase()}
+            </Text>
+            <Animated.View style={chevron}>
+              <ChevronDown size={16} strokeWidth={2.2} color={withAlpha(c.mist, 0.5)} />
+            </Animated.View>
+          </Pressable>
+          {open && <Toggles app={app.id} />}
         </Glass>
       </Animated.View>
     </View>
@@ -119,12 +145,13 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
 
 /** Une icone de la roue. Elle recule, s'efface et se tourne de biais. */
 function Tile({
-  app, index, x, item,
+  app, index, x, item, tile,
 }: {
   app: (typeof APPS)[number];
   index: number;
   x: SharedValue<number>;
   item: number;
+  tile: number;
 }) {
   const router = useRouter();
   const c = useColors();
@@ -152,9 +179,11 @@ function Tile({
         accessibilityLabel={`Ouvrir ${app.name}`}
         onPress={() => { haptics.press(); router.push(`/client/${app.id}`); }}
       >
-        <Glass radius={40} intensity={45} warmEdge="none" style={st.tile}>
-          <Image source={LOGOS[app.id]} style={st.logo} contentFit="contain" />
-        </Glass>
+        <Image
+          source={LOGOS[app.id]}
+          style={{ width: tile, height: tile }}
+          contentFit="contain"
+        />
       </Pressable>
     </Animated.View>
   );
@@ -190,12 +219,16 @@ function Toggles({ app }: { app: ClientId }) {
     <View>
       {APP_TOGGLES[app].map((t) => (
         <View key={t.key} style={st.line}>
-          {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
-          <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
-          <Toggle
-            on={t.locked ? true : isOn(app, t.key)}
-            onChange={(v) => (t.locked ? haptics.tap() : toggle(app, t.key, v))}
-          />
+          <Text
+            variant="body"
+            tone={t.locked ? 'secondary' : 'primary'}
+            style={{ flex: 1 }}
+          >
+            {t.label}
+          </Text>
+          {t.locked
+            ? <LockedPill />
+            : <Toggle on={isOn(app, t.key)} onChange={(v) => toggle(app, t.key, v)} />}
         </View>
       ))}
     </View>
@@ -204,10 +237,6 @@ function Toggles({ app }: { app: ClientId }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   slot: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.md },
-  tile: {
-    width: TILE, height: TILE, alignItems: 'center', justifyContent: 'center',
-  },
-  logo: { width: TILE * 0.66, height: TILE * 0.66 },
   legend: { alignItems: 'center', gap: 4, marginTop: space.md },
   open: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.md,
@@ -216,7 +245,10 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.35),
   },
   panel: { marginTop: space.lg, paddingHorizontal: space.lg, paddingBottom: space.sm },
-  panelHead: { paddingTop: space.lg, paddingBottom: space.xs },
+  panelHead: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingTop: space.lg, paddingBottom: space.lg,
+  },
   line: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 13,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),

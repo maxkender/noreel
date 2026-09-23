@@ -82,8 +82,7 @@ export const fr = {
     years: '{y} ans',
     bodyShort: 'passés devant un écran, les yeux ouverts.',
     cta1: 'Récupérer ce temps',
-    afterTitle: 'Tu n’as jamais eu le temps.',
-    afterBody: 'Tu as passé {h} heures sur ton téléphone cette année. C’était assez pour{nbsp}:',
+    afterTitle: 'Avec ce temps, tu aurais pu{nbsp}:',
     estimates: 'Estimations indicatives.',
     sources: 'Sources et méthode',
     cta2: 'Continuer',
@@ -208,7 +207,7 @@ export const fr = {
   },
 
   nav: {
-    home: 'Accueil',
+    home: 'Applis',
     block: 'Blocage',
     account: 'Compte',
   },

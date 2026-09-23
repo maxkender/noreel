@@ -433,8 +433,24 @@ export const INSTAGRAM_BLOCKER = `
       if (/[/]saved([/]|$)/.test(location.pathname)) { __go('/'); return; }
     }
 
-    if (__on('stories')) __hide(__tray(), 'stories');
-    else if (__on('feed')) __hide(__tray(), 'feed');
+    /*
+      Bloquer les stories, par trois chemins plutot qu'un.
+      On ne cherchait que la BANDE qui les porte, en remontant depuis un
+      lien tant que l'ancetre restait court. Quand Instagram remanie le fil —
+      ou quand la mesure de hauteur tombe pendant une recomposition — on ne
+      trouve rien, et le reglage semble mort. On coupe donc aussi chaque
+      vignette une a une, et surtout on refuse la page du lecteur : meme si
+      une story survit a l'ecran, elle ne s'ouvre pas.
+    */
+    if (__on('stories')) {
+      __hide(__tray(), 'stories');
+      document.querySelectorAll('a[href^="/stories/"]').forEach((a) => {
+        __hide(a.closest('li') || a, 'stories');
+      });
+      if (location.pathname.startsWith('/stories/')) { __go('/'); return; }
+    } else if (__on('feed')) {
+      __hide(__tray(), 'feed');
+    }
     if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {

@@ -52,18 +52,26 @@ export const realShield: ShieldService = {
   /**
    * Arme ou desarme le blocage.
    *
-   * S'il y a une selection, c'est ELLE qu'on bloque. Sans selection, on
-   * bloquait tout — l'interrupteur et le selecteur se contredisaient donc :
-   * choisir trois apps puis armer les bloquait toutes.
+   * On ne bloque QUE la selection, et rien sans elle.
+   *
+   * Sans selection, ce code armait un blocage general : tout le telephone.
+   * C'etait l'inverse de ce que l'app promet — on vient couper quatre
+   * applications, pas se mettre en cage. Et l'interrupteur contredisait le
+   * selecteur : on choisissait trois apps, on armait, tout sautait.
+   *
+   * Retourne faux quand il n'y a rien a bloquer, pour que l'ecran puisse
+   * emmener choisir plutot que de se croire arme.
    */
   async setActive(active: boolean, selection?: string | null) {
-    if (!FAMILY_CONTROLS_ENABLED) return;
+    if (!FAMILY_CONTROLS_ENABLED) return false;
     try {
-      if (!active) { DA.resetBlocks(); return; }
-      if (selection) DA.blockSelection({ activitySelectionToken: selection });
-      else DA.enableBlockAllMode();
+      if (!active) { DA.resetBlocks(); return true; }
+      if (!selection) return false;
+      DA.blockSelection({ activitySelectionToken: selection });
+      return true;
     } catch {
       /* le blocage n'est pas critique pour le reste de l'app */
+      return false;
     }
   },
 };

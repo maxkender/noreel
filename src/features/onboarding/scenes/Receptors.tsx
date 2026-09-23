@@ -8,6 +8,9 @@ import { Text } from '@/components/type/Text';
 
 const BARS = 14;
 const H = 132;
+// La premiere barre monte a 94 % de la hauteur : le repere se posait
+// dessus et se faisait couper. Il vit au-dessus du trace, pas dedans.
+const TOP = 26;
 
 /**
  * Ce que « les recepteurs s'aplatissent » veut dire, en une image.
@@ -58,12 +61,12 @@ export function Receptors() {
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  root: { marginTop: space.xl },
+  root: { marginTop: space.xl, paddingTop: TOP },
   plot: { height: H, justifyContent: 'flex-end' },
-  ruleWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
+  ruleWrap: { position: 'absolute', top: -TOP, left: 0, right: 0 },
   rule: { flexDirection: 'row', justifyContent: 'space-between' },
   dash: { width: 6, height: 1, backgroundColor: withAlpha(c.mist, 0.28) },
-  ruleLabel: { marginTop: 4 },
+  ruleLabel: { marginTop: 4, marginBottom: 2 },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: H },
   bar: { flex: 1, borderRadius: 3, backgroundColor: withAlpha(c.ember, 0.85) },
   axis: {

@@ -13,7 +13,8 @@ export interface HomeScreenService {
 export interface ShieldService {
   isActive(): Promise<boolean>;
   /** `selection` : le jeton du selecteur d'Apple. Absent, on bloque tout. */
-  setActive(active: boolean, selection?: string | null): Promise<void>;
+  /** Faux quand il n'y a rien a bloquer : aucune selection n'a ete faite. */
+  setActive(active: boolean, selection?: string | null): Promise<boolean>;
 }
 
 export interface StatsService {

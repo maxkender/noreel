@@ -27,7 +27,7 @@ export const mockHomeScreen: HomeScreenService = {
 let shieldActive = true;
 export const mockShield: ShieldService = {
   async isActive() { return shieldActive; },
-  async setActive(v: boolean) { shieldActive = v; },
+  async setActive(v: boolean) { shieldActive = v; return true; },
 };
 
 /** Journée pseudo-aléatoire mais stable : le même jour donne toujours la même valeur. */

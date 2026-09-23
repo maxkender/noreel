@@ -46,9 +46,6 @@ export function Activities({ onNext }: P) {
   return (
     <Screen cta={d.s6.cta2} onPress={onNext} hue="ember" hueLevel={0.5}>
       <Text variant="displayM" style={st.title}>{d.s6.afterTitle}</Text>
-      <Text variant="lead" tone="secondary" style={[st.title, st.body]}>
-        {t('s6.afterBody', { h: String(Math.round(hours)) })}
-      </Text>
 
       <View style={st.list}>
         {rows.map((r, i) => {

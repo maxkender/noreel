@@ -1,9 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
@@ -17,11 +16,12 @@ import { Stars } from '@/components/Stars';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours } from '@/lib/format';
-import { shield, stats } from '@/services';
+import { shield } from '@/services';
+import { today as usageToday, streak as usageStreak, type Today } from '@/services/usage';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Pill, Toggle } from './parts';
+import { Card, Row, Toggle } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
@@ -30,8 +30,6 @@ import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
 import { HardMode, HardModeIntro } from './HardMode';
-
-const STREAK_PNG = require('@/assets/brand/streak.png');
 
 type Tab = 'home' | 'block' | 'account';
 
@@ -42,9 +40,25 @@ export function HomeScreen() {
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [today, setToday] = useState<Today>({
+    total: 0,
+    perApp: { instagram: 0, tiktok: 0, twitter: 0, youtube: 0 },
+  });
   const onScroll = useAnimatedScrollHandler(() => {});
 
-  useEffect(() => { void stats.streakDays().then(setStreak); }, []);
+  /*
+    Les chiffres sont RELUS a chaque retour sur l'ecran.
+    Ils etaient tires d'un jeu d'exemple — « 102 minutes recuperees », « 4
+    jours d'affilee » — ecrit en dur dans les mocks. On ne mesure donc que ce
+    qu'on peut observer : le temps passe dans nos propres ecrans filtres.
+    Le temps passe dans l'Instagram d'origine ne nous est pas accessible, et
+    l'inventer serait mentir sur le seul chiffre qu'on vient verifier.
+  */
+  const refresh = useCallback(() => {
+    void usageToday().then(setToday);
+    void usageStreak().then(setStreak);
+  }, []);
+  useFocusEffect(refresh);
 
 
   const tabs: [Tab, string, typeof HomeIcon][] = [
@@ -69,8 +83,15 @@ export function HomeScreen() {
       </SafeAreaView>
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
-        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} />}
-        {tab === 'block' && <BlockTab onScroll={onScroll} />}
+        {tab === 'home' && <HomeTab onScroll={onScroll} minutes={today.perApp} />}
+        {tab === 'block' && (
+          <BlockTab
+            onScroll={onScroll}
+            minutes={today.perApp}
+            total={today.total}
+            streak={streak}
+          />
+        )}
         {tab === 'account' && <AccountTab onScroll={onScroll} />}
       </Animated.View>
 
@@ -99,27 +120,20 @@ export function HomeScreen() {
   );
 }
 
-/* ---------------- Accueil ---------------- */
+/* ---------------- Applis ---------------- */
 type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
 
-function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
+/**
+ * L'accueil ne montre plus que les applis.
+ *
+ * Il portait la roue, trois compteurs, les apps autorisees, la detox, la
+ * serie, l'idee du jour, le temps d'ecran et un raccourci : neuf blocs pour
+ * une page qu'on ouvre afin d'appuyer sur une icone. Tout ce qui n'etait pas
+ * l'icone est parti dans Blocage, et l'icone a pris la place.
+ */
+function HomeTab({ onScroll, minutes }: { onScroll: Scroll; minutes: Record<string, number> }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
-  const router = useRouter();
-  const [today, setToday] = useState({ reclaimedMinutes: 0, goalMinutes: 120 });
-  const goal = useSettings((x) => x.goalMinutes);
-  const [detox, setDetox] = useState(false);
-
-  useEffect(() => { void stats.today().then(setToday); }, []);
-
-  const perApp = {
-    instagram: Math.round(today.reclaimedMinutes * 0.4),
-    tiktok: Math.round(today.reclaimedMinutes * 0.25),
-    twitter: Math.round(today.reclaimedMinutes * 0.15),
-    youtube: Math.round(today.reclaimedMinutes * 0.2),
-  };
-  const focus = Math.min(100, Math.round((today.reclaimedMinutes / Math.max(goal, 1)) * 100));
 
   return (
     <Animated.ScrollView
@@ -128,88 +142,7 @@ function HomeTab({ streak, onScroll }: { streak: number; onScroll: Scroll }) {
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
-      {/* Les apps d'abord : c'est ce qu'on vient chercher. */}
-      <AppSlider minutes={perApp} />
-
-      <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
-        <Stat label="Récupéré" value={formatHours(today.reclaimedMinutes)} />
-        <View style={st.stripLine} />
-        <Stat label="Série" value={`${streak} j`} />
-        <View style={st.stripLine} />
-        <Stat label="Objectif" value={`${focus} %`} />
-      </Glass>
-
-      {/* Toujours autorisees : on rassure avant de bloquer. */}
-      <Glass radius={22} intensity={45} warmEdge="none" style={st.cardRow}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="title">Toujours autorisées ?</Text>
-          <Text variant="body" tone="secondary">
-            Plans, Uber, tes apps de santé : elles ne seront jamais bloquées.
-          </Text>
-        </View>
-        <Pill label="Configurer" onPress={() => { haptics.tap(); void Linking.openSettings(); }} />
-      </Glass>
-
-      {/* Detox : le geste fort, mis en avant. */}
-      <Glass radius={22} intensity={45} warmEdge="none" style={st.detox}>
-        <Text variant="title">L’heure d’une détox ?</Text>
-        <Text variant="body" tone="secondary" style={{ marginTop: space.xs }}>
-          Passe quelques heures hors ligne, ou même une semaine si tu oses.
-        </Text>
-        <Pressable
-          style={st.detoxBtn}
-          onPress={() => {
-            haptics.press();
-            const v = !detox;
-            setDetox(v);
-            useSettings.getState().set('blocking', v);
-            void shield.setActive(v, useSettings.getState().selection);
-          }}
-        >
-          <LinearGradient
-            colors={[withAlpha(c.accent, 0.35), withAlpha(c.accentDeep, 0.28), withAlpha(c.accentWarm, 0.22)]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <Text variant="button" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-            {detox ? '■  Arrêter la détox' : '▶  Commencer la détox'}
-          </Text>
-        </Pressable>
-      </Glass>
-
-      {/* Premier pas : la serie devient une recompense visible. */}
-      <Glass radius={22} intensity={45} warmEdge="none" style={st.cardRow}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="title">{streak > 0 ? 'Série en cours' : 'Premier pas franchi'}</Text>
-          <Text variant="body" tone="secondary">
-            {streak > 0
-              ? `${streak} jour${streak > 1 ? 's' : ''} sans doomscroll. Ne casse pas la chaîne.`
-              : 'Tu as commencé. C’est le plus dur. Ton futur toi te remercie déjà.'}
-          </Text>
-        </View>
-        <View style={st.egg}>
-          <Image source={STREAK_PNG} style={st.eggFlame} contentFit="contain" />
-          <Text variant="title" style={st.eggN}>{streak}</Text>
-        </View>
-      </Glass>
-
-      <Glass radius={22} intensity={45} warmEdge="none" style={st.idea}>
-        <Text variant="label" tone="tertiary">IDÉE DU JOUR</Text>
-        <Text variant="body" style={{ marginTop: space.xs }}>
-          {t(d.home.idea, {
-            h: formatHours(today.reclaimedMinutes),
-            n: Math.round((today.reclaimedMinutes * 238) / 275),
-          })}
-        </Text>
-      </Glass>
-
-      <ScreenTime minutes={perApp} />
-
-      <Pressable style={st.shortcut} onPress={() => { haptics.tap(); router.push('/widgets'); }}>
-        <Text variant="body">Mettre les apps sur l’écran d’accueil</Text>
-        <Text variant="body" tone="tertiary">›</Text>
-      </Pressable>
+      <AppSlider minutes={minutes} />
     </Animated.ScrollView>
   );
 }
@@ -226,29 +159,27 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /* ---------------- Blocage ---------------- */
-function BlockTab({ onScroll }: { onScroll: Scroll }) {
+
+function BlockTab({
+  onScroll, minutes, total, streak,
+}: {
+  onScroll: Scroll;
+  minutes: Record<string, number>;
+  total: number;
+  streak: number;
+}) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const router = useRouter();
-  const [on, setOn] = useState(true);
+  const [on, setOn] = useState(false);
   const [auth, setAuth] = useState<string>('notDetermined');
   const hard = useSettings((x) => x.hardMode);
+  const selection = useSettings((x) => x.selection);
+  const goal = useSettings((x) => x.goalMinutes);
   const setSetting = useSettings((x) => x.set);
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
-
-  /**
-   * Le seul endroit ou le blocage se rend.
-   *
-   * Avec le mode strict arme, on n'eteint pas : on ouvre la porte. C'est
-   * elle qui rappellera au bout de trois minutes.
-   */
-  const disarm = () => {
-    setOn(false);
-    useSettings.getState().set('blocking', false);
-    void shield.setActive(false, useSettings.getState().selection);
-  };
 
   useEffect(() => {
     void shield.isActive().then(setOn);
@@ -256,7 +187,31 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
   }, []);
 
   const ready = FAMILY_CONTROLS_ENABLED && auth !== 'unsupported';
-  const armed = on && (!ready || auth === 'approved');
+  const needsAuth = ready && auth !== 'approved';
+
+  /**
+   * Armer, c'est bloquer une SELECTION.
+   *
+   * Les jetons de Temps d'ecran sont chiffres et ne se fabriquent que dans
+   * le selecteur d'Apple : aucune app ne peut cocher Instagram a ta place.
+   * Sans selection on n'arme donc pas dans le vide — on emmene choisir.
+   */
+  const arm = async () => {
+    haptics.press();
+    if (needsAuth) { await requestAuthorization().then(setAuth); return; }
+    if (!selection) { router.push('/picker'); return; }
+    setOn(true);
+    setSetting('blocking', true);
+    await shield.setActive(true, selection);
+  };
+
+  const disarm = () => {
+    setOn(false);
+    setSetting('blocking', false);
+    void shield.setActive(false, selection);
+  };
+
+  const pct = Math.min(100, Math.round((total / Math.max(goal, 1)) * 100));
 
   return (
     <Animated.ScrollView
@@ -267,41 +222,61 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
     >
       <Text variant="displayM">{d.block.title}</Text>
 
-      {/* Carte d'etat : le statut se lit d'un coup d'oeil, l'action est dessous. */}
-      <View style={[st.status, armed ? st.statusOn : st.statusOff]}>
-        <View style={[st.statusRing, armed && st.statusRingOn]}>
-          <Shield size={26} strokeWidth={1.8} color={armed ? c.accent : withAlpha(c.mist, 0.5)} />
+      {/* Trois chiffres, tous mesures : le temps passe dans les versions
+          filtrees, les jours d'affilee, et la part du plafond du jour. */}
+      <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
+        <Stat label="Aujourd’hui" value={formatHours(total)} />
+        <View style={st.stripLine} />
+        <Stat label="Série" value={`${streak} j`} />
+        <View style={st.stripLine} />
+        <Stat label="Du plafond" value={`${pct} %`} />
+      </Glass>
+
+      <View style={[st.status, on ? st.statusOn : st.statusOff]}>
+        <View style={[st.statusRing, on && st.statusRingOn]}>
+          <Shield size={26} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.5)} />
         </View>
         <Text variant="title" style={{ textAlign: 'center' }}>
-          {armed ? d.block.shieldOn : d.block.shieldOff}
+          {on ? 'Les apps d’origine sont bloquées' : 'Bloquer les apps d’origine'}
+        </Text>
+        <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
+          {needsAuth
+            ? 'Temps d’écran doit d’abord donner son accord.'
+            : selection
+              ? 'Instagram, TikTok, X et YouTube s’ouvrent ici, pas ailleurs.'
+              : 'Choisis Instagram, TikTok, X et YouTube dans la liste d’Apple.'}
         </Text>
         <Pressable
           onPress={() => {
+            if (!on) { void arm(); return; }
             haptics.press();
-            if (on) {
-              if (hard) { setGate(true); return; }
-              disarm();
-              return;
-            }
-            setOn(true);
-            useSettings.getState().set('blocking', true);
-            void shield.setActive(true, useSettings.getState().selection);
+            // Avec le mode strict arme, on n'eteint pas : on ouvre la porte.
+            if (hard) { setGate(true); return; }
+            disarm();
           }}
-          style={[st.statusBtn, armed && st.statusBtnOn]}
+          style={[st.statusBtn, on && st.statusBtnOn]}
         >
           <Text
             variant="button"
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.85}
-            color={armed ? c.night : c.mist}
+            color={on ? c.night : c.mist}
           >
-            {armed ? d.block.pause : d.block.activate}
+            {needsAuth ? d.block.authorize
+              : !selection ? 'Choisir les apps'
+              : on ? 'Désactiver' : 'Activer'}
           </Text>
         </Pressable>
       </View>
 
       <Card>
+        <Row
+          title="Bloquer d’autres apps"
+          body={selection ? 'Ajoute ce que tu veux à la liste.' : 'Jeux, actualités, tout ce qui te happe.'}
+          onPress={() => router.push('/picker')}
+          right={<Text variant="body" tone="tertiary">›</Text>}
+        />
         <Row
           title="Mode strict"
           body={hard
@@ -333,43 +308,7 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
         onPass={() => { setGate(false); setSetting('hardMode', false); disarm(); }}
       />
 
-      <Card>
-        <Row
-          title="Choisir les apps à bloquer"
-          body="Le sélecteur d’Apple, app par app ou par catégorie."
-          onPress={() => router.push('/picker')}
-          right={<Text variant="body" tone="tertiary">›</Text>}
-        />
-      </Card>
-
-      <Card>
-        <Row
-          title={d.block.screenTime}
-          body={d.block.screenTimeBody}
-          right={
-            ready
-              ? <Pill
-                  label={auth === 'approved' ? '✓' : d.block.authorize}
-                  muted={auth === 'approved'}
-                  onPress={auth === 'approved' ? undefined : () => { void requestAuthorization().then(setAuth); }}
-                />
-              : <Pill label={d.block.screenTimeSoon} muted />
-          }
-        />
-      </Card>
-
-      {/* Les deux lignes suivantes menaient a un interrupteur sans effet et
-          a un service muet. iOS n'expose aucune API pour rediriger une app
-          ni pour poser une icone : le seul chemin qui marche passe par
-          Raccourcis, et c'est la qu'elles menent maintenant. */}
-      <Card>
-        <Row
-          title={d.block.redirect}
-          body="Un raccourci ouvre la version filtrée à la place de l’app d’origine."
-          onPress={() => router.push('/widgets')}
-          right={<Text variant="body" tone="tertiary">›</Text>}
-        />
-      </Card>
+      <ScreenTime minutes={minutes} />
 
       <Card>
         <Row
