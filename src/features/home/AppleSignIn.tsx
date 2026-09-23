@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as Apple from 'expo-apple-authentication';
 import { Check } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -19,6 +20,8 @@ import { linkAccount } from '@/services/purchases';
  * app — il n'identifie personne ailleurs, et rien n'est envoye nulle part.
  */
 export function AppleSignIn() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const user = useSettings((s) => s.appleUser);
   const set = useSettings((s) => s.set);
   const setPro = useProStore((s) => s.setPro);
@@ -35,7 +38,7 @@ export function AppleSignIn() {
     return (
       <View style={st.done}>
         <View style={st.ring}>
-          <Check size={14} strokeWidth={2.8} color={colors.accent} />
+          <Check size={14} strokeWidth={2.8} color={c.accent} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
           <Text variant="body">Achats rattachés</Text>
@@ -76,14 +79,14 @@ export function AppleSignIn() {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   button: { height: 48, width: '100%' },
   note: { lineHeight: 17 },
   done: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   ring: {
     width: 30, height: 30, borderRadius: 15,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(colors.accent, 0.5),
-    backgroundColor: withAlpha(colors.accent, 0.1),
+    borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.5),
+    backgroundColor: withAlpha(c.accent, 0.1),
   },
 });

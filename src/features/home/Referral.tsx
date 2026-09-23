@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Copy, Share2 } from 'lucide-react-native';
-import { colors, withAlpha } from '@/theme/colors';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -17,6 +18,8 @@ const GOAL = 5;
  * `joined` change de source.
  */
 export function Referral() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const startedAt = useOnboardingStore((s) => s.startedAt);
   const [copied, setCopied] = useState(false);
@@ -36,7 +39,7 @@ export function Referral() {
 
   return (
     <View style={st.card}>
-      <Text variant="label" color={colors.accent}>{d.referral.title}</Text>
+      <Text variant="label" color={c.accent}>{d.referral.title}</Text>
       <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
         {d.referral.body}
       </Text>
@@ -55,7 +58,7 @@ export function Referral() {
             setTimeout(() => setCopied(false), 1600);
           }}
         >
-          <Copy size={18} strokeWidth={2} color={colors.night} />
+          <Copy size={18} strokeWidth={2} color={c.night} />
         </Pressable>
         <Pressable
           style={st.iconBtn}
@@ -64,10 +67,10 @@ export function Referral() {
             void Share.share({ message: t(d.referral.shareText, { code }) });
           }}
         >
-          <Share2 size={18} strokeWidth={2} color={colors.night} />
+          <Share2 size={18} strokeWidth={2} color={c.night} />
         </Pressable>
       </View>
-      {copied && <Text variant="label" color={colors.accent}>{d.referral.copied}</Text>}
+      {copied && <Text variant="label" color={c.accent}>{d.referral.copied}</Text>}
 
       <View style={st.bar}>
         {Array.from({ length: GOAL }, (_, i) => (
@@ -81,22 +84,22 @@ export function Referral() {
   );
 }
 
-const st = StyleSheet.create({
+const sheet = (c: Palette) => StyleSheet.create({
   card: {
     padding: space.lg, borderRadius: 18, gap: space.xs,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line,
+    backgroundColor: c.surface,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
   },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
   code: { flex: 1, letterSpacing: 6 },
   iconBtn: {
     width: 42, height: 42, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent,
   },
   bar: { flexDirection: 'row', gap: 5, marginTop: space.lg },
   seg: {
     flex: 1, height: 5, borderRadius: 3,
-    backgroundColor: withAlpha(colors.mist, 0.12),
+    backgroundColor: withAlpha(c.mist, 0.12),
   },
-  segOn: { backgroundColor: colors.accent },
+  segOn: { backgroundColor: c.accent },
 });
