@@ -14,7 +14,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
-import { NavBubble, type NavAction } from './NavBubble';
+import { NavBar, type NavAction } from './NavBar';
 import { GlassSweep } from '@/components/GlassSweep';
 import { Coach } from '@/components/Coach';
 import { CLIENT_TOUR } from './tour';
@@ -228,7 +228,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
           voler les touches. */}
-      <NavBubble onAction={onNav} />
+      <NavBar onAction={onNav} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />

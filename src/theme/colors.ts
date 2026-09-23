@@ -24,6 +24,28 @@ export const colors = {
   danger: '#FF5A5F',       // le temps perdu, uniquement ici
   ember: '#FF8A4C',        // orange : le halo des deux ecrans qui pesent
   ground: '#000000',
+
+  /*
+   * La lumiere, nommee pour son ROLE et non pour sa couleur.
+   *
+   * Ces valeurs se deduisaient jusqu'ici de `mist` (le texte) et de `sun`
+   * (l'action). Sur fond noir cela marchait par coincidence : le texte y est
+   * presque blanc, donc « mist tres dilue » donnait bien une vitre. Sur fond
+   * creme le texte devient presque noir, et chaque reflet s'inversait en
+   * salissure — le verre s'enfoncait au lieu de flotter, et le lisere chaud
+   * de la marque virait au trait noir.
+   */
+  glassFill: '#FAFAFA12',   // la vitre elle-meme
+  glassSolid: '#16191FF5',  // sa version opaque, sans flou
+  glassEdge: '#FAFAFA2E',   // son bord
+  glassSpec: '#FAFAFA73',   // le reflet du ciel, 1 pt en haut
+  glassWarm: '#FFFFFF8C',   // le lisere chaud, du cote du soleil
+  control: '#FAFAFA',       // le pouce des interrupteurs
+  shadowTint: '#000000',
+  shadowAlpha: 0.35,
+  /** Multiplicateurs : le fond clair ne supporte pas la meme dose. */
+  glowAlpha: 1,
+  dustAlpha: 1,
 } as const;
 
 export const textAlpha = { primary: 1, secondary: 0.6, tertiary: 0.38 } as const;

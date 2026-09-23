@@ -146,8 +146,8 @@ const sheet = (c: Palette) => StyleSheet.create({
   track: {
     width: 44, height: 26, borderRadius: 13, padding: 3, overflow: 'hidden',
     backgroundColor: c.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: c.glassEdge,
   },
   trackOn: { backgroundColor: c.accent, borderRadius: 13 },
-  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: c.mist },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: c.control },
 });

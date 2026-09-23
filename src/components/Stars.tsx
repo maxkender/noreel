@@ -6,7 +6,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useColors } from '@/theme/useColors';
 
-/** Poussiere lumineuse en fond : lente, discrete, elle donne la profondeur. */
+/**
+ * Poussiere lumineuse en fond : lente, discrete, elle donne la profondeur.
+ *
+ * Elle n'existe que sur fond sombre. Sur du creme, les memes points prennent
+ * la couleur du texte et deviennent une constellation de taches noires :
+ * l'effet ne s'attenue pas, il se retourne. La palette claire la coupe donc
+ * net plutot que de la diluer.
+ */
 export function Stars({ count = 44 }: { count?: number }) {
   const c = useColors();
   const { width, height } = useWindowDimensions();
@@ -22,6 +29,8 @@ export function Stars({ count = 44 }: { count?: number }) {
     })),
     [count]
   );
+
+  if (c.dustAlpha === 0) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

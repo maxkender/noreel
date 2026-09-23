@@ -2,7 +2,6 @@ import { type ReactNode, useMemo } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { radii } from '@/theme/spacing';
 import { useReduceTransparency } from '@/lib/useReducedMotion';
@@ -17,7 +16,6 @@ type Props = {
   /** Un panneau devant du détail mérite un vrai flou ; sur un ciel lisse, non. */
   blur?: boolean;
 };
-
 export function Glass({
   children,
   radius = radii.panel,
@@ -31,15 +29,13 @@ export function Glass({
   const styles = useMemo(() => sheet(c), [c]);
   const opaque =
     useReduceTransparency() || (Platform.OS === 'android' && Platform.Version < 31);
-
   const shell: ViewStyle = {
     borderRadius: radius,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: withAlpha(c.mist, 0.18),
-    backgroundColor: opaque ? withAlpha(c.surfaceHi, 0.96) : withAlpha(c.mist, 0.07),
+    borderColor: c.glassEdge,
+    backgroundColor: opaque ? c.glassSolid : c.glassFill,
   };
-
   return (
     <View style={[styles.shadow, shell, style]}>
       {!opaque && blur && (
@@ -50,36 +46,34 @@ export function Glass({
           pointerEvents="none"
         />
       )}
-
-      {/* Lumière du ciel : un reflet froid d'1 pt en haut. */}
+      {/* Lumière du ciel : un reflet froid d'1 pt en haut. Il est toujours
+          PLUS CLAIR que la vitre — un reflet plus sombre qu'elle n'est plus
+          un reflet, c'est une rayure. */}
       <LinearGradient
-        colors={['transparent', withAlpha(c.mist, 0.45), 'transparent']}
+        colors={['transparent', c.glassSpec, 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.topLight}
         pointerEvents="none"
       />
-
       {/* Signature UnSwipe : le liseré chaud du côté du soleil, donc en bas. */}
       {warmEdge !== 'none' && (
         <LinearGradient
-          colors={['transparent', withAlpha(c.sun, 0.55), 'transparent']}
+          colors={['transparent', c.glassWarm, 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.warm, warmEdge === 'bottom' ? { bottom: 0 } : { top: 0 }]}
           pointerEvents="none"
         />
       )}
-
       {children}
     </View>
   );
 }
-
 const sheet = (c: Palette) => StyleSheet.create({
   shadow: {
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
+    shadowColor: c.shadowTint,
+    shadowOpacity: c.shadowAlpha,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 10 },
     elevation: 10,

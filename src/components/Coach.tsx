@@ -14,7 +14,7 @@ export type CoachStep = {
   mark?: ReactNode;
   title: string;
   body?: string;
-  /** Ou poser la bulle : le doigt doit pouvoir atteindre ce qu'elle designe. */
+  /** Ou poser la carte : le doigt doit pouvoir atteindre ce qu'elle designe. */
   at?: 'top' | 'middle' | 'bottom';
   /** Libelle du bouton. Absent : on avance en touchant l'ecran. */
   cta?: string;
@@ -23,7 +23,7 @@ export type CoachStep = {
 /**
  * Visite guidee posee PAR-DESSUS l'interface reelle.
  *
- * Elle ne mime rien : l'ecran en dessous est le vrai, et la bulle se
+ * Elle ne mime rien : l'ecran en dessous est le vrai, et la carte se
  * contente de le designer. C'est ce qui fait qu'on apprend le geste plutot
  * que de lire une notice.
  */

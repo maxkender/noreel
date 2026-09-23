@@ -78,7 +78,14 @@ export default function RootLayout() {
               pas un pas de plus : un fondu, et aucun retour au doigt. */}
           <Stack.Screen
             name="onboarding"
-            options={{ animation: 'fade', animationDuration: 420, gestureEnabled: false }}
+            options={{
+              animation: 'fade',
+              animationDuration: 420,
+              gestureEnabled: false,
+              // Le parcours est sombre en propre : sans ca, le fondu d'entree
+              // se ferait depuis un fond creme.
+              contentStyle: { backgroundColor: colors.night },
+            }}
           />
           <Stack.Screen
             name="home"

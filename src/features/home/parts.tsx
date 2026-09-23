@@ -95,7 +95,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },
   trackOn: { backgroundColor: c.accent, borderColor: c.accent },
-  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: c.mist },
+  // Le pouce est un objet eclaire, pas du texte : il reste clair sur les
+  // deux fonds. Pris sur `mist`, il devenait un galet noir en mode clair.
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: c.control },
   pill: {
     paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: 999,
     backgroundColor: c.mist,

@@ -20,13 +20,13 @@ const MARGIN = 14;
 export type NavAction = 'back' | 'home' | 'reload' | 'forward' | 'settings' | 'exit';
 
 /**
- * La bulle, et la barre qu'elle ouvre.
+ * La barre de navigation, et la poignee qui l'ouvre.
  *
  * Elle vit PAR-DESSUS la WebView, hors de son flux : la page ne peut pas
  * lui voler les touches. Glissement et appui sont deux gestes distincts —
  * marquer « deplace » au premier pixel empechait tout appui.
  */
-export function NavBubble({
+export function NavBar({
   onAction,
 }: { onAction: (a: NavAction) => void }) {
   const c = useColors();
@@ -62,7 +62,7 @@ export function NavBubble({
       y.value = withSpring(Math.min(Math.max(y.value, 90), height - SIZE - 80), springs.snappy);
     });
 
-  const bubble = useAnimatedStyle(() => ({
+  const handle = useAnimatedStyle(() => ({
     transform: [
       { translateX: x.value },
       { translateY: y.value },
@@ -80,7 +80,7 @@ export function NavBubble({
     <>
       {hint && !open && (
         <Animated.View style={styles.hint} pointerEvents="none">
-          <Text variant="label" tone="secondary">Touche la bulle pour naviguer</Text>
+          <Text variant="label" tone="secondary">Touche ici pour ta barre</Text>
         </Animated.View>
       )}
 
@@ -108,7 +108,7 @@ export function NavBubble({
 
       <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
         <Animated.View
-          style={[styles.bubble, bubble]}
+          style={[styles.handle, handle]}
           accessibilityRole="button"
           accessibilityLabel={open ? 'Fermer la navigation' : 'Ouvrir la navigation'}
         >
@@ -179,7 +179,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.3),
   },
-  bubble: {
+  handle: {
     position: 'absolute', top: 0, left: 0,
     width: SIZE, height: SIZE, borderRadius: SIZE / 2, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',

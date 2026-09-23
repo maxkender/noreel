@@ -48,14 +48,14 @@ export function Glow({ hue = 'accent', level = 0 }: { hue?: Hue; level?: number 
     >
       <Animated.View style={[StyleSheet.absoluteFill, anim]}>
         <LinearGradient
-          colors={[withAlpha(c, 0.18), withAlpha(c, 0.06), 'transparent']}
+          colors={[withAlpha(c, 0.18 * p.glowAlpha), withAlpha(c, 0.06 * p.glowAlpha), 'transparent']}
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, extra]}>
         <LinearGradient
-          colors={[withAlpha(c, 0.26), withAlpha(c, 0.08), 'transparent']}
+          colors={[withAlpha(c, 0.26 * p.glowAlpha), withAlpha(c, 0.08 * p.glowAlpha), 'transparent']}
           locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFill}
         />

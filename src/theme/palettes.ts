@@ -8,8 +8,11 @@ import { colors as dark } from './colors';
  * francs, pour garder le meme contraste percu.
  */
 // Les valeurs du jeu sombre sont des litteraux (`as const`) : sans cette
-// generalisation, aucune autre couleur ne serait assignable.
-export type Palette = { [K in keyof typeof dark]: string };
+// generalisation, aucune autre valeur ne serait assignable. Les reglages
+// numeriques (doses de halo, d'ombre) gardent leur type.
+export type Palette = {
+  [K in keyof typeof dark]: (typeof dark)[K] extends number ? number : string;
+};
 
 export const light: Palette = {
   ...dark,
@@ -31,6 +34,23 @@ export const light: Palette = {
   danger: '#C0392F',       // le rouge sombre tient sur fond clair
   ember: '#C2611E',
   ground: '#F8F6F1',
+
+  // Sur le creme, une carte doit etre PLUS CLAIRE que la page pour flotter.
+  // Diluer le texte, comme on le fait sur le noir, la creusait.
+  glassFill: '#FFFFFFB8',   // blanc 72 % : la carte se souleve
+  glassSolid: '#FFFFFFF7',
+  glassEdge: '#00000014',   // noir 8 % : un bord se pose, il ne cerne pas
+  glassSpec: '#FFFFFFF2',   // un reflet reste plus clair que sa surface
+  glassWarm: '#C98A3C59',   // le lisere de la marque, chaud sur les deux fonds
+  control: '#FFFFFF',
+  // Une ombre noire sur du creme fait une tache grise ; celle-ci est du
+  // brun chaud, tres legere, comme une vraie ombre sur du papier.
+  shadowTint: '#6B5E45',
+  shadowAlpha: 0.1,
+  glowAlpha: 0.4,
+  // Pas de poussiere lumineuse sur fond clair : la meme poussiere y devient
+  // une constellation de points noirs, autrement dit de la salete.
+  dustAlpha: 0,
 };
 
 export const palettes = { dark, light } as const;

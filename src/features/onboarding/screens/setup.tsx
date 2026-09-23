@@ -124,15 +124,31 @@ export function Constat({ onNext }: P) {
           </Animated.View>
         )}
 
-        {/* La replique ne tombe qu'une fois la reponse donnee. Sa place est
-            reservee des le depart — la version precedente l'inserait dans le
-            flux, ce qui poussait les boutons vers le haut au moment meme ou
-            le doigt s'y posait. */}
+        {/*
+          La replique ne tombe qu'une fois la reponse donnee, et elle ne
+          DEPLACE rien.
+          Reserver sa place par une hauteur minimale ne suffisait pas : une
+          replique de trois lignes debordait la reserve, et comme l'ecran
+          est centre verticalement, ces quelques points de plus recentraient
+          tout le bloc — les reponses remontaient sous le doigt au moment
+          meme ou on en choisissait une. La boite a donc une hauteur FIXE et
+          le texte y est pose par-dessus, hors du flux : quelle que soit sa
+          longueur, plus rien au-dessus ne peut bouger.
+        */}
         {step.kind === 'ask' && (
           <View style={st.reply}>
             {answer !== null && (
-              <Animated.View entering={FadeIn.duration(420)}>
-                <Text variant="lead" color={c.ember} style={st.center}>
+              <Animated.View
+                entering={FadeIn.duration(420)}
+                style={st.replyLayer}
+                pointerEvents="none"
+              >
+                <Text
+                  variant="lead"
+                  color={c.ember}
+                  numberOfLines={3}
+                  style={st.center}
+                >
                   {step.options[answer].reply}
                 </Text>
               </Animated.View>
@@ -394,7 +410,11 @@ function PromiseRow({ title }: { title: string }) {
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   // Hauteur fixe : la plus longue replique tient sur deux lignes.
-  reply: { minHeight: 58, justifyContent: 'center', marginTop: space.xl },
+  reply: { height: 62, marginTop: space.xl },
+  replyLayer: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+  },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.
   faded: { textAlign: 'center', opacity: 0.55 },
