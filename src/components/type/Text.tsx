@@ -1,5 +1,6 @@
 import { Text as RNText, type TextProps, type TextStyle } from 'react-native';
-import { colors, textAlpha, withAlpha } from '@/theme/colors';
+import { textAlpha, withAlpha } from '@/theme/colors';
+import { useColors } from '@/theme/useColors';
 import { maxFontSizeMultiplier, type, type TypeName } from '@/theme/typography';
 
 type Props = TextProps & {
@@ -15,6 +16,7 @@ export function Text({
   style,
   ...rest
 }: Props) {
+  const c = useColors();
   const base = type[variant] as TextStyle;
   return (
     <RNText
@@ -23,7 +25,7 @@ export function Text({
         base,
         // Les labels en capitales espacees : c'est ce qui donne le ton technique.
         variant === 'label' && { textTransform: 'uppercase' as const },
-        { color: color ?? withAlpha(colors.mist, textAlpha[tone]) },
+        { color: color ?? withAlpha(c.mist, textAlpha[tone]) },
         style,
       ]}
       {...rest}

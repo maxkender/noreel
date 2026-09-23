@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { LucideIcon } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
@@ -30,6 +30,7 @@ export function NavBar<T extends string>({
   onChange: (v: T) => void;
 }) {
   const c = useColors();
+  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
   const inner = width - gutter * 2 - PAD * 2;
@@ -62,7 +63,7 @@ export function NavBar<T extends string>({
   return (
     <View style={st.wrap} pointerEvents="box-none">
       <View style={st.bar}>
-        <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={100} tint={tint} style={StyleSheet.absoluteFill} />
         <LinearGradient
           colors={[withAlpha(c.mist, 0.16), withAlpha(c.mist, 0.05)]}
           start={{ x: 0, y: 0 }}

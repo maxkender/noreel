@@ -5,7 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { RotateCw, X } from 'lucide-react-native';
+import { Ban, RotateCw, X } from 'lucide-react-native';
+import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
@@ -62,6 +63,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [raw, setRaw] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [panel, setPanel] = useState(false);
+  // Blocage strict : un reel touche affiche un mur au lieu de ne rien
+  // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
+  const strict = useSettings((x) => x.strictMode);
+  const [wall, setWall] = useState(false);
   const toured = useSettings((x) => x.toured);
   const setSetting = useSettings((x) => x.set);
 
@@ -116,23 +121,35 @@ export function ClientScreen({ id }: { id: ClientId }) {
   }, [client.url, exit, reload]);
 
   const guard = useCallback((req: { url: string }) => {
+    let u: URL;
     try {
-      const { hostname, pathname } = new URL(req.url);
-      if (hostname.endsWith(client.host) && client.blocked(pathname)) {
-        // On annule la navigation, point. Rien d'autre.
-        //
-        // La version precedente rechargeait la page saine : sur Instagram,
-        // ou la moitie du fil mene a /reel/xxx, chaque appui renvoyait donc
-        // l'utilisateur en haut d'un fil fraichement recharge. L'app avait
-        // l'air cassee. Un reel qu'on n'ouvre pas doit simplement ne pas
-        // s'ouvrir.
-        return false;
-      }
+      u = new URL(req.url);
     } catch {
-      /* URL exotique (about:blank, intent://) : on laisse passer */
+      return false;   // URL illisible : on ne la suit pas
+    }
+
+    // TOUT ce qui n'est pas http(s) sort de la WebView et atterrit dans
+    // l'app native — c'est ainsi qu'ouvrir X renvoyait vers X. On refuse en
+    // bloc : instagram://, twitter://, itms-apps://, et le reste.
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+
+    // Les pages qui ne servent qu'a pousser vers l'app native.
+    if (/^\/(download|app|mobile\/?$|i\/flow\/login_error)/.test(u.pathname)) return false;
+
+    if (u.hostname.endsWith(client.host) && client.blocked(u.pathname)) {
+      if (strict) {
+        setWall(true);
+        setTimeout(() => setWall(false), 2600);
+      }
+      // On annule la navigation, point. Rien d'autre.
+      //
+      // La version precedente rechargeait la page saine : sur Instagram, ou
+      // la moitie du fil mene a /reel/xxx, chaque appui renvoyait donc
+      // l'utilisateur en haut d'un fil fraichement recharge.
+      return false;
     }
     return true;
-  }, [client]);
+  }, [client, strict]);
 
   return (
     <View style={styles.root}>
@@ -198,6 +215,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
         setSupportMultipleWindows={false}
+        // Sans cette liste, iOS remet les schemas inconnus au systeme,
+        // qui ouvre l'app native.
+        originWhitelist={['http://*', 'https://*']}
         style={styles.web}
       />
 
@@ -207,6 +227,18 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
+
+      {wall && (
+        <View style={styles.wall} pointerEvents="none">
+          <View style={styles.wallRing}>
+            <Ban size={30} strokeWidth={2} color={c.danger} />
+          </View>
+          <Text variant="title" style={styles.wallText}>Bloqué.</Text>
+          <Text variant="body" tone="secondary" style={styles.wallText}>
+            C’est exactement pour ça que tu es là.
+          </Text>
+        </View>
+      )}
 
       <ClientSettings id={id} visible={panel} onClose={() => setPanel(false)} />
 
@@ -303,4 +335,16 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: c.night, paddingHorizontal: 40, gap: space.md,
   },
   errText: { textAlign: 'center' },
+  wall: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center', gap: space.md,
+    paddingHorizontal: 40, backgroundColor: withAlpha(c.night, 0.94), zIndex: 120,
+  },
+  wallRing: {
+    width: 74, height: 74, borderRadius: 37,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: withAlpha(c.danger, 0.5),
+    backgroundColor: withAlpha(c.danger, 0.1),
+  },
+  wallText: { textAlign: 'center' },
 });

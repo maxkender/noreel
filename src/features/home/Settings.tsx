@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette, type ThemeName } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette, type ThemeName } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -29,6 +29,7 @@ const THEMES: [ThemeName, string][] = [
 /** Feuille de reglages : tout ce qu'il y a dedans agit reellement. */
 export function Settings({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const c = useColors();
+  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const router = useRouter();
@@ -43,7 +44,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
         <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
-          <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
           <View style={st.head}>
@@ -125,8 +126,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               <Toggle on={s.reduceMotion} onChange={(v) => s.set('reduceMotion', v)} />
             } />
             <Line
-              label="Mode strict"
-              sub="Impossible de mettre la protection en pause."
+              label="Blocage strict des reels"
+              sub="Un reel touche affiche un mur, au lieu de ne rien faire."
               right={<Toggle on={s.strictMode} onChange={(v) => s.set('strictMode', v)} />}
             />
 

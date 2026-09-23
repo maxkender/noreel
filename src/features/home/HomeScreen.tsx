@@ -1,13 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, {
-  FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -47,14 +44,7 @@ export function HomeScreen() {
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
-  // Le fondu n'existe que lorsqu'il y a quelque chose a masquer.
-  const y = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
-  const insets = useSafeAreaInsets();
-  // Court, comme iOS : la barre devient opaque en 24 pt de defilement.
-  const veil = useAnimatedStyle(() => ({
-    opacity: Math.min(1, Math.max(0, y.value / 24)),
-  }));
+  const onScroll = useAnimatedScrollHandler(() => {});
 
   useEffect(() => { void stats.streakDays().then(setStreak); }, []);
 
@@ -72,38 +62,22 @@ export function HomeScreen() {
     <View style={st.root}>
       <Glow />
       <Stars />
-      {/* Le contenu passe SOUS l'en-tete et s'y efface : c'est le fondu qui
-          tient les deux ensemble, pas une barre posee au-dessus. */}
-      <Animated.View
-        key={tab}
-        entering={FadeIn.duration(220)}
-        style={{ flex: 1 }}
-      >
-        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} />}
-        {tab === 'block' && <BlockTab onScroll={onScroll} />}
-        {tab === 'account' && <AccountTab onScroll={onScroll} />}
-      </Animated.View>
-
-      {/* Une barre, pas un fondu.
-          Trois versions de degrade ont echoue pour la meme raison : un
-          degrade a forcement une fin, et cette fin se voit. Ici il n'y en a
-          pas — un flou qui s'arrete net sur un filet d'un pixel, comme la
-          barre de navigation d'iOS. */}
-      <Animated.View
-        style={[st.veil, { height: insets.top + 56 }, veil]}
-        pointerEvents="none"
-      >
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={st.veilTint} />
-        <View style={st.veilLine} />
-      </Animated.View>
-
-      <SafeAreaView style={st.headWrap} edges={['top']} pointerEvents="box-none">
+      {/* L'en-tete est DANS le flux, opaque, et le contenu commence dessous.
+          Trois effets ont ete essayes pour la faire flotter — degrade, flou,
+          filet — et chacun laissait une bordure qui se voit. Ici il n'y a
+          plus de bordure a rater : rien ne passe derriere. */}
+      <SafeAreaView edges={['top']} style={st.headWrap}>
         <Header
           onSettings={() => setSettings(true)}
           onProfile={() => setTab('account')}
         />
       </SafeAreaView>
+
+      <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
+        {tab === 'home' && <HomeTab streak={streak} onScroll={onScroll} />}
+        {tab === 'block' && <BlockTab onScroll={onScroll} />}
+        {tab === 'account' && <AccountTab onScroll={onScroll} />}
+      </Animated.View>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
 
@@ -319,6 +293,15 @@ function BlockTab({ onScroll }: { onScroll: Scroll }) {
 
       <Card>
         <Row
+          title="Choisir les apps à bloquer"
+          body="Le sélecteur d’Apple, app par app ou par catégorie."
+          onPress={() => router.push('/picker')}
+          right={<Text variant="body" tone="tertiary">›</Text>}
+        />
+      </Card>
+
+      <Card>
+        <Row
           title={d.block.screenTime}
           body={d.block.screenTimeBody}
           right={
@@ -456,17 +439,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   statusBtnOn: { backgroundColor: c.accent, borderColor: c.accent },
   root: { flex: 1, backgroundColor: c.night },
-  // La marge haute laisse passer le contenu sous l'en-tete flottante.
-  scroll: { paddingHorizontal: gutter, paddingTop: 96, paddingBottom: 130, gap: space.md },
-  veil: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
-  veilTint: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(c.night, 0.55),
-  },
-  veilLine: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    height: StyleSheet.hairlineWidth, backgroundColor: withAlpha(c.mist, 0.14),
-  },
+  scroll: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: 130, gap: space.md },
+  headWrap: { backgroundColor: c.night },
   hem: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 },
-  headWrap: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

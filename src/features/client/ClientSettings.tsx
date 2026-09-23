@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -25,6 +25,7 @@ export function ClientSettings({
   id, visible, onClose,
 }: { id: ClientId; visible: boolean; onClose: () => void }) {
   const c = useColors();
+  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
@@ -36,7 +37,7 @@ export function ClientSettings({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
         <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
-          <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
           <View style={st.head}>

@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'reac
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { radii } from '@/theme/spacing';
 import { useReduceTransparency } from '@/lib/useReducedMotion';
 
@@ -27,6 +27,7 @@ export function Glass({
   blur = true,
 }: Props) {
   const c = useColors();
+  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const opaque =
     useReduceTransparency() || (Platform.OS === 'android' && Platform.Version < 31);
@@ -44,7 +45,7 @@ export function Glass({
       {!opaque && blur && (
         <BlurView
           intensity={intensity}
-          tint="dark"
+          tint={tint}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />

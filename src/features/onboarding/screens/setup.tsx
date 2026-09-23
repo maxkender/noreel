@@ -1,20 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions,
-} from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Check, Clock, Moon, Sunrise } from 'lucide-react-native';
 import { colors, withAlpha } from '@/theme/colors';
-import { gutter, space } from '@/theme/spacing';
+import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { SelectCard } from '@/components/SelectCard';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
-import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { screenYears } from '../calculations';
@@ -26,13 +21,20 @@ type P = { onNext: () => void };
 /* ---------- Le constat ---------- */
 
 type Step =
-  | { kind: 'ask'; q: string; options: { label: string; reply: string }[] }
+  | {
+      kind: 'ask';
+      q: string;
+      /** Ajoute « Honnêtement… » sous la question : ça change les réponses. */
+      honest?: boolean;
+      options: { label: string; reply: string }[];
+    }
   | { kind: 'say'; q: string; sub?: string };
 
 const CONSTAT: Step[] = [
   {
     kind: 'ask',
-    q: 'Combien de reels vus cette semaine saurais-tu me {raconter} ?',
+    q: 'Tu te souviens de combien de reels vus cette {semaine} ?',
+    honest: true,
     options: [
       { label: 'Aucun', reply: 'Aucun. Tu en as pourtant vu des centaines.' },
       { label: 'Un ou deux', reply: 'Deux, sur les centaines qui ont défilé.' },
@@ -66,6 +68,7 @@ const CONSTAT: Step[] = [
  * personne — pas notre affirmation — qui fait le constat.
  */
 export function Constat({ onNext }: P) {
+  const name = useOnboardingStore((x) => x.firstName);
   const [i, setI] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
 
@@ -88,7 +91,20 @@ export function Constat({ onNext }: P) {
       hue={i >= 2 ? 'ember' : 'deep'}
     >
       <Animated.View key={i} entering={FadeIn.duration(520)}>
-        <Typewriter text={step.q} variant="displayM" speed={44} style={st.center} />
+        <Typewriter
+          text={i === 0 && name ? `${name}, ${step.q[0].toLowerCase()}${step.q.slice(1)}` : step.q}
+          variant="displayM"
+          speed={44}
+          style={st.center}
+        />
+
+        {step.kind === 'ask' && step.honest ? (
+          <Animated.View entering={FadeIn.delay(1300).duration(420)}>
+            <Text variant="lead" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>
+              Honnêtement…
+            </Text>
+          </Animated.View>
+        ) : null}
 
         {step.kind === 'say' && step.sub ? (
           <Animated.View entering={FadeIn.delay(1100).duration(520)}>
@@ -285,98 +301,6 @@ export function Essentials({ onNext }: P) {
           ))}
         </View>
       </Glass>
-    </Screen>
-  );
-}
-
-/* ---------- Les regles, expliquees ---------- */
-export function RulesIntro({ onNext }: P) {
-  return (
-    <Screen cta="Continuer" onPress={onNext} center>
-      <Typewriter
-        text="Les règles bloquent les apps à des heures précises."
-        variant="displayM"
-        speed={38}
-        style={st.center}
-      />
-
-      <Animated.View entering={FadeIn.delay(1800).duration(800)} style={st.phone}>
-        <View style={st.notch} />
-        <View style={st.grid}>
-          {['instagram', 'tiktok', 'twitter', 'youtube'].map((id) => (
-            <Image key={id} source={LOGOS[id as keyof typeof LOGOS]} style={st.gridIcon} contentFit="contain" />
-          ))}
-          {Array.from({ length: 8 }, (_, i) => <View key={i} style={st.gridGhost} />)}
-        </View>
-        <Glass radius={22} intensity={55} warmEdge="none" style={st.ruleCard}>
-          <View style={st.ruleHead}>
-            <Clock size={16} strokeWidth={2} color={colors.accent} />
-            <Text variant="label" color={colors.accent}>22:00 — 07:00</Text>
-          </View>
-          <Text variant="body">Nuit calme</Text>
-        </Glass>
-      </Animated.View>
-    </Screen>
-  );
-}
-
-/* ---------- Les regles proposees ---------- */
-const RULES = [
-  { id: 'night', icon: Moon, hours: '22:00 — 07:00', name: 'Nuit calme', why: 'Tu t’endors plus vite.' },
-  { id: 'morning', icon: Sunrise, hours: '07:00 — 09:00', name: 'Matin clair', why: 'La journée commence sans fil.' },
-  { id: 'focus', icon: Clock, hours: '09:00 — 12:00', name: 'Bloc concentré', why: 'Trois heures sans coupure.' },
-] as const;
-
-export function RulesPick({ onNext }: P) {
-  const { width } = useWindowDimensions();
-  const name = useOnboardingStore((x) => x.firstName);
-  const rules = useOnboardingStore((x) => x.rules);
-  const toggle = useOnboardingStore((x) => x.toggleRule);
-  const [i, setI] = useState(0);
-  const page = width - gutter * 2;
-
-  return (
-    <Screen cta="Continuer" onPress={onNext} disabled={rules.length === 0} center hue="deep">
-      <Text variant="displayM" style={st.center}>
-        {name ? `${name}, voici les règles que je te propose` : 'Voici les règles que je te propose'}
-      </Text>
-
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / page))}
-        style={{ width: page, marginTop: space.xl, alignSelf: 'center' }}
-      >
-        {RULES.map((r) => {
-          const on = rules.includes(r.id);
-          const Icon = r.icon;
-          return (
-            <View key={r.id} style={{ width: page, alignItems: 'center' }}>
-              <Pressable onPress={() => { haptics.tick(); toggle(r.id); }}>
-                <Glass radius={28} intensity={55} warmEdge="none" style={[st.rule, on && st.ruleOn]}>
-                  <LinearGradient
-                    colors={[withAlpha(colors.accent, 0.26), withAlpha(colors.accentWarm, 0.16), 'transparent']}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <Icon size={26} strokeWidth={1.8} color={colors.accent} />
-                  <View style={{ flex: 1 }} />
-                  <Text variant="label" tone="tertiary">{r.hours}</Text>
-                  <Text variant="title">{r.name}</Text>
-                  <Text variant="body" tone="secondary">{r.why}</Text>
-                  <View style={[st.tick, on && st.tickOn]}>
-                    {on && <Check size={17} strokeWidth={3} color={colors.night} />}
-                  </View>
-                </Glass>
-              </Pressable>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      <View style={st.dots}>
-        {RULES.map((r, k) => <View key={r.id} style={[st.dot, k === i && st.dotOn]} />)}
-      </View>
     </Screen>
   );
 }

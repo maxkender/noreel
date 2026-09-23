@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, X,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
@@ -30,6 +30,7 @@ export function NavBubble({
   onAction,
 }: { onAction: (a: NavAction) => void }) {
   const c = useColors();
+  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const { width, height } = useWindowDimensions();
   const x = useSharedValue(width - SIZE - MARGIN);
@@ -90,13 +91,13 @@ export function NavBubble({
           style={styles.barWrap}
         >
           <View style={styles.bar}>
-            <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={70} tint={tint} style={StyleSheet.absoluteFill} />
             <View style={styles.barTint} />
             <Key icon={ChevronLeft} label="Retour" onPress={() => act('back')} />
             <Key icon={House} label="Accueil du site" onPress={() => act('home')} />
             <Key icon={RotateCw} label="Recharger" onPress={() => act('reload')} />
             <Key icon={ChevronRight} label="Suivant" onPress={() => act('forward')} />
-            <Key icon={Gear} label="Réglages" onPress={() => act('settings')} tint={c.accent} />
+            <Key icon={Gear} label="Réglages" onPress={() => act('settings')} colour={c.accent} />
           </View>
 
           <Animated.View entering={FadeIn.delay(80).duration(220)} style={styles.quitWrap}>
@@ -111,7 +112,7 @@ export function NavBubble({
           accessibilityRole="button"
           accessibilityLabel={open ? 'Fermer la navigation' : 'Ouvrir la navigation'}
         >
-          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={40} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={styles.tint} />
           <View style={styles.grip}>
             <View style={styles.line} />
@@ -125,16 +126,17 @@ export function NavBubble({
 }
 
 function Key({
-  icon: Icon, label, onPress, tint, big,
+  icon: Icon, label, onPress, colour, big,
 }: {
   icon: typeof House;
   label: string;
   onPress: () => void;
-  tint?: string;
+  colour?: string;
   big?: boolean;
 }) {
   const scale = useSharedValue(1);
   const c = useColors();
+  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const tap = Gesture.Tap()
@@ -149,9 +151,9 @@ function Key({
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        {big && <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />}
+        {big && <BlurView intensity={50} tint={tint} style={StyleSheet.absoluteFill} />}
         {big && <View style={styles.tint} />}
-        <Icon size={big ? 22 : 20} strokeWidth={2} color={tint ?? c.mist} />
+        <Icon size={big ? 22 : 20} strokeWidth={2} color={colour ?? c.mist} />
       </Animated.View>
     </GestureDetector>
   );

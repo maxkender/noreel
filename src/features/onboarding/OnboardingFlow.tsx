@@ -11,11 +11,10 @@ import { StepBoundary } from '@/components/StepBoundary';
 import { S1, S3, S4, S5, S6, S6Years, S7 } from './screens';
 import {
   Constat, Distractions, Essentials, Manifesto, Name, NotificationsAsk,
-  PromiseScreen, RulesIntro, RulesPick,
+  PromiseScreen,
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
-import { Picker } from './screens/Picker';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -81,13 +80,9 @@ export function OnboardingFlow() {
     <Distractions key="dis" onNext={n(11)} />,
     <Essentials key="ess" onNext={n(12)} />,
     <Permissions key="perm" onDone={n(13)} />,
-    // Apres l'autorisation seulement : sans elle le selecteur est vide.
-    <Picker key="pick" onNext={n(14)} />,
-    <NotificationsAsk key="notif" onNext={n(15)} />,
-    <PromiseScreen key="pro" onNext={n(16)} />,
-    <Paywall key="pw" onDone={n(17)} />,
-    <RulesIntro key="ri" onNext={n(18)} />,
-    <RulesPick key="rp" onNext={() => setFinale(true)} />,
+    <NotificationsAsk key="notif" onNext={n(14)} />,
+    <PromiseScreen key="pro" onNext={n(15)} />,
+    <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 
   const bar = step > 0 ? (
@@ -121,7 +116,7 @@ export function OnboardingFlow() {
   );
 }
 
-const TOTAL = 20;
+const TOTAL = 16;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },

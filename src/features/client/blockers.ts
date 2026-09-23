@@ -119,6 +119,19 @@ const COMMON = `
     location.replace(to);
   };
 
+  // Les sites poussent leur app native par des liens profonds et des
+  // bannieres. On les retire : un appui dessus fait sortir l'utilisateur de
+  // la version filtree, ce qu'il est venu eviter.
+  const __native = () => {
+    document.querySelectorAll(
+      'a[href^="instagram:"], a[href^="twitter:"], a[href^="x:"],'
+      + ' a[href^="tiktok:"], a[href^="youtube:"], a[href^="vnd.youtube:"],'
+      + ' a[href^="itms-apps:"], a[href^="fb:"]'
+    ).forEach(__hide);
+    // La banniere d'App Store des sites mobiles.
+    document.querySelectorAll('meta[name="apple-itunes-app"]').forEach((m) => m.remove());
+  };
+
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
   const __gray = () => {
     const v = __on('grayscale') ? 'grayscale(1)' : '';
@@ -166,6 +179,7 @@ export const INSTAGRAM_BLOCKER = `
   __watch(() => {
     __gray();
     __cookies();
+    __native();
 
     // Un reel du fil est un <article> contenant un lien /reel/xxx ;
     // dans l'explore c'est une simple tuile.
@@ -221,6 +235,7 @@ export const YOUTUBE_BLOCKER = `
   __watch(() => {
     __gray();
     __cookies();
+    __native();
     document.querySelectorAll('a[href^="/shorts"]').forEach((a) => {
       __hide(a.closest('ytd-rich-item-renderer, ytd-video-renderer, ytm-shorts-lockup-view-model') || a);
     });
@@ -257,6 +272,7 @@ export const TIKTOK_BLOCKER = `
   __watch(() => {
     __gray();
     __cookies();
+    __native();
     if (__on('explore')) {
       document.querySelectorAll('[data-e2e="nav-explore"], a[href^="/explore"]').forEach(__hide);
     }
@@ -301,6 +317,7 @@ export const TWITTER_BLOCKER = `
     if (following && following.getAttribute('aria-selected') === 'false') following.click();
     __gray();
     __cookies();
+    __native();
     if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
       __go('/messages');
     }

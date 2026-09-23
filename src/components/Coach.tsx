@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from './type/Text';
 import { Button } from './Button';
@@ -42,6 +42,7 @@ export function Coach({
 
 function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
   const c = useColors();
+  const tint = useBlurTint();
   const styles = useMemo(() => sheet(c), [c]);
   const { height } = useWindowDimensions();
   const [i, setI] = useState(0);
@@ -69,7 +70,7 @@ function Tour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
       <Pressable style={StyleSheet.absoluteFill} onPress={step.cta ? undefined : next} />
 
       <Animated.View key={i} entering={FadeIn.duration(260)} style={[styles.bubble, { top }]}>
-        <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={60} tint={tint} style={StyleSheet.absoluteFill} />
         <View style={styles.tint} />
 
         {step.mark ? <View style={styles.mark}>{step.mark}</View> : null}

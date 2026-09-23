@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
+import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -30,12 +30,13 @@ const REFS = [
  */
 export function Sources({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const c = useColors();
+  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
         <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
-          <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
           <View style={st.head}>
