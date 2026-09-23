@@ -138,10 +138,11 @@ export function Constat({ onNext }: P) {
  * ecrites s'effacent d'un cran pour que l'oeil suive celle qui s'ecrit.
  */
 const LINES = [
-  'On s’est frayé un chemin dans l’algorithme.',
-  'Tu gardes le contact avec tes amis,',
-  'sans y laisser la moitié de ton temps libre.',
-  'Tu peux suivre tes passions, lire, bouger, retenir ce que tu vois.',
+  'Instagram ne fera jamais de bouton pour éteindre les Reels.',
+  'Ils y perdraient trop.',
+  'Alors on s’est frayé un chemin dans leur algorithme.',
+  'Tes amis, tes messages, tes stories : tout reste.',
+  'Ce qui disparaît, c’est seulement ce qui te retenait.',
 ];
 const LAST = 'Bienvenue dans {UnSwipe}.';
 const SPEED = 26;

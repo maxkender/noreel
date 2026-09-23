@@ -87,6 +87,24 @@ export async function restore(): Promise<boolean> {
   }
 }
 
+/**
+ * Rattache les achats a un identifiant stable.
+ *
+ * Sans ca, RevenueCat suit un identifiant anonyme lie a l'installation :
+ * changer de telephone, et l'abonnement ne suit pas. L'identifiant Apple
+ * est opaque et propre a cette app — il n'identifie la personne nulle part
+ * ailleurs.
+ */
+export async function linkAccount(userId: string): Promise<boolean> {
+  if (!KEY) return false;
+  try {
+    const { customerInfo: info } = await Purchases.logIn(userId);
+    return isPro(info);
+  } catch {
+    return false;
+  }
+}
+
 /** Previent a chaque changement d'abonnement, y compris hors de l'app. */
 export function onCustomerInfo(fn: (pro: boolean) => void): () => void {
   if (!KEY) return () => {};

@@ -29,6 +29,7 @@ import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
 import { Referral } from './Referral';
+import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
 
 const STREAK_PNG = require('@/assets/brand/streak.png');
@@ -360,6 +361,9 @@ function AccountTab({ onScroll, onSettings }: { onScroll: Scroll; onSettings: ()
       </View>
 
       <Referral />
+
+      <Text variant="label" tone="secondary" style={st.section}>Ton abonnement</Text>
+      <Card><AppleSignIn /></Card>
 
       <Text variant="label" tone="secondary" style={st.section}>{d.account.profile}</Text>
       <Card>

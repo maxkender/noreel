@@ -14,6 +14,9 @@ import {
   PromiseScreen, RulesIntro, RulesPick,
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
+import { Tune } from './screens/Tune';
+import { Picker } from './screens/Picker';
+import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
 /**
@@ -25,6 +28,8 @@ export function OnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [intro, setIntro] = useState(true);
+  // Le dernier plan, joue une fois le parcours fini.
+  const [finale, setFinale] = useState(false);
   const persist = useOnboardingStore((s) => s.setStep);
   const complete = useOnboardingStore((s) => s.complete);
   const start = useOnboardingStore((s) => s.start);
@@ -72,14 +77,17 @@ export function OnboardingFlow() {
     <S7 key="s7" onNext={n(7)} />,
     <Manifesto key="man" onNext={n(8)} />,
     <S4 key="s4" onNext={n(9)} />,
-    <Distractions key="dis" onNext={n(10)} />,
-    <Essentials key="ess" onNext={n(11)} />,
-    <Permissions key="perm" onDone={n(12)} />,
-    <NotificationsAsk key="notif" onNext={n(13)} />,
-    <PromiseScreen key="pro" onNext={n(14)} />,
-    <Paywall key="pw" onDone={n(15)} />,
-    <RulesIntro key="ri" onNext={n(16)} />,
-    <RulesPick key="rp" onNext={finish} />,
+    <Tune key="tune" onNext={n(10)} />,
+    <Distractions key="dis" onNext={n(11)} />,
+    <Essentials key="ess" onNext={n(12)} />,
+    <Permissions key="perm" onDone={n(13)} />,
+    // Apres l'autorisation seulement : sans elle le selecteur est vide.
+    <Picker key="pick" onNext={n(14)} />,
+    <NotificationsAsk key="notif" onNext={n(15)} />,
+    <PromiseScreen key="pro" onNext={n(16)} />,
+    <Paywall key="pw" onDone={n(17)} />,
+    <RulesIntro key="ri" onNext={n(18)} />,
+    <RulesPick key="rp" onNext={() => setFinale(true)} />,
   ];
 
   const bar = step > 0 ? (
@@ -108,11 +116,12 @@ export function OnboardingFlow() {
       </ProgressContext.Provider>
 
       {intro && <Intro onDone={() => setIntro(false)} />}
+      {finale && <Finale onDone={finish} />}
     </View>
   );
 }
 
-const TOTAL = 18;
+const TOTAL = 20;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.night },

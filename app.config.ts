@@ -43,6 +43,7 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-font',
     'expo-localization',
+    'expo-apple-authentication',
     // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
     './plugins/withoutPushEntitlement',
     // Pas d'image : l'icone apparaissait une fraction de seconde avant
