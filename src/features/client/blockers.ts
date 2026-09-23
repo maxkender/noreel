@@ -314,6 +314,8 @@ export const INSTAGRAM_BLOCKER = `
     return best;
   };
 
+  let __lastSkip = 0;
+
   // Le fil « Abonnements » ne se choisit qu'UNE fois par page. Cliquer a
   // chaque passe rouvrait le menu sous le doigt toutes les 300 ms.
   let __feed = false;
@@ -352,6 +354,43 @@ export const INSTAGRAM_BLOCKER = `
 
     if (__on('ads')) __byLabel(AD, 'ads');
     if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
+
+    /*
+      Une story sponsorisee ne se cache pas : elle OCCUPE l'ecran entier.
+      La masquer laisserait un trou noir dont on ne sort qu'en devinant ou
+      appuyer. On fait donc ce que ferait le doigt — un appui dans la zone
+      « suivante », a droite du lecteur. Un saut par seconde au plus : la
+      story suivante met un instant a s'annoncer, et sans ce frein on
+      traverserait tout le carrousel d'une traite.
+    */
+    if (__on('storyAds') && location.pathname.startsWith('/stories/')) {
+      const view = document.querySelector('section, [role="dialog"]') || document.body;
+      const txt = (view.textContent || '').slice(0, 300);
+      if (AD.test(txt) || /sponsoris|sponsored/i.test(txt)) {
+        const now = Date.now();
+        if (now - __lastSkip > 1000) {
+          __lastSkip = now;
+          const r = view.getBoundingClientRect();
+          const x = r.left + r.width * 0.9;
+          const y = r.top + r.height * 0.5;
+          const el = document.elementFromPoint(x, y);
+          if (el) {
+            for (const type of ['pointerdown', 'mousedown', 'mouseup', 'click']) {
+              el.dispatchEvent(new MouseEvent(type, {
+                bubbles: true, cancelable: true, clientX: x, clientY: y,
+              }));
+            }
+          }
+        }
+      }
+    }
+
+    // Les publications enregistrees sont une reserve a rescroller : c'est le
+    // meme fil, en differe.
+    if (__on('saved')) {
+      document.querySelectorAll('a[href*="/saved/"]').forEach((a) => __hide(a, 'saved'));
+      if (/[/]saved([/]|$)/.test(location.pathname)) { __go('/'); return; }
+    }
 
     if (__on('stories')) __hide(__tray(), 'stories');
     else if (__on('feed')) __hide(__tray(), 'feed');
@@ -402,6 +441,35 @@ export const YOUTUBE_BLOCKER = `
     if (__on('recommended')) {
       document.querySelectorAll('#related, ytm-item-section-renderer[section-identifier="related-items"]')
         .forEach((el) => __hide(el, 'recommended'));
+    }
+
+    /*
+      « Recherche uniquement » : la barre reste, le fil disparait. On ne
+      redirige pas — rediriger enverrait sur une page de resultats vide, et
+      YouTube sans champ de recherche n'a plus d'usage du tout. On retire
+      les grilles de vignettes, la ou elles sont, et seul ce qu'on est venu
+      chercher s'affiche.
+    */
+    if (__on('searchOnly')
+        && !/^[/](results|watch|channel|@|playlist)/.test(location.pathname)) {
+      document.querySelectorAll(
+        'ytd-rich-grid-renderer, ytm-rich-grid-renderer,'
+        + ' ytd-browse[role="main"] #contents, ytm-browse,'
+        + ' ytd-two-column-browse-results-renderer'
+      ).forEach((el) => __hide(el, 'searchOnly'));
+    }
+
+    if (__on('ads')) {
+      document.querySelectorAll(
+        'ytd-ad-slot-renderer, ytm-companion-slot, ytd-promoted-sparkles-web-renderer,'
+        + ' ytd-display-ad-renderer, ytm-promoted-video-renderer, .ytp-ad-module,'
+        + ' ad-slot-renderer, ytd-in-feed-ad-layout-renderer'
+      ).forEach((el) => __hide(el, 'ads'));
+      // Passer la publicite quand YouTube veut bien le permettre.
+      const skip = document.querySelector(
+        '.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button'
+      );
+      if (skip) skip.click();
     }
     if (__on('home') && (location.pathname === '/' || location.pathname === '/feed/trending')) {
       __go('/feed/subscriptions');

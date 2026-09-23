@@ -24,7 +24,9 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
     { key: 'explore', label: 'Bloquer Explorer', locked: true },
     { key: 'ads', label: 'Masquer les publicités', on: true },
     { key: 'suggested', label: 'Masquer les posts suggérés', on: true },
+    { key: 'storyAds', label: 'Masquer les pubs dans les stories', on: true },
     { key: 'stories', label: 'Bloquer les stories' },
+    { key: 'saved', label: 'Bloquer les publications enregistrées' },
     { key: 'feed', label: 'Bloquer le fil' },
     { key: 'dmsOnly', label: 'Messages uniquement' },
     { key: 'grayscale', label: 'Noir et blanc' },
@@ -45,6 +47,8 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   ],
   youtube: [
     { key: 'shorts', label: 'Bloquer les Shorts', locked: true },
+    { key: 'searchOnly', label: 'Recherche uniquement' },
+    { key: 'ads', label: 'Bloquer les publicités', on: true },
     { key: 'home', label: 'Bloquer la page d’accueil' },
     { key: 'comments', label: 'Bloquer les commentaires' },
     { key: 'recommended', label: 'Masquer les suggestions' },
