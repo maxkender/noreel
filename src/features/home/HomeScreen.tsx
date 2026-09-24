@@ -29,6 +29,9 @@ import { NavBar } from './NavBar';
 import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
+import { LockedPill } from './LockedPill';
+import { ProGate } from './ProGate';
+import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
 
 type Tab = 'home' | 'block' | 'account';
@@ -180,6 +183,10 @@ function BlockTab({
   const setSetting = useSettings((x) => x.set);
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
+  const [paywall, setPaywall] = useState(false);
+  // Le blocage des apps d'origine et le mode strict sont payants : grises et
+  // cadenasses plutot qu'absents, pour qu'on voie ce qu'on n'a pas.
+  const pro = useProStore((x) => x.pro);
 
   useEffect(() => {
     void shield.isActive().then(setOn);
@@ -198,6 +205,7 @@ function BlockTab({
    */
   const arm = async () => {
     haptics.press();
+    if (!pro) { setPaywall(true); return; }
     if (needsAuth) { await requestAuthorization().then(setAuth); return; }
     if (!selection) { router.push('/picker'); return; }
     setOn(true);
@@ -232,7 +240,7 @@ function BlockTab({
         <Stat label="Du plafond" value={`${pct} %`} />
       </Glass>
 
-      <View style={[st.status, on ? st.statusOn : st.statusOff]}>
+      <View style={[st.status, on ? st.statusOn : st.statusOff, !pro && st.dimmed]}>
         <View style={[st.statusRing, on && st.statusRingOn]}>
           <Shield size={26} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.5)} />
         </View>
@@ -263,7 +271,8 @@ function BlockTab({
             minimumFontScale={0.85}
             color={on ? c.night : c.mist}
           >
-            {needsAuth ? d.block.authorize
+            {!pro ? 'Débloquer'
+              : needsAuth ? d.block.authorize
               : !selection ? 'Choisir les apps'
               : on ? 'Désactiver' : 'Activer'}
           </Text>
@@ -274,15 +283,17 @@ function BlockTab({
         <Row
           title="Bloquer d’autres apps"
           body={selection ? 'Ajoute ce que tu veux à la liste.' : 'Jeux, actualités, tout ce qui te happe.'}
-          onPress={() => router.push('/picker')}
-          right={<Text variant="body" tone="tertiary">›</Text>}
+          onPress={() => (pro ? router.push('/picker') : setPaywall(true))}
+          right={pro
+            ? <Text variant="body" tone="tertiary">›</Text>
+            : <LockedPill label="Pro" onPress={() => setPaywall(true)} />}
         />
         <Row
           title="Mode strict"
           body={hard
             ? 'Rendre le blocage demande une minute, une phrase et trois calculs.'
             : 'Rend la désactivation volontairement pénible. Environ trois minutes.'}
-          right={
+          right={!pro ? <LockedPill label="Pro" onPress={() => setPaywall(true)} /> : (
             <Toggle
               on={hard}
               onChange={(v) => {
@@ -292,9 +303,11 @@ function BlockTab({
                 setGate(true);
               }}
             />
-          }
+          )}
         />
       </Card>
+
+      <ProGate visible={paywall} onClose={() => setPaywall(false)} />
 
       <HardModeIntro
         visible={intro}
@@ -403,6 +416,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     alignItems: 'center', gap: space.md, padding: space.xl, borderRadius: 22,
     borderWidth: 1,
   },
+  dimmed: { opacity: 0.55 },
   statusOn: { borderColor: withAlpha(c.accent, 0.5), backgroundColor: withAlpha(c.accent, 0.07) },
   statusOff: { borderColor: c.lineStrong, backgroundColor: c.surface },
   statusRing: {

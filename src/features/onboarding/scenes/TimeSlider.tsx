@@ -16,8 +16,8 @@ const KNOB = 38;
 
 /** Rail de verre, poignee de verre. La poignee grossit sous le doigt. */
 export function TimeSlider({
-  minutes, onChange,
-}: { minutes: number; onChange: (m: number) => void }) {
+  minutes, onChange, onCommit,
+}: { minutes: number; onChange: (m: number) => void; onCommit?: (m: number) => void }) {
   const c = useColors();
   const styles = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
@@ -25,6 +25,9 @@ export function TimeSlider({
   const ratio = (minutes - MIN) / (MAX - MIN);
   const x = useSharedValue(ratio * track);
   const grab = useSharedValue(0);         // 0 pose, 1 saisi
+
+  // La derniere valeur calculee, lisible depuis le fil d'animation.
+  const last = useSharedValue(minutes);
 
   const commit = (px: number) => {
     const r = Math.min(1, Math.max(0, px / track));
@@ -42,9 +45,21 @@ export function TimeSlider({
     .onBegin(() => { grab.value = withSpring(1, springs.snappy); })
     .onChange((e) => {
       x.value = Math.min(track, Math.max(0, x.value + e.changeX));
+      const r = Math.min(1, Math.max(0, x.value / track));
+      last.value = Math.round((MIN + r * (MAX - MIN)) / STEP) * STEP;
       runOnJS(commit)(x.value);
     })
-    .onFinalize(() => { grab.value = withSpring(0, springs.gentle); });
+    /*
+      La valeur n'est ECRITE qu'au relacher.
+      Chaque pas du geste appelait le magasin persistant, qui recopie tout
+      sur le disque a chaque appel : traverser le curseur declenchait une
+      centaine d'ecritures, et l'appui suivant attendait derriere elles. Le
+      chiffre affiche suit toujours le doigt — c'est le disque qui attend.
+    */
+    .onFinalize(() => {
+      grab.value = withSpring(0, springs.gentle);
+      if (onCommit) runOnJS(onCommit)(last.value);
+    });
 
   const knob = useAnimatedStyle(() => ({
     transform: [

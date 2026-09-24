@@ -77,8 +77,11 @@ export function S5({ onNext }: P) {
   const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const [phase, setPhase] = useState<'time' | 'age'>('time');
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const stored = useOnboardingStore((x) => x.minutesPerDay);
   const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
+  // Pendant le geste, la valeur vit ici. Elle ne touche le disque qu'au
+  // relacher — sinon chaque pas du curseur y recopiait tout le magasin.
+  const [minutes, setDraft] = useState(stored);
   const age = useOnboardingStore((x) => x.age);
   const setAge = useOnboardingStore((x) => x.setAge);
   // Les cases partent vides : tant qu'elles le sont, on ne peut pas avancer.
@@ -86,13 +89,24 @@ export function S5({ onNext }: P) {
 
   if (phase === 'time') {
     return (
-      <Screen cta={d.s5.ctaA} onPress={() => { track('screen_time_set', { minutes }); setPhase('age'); }} center hue="accent">
+      <Screen
+        cta={d.s5.ctaA}
+        onPress={() => {
+          // On pose la valeur avant de partir : si le doigt quitte l'ecran
+          // sans relacher le curseur, rien ne l'aurait enregistree.
+          setMinutes(minutes);
+          track('screen_time_set', { minutes });
+          setPhase('age');
+        }}
+        center
+        hue="accent"
+      >
         <Typewriter text={d.s5.titleA} variant="displayM" style={s.center} />
         <Text variant="hero" style={[s.center, s.value]} numberOfLines={1} adjustsFontSizeToFit>
           {formatHours(minutes)}
         </Text>
         <View style={s.sliderWrap}>
-          <TimeSlider minutes={minutes} onChange={setMinutes} />
+          <TimeSlider minutes={minutes} onChange={setDraft} onCommit={setMinutes} />
         </View>
         <Text variant="body" tone="secondary" style={s.center}>
           {t(d.s5.liveShare, { p: Math.round(wakingShare(minutes) * 100) })}

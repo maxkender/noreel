@@ -12,8 +12,7 @@ import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
 import { S1, S3, S5, S6, S6Years, S7 } from './screens';
 import {
-  Constat, Distractions, Essentials, Manifesto, Name, NotificationsAsk,
-  PromiseScreen,
+  Constat, Distractions, Manifesto, Name, NotificationsAsk, PromiseScreen,
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
@@ -108,7 +107,6 @@ export function OnboardingFlow() {
     <Manifesto key="man" onNext={next} />,
     <Tune key="tune" onNext={next} />,
     <Distractions key="dis" onNext={next} />,
-    <Essentials key="ess" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <HomeShortcuts key="short" onNext={next} />,

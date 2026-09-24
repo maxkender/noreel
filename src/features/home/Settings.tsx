@@ -5,17 +5,16 @@ import {
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { SlideInDown } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette, type ThemeName } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { formatHours, lang } from '@/lib/format';
+import { formatHours } from '@/lib/format';
 import { useSettings } from '@/store/settings';
-import { useOnboardingStore } from '@/store/onboarding';
 import { Toggle } from './parts';
+import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
@@ -32,10 +31,9 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
-  const router = useRouter();
   const s = useSettings();
-  const reset = useOnboardingStore((x) => x.reset);
   const [cleared, setCleared] = useState(false);
+  const [feedback, setFeedback] = useState(false);
   const [auth, setAuth] = useState<AuthState>('notDetermined');
 
   useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
@@ -72,14 +70,9 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 : () => { void requestAuthorization().then(setAuth); }}
             />
             <Line
-              label="Apps toujours autorisées"
-              sub="Téléphone, Plans, Santé : jamais bloquées."
-              onPress={() => void Linking.openSettings()}
-            />
-            <Line
-              label="Notifications"
-              sub="Le résumé hebdomadaire."
-              onPress={() => void Linking.openSettings()}
+              label="Blocage strict des reels"
+              sub="Un reel touché affiche un mur, au lieu de ne rien faire."
+              right={<Toggle on={s.strictMode} onChange={(v) => s.set('strictMode', v)} />}
             />
 
             <Group title="Apparence" />
@@ -100,7 +93,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               })}
             </View>
 
-            <Group title="Objectif quotidien" />
+            <Group title="Plafond quotidien" />
             <View style={st.chips}>
               {GOALS.map((g) => {
                 const on = s.goalMinutes === g;
@@ -125,40 +118,37 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             <Line label="Réduire les animations" right={
               <Toggle on={s.reduceMotion} onChange={(v) => s.set('reduceMotion', v)} />
             } />
-            <Line
-              label="Blocage strict des reels"
-              sub="Un reel touche affiche un mur, au lieu de ne rien faire."
-              right={<Toggle on={s.strictMode} onChange={(v) => s.set('strictMode', v)} />}
-            />
 
-            <Group title="Compte" />
-            <Line label="Langue" right={
-              <Text variant="body" tone="secondary">{lang === 'fr' ? 'Français' : 'English'}</Text>
-            } />
+            {/*
+              Une seule porte vers les reglages d’iOS.
+              Il y en avait trois — notifications, apps autorisées, réglages —
+              qui menaient toutes au meme endroit, et deux groupes « À propos »
+              se suivaient. Un reglage qui ne fait rien de particulier n’a pas
+              besoin de sa ligne.
+            */}
+            <Group title="Aide" />
             <Line
-              label="Refaire l’introduction"
-              onPress={() => { reset(); onClose(); router.replace('/onboarding'); }}
+              label="Faire un retour"
+              sub="Un bug, une idée, une app qui résiste au filtre."
+              onPress={() => setFeedback(true)}
             />
             <Line
-              label={cleared ? 'Données effacées' : 'Effacer mes données'}
-              danger
-              onPress={async () => {
-                await AsyncStorage.clear();
-                haptics.stop();
-                setCleared(true);
+              label="Écrire au support"
+              sub={SUPPORT_EMAIL}
+              onPress={() => {
+                void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${
+                  encodeURIComponent('[UnSwipe] Support')}`).catch(() => {});
               }}
             />
-
-            <Group title="À propos" />
             <Line
               label="Réglages iOS de UnSwipe"
+              sub="Notifications, Temps d’écran, autorisations."
               onPress={() => void Linking.openSettings()}
             />
 
             <Group title="À propos" />
             <Line
               label="Partager UnSwipe"
-              sub="Ton code de parrainage est dans l’onglet Compte."
               onPress={() => {
                 void Share.share({
                   message: 'UnSwipe : Instagram, TikTok, X et YouTube sans les reels.',
@@ -172,12 +162,24 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             <Line label="Version" right={
               <Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>
             } />
+            <Line
+              label={cleared ? 'Données effacées' : 'Effacer mes données'}
+              danger
+              onPress={async () => {
+                await AsyncStorage.clear();
+                haptics.stop();
+                setCleared(true);
+              }}
+            />
+
             <Text variant="label" tone="tertiary" style={st.foot}>
               {d.account.dataBody}
             </Text>
           </ScrollView>
         </Animated.View>
       </Pressable>
+
+      <Feedback visible={feedback} onClose={() => setFeedback(false)} />
     </Modal>
   );
 }

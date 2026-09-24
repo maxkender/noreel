@@ -55,6 +55,24 @@ export async function currentOffering(): Promise<PurchasesOffering | null> {
   }
 }
 
+/**
+ * L'offre de rattrapage, si elle existe.
+ *
+ * Elle vit dans une offre RevenueCat nommee « winback ». Quand elle n'est
+ * pas configuree, cette fonction rend null et l'ecran ne s'affiche PAS :
+ * mieux vaut ne rien proposer qu'annoncer un prix sur lequel l'achat
+ * echouerait.
+ */
+export async function winbackOffering(): Promise<PurchasesOffering | null> {
+  if (!KEY) return null;
+  try {
+    const all = await Purchases.getOfferings();
+    return all.all.winback ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function customerInfo(): Promise<CustomerInfo | null> {
   if (!KEY) return null;
   try {

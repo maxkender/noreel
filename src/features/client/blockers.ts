@@ -356,6 +356,38 @@ export const INSTAGRAM_BLOCKER = `
 
   let __lastSkip = 0;
 
+  /*
+    Un clic sur une story ne part pas.
+    Masquer ne suffisait pas : Instagram ouvre ses stories sans lien, par un
+    gestionnaire pose sur un <div>. On ne pouvait donc rien cacher qui les
+    empeche de s'ouvrir, et le reglage paraissait mort. On intercepte le clic
+    lui-meme, EN CAPTURE — avant que la page ne le voie — et on refuse ceux
+    qui visent une story. Le libelle est teste en francais comme en anglais :
+    le site suit la langue du telephone, pas la notre.
+  */
+  const STORY = /\bstor(y|ies)\b|\bhistoire/i;
+  const __isStory = (t) => {
+    if (!t || !t.closest) return false;
+    if (t.closest('a[href*="/stories/"]')) return true;
+    let n = t;
+    for (let i = 0; i < 8 && n; i += 1) {
+      const lab = n.getAttribute && n.getAttribute('aria-label');
+      if (lab && STORY.test(lab)) return true;
+      n = n.parentElement;
+    }
+    return false;
+  };
+  for (const ev of ['pointerdown', 'mousedown', 'click', 'touchstart']) {
+    addEventListener(ev, (e) => {
+      if (!__on('stories')) return;
+      if (location.pathname.startsWith('/stories/')) return;
+      if (!__isStory(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    }, true);
+  }
+
   // Le fil « Abonnements » ne se choisit qu'UNE fois par page. Cliquer a
   // chaque passe rouvrait le menu sous le doigt toutes les 300 ms.
   let __feed = false;

@@ -13,6 +13,7 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering } from '@/services/purchases';
+import { WinBack } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
@@ -42,8 +43,7 @@ const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
  * recoit.
  */
 const ROWS = [
-  'Instagram, TikTok, X et YouTube filtrés',
-  'Reels, Shorts et « Pour toi » coupés partout',
+  'TikTok, X et YouTube, filtrés comme Instagram',
   'Réglages app par app, appliqués tout de suite',
   'Blocage des apps d’origine, avec mode strict',
   'Ton temps mesuré, jour après jour',
@@ -52,7 +52,7 @@ const ROWS = [
 // La croix n'apparait qu'apres cinq secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
 // est un piege, et l'App Store le refuse.
-const EXIT_AFTER = 5000;
+const EXIT_AFTER = 6500;
 
 /**
  * Le paywall.
@@ -68,6 +68,8 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const name = useOnboardingStore((x) => x.firstName);
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(false);
+  const [winback, setWinback] = useState(false);
+  const [offered, setOffered] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setCanExit(true), EXIT_AFTER);
@@ -99,7 +101,10 @@ export function Paywall({ onDone }: { onDone: () => void }) {
     const r = await buy(chosen);
     setBusy(false);
     if (r === 'bought') { setPro(true); onDone(); return; }
-    if (r === 'cancelled') return;   // l'utilisateur a renonce : on le laisse
+    // Renoncement : on propose l'offre de rattrapage, une fois. Refermer la
+    // feuille d'Apple est le moment ou le prix vient d'etre juge trop cher —
+    // c'est la, ou nulle part.
+    if (r === 'cancelled') { if (!offered) { setOffered(true); setWinback(true); } return; }
     onDone();                        // un echec ne doit pas l'enfermer ici
   };
 
@@ -107,7 +112,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
     <Screen
       // L'essai n'existe que sur l'annuel : promettre « gratuit » sur
       // l'hebdomadaire serait faux, et Apple facturerait aussitot.
-      cta={busy ? 'Un instant…' : 'Continuer'}
+      cta={busy ? 'Un instant…' : 'Reprendre contrôle de mon temps'}
       onPress={() => { void go(); }}
       disabled={busy}
       hue="warm"
@@ -125,14 +130,28 @@ export function Paywall({ onDone }: { onDone: () => void }) {
       </View>
 
       <Text variant="displayM" style={st.title}>
-        {name ? `${name}, essaie ` : 'Essaie '}
-        <Text variant="displayM" color={c.accent}>{TRIAL_DAYS} jours</Text>
-        {' gratuitement.'}
+        {name ? `${name}, reprends ` : 'Reprends '}
+        <Text variant="displayM" color={c.accent}>le contrôle</Text>
+        {' de ton temps.'}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.title, st.sub]}>
-        Tout est débloqué tout de suite. Tu ne paies rien avant la fin des
-        {` ${TRIAL_DAYS} jours, et tu peux arrêter avant.`}
+        Reprends enfin contrôle de ton temps. Sans perdre contact.
       </Text>
+
+      {/* La banniere ne parle que de l'annuel : c'est le seul forfait qui
+          porte l'essai, et laisser croire le contraire ferait decouvrir le
+          prelevement le jour meme. */}
+      <Animated.View entering={FadeIn.delay(120).duration(420)} style={st.banner}>
+        <LinearGradient
+          colors={[withAlpha(c.accent, 0.3), withAlpha(c.accentWarm, 0.18)]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Text variant="button" numberOfLines={1} adjustsFontSizeToFit>
+          {TRIAL_DAYS} jours d’essai gratuit sur l’annuel
+        </Text>
+      </Animated.View>
 
       <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
         {ROWS.map((label, i) => (
@@ -159,7 +178,7 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         <PlanCard
           label="Hebdomadaire"
           price={price(weekly, FALLBACK.weekly)}
-          note="Sans engagement, annule quand tu veux"
+          note="Sans essai gratuit. Sans engagement."
           on={plan === 'weekly'}
           onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
@@ -171,6 +190,8 @@ export function Paywall({ onDone }: { onDone: () => void }) {
           : `${price(weekly, FALLBACK.weekly)} par semaine, renouvelé automatiquement.`}
         {' Annule quand tu veux.'}
       </Text>
+
+      <WinBack visible={winback} onClose={() => setWinback(false)} />
 
       <Pressable onPress={() => { haptics.tap(); void restorePro(); }} style={st.restore}>
         <Text variant="label" tone="tertiary">
@@ -240,6 +261,11 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   sub: { marginTop: space.md },
+  banner: {
+    marginTop: space.xl, height: 46, borderRadius: 23, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
+  },
   list: { marginTop: space.xl, gap: space.md },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   title: { textAlign: 'center' },

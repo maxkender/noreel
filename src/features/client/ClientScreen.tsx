@@ -219,9 +219,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
         au-dessus d'une page claire.
       */}
       <SafeAreaView edges={['top']} style={styles.bar}>
-        <Text variant="label" color={withAlpha(c.mist, 0.5)} style={styles.barText}>
-          {raw ? 'SANS FILTRE' : LABELS[id]}
-        </Text>
+        <View style={styles.barRow}>
+          <Text variant="label" color={withAlpha(c.mist, 0.5)}>
+            {raw ? 'SANS FILTRE' : LABELS[id]}
+          </Text>
+        </View>
       </SafeAreaView>
 
       <WebView
@@ -343,11 +345,15 @@ export function ClientScreen({ id }: { id: ClientId }) {
 const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
   bar: { backgroundColor: c.night },
-  barText: { textAlign: 'center', paddingBottom: 8, paddingTop: 2 },
-  barRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: space.lg, paddingVertical: space.md,
-  },
+  /*
+    Une hauteur de barre de navigation, la meme partout.
+    Le bandeau ne faisait que la hauteur de son texte : la page demarrait
+    donc juste sous l'encoche, et l'en-tete du site — les coeurs d'Instagram,
+    par exemple — se retrouvait a portee du pouce de personne, a demi sous
+    l'ilot dynamique. 44 points, c'est la hauteur qu'iOS donne a ses propres
+    barres, et elle ne depend pas du site affiche.
+  */
+  barRow: { height: 44, alignItems: 'center', justifyContent: 'center' },
   close: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 38, borderRadius: 19, paddingHorizontal: 14,
