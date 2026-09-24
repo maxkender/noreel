@@ -143,7 +143,10 @@ const COMMON = `
   // l'app parait figee — plus moyen d'en sortir.
   const __went = {};
   const __go = (to) => {
-    const from = location.pathname;
+    // La cle inclut la REQUETE : deux fils d'Instagram partagent le meme
+    // chemin et ne different que par ?variant=, et comparer les seuls
+    // chemins empechait la bascule.
+    const from = location.pathname + location.search;
     if (__auth() || from === to || __went[from] === to) return;
     __went[from] = to;
     location.replace(to);
@@ -334,38 +337,63 @@ export const INSTAGRAM_BLOCKER = `
   };
 
   /**
-   * Le carrousel de stories n'a aucun attribut a lui.
+   * Le carrousel de stories, trouve dans le navigateur et non devine.
    *
-   * On part d'un lien /stories/ et on remonte tant que l'ancetre reste une
-   * BANDE : un carrousel fait moins de 260 px de haut, le fil qui le
-   * contient en fait des milliers. Exiger trois liens, comme avant, ratait
-   * le carrousel des qu'il ne restait qu'un ou deux amis a publier.
+   * On le cherchait depuis un lien /stories/ : il n'y en a AUCUN. Instagram
+   * dessine l'anneau colore dans un <canvas> et pose le clic sur un div sans
+   * lien. Cinq tentatives ont echoue sur ce seul point, sans qu'on le sache.
+   *
+   * La bande est le <ul> qui porte au moins trois canvas et reste haute
+   * d'une vignette. Aucun nom de classe, aucune langue : ce qui a ete
+   * verifie tient tant qu'Instagram dessine ses anneaux ainsi.
    */
   const __tray = () => {
-    const a = document.querySelector('a[href^="/stories/"]');
-    if (!a) return null;
-    let best = null;
-    let n = a.parentElement;
-    for (let i = 0; i < 12 && n; i += 1) {
-      if (n.offsetHeight > 0 && n.offsetHeight < 260) best = n;
-      else if (best) break;
-      n = n.parentElement;
+    for (const u of document.querySelectorAll('ul')) {
+      if (u.querySelectorAll('canvas').length < 3) continue;
+      if (u.offsetHeight > 0 && u.offsetHeight < 220) return u;
     }
-    return best;
+    return null;
   };
 
-  let __lastSkip = 0;
-
-  // Le fil « Abonnements » ne se choisit qu'UNE fois par page. Cliquer a
-  // chaque passe rouvrait le menu sous le doigt toutes les 300 ms.
-  let __feed = false;
-  const __following = () => {
-    if (__feed || location.pathname !== '/') return;
-    const sel = '[role="menuitem"], [role="tab"], [role="button"], button';
-    for (const b of document.querySelectorAll(sel)) {
-      const t = (b.textContent || '').trim().toLowerCase();
-      if (/^(abonnements|following)$/.test(t)) { __feed = true; b.click(); return; }
+  /*
+    Ouvrir une story ne passe pas par un lien : le clic est pose sur un
+    div[role="button"] dont le libelle commence par « Story by » ou
+    « Histoire de ». On l'intercepte EN CAPTURE, avant la page.
+  */
+  const STORY = /\\bstor(y|ies)\\b|\\bhistoire/i;
+  const __isStory = (t) => {
+    let n = t;
+    for (let i = 0; i < 8 && n; i += 1) {
+      const lab = n.getAttribute && n.getAttribute('aria-label');
+      if (lab && STORY.test(lab)) return true;
+      n = n.parentElement;
     }
+    return false;
+  };
+  for (const ev of ['pointerdown', 'mousedown', 'click', 'touchstart']) {
+    addEventListener(ev, (e) => {
+      if (!__on('stories')) return;
+      if (!e.target || !__isStory(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    }, true);
+  }
+
+  /**
+   * « Abonnements » s'obtient par l'ADRESSE.
+   *
+   * On cherchait un bouton portant ce mot : il n'existe pas tant que le
+   * menu deroulant est ferme, et une fois ouvert ce n'est qu'un <span> sans
+   * role ni lien — aucun des selecteurs ne pouvait l'atteindre. Mais
+   * choisir l'option pose ?variant=following sur l'adresse, et cette
+   * adresse chargee directement donne le meme fil. Une adresse survit aux
+   * refontes, un nom de classe non : c'est la lecon de TikTok, appliquee.
+   */
+  const __following = () => {
+    if (location.pathname !== '/') return;
+    if (location.search.indexOf('variant=following') >= 0) return;
+    __go('/?variant=following');
   };
 
   __watch(() => {
@@ -433,14 +461,8 @@ export const INSTAGRAM_BLOCKER = `
       if (/[/]saved([/]|$)/.test(location.pathname)) { __go('/'); return; }
     }
 
-    /*
-      Le carrousel de stories ne part qu'avec le fil.
-      « Bloquer les stories » a ete retire : Instagram les ouvre sans lien,
-      par un gestionnaire pose sur un div qu'aucun selecteur ne tient, et
-      cinq tentatives n'en sont pas venues a bout. Un interrupteur qui ne
-      fait rien vaut moins que pas d'interrupteur du tout.
-    */
-    if (__on('feed')) __hide(__tray(), 'feed');
+    if (__on('stories')) __hide(__tray(), 'stories');
+    else if (__on('feed')) __hide(__tray(), 'feed');
     if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
@@ -665,7 +687,7 @@ true;
 
 export const CLIENTS = {
   instagram: {
-    url: 'https://www.instagram.com/',
+    url: 'https://www.instagram.com/?variant=following',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
     blocked: (p: string) => /^\/reels?(\/|$)/.test(p),
