@@ -415,7 +415,19 @@ export const INSTAGRAM_BLOCKER = `
    * adresse chargee directement donne le meme fil. Une adresse survit aux
    * refontes, un nom de classe non : c'est la lecon de TikTok, appliquee.
    */
+  /*
+    Une seule fois, au chargement — jamais pendant la navigation.
+    La methode location.replace provoque un rechargement COMPLET. Appliquee
+    a chaque passe, elle partait des qu'Instagram revenait a « / » par sa
+    navigation interne : toucher le coeur, la loupe ou l'accueil relancait
+    la page entiere, et on ne voyait plus qu'un chargement sans fin. Le
+    point d'entree porte deja ?variant=following ; il suffit de ne pas
+    defaire ce qu'Instagram fait ensuite.
+  */
+  let __feedDone = false;
   const __following = () => {
+    if (__feedDone) return;
+    __feedDone = true;
     if (location.pathname !== '/') return;
     if (location.search.indexOf('variant=following') >= 0) return;
     __go('/?variant=following');
@@ -500,7 +512,13 @@ export const INSTAGRAM_BLOCKER = `
       return;
     }
     if (/^\\/reels?(\\/|$)/.test(location.pathname)) __go('/');
-    if (location.pathname.startsWith('/explore')) __go('/');
+    /*
+      Chercher un compte passe par /explore.
+      Ce chemin etait bloque en dur, verrouille : impossible de chercher qui
+      que ce soit, et rien ne disait pourquoi. Le reglage existe toujours —
+      il est simplement debrayable, et eteint par defaut.
+    */
+    if (__on('explore') && location.pathname.startsWith('/explore')) __go('/');
   });
 })();
 true;
