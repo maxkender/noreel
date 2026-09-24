@@ -4,9 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { Asset } from 'expo-asset';
-import * as MediaLibrary from 'expo-media-library';
-import { ChevronLeft, Copy, Check, Download } from 'lucide-react-native';
+import { ChevronLeft, Copy, Check } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -18,20 +16,6 @@ import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { APPS, LOGOS } from './AppSlider';
 
-/**
- * Les icones a poser sur l'ecran d'accueil.
- *
- * Ce ne sont PAS celles de l'app : celles-ci sont mates et pleines, faites
- * pour se tenir a cote des vraies applications sans jurer. Raccourcis ne
- * sait choisir une icone que dans la photothèque — il faut donc les y
- * enregistrer d'abord, et c'est tout ce que fait le bouton.
- */
-const SHORTCUT_ICONS = {
-  instagram: require('@/assets/shortcuts/instagram.png'),
-  tiktok: require('@/assets/shortcuts/tiktok.png'),
-  twitter: require('@/assets/shortcuts/twitter.png'),
-  youtube: require('@/assets/shortcuts/youtube.png'),
-} as const;
 
 /**
  * iOS n'autorise aucune app a poser une icone sur l'ecran d'accueil. Le
@@ -44,34 +28,13 @@ export function Widgets() {
   const st = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const saveIcons = async () => {
-    haptics.press();
-    setSaving(true);
-    try {
-      const { granted } = await MediaLibrary.requestPermissionsAsync(true);
-      if (!granted) { setSaving(false); return; }
-      for (const a of APPS) {
-        const asset = Asset.fromModule(SHORTCUT_ICONS[a.id]);
-        await asset.downloadAsync();
-        if (asset.localUri) await MediaLibrary.saveToLibraryAsync(asset.localUri);
-      }
-      haptics.success();
-      setSaved(true);
-    } catch {
-      // Refus ou photothèque indisponible : on ne bloque pas l'ecran pour ca.
-    }
-    setSaving(false);
-  };
 
   const copy = async (id: string) => {
     const link = `unswipe://client/${id}`;
     await Clipboard.setStringAsync(link);
     haptics.success();
     setCopied(id);
-    setTimeout(() => setCopied((c) => (c === id ? null : c)), 2200);
+    setTimeout(() => setCopied((k) => (k === id ? null : k)), 2200);
   };
 
   return (
@@ -112,32 +75,6 @@ export function Widgets() {
             ))}
           </View>
 
-          <Text variant="label" tone="tertiary" style={{ marginTop: space.xl }}>ICÔNES</Text>
-          <Glass radius={22} intensity={45} warmEdge="none" style={st.icons}>
-            <View style={st.iconRow}>
-              {APPS.map((a) => (
-                <Image
-                  key={a.id}
-                  source={SHORTCUT_ICONS[a.id]}
-                  style={st.shortcutIcon}
-                  contentFit="contain"
-                />
-              ))}
-            </View>
-            <Text variant="body" tone="secondary" style={st.iconsBody}>
-              Raccourcis ne sait choisir une icône que dans tes photos. On les
-              y dépose, tu les retrouves à l’étape « Choisis le nom et l’icône ».
-            </Text>
-            <Pressable style={st.save} onPress={() => { void saveIcons(); }} disabled={saving}>
-              {saved
-                ? <Check size={16} strokeWidth={2.4} color={c.accent} />
-                : <Download size={16} strokeWidth={2} color={c.accent} />}
-              <Text variant="label" color={c.accent}>
-                {saved ? 'Enregistrées dans tes photos' : saving ? 'Un instant…' : 'Enregistrer les icônes'}
-              </Text>
-            </Pressable>
-          </Glass>
-
           {Platform.OS === 'ios' && (
             <Pressable
               style={st.open}
@@ -175,16 +112,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   back: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xxl },
   steps: { padding: space.lg, marginTop: space.xl, gap: space.md },
-  icons: { padding: space.lg, marginTop: space.sm, gap: space.md },
-  iconRow: { flexDirection: 'row', justifyContent: 'center', gap: space.md },
-  shortcutIcon: { width: 56, height: 56, borderRadius: 13 },
-  iconsBody: { lineHeight: 20 },
-  save: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm,
-    paddingVertical: space.md, borderRadius: 14,
-    backgroundColor: withAlpha(c.accent, 0.12),
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.35),
-  },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: {
     width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center',

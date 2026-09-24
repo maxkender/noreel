@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -53,6 +53,18 @@ const ROWS = [
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
 // est un piege, et l'App Store le refuse.
 const EXIT_AFTER = 7000;
+
+/*
+ * Les deux liens qu'Apple exige sur un ecran d'abonnement (3.1.2).
+ *
+ * La confidentialite pointe sur la page du studio. Les conditions pointent
+ * sur l'EULA STANDARD d'Apple : la page du studio annonce des conditions
+ * qu'elle ne contient pas, et un lien qui promet un texte absent vaut moins
+ * que pas de lien — c'est justement ce que le relecteur ouvre. L'EULA
+ * standard est la solution prevue par Apple quand on n'a pas la sienne.
+ */
+const PRIVACY = 'https://vikstudios.com/unswipe';
+const TERMS = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 /**
  * Le paywall.
@@ -198,6 +210,16 @@ export function Paywall({ onDone }: { onDone: () => void }) {
         {' Annule quand tu veux.'}
       </Text>
 
+      <View style={st.legal}>
+        <Pressable onPress={() => { haptics.tap(); void Linking.openURL(TERMS); }} hitSlop={8}>
+          <Text variant="label" tone="tertiary">Conditions d’utilisation</Text>
+        </Pressable>
+        <Text variant="label" tone="tertiary">·</Text>
+        <Pressable onPress={() => { haptics.tap(); void Linking.openURL(PRIVACY); }} hitSlop={8}>
+          <Text variant="label" tone="tertiary">Confidentialité</Text>
+        </Pressable>
+      </View>
+
       <WinBack visible={winback} onClose={() => setWinback(false)} />
 
       <Pressable onPress={() => { haptics.tap(); void restorePro(); }} style={st.restore}>
@@ -297,5 +319,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: c.accent,
   },
   terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
+  legal: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: space.sm, marginTop: space.md,
+  },
   restore: { alignSelf: 'center', marginTop: space.sm, paddingVertical: space.sm },
 });
