@@ -57,14 +57,17 @@ const EXIT_AFTER = 7000;
 /*
  * Les deux liens qu'Apple exige sur un ecran d'abonnement (3.1.2).
  *
- * La confidentialite pointe sur la page du studio. Les conditions pointent
- * sur l'EULA STANDARD d'Apple : la page du studio annonce des conditions
- * qu'elle ne contient pas, et un lien qui promet un texte absent vaut moins
- * que pas de lien — c'est justement ce que le relecteur ouvre. L'EULA
- * standard est la solution prevue par Apple quand on n'a pas la sienne.
+ * Les deux textes vivent sur la meme page du studio, en deux onglets. Une
+ * premiere lecture automatique n'avait vu que l'onglet ouvert par defaut et
+ * m'avait fait croire les conditions absentes : elles sont bien la, verifie
+ * en ouvrant le second onglet. On pointe donc sur les conditions DU STUDIO
+ * plutot que sur l'EULA standard d'Apple.
+ *
+ * La page n'a qu'une adresse pour les deux onglets ; le libelle du lien dit
+ * lequel chercher.
  */
 const PRIVACY = 'https://vikstudios.com/unswipe';
-const TERMS = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const TERMS = 'https://vikstudios.com/unswipe';
 
 /**
  * Le paywall.
