@@ -72,3 +72,18 @@ describe('la feuille de style ne fige que le verrouille', () => {
     }
   }
 });
+
+/**
+ * Le client YouTube ouvre m.youtube.com, dont les composants s'appellent
+ * « ytm- ». Les selecteurs « ytd- » sont ceux du site de BUREAU : ils
+ * n'echouent pas, ils ne trouvent rien, en silence. La moitie des reglages
+ * YouTube a semble morte pour cette seule raison.
+ */
+it('le bloqueur YouTube ne vise pas le site de bureau', () => {
+  expect(CLIENTS.youtube.url).toContain('m.youtube.com');
+  // Les commentaires ont le droit d'en parler ; le code, non.
+  const code = CLIENTS.youtube.script
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*/g, '');
+  expect(code).not.toContain('ytd-');
+});

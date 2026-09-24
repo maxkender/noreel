@@ -520,13 +520,21 @@ export const YOUTUBE_BLOCKER = `
   'use strict';
   ${COMMON}
 
+  /*
+    On vise m.youtube.com, donc des elements « ytm- ».
+    La moitie des selecteurs d'avant etaient ceux du YouTube DE BUREAU —
+    ytd-*, #comments, #related — qui ne correspondent a rien ici. Ils
+    n'echouaient pas : ils ne trouvaient rien, en silence. D'ou des reglages
+    qui semblaient morts sans l'etre.
+
+    Plutot que de courir apres des noms qui changent a chaque deploiement,
+    on remonte a l'UNITE qui porte l'element : chez YouTube, tout bloc est
+    un composant sur mesure, donc une balise a trait d'union. On garde ce
+    qu'on trouve par le texte, qui, lui, survit aux renommages.
+  */
   const css = \`
-    ytd-reel-shelf-renderer,
-    ytd-rich-shelf-renderer[is-shorts],
-    ytd-reel-item-renderer,
     ytm-reel-shelf-renderer,
-    ytm-shorts-lockup-view-model,
-    ytd-guide-entry-renderer a[title="Shorts"],
+    ytm-shorts-lockup-view-model, shorts-lockup-view-model,
     ytm-pivot-bar-item-renderer[tab-identifier="FEshorts"],
     a[href^="/shorts"], a[href*="/shorts/"] { display: none !important; }
   \`;
@@ -534,52 +542,82 @@ export const YOUTUBE_BLOCKER = `
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
 
+  /** Le composant qui porte ce noeud, sans jamais avaler la page entiere. */
+  const __unit = (n) => {
+    let el = n;
+    for (let i = 0; i < 8 && el && el.parentElement; i += 1) {
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag.indexOf('-') > 0 && el.offsetHeight < innerHeight * 0.8) return el;
+      el = el.parentElement;
+    }
+    return null;
+  };
+
+  /** Les noeuds de texte dont le contenu entier correspond. */
+  const __labelled = (re, fn) => {
+    document.querySelectorAll('span, h2, h3, div[role="heading"], a').forEach((n) => {
+      if (n.children.length) return;
+      const t = (n.textContent || '').trim();
+      if (t && t.length < 40 && re.test(t)) fn(n);
+    });
+  };
+
+  const SHORTS = /^shorts$/i;
+  const COMMENTS = /^(commentaires|comments)$/i;
+  const NEXT = /^(a suivre|à suivre|up next|suggestions|autres vid)/i;
+  const AD = /^(sponsoris|sponsored|publicit|annonce)/i;
+
   __watch(() => {
     __restore();
     __scheme();
     __gray();
     __cookies();
     __native();
-    document.querySelectorAll('a[href^="/shorts"]').forEach((a) => {
-      __hide(a.closest('ytd-rich-item-renderer, ytd-video-renderer, ytm-shorts-lockup-view-model') || a);
+
+    // Les Shorts, par leur adresse ET par leur intitule : l'etagere, la
+    // vignette et l'onglet du bas portent le meme mot.
+    document.querySelectorAll('a[href^="/shorts"], a[href*="/shorts/"]').forEach((a) => {
+      __hide(__unit(a) || a);
     });
+    __labelled(SHORTS, (n) => __hide(__unit(n) || n));
+
     if (__on('comments')) {
-      document.querySelectorAll('#comments, ytm-comments-entry-point-header-renderer')
+      document.querySelectorAll('ytm-comments-entry-point-header-renderer, #comments')
         .forEach((el) => __hide(el, 'comments'));
+      __labelled(COMMENTS, (n) => __hide(__unit(n) || n, 'comments'));
     }
+
     if (__on('recommended')) {
-      document.querySelectorAll('#related, ytm-item-section-renderer[section-identifier="related-items"]')
-        .forEach((el) => __hide(el, 'recommended'));
+      document.querySelectorAll(
+        'ytm-item-section-renderer[section-identifier="related-items"], #related'
+      ).forEach((el) => __hide(el, 'recommended'));
+      __labelled(NEXT, (n) => __hide(__unit(n) || n, 'recommended'));
     }
 
     /*
       « Recherche uniquement » : la barre reste, le fil disparait. On ne
       redirige pas — rediriger enverrait sur une page de resultats vide, et
-      YouTube sans champ de recherche n'a plus d'usage du tout. On retire
-      les grilles de vignettes, la ou elles sont, et seul ce qu'on est venu
-      chercher s'affiche.
+      YouTube sans champ de recherche n'a plus d'usage du tout.
     */
     if (__on('searchOnly')
         && !/^[/](results|watch|channel|@|playlist)/.test(location.pathname)) {
-      document.querySelectorAll(
-        'ytd-rich-grid-renderer, ytm-rich-grid-renderer,'
-        + ' ytd-browse[role="main"] #contents, ytm-browse,'
-        + ' ytd-two-column-browse-results-renderer'
-      ).forEach((el) => __hide(el, 'searchOnly'));
+      document.querySelectorAll('ytm-rich-grid-renderer, ytm-section-list-renderer')
+        .forEach((el) => __hide(el, 'searchOnly'));
     }
 
     if (__on('ads')) {
       document.querySelectorAll(
-        'ytd-ad-slot-renderer, ytm-companion-slot, ytd-promoted-sparkles-web-renderer,'
-        + ' ytd-display-ad-renderer, ytm-promoted-video-renderer, .ytp-ad-module,'
-        + ' ad-slot-renderer, ytd-in-feed-ad-layout-renderer'
+        'ytm-companion-slot, ytm-promoted-video-renderer, .ytp-ad-module,'
+        + ' ad-slot-renderer, ytm-promoted-sparkles-web-renderer'
       ).forEach((el) => __hide(el, 'ads'));
+      __labelled(AD, (n) => __hide(__unit(n) || n, 'ads'));
       // Passer la publicite quand YouTube veut bien le permettre.
       const skip = document.querySelector(
         '.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button'
       );
       if (skip) skip.click();
     }
+
     if (__on('home') && (location.pathname === '/' || location.pathname === '/feed/trending')) {
       __go('/feed/subscriptions');
     }
