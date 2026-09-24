@@ -357,6 +357,21 @@ export const INSTAGRAM_BLOCKER = `
   let __lastSkip = 0;
 
   /*
+    Ce que le script VOIT, renvoye a l'app.
+    Bloquer les stories a echoue cinq fois d'affilee, et a chaque fois on a
+    corrige a l'aveugle : on ne savait ni si le reglage arrivait, ni si le
+    carrousel etait trouve, ni combien de vignettes existaient. Un echec
+    muet ne se repare pas, il se devine — et deviner a coute cinq essais.
+  */
+  let __last = '';
+  const __report = (o) => {
+    const k = JSON.stringify(o);
+    if (k === __last) return;      // on ne repete pas le meme etat
+    __last = k;
+    __post({ t: 'stories', ...o });
+  };
+
+  /*
     Un clic sur une story ne part pas.
     Masquer ne suffisait pas : Instagram ouvre ses stories sans lien, par un
     gestionnaire pose sur un <div>. On ne pouvait donc rien cacher qui les
@@ -475,12 +490,16 @@ export const INSTAGRAM_BLOCKER = `
       une story survit a l'ecran, elle ne s'ouvre pas.
     */
     if (__on('stories')) {
-      __hide(__tray(), 'stories');
-      document.querySelectorAll('a[href^="/stories/"]').forEach((a) => {
-        __hide(a.closest('li') || a, 'stories');
-      });
+      const tray = __tray();
+      __hide(tray, 'stories');
+      const links = document.querySelectorAll('a[href^="/stories/"]');
+      links.forEach((a) => { __hide(a.closest('li') || a, 'stories'); });
+      __report({ on: true, tray: !!tray, links: links.length });
       if (location.pathname.startsWith('/stories/')) { __go('/'); return; }
-    } else if (__on('feed')) {
+    } else {
+      __report({ on: false, tray: false, links: 0 });
+    }
+    if (!__on('stories') && __on('feed')) {
       __hide(__tray(), 'feed');
     }
     if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));

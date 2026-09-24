@@ -56,8 +56,14 @@ const ACCOUNT: Record<ClientId, { add: string; out: string; note?: string }> = {
  * cacher. Il n'y a donc plus rien a recharger.
  */
 export function ClientSettings({
-  id, visible, onClose, onGo,
-}: { id: ClientId; visible: boolean; onClose: () => void; onGo: (url: string) => void }) {
+  id, visible, onClose, onGo, diag,
+}: {
+  id: ClientId;
+  visible: boolean;
+  onClose: () => void;
+  onGo: (url: string) => void;
+  diag?: string | null;
+}) {
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
@@ -99,6 +105,13 @@ export function ClientSettings({
             <Text variant="label" tone="tertiary" style={st.note}>
               Les changements s’appliquent tout de suite.
             </Text>
+
+            {/* Ce que le filtre voit vraiment dans la page. */}
+            {id === 'instagram' && diag && (
+              <Text variant="label" tone="tertiary" style={st.note}>
+                Stories : {diag}
+              </Text>
+            )}
 
             <Text variant="label" tone="tertiary" style={st.section}>COMPTE</Text>
 
