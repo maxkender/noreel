@@ -14,6 +14,8 @@ type State = {
    * Distinct de `strictMode`, qui ne fait qu'afficher un mur sur un reel.
    */
   hardMode: boolean;
+  /** L'offre de rattrapage a deja ete montree. Elle ne revient pas. */
+  winbackSeen: boolean;
   /**
    * Le blocage VOULU par l'utilisateur, garde sur le disque.
    *
@@ -39,6 +41,7 @@ export const useSettings = create<State>()(
       goalMinutes: 120,
       strictMode: false,
       hardMode: false,
+      winbackSeen: false,
       blocking: false,
       selection: null,
       appleUser: null,
@@ -65,8 +68,8 @@ export const useSettings = create<State>()(
         if (from < 2) return { ...s, theme: 'dark' as ThemeName };
         return s;
       },
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, blocking, selection, appleUser, theme }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, blocking, selection, appleUser, theme }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

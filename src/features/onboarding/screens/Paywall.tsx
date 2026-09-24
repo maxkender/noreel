@@ -13,7 +13,7 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering } from '@/services/purchases';
-import { WinBack } from './WinBack';
+import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
@@ -69,7 +69,6 @@ export function Paywall({ onDone }: { onDone: () => void }) {
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(false);
   const [winback, setWinback] = useState(false);
-  const [offered, setOffered] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setCanExit(true), EXIT_AFTER);
@@ -101,10 +100,18 @@ export function Paywall({ onDone }: { onDone: () => void }) {
     const r = await buy(chosen);
     setBusy(false);
     if (r === 'bought') { setPro(true); onDone(); return; }
-    // Renoncement : on propose l'offre de rattrapage, une fois. Refermer la
-    // feuille d'Apple est le moment ou le prix vient d'etre juge trop cher —
-    // c'est la, ou nulle part.
-    if (r === 'cancelled') { if (!offered) { setOffered(true); setWinback(true); } return; }
+    /*
+      Renoncement : l'offre de rattrapage, UNE fois dans la vie de l'app.
+      Refermer la feuille d'Apple est le moment ou le prix vient d'etre juge
+      trop cher — c'est la, ou nulle part. Le fait de l'avoir montree est
+      garde sur le disque et non dans l'etat de l'ecran : sinon elle
+      revenait a chaque reouverture du paywall, et une remise qu'on peut
+      faire revenir apprend surtout a attendre le rabais.
+    */
+    if (r === 'cancelled') {
+      if (!winbackSeen()) { markWinbackSeen(); setWinback(true); }
+      return;
+    }
     onDone();                        // un echec ne doit pas l'enfermer ici
   };
 
