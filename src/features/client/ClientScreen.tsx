@@ -238,12 +238,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
             if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
               setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
             }
-            // Un format court reconnu a sa forme : la page est deja repartie
-            // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
-            if (m && m.t === 'short') {
-              setWall(true);
-              setTimeout(() => setWall(false), 2000);
-            }
           } catch {
             /* message qui ne vient pas de nous */
           }

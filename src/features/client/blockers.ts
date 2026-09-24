@@ -224,27 +224,6 @@ const COMMON = `
    * verticale du fil s'arrete a 4:5, soit 0,80. Entre les deux, 0,65.
    */
   const SHORT = 0.65;
-  let __left = 0;
-  let __exits = 0;
-  const __escape = () => {
-    if (__auth()) return;
-    /*
-      Trois sorties au plus, puis plus jamais.
-      Le frein d'une seconde et demie ne bornait que la CADENCE, pas le
-      nombre : une detection qui se trompe repartait indefiniment, et comme
-      chaque retour interrompt le chargement en cours, la page tournait sans
-      jamais finir. Un plafond garantit qu'aucune heuristique, meme fausse,
-      ne peut rendre l'app inutilisable.
-    */
-    if (__exits >= 3) return;
-    const now = Date.now();
-    if (now - __left < 1500) return;
-    __left = now;
-    __exits += 1;
-    __post({ t: 'short' });
-    if (history.length > 1) history.back();
-    else location.replace('/');
-  };
   const __tall = (v) => {
     const w = v.videoWidth;
     const h = v.videoHeight;
@@ -254,31 +233,43 @@ const COMMON = `
     try { v.pause(); v.muted = true; v.removeAttribute('autoplay'); } catch (e) { /* tant pis */ }
   };
 
+  /** Le bloc qui porte une video plein ecran : sa « diapositive ». */
+  const __slide = (v) => {
+    let el = v;
+    for (let i = 0; i < 8 && el && el.parentElement; i += 1) {
+      if (el.offsetHeight > innerHeight * 0.6) return el;
+      el = el.parentElement;
+    }
+    return null;
+  };
+
   /**
-   * On ne sort que devant un LECTEUR PLEIN ECRAN, jamais depuis le fil.
+   * On REGARDE le reel qu'un ami a envoye. On ne peut pas enchainer.
    *
-   * La barre etait placee trop bas : « une video verticale occupant plus de
-   * la moitie de la hauteur ». Or un reel du fil remplit facilement la
-   * moitie de l'ecran, et le fil en contient plusieurs. Faire defiler
-   * Instagram declenchait donc un history.back() toutes les secondes et
-   * demie — la page se rechargeait sans fin et le mur « Bloque » clignotait.
+   * Sortir du lecteur etait une erreur : un reel qu'on vous envoie fait
+   * partie de la conversation, et le couper casse l'echange. Ce qui happe,
+   * ce n'est pas cette video-la — c'est la SUIVANTE, tenue en reserve pour
+   * que le pouce l'enchaine sans y penser. C'est elle qu'on retire.
    *
-   * Un lecteur plein ecran, lui, couvre 85 % de la hauteur ET commence tout
-   * en haut. Une publication du fil ne peut pas : son en-tete et sa barre
-   * d'actions prennent la place. Les reels du fil, eux, sont deja retires
-   * par les regles du DOM — cette sortie-ci ne sert qu'au lecteur qui
-   * s'ouvre PAR-DESSUS une conversation.
+   * Celle qu'on regarde est reconnaissable : elle couvre 85 % de la hauteur
+   * et commence tout en haut. Les autres videos verticales presentes sont,
+   * par construction, celles d'apres. On les arrete et on retire leur
+   * diapositive : il n'y a plus rien sous le doigt.
    */
   const __shorts = () => {
     const tall = Array.from(document.querySelectorAll('video')).filter(__tall);
     if (tall.length < 2) return;
-    const big = tall.filter((v) => {
+    const current = tall.find((v) => {
       const r = v.getBoundingClientRect();
       return r.height > innerHeight * 0.85 && r.top < innerHeight * 0.15;
     });
-    if (!big.length) return;
-    tall.forEach(__stop);
-    __escape();
+    if (!current) return;
+    for (const v of tall) {
+      if (v === current) continue;
+      __stop(v);
+      const slide = __slide(v);
+      if (slide) __hide(slide);
+    }
   };
   // La passe de 300 ms arrive trop tard : la video a deja commence. On
   // ecoute donc la lecture elle-meme, en capture, avant la page.
