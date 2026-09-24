@@ -87,3 +87,4 @@ it('le bloqueur YouTube ne vise pas le site de bureau', () => {
     .replace(/\/\/.*/g, '');
   expect(code).not.toContain('ytd-');
 });
+

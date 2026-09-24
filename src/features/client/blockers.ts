@@ -511,12 +511,22 @@ export const YOUTUBE_BLOCKER = `
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
 
-  /** Le composant qui porte ce noeud, sans jamais avaler la page entiere. */
+  /**
+   * Le composant qui porte ce noeud, sans jamais avaler la page entiere.
+   *
+   * La hauteur doit etre REELLE. Sans cette condition, la remontee
+   * s'arretait au premier composant venu, y compris ceux de hauteur zero —
+   * et YouTube en empile plusieurs autour de chaque titre. « Bloquer les
+   * commentaires » masquait donc un titre invisible pendant que le bloc
+   * restait a l'ecran. Verifie sur une vraie page de lecture.
+   */
   const __unit = (n) => {
     let el = n;
-    for (let i = 0; i < 8 && el && el.parentElement; i += 1) {
+    for (let i = 0; i < 10 && el && el.parentElement; i += 1) {
       const tag = (el.tagName || '').toLowerCase();
-      if (tag.indexOf('-') > 0 && el.offsetHeight < innerHeight * 0.8) return el;
+      if (tag.indexOf('-') > 0 && el.offsetHeight > 0 && el.offsetHeight < innerHeight * 0.8) {
+        return el;
+      }
       el = el.parentElement;
     }
     return null;
@@ -551,8 +561,12 @@ export const YOUTUBE_BLOCKER = `
     __labelled(SHORTS, (n) => __hide(__unit(n) || n));
 
     if (__on('comments')) {
-      document.querySelectorAll('ytm-comments-entry-point-header-renderer, #comments')
-        .forEach((el) => __hide(el, 'comments'));
+      // Le nom « comments-entry-point-teaser-view-model » est l'actuel, verifie
+      // sur une page de lecture ; l'ancien ne correspond plus a rien.
+      document.querySelectorAll(
+        'comments-entry-point-teaser-view-model,'
+        + ' ytm-comments-entry-point-header-renderer, #comments'
+      ).forEach((el) => __hide(el, 'comments'));
       __labelled(COMMENTS, (n) => __hide(__unit(n) || n, 'comments'));
     }
 
