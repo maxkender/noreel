@@ -295,7 +295,15 @@ export const INSTAGRAM_BLOCKER = `
   // regenere a chaque deploiement, un selecteur de classe ne tient pas une
   // semaine.
   const SUGGEST = /suggestions? pour vous|suggested for you|publications sugg|suggested posts?|suggestions? pour toi/i;
-  const AD = /^sponsoris|^sponsored|^publicit|paid partnership|partenariat r|en savoir plus sur cette/i;
+  /*
+    « Ad », en deux lettres.
+    Vu dans le navigateur sur un fil reel : Instagram etiquette ses
+    publications sponsorisees « Ad » en anglais, pas « Sponsored ». La regex
+    ne reconnaissait que le mot long, et laissait donc passer les publicites
+    de tout un compte en anglais. Les deux formes courtes sont ANCREES aux
+    deux bouts : sans le $, « Ad » attraperait « Adrien » et « Adidas ».
+  */
+  const AD = /^sponsoris|^sponsored|^publicit|^ad$|^annonce$|paid partnership|partenariat r|en savoir plus sur cette/i;
   // La signature d'un reel dans le fil : le format court ne s'annonce pas
   // autrement une fois les classes obfusquees.
   const REEL = /\\breels?\\b|son original|original audio|audio original/i;

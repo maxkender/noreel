@@ -14,3 +14,21 @@ it('les ancres de mot survivent au gabarit', () => {
   expect(re.test('Histoire de Léa')).toBe(true);
   expect(re.test('History of France')).toBe(false);
 });
+
+/**
+ * Instagram etiquette ses publications sponsorisees « Ad » en anglais, pas
+ * « Sponsored ». Vu sur un fil reel : la regex ne reconnaissait que le mot
+ * long et laissait passer toutes les publicites d'un compte en anglais.
+ */
+it('l’étiquette publicitaire reconnaît les formes courtes', () => {
+  const m = CLIENTS.instagram.script.match(/const AD = (\/.*?\/i);/);
+  expect(m).toBeTruthy();
+  const re = eval(m![1]) as RegExp;
+  for (const oui of ['Ad', 'Sponsored', 'Sponsorisé', 'Annonce', 'Publicité']) {
+    expect(re.test(oui)).toBe(true);
+  }
+  // Et surtout, ce qu'elle ne doit PAS prendre : un prenom, une marque.
+  for (const non of ['Adrien', 'Adidas', 'Adam', 'Addition']) {
+    expect(re.test(non)).toBe(false);
+  }
+});
