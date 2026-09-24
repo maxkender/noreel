@@ -16,6 +16,7 @@ import { formatHours } from '@/lib/format';
 import { useSettings } from '@/store/settings';
 import { Toggle } from './parts';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
+import { Sources } from './Sources';
 import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
@@ -35,6 +36,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const s = useSettings();
   const [cleared, setCleared] = useState(false);
   const [feedback, setFeedback] = useState(false);
+  const [sources, setSources] = useState(false);
   const [auth, setAuth] = useState<AuthState>('notDetermined');
 
   useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
@@ -157,6 +159,11 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               }}
             />
             <Line
+              label="Sources médicales"
+              sub="D’où viennent les chiffres sur le cerveau, et leurs limites."
+              onPress={() => setSources(true)}
+            />
+            <Line
               label="Confidentialité"
               sub="Rien ne quitte ton téléphone. Aucun compte, aucun serveur."
             />
@@ -190,6 +197,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
       </Pressable>
 
       <Feedback visible={feedback} onClose={() => setFeedback(false)} />
+      <Sources visible={sources} onClose={() => setSources(false)} />
     </Modal>
   );
 }

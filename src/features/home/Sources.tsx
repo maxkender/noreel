@@ -11,16 +11,36 @@ import { LIFE_YEARS, WAKING_HOURS } from '@/features/onboarding/calculations';
 
 const REFS = [
   {
-    t: 'Amour et circuit de la récompense',
-    a: 'Fisher, Aron & Brown — Journal of Comparative Neurology, 2005',
-    d: 'L’amour naissant active l’aire tegmentale ventrale et le noyau caudé, les régions dopaminergiques de la récompense.',
+    t: 'Tomber amoureux passe par le circuit de la récompense',
+    a: 'Fisher, Aron & Brown — Journal of Comparative Neurology, 2005, 493(1), 58-62',
+    d: 'L’imagerie de l’amour naissant montre une activation de l’aire tegmentale ventrale et du noyau caudé, les régions dopaminergiques de la récompense — les mêmes que sollicite une gratification immédiate répétée.',
   },
   {
-    t: 'Récompense et désensibilisation',
-    a: 'Volkow et coll. — travaux sur les récepteurs D2',
-    d: 'Une stimulation répétée du circuit de la récompense s’accompagne d’une réponse émoussée aux plaisirs ordinaires.',
+    t: 'Les récepteurs s’émoussent sous stimulation répétée',
+    a: 'Volkow, Fowler, Wang, Swanson & Telang — Archives of Neurology, 2007, 64(11), 1575-1579',
+    d: 'Une stimulation intense et répétée du circuit de la récompense s’accompagne d’une disponibilité réduite des récepteurs D2, et d’une réponse émoussée aux plaisirs ordinaires.',
+  },
+  {
+    t: 'Le même mécanisme, imagé',
+    a: 'Volkow et coll. — Neuropharmacology, 2009, 56 (suppl. 1), 3-8',
+    d: 'Revue des travaux d’imagerie sur le rôle de la dopamine dans la perte de contrôle et la recherche compulsive de récompense.',
   },
 ];
+
+/*
+ * Ce que ces travaux disent — et ce qu'ils ne disent pas.
+ *
+ * Ils portent sur la dependance et sur des stimulations intenses, pas sur
+ * les videos courtes. Le rapprochement que fait cette app est une
+ * INFERENCE, pas un resultat demontre. Une app qui parle du cerveau de
+ * quelqu'un lui doit cette distinction : sans elle, on emprunte l'autorite
+ * d'une science sans en accepter les limites.
+ */
+const CAVEAT = 'Ces travaux portent sur la dépendance et sur des '
+  + 'stimulations intenses, pas sur les vidéos courtes. Le rapprochement '
+  + 'que fait UnSwipe est une inférence raisonnable, pas un résultat '
+  + 'démontré. Les durées affichées sont des estimations calculées à partir '
+  + 'de ce que tu as déclaré.';
 
 /**
  * Sources et methode.
@@ -65,8 +85,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
             ))}
 
             <Text variant="label" tone="tertiary" style={[st.group, { lineHeight: 17 }]}>
-              Ces travaux décrivent le circuit de la récompense. Le lien avec le
-              scroll est une conséquence qu’on en tire, pas leur conclusion.
+              {CAVEAT}
             </Text>
           </ScrollView>
         </Animated.View>
