@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
-  Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, View,
+  Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette, type ThemeName } from '@/theme/useColors';
@@ -159,8 +160,17 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               label="Confidentialité"
               sub="Rien ne quitte ton téléphone. Aucun compte, aucun serveur."
             />
+            {/*
+              Le NUMERO DE BUILD, pas seulement la version.
+              Sans lui, impossible de savoir quelle version tourne : on a
+              cherche un bug de verrouillage pendant un moment avant de
+              comprendre que le telephone etait reste sur un build anterieur.
+              TestFlight ne met pas a jour tout seul.
+            */}
             <Line label="Version" right={
-              <Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>
+              <Text variant="body" tone="secondary">
+                1.0.0 ({Constants.nativeBuildVersion ?? '—'})
+              </Text>
             } />
             <Line
               label={cleared ? 'Données effacées' : 'Effacer mes données'}

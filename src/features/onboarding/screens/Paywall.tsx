@@ -52,7 +52,7 @@ const ROWS = [
 // La croix n'apparait qu'apres cinq secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
 // est un piege, et l'App Store le refuse.
-const EXIT_AFTER = 6500;
+const EXIT_AFTER = 7000;
 
 /**
  * Le paywall.
