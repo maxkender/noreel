@@ -35,17 +35,17 @@ export function Stars({ count = 44 }: { count?: number }) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {seeds.map((s) => (
-        <Star key={s.i} {...s} w={width} h={height} dot={c.mist} glow={c.accent} />
+        <Star key={s.i} {...s} w={width} h={height} dot={c.mist} />
       ))}
     </View>
   );
 }
 
 function Star({
-  x, y, size, delay, drift, w, h, dot, glow,
+  x, y, size, delay, drift, w, h, dot,
 }: {
   x: number; y: number; size: number; delay: number; drift: number;
-  w: number; h: number; dot: string; glow: string;
+  w: number; h: number; dot: string;
 }) {
   const t = useSharedValue(0);
 
@@ -80,10 +80,6 @@ function Star({
           height: size,
           borderRadius: size / 2,
           backgroundColor: dot,
-          shadowColor: glow,
-          shadowOpacity: 0.9,
-          shadowRadius: size * 2.6,
-          shadowOffset: { width: 0, height: 0 },
         },
         style,
       ]}

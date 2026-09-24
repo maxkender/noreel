@@ -225,13 +225,22 @@ const COMMON = `
    */
   const SHORT = 0.65;
   let __left = 0;
+  let __exits = 0;
   const __escape = () => {
     if (__auth()) return;
+    /*
+      Trois sorties au plus, puis plus jamais.
+      Le frein d'une seconde et demie ne bornait que la CADENCE, pas le
+      nombre : une detection qui se trompe repartait indefiniment, et comme
+      chaque retour interrompt le chargement en cours, la page tournait sans
+      jamais finir. Un plafond garantit qu'aucune heuristique, meme fausse,
+      ne peut rendre l'app inutilisable.
+    */
+    if (__exits >= 3) return;
     const now = Date.now();
-    // Un seul depart par seconde et demie : la page se reconstruit apres le
-    // retour, et sans ce frein on repartirait en arriere sans fin.
     if (now - __left < 1500) return;
     __left = now;
+    __exits += 1;
     __post({ t: 'short' });
     if (history.length > 1) history.back();
     else location.replace('/');
@@ -246,19 +255,27 @@ const COMMON = `
   };
 
   /**
-   * On ne sort que devant un DEFILEMENT, jamais devant une seule video.
+   * On ne sort que devant un LECTEUR PLEIN ECRAN, jamais depuis le fil.
    *
-   * Une video verticale qui occupe l'ecran ne suffit pas : ce peut etre
-   * celle qu'un ami a tournee et envoyee en message, et la couper serait
-   * casser la conversation. Le lecteur de format court, lui, tient toujours
-   * la SUIVANTE en reserve pour que le doigt l'enchaine sans attendre :
-   * deux videos verticales en memoire, dont une plein ecran, c'est le fil
-   * infini et rien d'autre.
+   * La barre etait placee trop bas : « une video verticale occupant plus de
+   * la moitie de la hauteur ». Or un reel du fil remplit facilement la
+   * moitie de l'ecran, et le fil en contient plusieurs. Faire defiler
+   * Instagram declenchait donc un history.back() toutes les secondes et
+   * demie — la page se rechargeait sans fin et le mur « Bloque » clignotait.
+   *
+   * Un lecteur plein ecran, lui, couvre 85 % de la hauteur ET commence tout
+   * en haut. Une publication du fil ne peut pas : son en-tete et sa barre
+   * d'actions prennent la place. Les reels du fil, eux, sont deja retires
+   * par les regles du DOM — cette sortie-ci ne sert qu'au lecteur qui
+   * s'ouvre PAR-DESSUS une conversation.
    */
   const __shorts = () => {
     const tall = Array.from(document.querySelectorAll('video')).filter(__tall);
     if (tall.length < 2) return;
-    const big = tall.filter((v) => v.getBoundingClientRect().height > innerHeight * 0.5);
+    const big = tall.filter((v) => {
+      const r = v.getBoundingClientRect();
+      return r.height > innerHeight * 0.85 && r.top < innerHeight * 0.15;
+    });
     if (!big.length) return;
     tall.forEach(__stop);
     __escape();
@@ -412,9 +429,14 @@ export const INSTAGRAM_BLOCKER = `
     __native();
     __following();
 
-    // Les stories sont du 9:16 elles aussi : sans cette reserve, les
-    // regarder aurait renvoye dehors comme un reel.
-    window.__nrShorts = !location.pathname.startsWith('/stories/');
+    /*
+      Ni sur les stories, ni sur le fil.
+      Les stories sont du 9:16 elles aussi. Et le fil contient des reels que
+      les regles du DOM retirent deja : y laisser cette sortie-la revenait a
+      faire reculer la page pendant qu'on faisait simplement defiler.
+    */
+    window.__nrShorts = !location.pathname.startsWith('/stories/')
+      && location.pathname !== '/';
     if (window.__nrShorts) __shorts();
 
     // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans

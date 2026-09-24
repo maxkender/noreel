@@ -77,18 +77,21 @@ const TERMS = 'https://vikstudios.com/unswipe';
  * regles tenues : le prix est dit en entier, la croix est toujours la, et
  * les deux sorties menent a l'app.
  */
-export function Paywall({ onDone }: { onDone: () => void }) {
+export function Paywall(
+  { onDone, exitDelay = EXIT_AFTER }: { onDone: () => void; exitDelay?: number }
+) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const [plan, setPlan] = useState<Plan>('annual');
-  const [canExit, setCanExit] = useState(false);
+  const [canExit, setCanExit] = useState(exitDelay === 0);
   const [winback, setWinback] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setCanExit(true), EXIT_AFTER);
+    if (exitDelay === 0) return;
+    const t = setTimeout(() => setCanExit(true), exitDelay);
     return () => clearTimeout(t);
-  }, []);
+  }, [exitDelay]);
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
   const setPro = useProStore((x) => x.setPro);
