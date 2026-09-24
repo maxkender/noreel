@@ -32,8 +32,7 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   ],
   tiktok: [
     { key: 'foryou', label: 'Bloquer le fil Pour toi', locked: true },
-    { key: 'explore', label: 'Bloquer la recherche' },
-    { key: 'create', label: 'Bloquer la création' },
+    { key: 'explore', label: 'Bloquer la recherche et Découvrir' },
     { key: 'dmsOnly', label: 'Messages uniquement' },
     { key: 'grayscale', label: 'Noir et blanc' },
   ],

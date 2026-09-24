@@ -572,10 +572,17 @@ export const TIKTOK_BLOCKER = `
   'use strict';
   ${COMMON}
 
+  /*
+    Verifie contre le vrai site mobile, pas de memoire.
+    Les selecteurs precedents — nav-foryou, nav-explore, nav-upload,
+    recommend-list-item-container — ne correspondaient a RIEN : sur 49
+    elements portant un data-e2e, aucun ne portait ces noms-la. Et
+    « messages uniquement » menait a /messages, qui n'existe pas ici.
+    Les vrais chemins sont /discover, /search, /inbox et /following.
+  */
   const css = \`
-    a[href="/foryou"], a[href^="/foryou"],
-    [data-e2e="nav-foryou"], [data-e2e="recommend-list-item-container"],
-    [aria-label="Pour toi" i], [aria-label="For You" i] { display: none !important; }
+    [data-e2e="discover-icon"], a[href^="/discover"],
+    [data-e2e="open-titok-icon"] { display: none !important; }
   \`;
   const style = document.createElement('style');
   style.textContent = css;
@@ -587,18 +594,23 @@ export const TIKTOK_BLOCKER = `
     __gray();
     __cookies();
     __native();
+
     if (__on('explore')) {
-      document.querySelectorAll('[data-e2e="nav-explore"], a[href^="/explore"]')
-        .forEach((el) => __hide(el, 'explore'));
+      document.querySelectorAll(
+        '[data-e2e="discover-icon"], a[href^="/discover"], a[href^="/search"]'
+      ).forEach((el) => __hide(el.closest('a') || el, 'explore'));
+      if (/^[/](discover|search)/.test(location.pathname)) { __go('/following'); return; }
     }
-    if (__on('create')) {
-      document.querySelectorAll('[data-e2e="nav-upload"], a[href^="/upload"]')
-        .forEach((el) => __hide(el, 'create'));
+
+    // « Messages uniquement » : la boite s'appelle /inbox, pas /messages.
+    if (__on('dmsOnly') && !location.pathname.startsWith('/inbox')) {
+      __go('/inbox');
+      return;
     }
-    if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
-      __go('/messages');
-    }
-    // Le fil « Pour toi » EST le produit de TikTok : on ne garde que les abonnements.
+
+    // Le fil « Pour toi » EST le produit de TikTok : on ne garde que les
+    // abonnements. C'est la seule regle qui passait deja, parce qu'elle
+    // repose sur l'adresse et non sur un nom de classe.
     if (location.pathname === '/' || location.pathname.startsWith('/foryou')) {
       __go('/following');
     }
