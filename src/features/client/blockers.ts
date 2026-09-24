@@ -356,53 +356,6 @@ export const INSTAGRAM_BLOCKER = `
 
   let __lastSkip = 0;
 
-  /*
-    Ce que le script VOIT, renvoye a l'app.
-    Bloquer les stories a echoue cinq fois d'affilee, et a chaque fois on a
-    corrige a l'aveugle : on ne savait ni si le reglage arrivait, ni si le
-    carrousel etait trouve, ni combien de vignettes existaient. Un echec
-    muet ne se repare pas, il se devine — et deviner a coute cinq essais.
-  */
-  let __last = '';
-  const __report = (o) => {
-    const k = JSON.stringify(o);
-    if (k === __last) return;      // on ne repete pas le meme etat
-    __last = k;
-    __post({ t: 'stories', ...o });
-  };
-
-  /*
-    Un clic sur une story ne part pas.
-    Masquer ne suffisait pas : Instagram ouvre ses stories sans lien, par un
-    gestionnaire pose sur un <div>. On ne pouvait donc rien cacher qui les
-    empeche de s'ouvrir, et le reglage paraissait mort. On intercepte le clic
-    lui-meme, EN CAPTURE — avant que la page ne le voie — et on refuse ceux
-    qui visent une story. Le libelle est teste en francais comme en anglais :
-    le site suit la langue du telephone, pas la notre.
-  */
-  const STORY = /\bstor(y|ies)\b|\bhistoire/i;
-  const __isStory = (t) => {
-    if (!t || !t.closest) return false;
-    if (t.closest('a[href*="/stories/"]')) return true;
-    let n = t;
-    for (let i = 0; i < 8 && n; i += 1) {
-      const lab = n.getAttribute && n.getAttribute('aria-label');
-      if (lab && STORY.test(lab)) return true;
-      n = n.parentElement;
-    }
-    return false;
-  };
-  for (const ev of ['pointerdown', 'mousedown', 'click', 'touchstart']) {
-    addEventListener(ev, (e) => {
-      if (!__on('stories')) return;
-      if (location.pathname.startsWith('/stories/')) return;
-      if (!__isStory(e.target)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-    }, true);
-  }
-
   // Le fil « Abonnements » ne se choisit qu'UNE fois par page. Cliquer a
   // chaque passe rouvrait le menu sous le doigt toutes les 300 ms.
   let __feed = false;
@@ -481,27 +434,13 @@ export const INSTAGRAM_BLOCKER = `
     }
 
     /*
-      Bloquer les stories, par trois chemins plutot qu'un.
-      On ne cherchait que la BANDE qui les porte, en remontant depuis un
-      lien tant que l'ancetre restait court. Quand Instagram remanie le fil —
-      ou quand la mesure de hauteur tombe pendant une recomposition — on ne
-      trouve rien, et le reglage semble mort. On coupe donc aussi chaque
-      vignette une a une, et surtout on refuse la page du lecteur : meme si
-      une story survit a l'ecran, elle ne s'ouvre pas.
+      Le carrousel de stories ne part qu'avec le fil.
+      « Bloquer les stories » a ete retire : Instagram les ouvre sans lien,
+      par un gestionnaire pose sur un div qu'aucun selecteur ne tient, et
+      cinq tentatives n'en sont pas venues a bout. Un interrupteur qui ne
+      fait rien vaut moins que pas d'interrupteur du tout.
     */
-    if (__on('stories')) {
-      const tray = __tray();
-      __hide(tray, 'stories');
-      const links = document.querySelectorAll('a[href^="/stories/"]');
-      links.forEach((a) => { __hide(a.closest('li') || a, 'stories'); });
-      __report({ on: true, tray: !!tray, links: links.length });
-      if (location.pathname.startsWith('/stories/')) { __go('/'); return; }
-    } else {
-      __report({ on: false, tray: false, links: 0 });
-    }
-    if (!__on('stories') && __on('feed')) {
-      __hide(__tray(), 'feed');
-    }
+    if (__on('feed')) __hide(__tray(), 'feed');
     if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {

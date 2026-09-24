@@ -97,9 +97,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
   const [wall, setWall] = useState(false);
-  // Ce que le script dit avoir trouve. Affiche dans les reglages : un echec
-  // muet ne se repare pas, il se devine.
-  const [diag, setDiag] = useState<string | null>(null);
 
   /**
    * Un interrupteur agit TOUT DE SUITE.
@@ -243,11 +240,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
             }
             // Un format court reconnu a sa forme : la page est deja repartie
             // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
-            if (m && m.t === 'stories') {
-              setDiag(m.on
-                ? `réglage reçu · carrousel ${m.tray ? 'trouvé' : 'introuvable'} · ${m.links} vignette(s)`
-                : 'réglage « bloquer les stories » inactif');
-            }
             if (m && m.t === 'short') {
               setWall(true);
               setTimeout(() => setWall(false), 2000);
@@ -302,7 +294,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
         id={id}
         visible={panel}
         onClose={() => setPanel(false)}
-        diag={diag}
         onGo={(url) => {
           setPanel(false);
           web.current?.injectJavaScript(
