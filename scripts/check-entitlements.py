@@ -27,19 +27,27 @@ def get(path):
     except urllib.error.HTTPError as e:
         print(f"HTTP {e.code}: {e.read().decode()[:300]}"); sys.exit(1)
 
-for bid in ("com.nutria25.noreel", "com.nutria25.reelsfree"):
+# Les bundles REELLEMENT utilises. Ce script interrogeait les anciens —
+# com.nutria25.* — abandonnes depuis le changement de nom. Il repondait donc
+# « FAMILY_CONTROLS : non visible » en toute bonne foi, sur des identifiants
+# morts, pendant que le vrai portait la capacite. Un diagnostic qui regarde
+# au mauvais endroit est pire qu'aucun diagnostic : il rassure a tort, ou il
+# alarme a tort.
+for bid in ("com.vikstudios.noreel",
+            "com.vikstudios.noreel.ShieldAction",
+            "com.vikstudios.noreel.ShieldConfiguration",
+            "com.vikstudios.noreel.ActivityMonitorExtension"):
     res = get(f"/v1/bundleIds?filter[identifier]={bid}&limit=1")
     data = res.get("data", [])
     if not data:
         print(f"{bid} : non enregistre"); continue
     rid = data[0]["id"]
     caps = get(f"/v1/bundleIds/{rid}/bundleIdCapabilities")
-    names = sorted(c["attributes"]["capabilityType"] for c in caps.get("data", []))
-    fam = [n for n in names if "FAMILY" in n.upper()]
-    # ATTENTION : l'API publique ne connait PAS le type FAMILY_CONTROLS
-    # (absent de son enum). C'est une "managed capability". Ce script ne peut
-    # donc pas confirmer son activation : seul le mail d'Apple et un build
-    # reussi font foi.
-    print(f"\n{bid}")
-    print(f"  capacites actives : {', '.join(names) if names else '(aucune)'}")
-    print(f"  FAMILY_CONTROLS   : {'visible' if fam else 'non visible via l API (normal)'}")
+    names = sorted(c["attributes"]["capabilityType"] or "?" for c in caps.get("data", []))
+    print(bid)
+    print("  capacites :", ", ".join(names))
+    manque = [n for n in ("FAMILY_CONTROLS", "FAMILY_CONTROLS_DISTRIBUTION")
+              if n not in names]
+    print("  " + ("MANQUE : " + ", ".join(manque) if manque
+                  else "Family Controls et sa distribution : presents"))
+    print()
