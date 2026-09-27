@@ -18,6 +18,8 @@ import {
 import { MockFeed } from '@/components/MockFeed';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import type { Stats } from '@/services/protect';
+import { Settings } from './Settings';
+import { HomeScreen } from './HomeScreen';
 
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
@@ -25,6 +27,10 @@ jest.mock('react-native-purchases', () => ({
   LOG_LEVEL: { WARN: 'WARN' },
 }));
 jest.mock('react-native-device-activity', () => ({}));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useFocusEffect: jest.fn(),
+}));
 jest.mock('react-native-view-shot', () => ({ captureRef: () => Promise.resolve('file:///x.png') }));
 
 
@@ -97,5 +103,26 @@ describe('le faux fil', () => {
   it('a l’echelle de la video', () => { render(<MockFeed filtered={false} u={2.6} />); });
   it('dans une maquette de telephone', () => {
     render(<PhoneFrame width={196}><MockFeed filtered={false} /></PhoneFrame>);
+  });
+});
+
+/*
+ * Les deux ecrans que j'ai modifies sans les avoir encore montes : la feuille
+ * de reglages, ou la soupape ajoute une section entiere, et l'accueil, dont
+ * l'onglet blocage ouvre maintenant sur la carte de recuperation.
+ */
+describe('les ecrans modifies', () => {
+  it('la feuille de reglages, fermee', () => {
+    render(<Settings visible={false} onClose={() => {}} />);
+  });
+
+  it('la feuille de reglages, ouverte', () => {
+    const r = render(<Settings visible onClose={() => {}} />);
+    expect(r.toJSON()).toBeTruthy();
+  });
+
+  it('l’accueil', () => {
+    const r = render(<HomeScreen />);
+    expect(r.toJSON()).toBeTruthy();
   });
 });
