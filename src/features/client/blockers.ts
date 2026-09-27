@@ -4,14 +4,39 @@
  * YouTube sont obfusquees et changent en permanence.
  */
 
+/**
+ * La fenetre ou le format court est autorise.
+ *
+ * Le jour suit la numerotation de Date.getDay : 0 pour dimanche, 6 pour
+ * samedi. Les bornes sont des heures locales.
+ */
+export type Valve = { on: boolean; day: number; from: number; to: number };
+
+/**
+ * La fenetre est-elle ouverte, maintenant ?
+ *
+ * La page injectee porte la meme regle, ecrite dans son propre langage :
+ * elle vit dans un litteral de gabarit et ne peut rien importer. Celle-ci
+ * sert a l'interface — le bandeau qui annonce la fenetre, et le reglage qui
+ * la decrit. Les deux sont tenues par le meme test.
+ */
+export function valveOpen(v: Valve | undefined, now = new Date()): boolean {
+  if (!v || !v.on) return false;
+  if (now.getDay() !== v.day) return false;
+  const h = now.getHours() + now.getMinutes() / 60;
+  return h >= v.from && h < v.to;
+}
+
 /** Construit le script final en y injectant les reglages actifs. */
 export function buildScript(
   base: string,
   settings: Record<string, boolean>,
-  theme: 'light' | 'dark' = 'dark'
+  theme: 'light' | 'dark' = 'dark',
+  valve?: Valve
 ): string {
   return `window.__NR = ${JSON.stringify(settings)};\n`
     + `window.__nrTheme = ${JSON.stringify(theme)};\n`
+    + `window.__nrValve = ${JSON.stringify(valve ?? { on: false, day: 6, from: 20, to: 21 })};\n`
     + base;
 }
 
@@ -45,30 +70,97 @@ const COMMON = `
     }, 300);
   };
   const __watch = (fn) => {
-    window.__nrPass = fn;
-    new MutationObserver(() => __schedule(fn))
+    // La soupape est relue A CHAQUE passe, avant les regles : c'est elle qui
+    // decide si la feuille toujours-active s'applique ou dort.
+    const pass = () => {
+      if (__sheet) __sheet.disabled = __valve();
+      fn();
+    };
+    window.__nrPass = pass;
+    new MutationObserver(() => __schedule(pass))
       .observe(document.body || document.documentElement, { childList: true, subtree: true });
     for (const m of ['pushState', 'replaceState']) {
       const o = history[m];
-      history[m] = function (...a) { const r = o.apply(this, a); __schedule(fn); return r; };
+      history[m] = function (...a) { const r = o.apply(this, a); __schedule(pass); return r; };
     }
-    addEventListener('popstate', () => __schedule(fn));
+    addEventListener('popstate', () => __schedule(pass));
+    /*
+      Une passe toutes les trente secondes, meme sans rien qui bouge.
+      La fenetre s'ouvre a une heure precise : si on attendait une mutation du
+      DOM pour la relire, elle s'ouvrirait au prochain geste et se refermerait
+      au suivant, pas a vingt et une heures.
+    */
+    setInterval(() => { try { pass(); } catch (e) { /* la suivante repassera */ } }, 30000);
+    /*
+      Le compte des prises part vers l'app une fois la page posee.
+      Six secondes : assez pour que le fil ait rendu et que plusieurs passes
+      soient deja passees. Zero prise ne veut rien dire tout seul — c'est
+      l'app qui decide, apres plusieurs chargements muets d'affilee.
+    */
+    setTimeout(() => {
+      const on = window.__NR ? Object.keys(window.__NR).filter((k) => window.__NR[k]).length : 0;
+      __post({ t: 'rules', n: __hits, on: on });
+    }, 6000);
     // La premiere passe est immediate : pas de flash de contenu.
-    try { fn(); } catch (e) { /* idem */ }
+    try { pass(); } catch (e) { /* idem */ }
   };
   // Un reglage qu'on eteint doit RENDRE ce qu'il avait cache. Chaque
   // masquage porte donc le nom de la regle qui l'a decide, et ceux dont la
   // regle ne demande plus rien reviennent des la passe suivante. Sans ca,
   // decocher un interrupteur ne faisait rien tant qu'on ne rechargeait pas.
+  /*
+    On compte les prises.
+    C'est le seul moyen de savoir qu'Instagram a change de structure sans
+    attendre qu'un utilisateur nous ecrive : une regle qui ne trouve plus rien
+    est une regle morte. On ne compte que les NOUVEAUX masquages — un element
+    deja cache est deja compte, et chaque passe repasse dessus.
+  */
+  let __hits = 0;
   const __hide = (el, key) => {
     if (!el) return;
     if (key) el.setAttribute('data-nr', key);
+    if (el.style.display !== 'none') __hits += 1;
     el.style.setProperty('display', 'none', 'important');
   };
   const __on = (k) => !!(window.__NR && window.__NR[k]);
+
+  /*
+    La soupape : une fenetre ou le format court est autorise.
+    Ca sonne faux dans une app qui bloque les reels, et c'est pourtant ce qui
+    fait tenir le blocage : une interdiction totale se contourne en
+    desinstallant, tandis qu'une heure annoncee d'avance se respecte. Mieux
+    vaut un blocage garde six mois avec une fenetre le samedi soir qu'un
+    blocage parfait garde neuf jours.
+  */
+  const __valve = () => {
+    const v = window.__nrValve;
+    if (!v || !v.on) return false;
+    const d = new Date();
+    if (d.getDay() !== v.day) return false;
+    const h = d.getHours() + d.getMinutes() / 60;
+    return h >= v.from && h < v.to;
+  };
+  /*
+    Les regles de format court, elles, ne sont jamais debrayables par un
+    reglage — seulement par la soupape. Elles portent donc leur propre nom de
+    regle plutot que rien du tout : sans nom, un masquage ne peut pas etre
+    defait, et la fenetre du samedi soir n'aurait rien ouvert.
+  */
+  const __short = () => !__valve();
+
+  // La feuille des regles toujours actives, gardee sous la main : la soupape
+  // l'eteint a l'heure dite et la rallume apres, sans recharger la page.
+  let __sheet = null;
+  const __css = (text) => {
+    __sheet = document.createElement('style');
+    __sheet.textContent = text;
+    (document.head || document.documentElement).appendChild(__sheet);
+  };
+
   const __restore = () => {
     document.querySelectorAll('[data-nr]').forEach((el) => {
-      if (__on(el.getAttribute('data-nr'))) return;
+      const k = el.getAttribute('data-nr');
+      if (k === 'short' ? __short() : __on(k)) return;
       el.style.removeProperty('display');
       el.removeAttribute('data-nr');
     });
@@ -228,6 +320,8 @@ const COMMON = `
   let __exits = 0;
   const __escape = () => {
     if (__auth()) return;
+    // Pendant la fenetre, on ne sort pas : c'est le moment qu'elle autorise.
+    if (__valve()) return;
     /*
       Trois sorties au plus, puis plus jamais.
       Le frein d'une seconde et demie ne bornait que la CADENCE, pas le
@@ -270,6 +364,7 @@ const COMMON = `
    * s'ouvre PAR-DESSUS une conversation.
    */
   const __shorts = () => {
+    if (__valve()) return;
     const tall = Array.from(document.querySelectorAll('video')).filter(__tall);
     if (tall.length < 2) return;
     const big = tall.filter((v) => {
@@ -304,9 +399,7 @@ export const INSTAGRAM_BLOCKER = `
     [aria-label="Reels" i], [aria-label*="Reels" i],
     section[aria-labelledby*="reel" i] { display: none !important; }
   \`;
-  const style = document.createElement('style');
-  style.textContent = css;
-  (document.head || document.documentElement).appendChild(style);
+  __css(css);
 
   // On reconnait un bloc a son TEXTE, jamais a ses classes : Instagram les
   // regenere a chaque deploiement, un selecteur de classe ne tient pas une
@@ -454,13 +547,13 @@ export const INSTAGRAM_BLOCKER = `
     // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans
     // l'explore c'est une tuile. Les deux partent, et le post entier avec.
     document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
-      __hide(a.closest('article') || a);
+      __hide(a.closest('article') || a, 'short');
     });
 
     // Filet de securite : un post qui porte la mention d'un son original
     // ou le mot Reel est un reel, meme sans lien /reel/ visible.
     posts().forEach((art) => {
-      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(art);
+      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(art, 'short');
     });
 
     if (__on('ads')) __byLabel(AD, 'ads');
@@ -547,9 +640,7 @@ export const YOUTUBE_BLOCKER = `
     ytm-pivot-bar-item-renderer[tab-identifier="FEshorts"],
     a[href^="/shorts"], a[href*="/shorts/"] { display: none !important; }
   \`;
-  const style = document.createElement('style');
-  style.textContent = css;
-  (document.head || document.documentElement).appendChild(style);
+  __css(css);
 
   /**
    * Le composant qui porte ce noeud, sans jamais avaler la page entiere.
@@ -668,9 +759,7 @@ export const TIKTOK_BLOCKER = `
     [data-e2e="discover-icon"], a[href^="/discover"],
     [data-e2e="open-titok-icon"] { display: none !important; }
   \`;
-  const style = document.createElement('style');
-  style.textContent = css;
-  (document.head || document.documentElement).appendChild(style);
+  __css(css);
 
   __watch(() => {
     __restore();
@@ -715,9 +804,7 @@ export const TWITTER_BLOCKER = `
     a[href^="/i/trends"],
     [data-testid="trend"], [aria-label="Timeline: Trending now" i] { display: none !important; }
   \`;
-  const style = document.createElement('style');
-  style.textContent = css;
-  (document.head || document.documentElement).appendChild(style);
+  __css(css);
 
   __watch(() => {
     // « Pour vous » est l'onglet algorithmique : on bascule sur « Abonnements ».
@@ -747,30 +834,48 @@ export const TWITTER_BLOCKER = `
 true;
 `;
 
+/*
+ * Le fond de chaque site, releve DANS le navigateur sur le site lui-meme.
+ *
+ * Notre bandeau du haut se peignait avec la couleur de l'app, la WebView avec
+ * une troisieme, et le site avec la sienne : trois noirs presque identiques
+ * empiles, donc deux coutures visibles sous l'encoche. De memoire j'aurais
+ * ecrit du noir pur pour Instagram — c'est 12, 16, 20. C'est exactement le
+ * genre de valeur qu'on ne devine pas, et la couture se voyait.
+ *
+ * YouTube redirige vers sa page de consentement avant de montrer sa couleur ;
+ * on garde sa valeur connue, et elle ne coute qu'une couture si elle bouge.
+ */
+type Chrome = { dark: string; light: string };
+
 export const CLIENTS = {
   instagram: {
     url: 'https://www.instagram.com/?variant=following',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
     blocked: (p: string) => /^\/reels?(\/|$)/.test(p),
+    chrome: { dark: '#0C1014', light: '#FFFFFF' } as Chrome,
   },
   tiktok: {
     url: 'https://www.tiktok.com/following',
     host: 'tiktok.com',
     script: TIKTOK_BLOCKER,
     blocked: (p: string) => p === '/' || p.startsWith('/foryou'),
+    chrome: { dark: '#000000', light: '#FFFFFF' } as Chrome,
   },
   twitter: {
     url: 'https://x.com/home',
     host: 'x.com',
     script: TWITTER_BLOCKER,
     blocked: (p: string) => p.startsWith('/explore'),
+    chrome: { dark: '#000000', light: '#FFFFFF' } as Chrome,
   },
   youtube: {
     url: 'https://m.youtube.com/feed/subscriptions',
     host: 'youtube.com',
     script: YOUTUBE_BLOCKER,
     blocked: (p: string) => p.startsWith('/shorts'),
+    chrome: { dark: '#0F0F0F', light: '#FFFFFF' } as Chrome,
   },
 } as const;
 

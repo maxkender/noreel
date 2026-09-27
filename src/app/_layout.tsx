@@ -15,6 +15,7 @@ import { useColors } from '@/theme/useColors';
 import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
 import { shield } from '@/services';
+import { startNotifications } from '@/services/trial';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
@@ -31,6 +32,11 @@ export default function RootLayout() {
 
   // RevenueCat se configure au demarrage, une seule fois.
   useEffect(() => { void useProStore.getState().start(); }, []);
+
+  // Le rappel de fin d'essai ne s'affiche que si ce gestionnaire existe :
+  // sans lui, la notification qui arrive pendant que l'app est ouverte est
+  // avalee — justement quand la personne se demande si elle garde l'abonnement.
+  useEffect(() => { startNotifications(); }, []);
 
   // Le blocage se rearme seul : iOS le lache au redemarrage, et le
   // retrouver eteint apres chaque lancement le rendait inutile.

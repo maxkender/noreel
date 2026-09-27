@@ -5,20 +5,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Ban, RotateCw } from 'lucide-react-native';
+import { Ban, Hourglass, RotateCw } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { CLIENTS, buildScript, type ClientId } from './blockers';
+import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { NavBar, type NavAction } from './NavBar';
 import { GlassSweep } from '@/components/GlassSweep';
 import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
-import { record } from '@/services/usage';
+import { record, today } from '@/services/usage';
+import { countBlocked, markDay, markRaw, reportRules } from '@/services/protect';
 import { useProStore } from '@/store/pro';
 import { ProGate } from '@/features/home/ProGate';
 
@@ -28,6 +29,16 @@ const LABELS: Record<ClientId, string> = {
   twitter: 'X · abonnements',
   youtube: 'YouTube · sans shorts',
 };
+
+/*
+ * Quinze minutes par jour en gratuit.
+ *
+ * Assez pour repondre a ses messages et voir ce qu'on voulait voir, trop peu
+ * pour s'y perdre. C'est aussi la demonstration la plus honnete de ce que
+ * vend l'abonnement : on ne cache pas la fonctionnalite, on rend son temps
+ * fini — exactement ce que l'app promet de faire du temps d'ecran.
+ */
+const FREE_MINUTES = 15;
 
 // Sans un UA de vrai Safari mobile, les deux sites servent une page degradee
 // avec un bandeau « ouvrir dans l'app » permanent.
@@ -56,11 +67,37 @@ export function ClientScreen({ id }: { id: ClientId }) {
   */
   useEffect(() => {
     const t0 = Date.now();
+    // Aujourd'hui compte comme un jour protege des qu'un ecran filtre sert.
+    void markDay();
     return () => { void record(id, Date.now() - t0); };
   }, [id]);
   const styles = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const client = CLIENTS[id];
+  /*
+    La couleur du bandeau est celle DU SITE, relevee dans le navigateur.
+    Trois couleurs se suivaient sous l'encoche : notre bandeau, le fond de la
+    WebView, et le fond du site. Trois noirs presque identiques font deux
+    coutures, et une couture sous l'encoche se voit tout de suite — c'est la
+    difference entre « une app qui ouvre Instagram » et « Instagram ».
+  */
+  const chrome = client.chrome[theme === 'dark' ? 'dark' : 'light'];
+
+  // La fenetre du samedi soir. Elle voyage avec le script : la page doit
+  // pouvoir decider seule, a la minute, sans qu'on lui reparle.
+  const valve = useSettings((x) => x.valve);
+  /*
+    La fenetre s'ouvre a une heure, pas a un geste.
+    Le bandeau doit s'allumer a vingt heures meme si personne ne touche
+    l'ecran, et s'eteindre a vingt et une : on relit l'horloge toutes les
+    trente secondes, comme la page injectee le fait de son cote.
+  */
+  const [inValve, setInValve] = useState(() => valveOpen(valve));
+  useEffect(() => {
+    setInValve(valveOpen(valve));
+    const iv = setInterval(() => setInValve(valveOpen(valve)), 30_000);
+    return () => clearInterval(iv);
+  }, [valve]);
 
   const settingsMap = useAppsStore((st) => st.settings);
   const active = useMemo(() => {
@@ -77,7 +114,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // chargement de la page, changer la propriete ensuite ne change rien.
   // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
   const script = useMemo(
-    () => buildScript(client.script, active, theme),
+    () => buildScript(client.script, active, theme, valve),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]
   );
@@ -97,6 +134,32 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
   const [wall, setWall] = useState(false);
+  // Le numero du reel referme. Un compteur qui monte se lit comme un score ;
+  // « Bloque » tout seul se lit comme un reproche.
+  const [nth, setNth] = useState(0);
+  // Le plafond du jour, en gratuit. Et le paywall qu'il propose.
+  const [capped, setCapped] = useState(false);
+  const [gate, setGate] = useState(false);
+
+  /*
+    Le plafond se surveille pendant la seance, pas seulement a son ouverture.
+    Le temps du jour n'est ecrit sur le disque qu'a la sortie de l'ecran : en
+    ne lisant que le disque, une premiere seance du jour n'aurait jamais de
+    fin. On ajoute donc le temps ecoule depuis l'entree.
+  */
+  useEffect(() => {
+    if (pro) return;
+    let alive = true;
+    const t0 = Date.now();
+    const check = async () => {
+      const t = await today();
+      const used = t.perApp[id] + (Date.now() - t0) / 60_000;
+      if (alive && used >= FREE_MINUTES) setCapped(true);
+    };
+    void check();
+    const iv = setInterval(() => { void check(); }, 15_000);
+    return () => { alive = false; clearInterval(iv); };
+  }, [pro, id]);
 
   /**
    * Un interrupteur agit TOUT DE SUITE.
@@ -139,7 +202,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
     setPageError(null);
     setReady(false);
     setStuck(false);
-    setRaw((v) => !v);
+    setRaw((v) => {
+      // Le mode brut est le seul recul qu'on puisse observer : l'indice de
+      // recuperation le compte, et il n'a rien d'autre a se mettre sous la dent.
+      if (!v) void markRaw();
+      return !v;
+    });
   }, []);
 
   /**
@@ -218,7 +286,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         Il suit le theme — un bandeau fige en sombre ferait une barre noire
         au-dessus d'une page claire.
       */}
-      <SafeAreaView edges={['top']} style={styles.bar}>
+      <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: chrome }]}>
         <View style={styles.barRow}>
           <Text variant="label" color={withAlpha(c.mist, 0.5)}>
             {raw ? 'SANS FILTRE' : LABELS[id]}
@@ -242,7 +310,19 @@ export function ClientScreen({ id }: { id: ClientId }) {
             // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
             if (m && m.t === 'short') {
               setWall(true);
+              void countBlocked().then(setNth);
               setTimeout(() => setWall(false), 2000);
+            }
+            /*
+              Le filtre se surveille lui-meme.
+              Une regle qui ne trouve plus rien est une regle morte, et un
+              utilisateur qui revoit un reel ne nous ecrit pas : il annule. La
+              page rend donc compte de ses prises, et l'app decide — jamais
+              sur un seul chargement, et jamais quand tous les reglages sont
+              eteints, ou zero prise est la reponse juste.
+            */
+            if (m && m.t === 'rules' && typeof m.n === 'number' && m.on > 0) {
+              void reportRules(id, m.n);
             }
           } catch {
             /* message qui ne vient pas de nous */
@@ -268,7 +348,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         // Sans cette liste, iOS remet les schemas inconnus au systeme,
         // qui ouvre l'app native.
         originWhitelist={['http://*', 'https://*']}
-        style={styles.web}
+        style={[styles.web, { backgroundColor: chrome }]}
       />
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
@@ -283,12 +363,66 @@ export function ClientScreen({ id }: { id: ClientId }) {
           <View style={styles.wallRing}>
             <Ban size={30} strokeWidth={2} color={c.danger} />
           </View>
-          <Text variant="title" style={styles.wallText}>Bloqué.</Text>
+          {/*
+            Le mur porte un NUMERO.
+            « Bloque. » tout seul est un reproche, et on finit par en vouloir a
+            l'app qui le dit. Le meme evenement numerote devient un score : ce
+            n'est plus une porte fermee mais un reel de moins, et c'est le seul
+            chiffre qui justifie l'abonnement a la fin du mois.
+          */}
+          <Text variant="title" style={styles.wallText}>
+            {nth > 0 ? `Reel nº ${nth} évité` : 'Bloqué.'}
+          </Text>
           <Text variant="body" tone="secondary" style={styles.wallText}>
             C’est exactement pour ça que tu es là.
           </Text>
         </View>
       )}
+
+      {/* La fenetre ouverte se dit. Une permission qu'on ne voit pas ne
+          rassure personne, et on croit le filtre casse. */}
+      {inValve && !capped && (
+        <View style={styles.valve} pointerEvents="none">
+          <Text variant="label" color={c.ember}>
+            Fenêtre ouverte jusqu’à {valve.to} h
+          </Text>
+        </View>
+      )}
+
+      {/*
+        Le plafond du jour. Il explique AVANT de vendre : un paywall qui tombe
+        sans un mot se lit comme une panne.
+      */}
+      {capped && !gate && (
+        <View style={styles.cap}>
+          <View style={styles.wallRing}>
+            <Hourglass size={28} strokeWidth={2} color={c.ember} />
+          </View>
+          <Text variant="displayM" style={styles.wallText}>
+            Tes {FREE_MINUTES} minutes du jour sont passées.
+          </Text>
+          <Text variant="body" tone="secondary" style={styles.wallText}>
+            C’est le principe : ton temps est fini. Passe en illimité pour
+            choisir toi-même combien tu t’accordes.
+          </Text>
+          <View style={styles.capBtns}>
+            <Button
+              label="Débloquer mes 3 jours gratuits"
+              onPress={() => { haptics.press(); setGate(true); }}
+            />
+            <Button label="Fermer Instagram" onPress={exit} variant="ghost" />
+          </View>
+        </View>
+      )}
+
+      <ProGate
+        visible={gate}
+        onClose={() => {
+          setGate(false);
+          // Achete : le plafond tombe. Refuse : il reste, et la sortie est la.
+          if (useProStore.getState().pro) setCapped(false);
+        }}
+      />
 
       <ClientSettings
         id={id}
@@ -387,7 +521,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: c.surface,
   },
   host: { flex: 1, textAlign: 'center' },
-  web: { flex: 1, backgroundColor: c.night === '#08090B' ? '#0B0D11' : '#FFFFFF' },
+  // Le fond de la WebView est pose a l'usage, avec la couleur du site : une
+  // valeur figee ici ne peut pas savoir quel site on affiche.
+  web: { flex: 1 },
   overlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
@@ -406,4 +542,14 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: withAlpha(c.danger, 0.1),
   },
   wallText: { textAlign: 'center' },
+  valve: {
+    position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center',
+    paddingTop: 2, zIndex: 110,
+  },
+  cap: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center', gap: space.md,
+    paddingHorizontal: 32, backgroundColor: withAlpha(c.night, 0.97), zIndex: 130,
+  },
+  capBtns: { alignSelf: 'stretch', marginTop: space.md, gap: space.xs },
 });

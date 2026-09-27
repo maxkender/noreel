@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { setHapticsEnabled } from '@/lib/haptics';
 import type { ThemeName } from '@/theme/palettes';
+import type { Valve } from '@/features/client/blockers';
 
 type State = {
   haptics: boolean;
@@ -30,6 +31,16 @@ type State = {
   appleUser: string | null;
   /** Clair, sombre, ou celui du telephone. */
   theme: ThemeName;
+  /**
+   * La soupape : une fenetre annoncee ou le format court est autorise.
+   *
+   * Eteinte par defaut, et elle ne s'allume que si on la demande. Elle a l'air
+   * de contredire l'app, et c'est pourtant ce qui fait tenir le blocage :
+   * l'interdiction totale se contourne en desinstallant, la fenetre du samedi
+   * soir se respecte. Mieux vaut un blocage garde six mois avec une heure
+   * ouverte qu'un blocage parfait garde neuf jours.
+   */
+  valve: Valve;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -48,6 +59,9 @@ export const useSettings = create<State>()(
       // Sombre par defaut : c'est la matiere de l'app. Le clair existe pour
       // qui le demande, dans les reglages.
       theme: 'dark',
+      // Samedi 20 h - 21 h : une heure, le soir ou personne n'a de raison de
+      // se lever tot. Le jour et les heures se changent dans les reglages.
+      valve: { on: false, day: 6, from: 20, to: 21 },
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.
@@ -68,8 +82,8 @@ export const useSettings = create<State>()(
         if (from < 2) return { ...s, theme: 'dark' as ThemeName };
         return s;
       },
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

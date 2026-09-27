@@ -60,8 +60,19 @@ describe('chaque interrupteur est reellement lu', () => {
 describe('la feuille de style ne fige que le verrouille', () => {
   for (const [id, toggles] of Object.entries(APP_TOGGLES)) {
     const script = CLIENTS[id as ClientId].script;
-    const css = script.slice(script.indexOf('const css'), script.indexOf('</style>') > 0
-      ? script.indexOf('</style>') : script.indexOf('appendChild(style)'));
+    /*
+      La feuille va de sa declaration a sa pose. Le repere etait
+      « appendChild(style) », qui a disparu le jour ou les quatre scripts sont
+      passes par un helper commun : indexOf rendait -1, le slice remontait
+      alors jusqu'a l'avant-dernier caractere du script entier, et le test
+      cherchait donc ses selecteurs dans TOUT le code — ou il les trouvait,
+      evidemment. Un repere absent doit faire echouer l'extraction, pas la
+      fausser en silence.
+    */
+    const from = script.indexOf('const css');
+    const to = script.indexOf('__css(css)');
+    if (from < 0 || to < 0) throw new Error(`feuille introuvable dans ${id}`);
+    const css = script.slice(from, to);
     for (const t of toggles) {
       if (t.locked) continue;
       it(`${id} · ${t.key} n’est pas fige`, () => {
