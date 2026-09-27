@@ -53,13 +53,13 @@ export const en: Dict = {
   },
 
   s5: {
-    titleA: 'How much time do you spend on your phone a day?',
+    titleA: 'How long a day, would you guess?',
     unit: 'a day',
     liveShare: `That's {p}% of your waking day.`,
     liveWeek: '{h} a week.',
     helpIos: 'Not sure? Settings > Screen Time',
     helpAndroid: 'Not sure? Settings > Digital Wellbeing',
-    ctaA: 'Confirm',
+    ctaA: 'That’s my guess',
     titleB: 'And how old are you?',
     bodyB: 'So we can see what it means for your life.',
     ageValue: '{n} years old',

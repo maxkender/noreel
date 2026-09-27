@@ -16,6 +16,7 @@ type OnboardingState = {
   /** Regles horaires retenues a l'onboarding. */
   rules: string[];
   painFrequency?: PainFrequency;
+  source?: string;
   demoPlatform: SocialApp;
   startedAt?: number;
   /** Faux tant que le disque n'a pas répondu : évite de rediriger trop tôt. */
@@ -30,6 +31,8 @@ type OnboardingActions = {
   toggleDistraction: (id: string) => void;
   toggleRule: (id: string) => void;
   setPainFrequency: (f: PainFrequency) => void;
+  /** Ou la personne a entendu parler de l'app. Declaratif, donc approximatif. */
+  setSource: (s: string) => void;
   setDemoPlatform: (app: SocialApp) => void;
   start: () => void;
   complete: () => void;
@@ -71,6 +74,7 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>()(
           : [...s.rules, id],
       })),
       setPainFrequency: (painFrequency) => set({ painFrequency }),
+      setSource: (source) => set({ source }),
       setDemoPlatform: (demoPlatform) => set({ demoPlatform }),
       start: () => set((s) => (s.startedAt ? s : { startedAt: Date.now() })),
       complete: () => set({ completed: true }),

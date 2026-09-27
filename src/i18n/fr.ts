@@ -58,13 +58,13 @@ export const fr = {
   },
 
   s5: {
-    titleA: `Combien de temps passes-tu sur ton téléphone par jour${NNBSP}?`,
+    titleA: `À ton avis, combien de temps par jour${NNBSP}?`,
     unit: 'par jour',
     liveShare: 'Soit {p}{nbsp}% de ta journée éveillée.',
     liveWeek: '{h} par semaine.',
     helpIos: `Pas sûr${NNBSP}? Réglages > Temps d'écran`,
     helpAndroid: `Pas sûr${NNBSP}? Paramètres > Bien-être numérique`,
-    ctaA: 'Valider',
+    ctaA: 'C’est mon estimation',
     titleB: `Et tu as quel âge${NNBSP}?`,
     bodyB: 'Pour voir ce que ça représente sur ta vie.',
     ageValue: '{n} ans',

@@ -29,4 +29,7 @@ export type AnalyticsEvent =
   | 'onboarding_started' | 'step_viewed' | 'intro_skipped'
   | 'demo_platform_toggled' | 'pain_answered' | 'screen_time_set'
   | 'age_set' | 'life_reclaimed' | 'sources_opened'
+  // Le seul canal d'acquisition qu'on aura jamais : l'App Store ne dit pas
+  // d'ou viennent les installations.
+  | 'source_answered'
   | 'home_add_tapped' | 'onboarding_completed';

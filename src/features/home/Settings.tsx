@@ -22,6 +22,19 @@ import {
   type AuthState,
 } from '@/services/shield.real';
 
+/*
+ * Les jours, dans l'ordre ou on les lit — et numerotes comme Date.getDay les
+ * numerote : dimanche vaut 0. Ecrire la liste dans l'ordre francais et se
+ * servir de l'indice aurait decale toute la semaine d'un cran.
+ */
+const DAYS: [number, string][] = [
+  [1, 'Lundi'], [2, 'Mardi'], [3, 'Mercredi'], [4, 'Jeudi'],
+  [5, 'Vendredi'], [6, 'Samedi'], [0, 'Dimanche'],
+];
+
+// Le soir seulement : une fenetre le matin se prolonge sur la journee.
+const HOURS = [18, 19, 20, 21, 22];
+
 const GOALS = [60, 90, 120, 180, 240];
 const THEMES: [ThemeName, string][] = [
   ['system', 'Système'], ['dark', 'Sombre'], ['light', 'Clair'],
@@ -77,6 +90,69 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               sub="Un reel touché affiche un mur, au lieu de ne rien faire."
               right={<Toggle on={s.strictMode} onChange={(v) => s.set('strictMode', v)} />}
             />
+
+            {/*
+              La soupape.
+              Elle a l'air de contredire toute l'app, et c'est ce qui fait tenir
+              le blocage : une interdiction totale se contourne en
+              desinstallant, une heure annoncee d'avance se respecte. Eteinte
+              par defaut — on ne l'impose pas, on la rend possible.
+            */}
+            <Group title="Fenêtre autorisée" />
+            <Line
+              label="Une heure par semaine"
+              sub={s.valve.on
+                ? `${DAYS.find(([k]) => k === s.valve.day)?.[1] ?? ''} de ${s.valve.from} h à ${s.valve.to} h, les reels passent.`
+                : 'Une heure choisie où les reels passent. Mieux tenue qu’un blocage total.'}
+              right={
+                <Toggle
+                  on={s.valve.on}
+                  onChange={(v) => s.set('valve', { ...s.valve, on: v })}
+                />
+              }
+            />
+            {s.valve.on && (
+              <>
+                <View style={st.chips}>
+                  {DAYS.map(([k, label]) => {
+                    const on = s.valve.day === k;
+                    return (
+                      <Pressable
+                        key={k}
+                        onPress={() => { haptics.tick(); s.set('valve', { ...s.valve, day: k }); }}
+                        style={[st.chip, on && st.chipOn]}
+                      >
+                        <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
+                          {label.slice(0, 3)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <View style={st.chips}>
+                  {HOURS.map((h) => {
+                    const on = s.valve.from === h;
+                    return (
+                      <Pressable
+                        key={h}
+                        // La fenetre dure une heure : la fin suit le debut, on
+                        // ne peut donc pas se retrouver avec une fin avant son
+                        // debut, ni avec une soupape ouverte toute la soiree.
+                        onPress={() => {
+                          haptics.tick();
+                          s.set('valve', { ...s.valve, from: h, to: h + 1 });
+                        }}
+                        style={[st.chip, on && st.chipOn]}
+                      >
+                        <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
+                          {h} h
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             <Group title="Apparence" />
             <View style={st.chips}>

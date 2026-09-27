@@ -17,8 +17,8 @@ import {
 import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
 import { Activities } from './screens/Activities';
-import { PromoCode } from './screens/PromoCode';
 import { HomeShortcuts } from './screens/HomeShortcuts';
+import { Attribution, Commit, Proof, RateAsk, Reveal } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -78,6 +78,9 @@ export function OnboardingFlow() {
     l'ecran monte peut l'appeler, donc il ne peut pas se tromper de place.
   */
   const next = useCallback(() => go(step + 1), [go, step]);
+  // Un pas en arriere, pour le seul ecran qui en propose un : celui qui
+  // retourne son chiffre et lui offre de le corriger.
+  const back = useCallback(() => go(Math.max(0, step - 1)), [go, step]);
 
   /**
    * L'ordre suit un arc, pas une liste de reglages.
@@ -93,6 +96,19 @@ export function OnboardingFlow() {
    * on y tient.  8. La promesse chiffree, a son nom, est le sommet — et le
    * paywall tombe dessus, pas trois ecrans plus loin.  9. Les reglages fins
    * viennent apres la decision.
+   *
+   * Le rythme compte autant que l'ordre. Apres les ecrans qui pesent vient
+   * une question facile — d'ou viens-tu — puis un ecran en pleine couleur ou
+   * il faut MAINTENIR le doigt : le contraste remet l'oeil a zero, et une
+   * intention tenue deux secondes se retient mieux qu'un bouton tape sans
+   * lire. L'ecran de demonstration est le seul du parcours qui prouve quelque
+   * chose ; il arrive juste apres le manifeste, la ou l'on vient de dire ce
+   * qu'on croit.
+   *
+   * Le code promo a quitte le parcours. Demander « tu as un code ? » avant
+   * d'avoir montre le prix apprend a en chercher un : on quitte l'app, on
+   * fouille, on ne revient pas. Il vit desormais en lien sur le paywall,
+   * APRES le prix — et la promesse tombe directement sur lui.
    */
   const screens = [
     <S1 key="s1" onNext={next} />,
@@ -100,18 +116,22 @@ export function OnboardingFlow() {
     <S3 key="s3" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <S5 key="s5" onNext={next} />,
+    <Reveal key="rev" onNext={next} onBack={back} />,
     <S6 key="s6" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
     <S7 key="s7" onNext={next} />,
     <Manifesto key="man" onNext={next} />,
+    <Proof key="proof" onNext={next} />,
     <Tune key="tune" onNext={next} />,
     <Distractions key="dis" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <HomeShortcuts key="short" onNext={next} />,
+    <Attribution key="src" onNext={next} />,
+    <RateAsk key="rate" onNext={next} />,
+    <Commit key="commit" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
-    <PromoCode key="promo" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 
