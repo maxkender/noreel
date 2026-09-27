@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import type { ClientId } from '@/features/client/blockers';
 import { dayKey } from './usage';
 
@@ -140,8 +141,34 @@ export async function reportRules(app: ClientId, matched: number): Promise<void>
     l.miss[app] = 0;
   } else {
     l.miss[app] = (l.miss[app] ?? 0) + 1;
+    /*
+      On previent au troisieme chargement muet, et une seule fois.
+      Exactement au troisieme et non au-dela : le compteur ne retombe a zero
+      qu'a la prochaine prise, donc tester « au moins trois » enverrait un
+      avertissement a chaque page tant que la panne dure. Quelqu'un qui revoit
+      un reel croit que l'app est cassee ; mieux vaut qu'il l'apprenne de nous,
+      avec le geste qui repare.
+    */
+    if (l.miss[app] === 3) void warn();
   }
   await save(l);
+}
+
+async function warn(): Promise<void> {
+  try {
+    const { granted } = await Notifications.getPermissionsAsync();
+    if (!granted) return;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Le filtre est à vérifier',
+        body: 'Le site a peut-être changé. Ouvre UnSwipe : la mise à jour prend dix secondes.',
+      },
+      // Immediat : un declencheur nul envoie la notification tout de suite.
+      trigger: null,
+    });
+  } catch {
+    /* pas de notification : l'accueil porte deja l'avertissement */
+  }
 }
 
 export type Stats = {
@@ -157,6 +184,14 @@ export type Stats = {
   brain: number;
   /** Derniere fois qu'une regle a mordu, toutes apps confondues. */
   checkedAt: number;
+  /**
+   * La derniere verification date de moins de trente-six heures.
+   *
+   * Calcule ICI et non au rendu : l'heure courante est une valeur impure, et
+   * un composant qui la lit pendant qu'il se dessine rend un resultat
+   * different a chaque passage sans que rien n'ait change.
+   */
+  fresh: boolean;
   /** Une app dont le filtre semble ne plus rien trouver. */
   shaky: ClientId | null;
 };
@@ -187,13 +222,15 @@ export async function stats(): Promise<Stats> {
   const rawDays = Object.keys(l.raw).length;
   const times = Object.values(l.ok).filter((n): n is number => typeof n === 'number');
   const shaky = (Object.keys(l.miss) as ClientId[]).find((a) => (l.miss[a] ?? 0) >= 3) ?? null;
+  const checkedAt = times.length ? Math.max(...times) : 0;
   return {
     blocked: l.blocked,
     avoided: l.avoided,
     minutes: l.avoided * MINUTES_PER_SESSION,
     days,
     brain: brainIndex(days, rawDays),
-    checkedAt: times.length ? Math.max(...times) : 0,
+    checkedAt,
+    fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,
     shaky,
   };
 }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,6 +17,7 @@ import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
 import { shield } from '@/services';
 import { startNotifications } from '@/services/trial';
+import { pullUpdate } from '@/services/refresh';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
@@ -37,6 +39,22 @@ export default function RootLayout() {
   // sans lui, la notification qui arrive pendant que l'app est ouverte est
   // avalee — justement quand la personne se demande si elle garde l'abonnement.
   useEffect(() => { startNotifications(); }, []);
+
+  /*
+    On cherche un correctif a chaque retour au premier plan.
+    Nos regles de filtrage vivent dans le paquet JavaScript : quand Instagram
+    remanie sa structure, le correctif part par expo-updates et arrive en
+    quelques minutes, sans revue de l'App Store. Sans cette verification il
+    n'arriverait qu'au prochain lancement a froid — c'est-a-dire des jours plus
+    tard sur un telephone qu'on ne redemarre jamais.
+  */
+  useEffect(() => {
+    void pullUpdate();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void pullUpdate();
+    });
+    return () => sub.remove();
+  }, []);
 
   // Le blocage se rearme seul : iOS le lache au redemarrage, et le
   // retrouver eteint apres chaque lancement le rendait inutile.

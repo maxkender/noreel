@@ -61,30 +61,41 @@ export default function Demo() {
    * de ce qu'on vend.
    */
   const cycle = useCallback(() => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    veil.value = 0;
-    sweep.value = 0;
-    setPhase('raw');
-
-    after(HOLD, () => {
-      // Le trait descend une fois, a la vitesse de la cascade : c'est lui qui
-      // designe ce qui disparait, sinon les cartes s'evanouissent sans cause.
-      sweep.value = withTiming(1, { duration: CASCADE, easing: Easing.out(Easing.quad) });
-      setPhase('filtered');
-    });
-
-    after(HOLD + CASCADE + SHOW, () => {
-      veil.value = withTiming(1, { duration: FADE, easing: Easing.in(Easing.quad) });
-    });
-
-    after(HOLD + CASCADE + SHOW + FADE, () => {
+    /*
+      La boucle se rappelle par son NOM, pas par la variable qui la tient.
+      Elle se relancait en refermant sur `cycle` depuis l'interieur de la
+      declaration de `cycle` : ca tourne, mais le tour suivant part de la
+      fonction figee au premier rendu — et si le memo se reconstruit, la
+      boucle continue d'appeler l'ancienne, avec ses anciennes valeurs
+      partagees. Une fonction nommee est visible dans son propre corps.
+    */
+    function loop() {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+      veil.value = 0;
+      sweep.value = 0;
       setPhase('raw');
-      setRun((n) => n + 1);
-      veil.value = withTiming(0, { duration: FADE, easing: Easing.out(Easing.quad) });
-    });
 
-    after(HOLD + CASCADE + SHOW + FADE * 2 + 400, cycle);
+      after(HOLD, () => {
+        // Le trait descend une fois, a la vitesse de la cascade : c'est lui qui
+        // designe ce qui disparait, sinon les cartes s'evanouissent sans cause.
+        sweep.value = withTiming(1, { duration: CASCADE, easing: Easing.out(Easing.quad) });
+        setPhase('filtered');
+      });
+
+      after(HOLD + CASCADE + SHOW, () => {
+        veil.value = withTiming(1, { duration: FADE, easing: Easing.in(Easing.quad) });
+      });
+
+      after(HOLD + CASCADE + SHOW + FADE, () => {
+        setPhase('raw');
+        setRun((n) => n + 1);
+        veil.value = withTiming(0, { duration: FADE, easing: Easing.out(Easing.quad) });
+      });
+
+      after(HOLD + CASCADE + SHOW + FADE * 2 + 400, loop);
+    }
+    loop();
   }, [veil, sweep]);
 
   useEffect(() => {

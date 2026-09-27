@@ -33,6 +33,10 @@ import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
+import {
+  Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
+} from './Recovery';
+import { pullAndRestart } from '@/services/refresh';
 
 type Tab = 'home' | 'block' | 'account';
 
@@ -184,6 +188,9 @@ function BlockTab({
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
   const [paywall, setPaywall] = useState(false);
+  // Le registre de la protection : reels evites, temps repris, jours
+  // proteges, indice de recuperation, et l'etat du filtre.
+  const { s: prot, prize, clear } = useProtect();
   // Le blocage des apps d'origine et le mode strict sont payants : grises et
   // cadenasses plutot qu'absents, pour qu'on voie ce qu'on n'a pas.
   const pro = useProStore((x) => x.pro);
@@ -230,7 +237,26 @@ function BlockTab({
     >
       <Text variant="displayM">{d.block.title}</Text>
 
-      {/* Trois chiffres, tous mesures : le temps passe dans les versions
+      {/*
+        Ce qu'on a recupere vient AVANT ce qu'on a consomme.
+        Les trois chiffres du jour — temps passe, serie, part du plafond —
+        disent tous ce qu'on a depense. Ouvrir sur une depense fait un releve
+        de compte ; ouvrir sur les reels evites et le temps repris fait un
+        bilan. C'est ce second chiffre qui justifie l'abonnement a la fin du
+        mois, donc c'est lui qu'on voit en premier.
+      */}
+      {prot && (
+        <>
+          <RecoveryCard s={prot} />
+          <ReclaimedNote s={prot} />
+          <ProtectionStatus
+            s={prot}
+            onFix={() => { haptics.press(); void pullAndRestart(); }}
+          />
+        </>
+      )}
+
+      {/* Puis les trois chiffres du jour : le temps passe dans les versions
           filtrees, les jours d'affilee, et la part du plafond du jour. */}
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
         <Stat label="Aujourd’hui" value={formatHours(total)} />
@@ -308,6 +334,21 @@ function BlockTab({
       </Card>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
+
+      {/*
+        Le palier se feter une fois, au retour sur l'ecran.
+        Une pause GELE le compte au lieu de le remettre a zero : un compteur
+        efface enseigne « c'est perdu de toute facon », et c'est precisement la
+        que les gens desinstallent.
+      */}
+      {prize && prot && (
+        <Milestone
+          prize={prize}
+          days={prot.days}
+          blocked={prot.blocked}
+          onClose={clear}
+        />
+      )}
 
       <HardModeIntro
         visible={intro}

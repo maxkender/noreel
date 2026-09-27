@@ -1,0 +1,298 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle } from 'react-native-svg';
+import { captureRef } from 'react-native-view-shot';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useFocusEffect } from 'expo-router';
+import { Brain, CircleCheck, ShieldAlert, Trophy, X } from 'lucide-react-native';
+import { withAlpha } from '@/theme/colors';
+import { useColors, type Palette } from '@/theme/useColors';
+import { gutter, space } from '@/theme/spacing';
+import { Text } from '@/components/type/Text';
+import { Glass } from '@/components/glass/Glass';
+import { Button } from '@/components/Button';
+import { haptics } from '@/lib/haptics';
+import { formatHours } from '@/lib/format';
+import {
+  MINUTES_PER_SESSION, claimMilestone, stats, type Stats,
+} from '@/services/protect';
+
+/** Relit le registre a chaque retour sur l'ecran, et rend le palier atteint. */
+export function useProtect() {
+  const [s, setS] = useState<Stats | null>(null);
+  const [prize, setPrize] = useState<{ kind: string; at: number } | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void stats().then((x) => { if (alive) setS(x); });
+      // Le palier est reclame ici et nulle part ailleurs : il est marque vu au
+      // moment ou il est rendu, donc deux appels ne le feteraient pas deux fois.
+      void claimMilestone().then((m) => { if (alive && m) setPrize(m); });
+      return () => { alive = false; };
+    }, [])
+  );
+
+  return { s, prize, clear: () => setPrize(null) };
+}
+
+/**
+ * Le seul chiffre qui justifie l'abonnement a la fin du mois.
+ *
+ * Il tient dans une carte avec l'indice de recuperation : le chiffre dit ce
+ * qu'on a recupere, l'anneau dit ou on en est. Separes, l'un se lit comme une
+ * statistique et l'autre comme une decoration.
+ */
+export function RecoveryCard({ s }: { s: Stats }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+
+  return (
+    <Glass radius={26} intensity={55} warmEdge="none" style={st.card}>
+      <Ring value={s.brain} />
+
+      <View style={st.figures}>
+        <Figure label="Reels évités" value={String(s.blocked)} />
+        <Figure label="Temps repris" value={formatHours(s.minutes)} />
+        <Figure label="Jours protégés" value={`${s.days} j`} />
+      </View>
+    </Glass>
+  );
+}
+
+/**
+ * L'anneau de recuperation.
+ *
+ * Dessine, jamais anime en couleur : animer une propriete de couleur fait
+ * tomber cette app. La teinte est choisie au rendu, par palier, et l'anneau
+ * ne bouge pas.
+ */
+function Ring({ value }: { value: number }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const size = 104;
+  const w = 9;
+  const r = (size - w) / 2;
+  const circ = 2 * Math.PI * r;
+
+  // Trois paliers, trois teintes. Le vocabulaire reste factuel : c'est un
+  // indice tire de deux nombres qu'on observe, pas un diagnostic.
+  const tone = value < 35 ? c.danger : value < 70 ? c.ember : c.accent;
+  const word = value < 35 ? 'Sous tension' : value < 70 ? 'En récupération' : 'Rétabli';
+
+  return (
+    <View style={st.ringWrap}>
+      <Svg width={size} height={size}>
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={withAlpha(c.mist, 0.1)} strokeWidth={w} fill="none"
+        />
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={tone} strokeWidth={w} fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${circ}`}
+          strokeDashoffset={circ * (1 - value / 100)}
+          // On part du haut : un anneau qui demarre a trois heures se lit
+          // comme un camembert, pas comme une jauge.
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Svg>
+      <View style={st.ringIn}>
+        <Brain size={17} strokeWidth={2} color={tone} />
+        <Text variant="title">{value}</Text>
+      </View>
+      <Text variant="label" color={tone} style={{ marginTop: 2 }}>{word}</Text>
+    </View>
+  );
+}
+
+function Figure({ label, value }: { label: string; value: string }) {
+  // Le hook se lit DANS le composant, pas dans le callback du memo : appele
+  // la, il ne serait plus rejoue quand la palette change, et la carte
+  // garderait les couleurs du theme precedent.
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  return (
+    <View style={st.figure}>
+      <Text variant="title" numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <Text variant="label" tone="tertiary">{label}</Text>
+    </View>
+  );
+}
+
+/**
+ * La note d'honnetete sous les chiffres.
+ *
+ * On ne voit pas combien de temps la personne aurait regarde — personne ne le
+ * voit. Le temps repris est une estimation, et le multiplicateur est ecrit
+ * noir sur blanc pour qu'on puisse refaire le calcul soi-meme. Un chiffre
+ * qu'on ne peut pas verifier finit par decredibiliser tous les autres.
+ */
+export function ReclaimedNote({ s }: { s: Stats }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  return (
+    <Text variant="label" tone="tertiary" style={st.note}>
+      Estimation : {s.avoided} entrées dans un fil de reels refermées,
+      comptées {MINUTES_PER_SESSION} min chacune. Le temps passé dans
+      l’application d’origine ne nous est pas accessible.
+    </Text>
+  );
+}
+
+/**
+ * L'etat du filtre, dit a voix haute.
+ *
+ * C'est la panne silencieuse la plus couteuse : Instagram change sa structure,
+ * une regle ne trouve plus rien, un reel passe — et la personne en conclut que
+ * l'app est cassee et annule, sans jamais nous ecrire. Le dire ici, avec la
+ * date, change une suspicion en information.
+ */
+export function ProtectionStatus({ s, onFix }: { s: Stats; onFix: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  if (s.shaky) {
+    return (
+      <Pressable onPress={onFix} style={[st.line, st.lineWarn]}>
+        <ShieldAlert size={15} strokeWidth={2.2} color={c.ember} />
+        <Text variant="label" color={c.ember} style={{ flex: 1 }}>
+          Le filtre n’a rien trouvé à masquer. Vérifier la mise à jour.
+        </Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={[st.line, st.lineOk]}>
+      <CircleCheck size={15} strokeWidth={2.2} color={c.accent} />
+      <Text variant="label" tone="secondary" style={{ flex: 1 }}>
+        {s.fresh ? 'Protection active, vérifiée aujourd’hui' : 'Protection active'}
+      </Text>
+    </View>
+  );
+}
+
+const WORDS: Record<string, [string, string]> = {
+  'days:7': ['Une semaine', 'Sept jours sans fil infini.'],
+  'days:30': ['Un mois', 'Trente jours. Ce n’est plus un essai, c’est une habitude.'],
+  'days:100': ['Cent jours', 'Cent jours. Tu as change de rapport a ton telephone.'],
+  'reels:1000': ['Mille reels', 'Mille reels qui ne sont jamais arrives jusqu’a toi.'],
+};
+
+/**
+ * Le palier, et sa carte a partager.
+ *
+ * La carte est capturee telle qu'elle est a l'ecran plutot que redessinee
+ * pour l'export : deux dessins d'une meme chose finissent toujours par
+ * diverger, et c'est l'exporte qu'on ne regarde jamais.
+ */
+export function Milestone({
+  prize, days, blocked, onClose,
+}: {
+  prize: { kind: string; at: number };
+  days: number;
+  blocked: number;
+  onClose: () => void;
+}) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const card = useRef<View>(null);
+  const [busy, setBusy] = useState(false);
+  const id = `${prize.kind}:${prize.at}`;
+  const [title, body] = WORDS[id] ?? ['Palier atteint', ''];
+
+  const share = async () => {
+    setBusy(true);
+    try {
+      const uri = await captureRef(card, { format: 'png', quality: 1, result: 'tmpfile' });
+      await Share.share({ url: uri });
+    } catch {
+      // Le partage peut echouer (permission, disque) : le palier reste acquis.
+    }
+    setBusy(false);
+  };
+
+  return (
+    <Modal visible animationType="fade" onRequestClose={onClose} transparent>
+      <View style={st.scrim}>
+        <SafeAreaView style={st.sheet}>
+          <Pressable onPress={onClose} hitSlop={16} style={st.close}>
+            <X size={18} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+          </Pressable>
+
+          <Animated.View entering={FadeIn.duration(420)} ref={card} style={st.prize}>
+            <LinearGradient
+              colors={[withAlpha(c.accent, 0.22), withAlpha(c.accentWarm, 0.08)]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={st.trophy}>
+              <Trophy size={26} strokeWidth={1.8} color={c.accent} />
+            </View>
+            <Text variant="displayM" style={st.mid}>{title}</Text>
+            <Text variant="body" tone="secondary" style={st.mid}>{body}</Text>
+            <View style={st.prizeRow}>
+              <Figure label="Jours protégés" value={`${days} j`} />
+              <Figure label="Reels évités" value={String(blocked)} />
+            </View>
+            <Text variant="label" tone="tertiary">UNSWIPE</Text>
+          </Animated.View>
+
+          <View style={st.prizeBtns}>
+            <Button
+              label={busy ? 'Un instant…' : 'Partager'}
+              onPress={() => { haptics.press(); void share(); }}
+              disabled={busy}
+            />
+            <Button label="Plus tard" onPress={onClose} variant="ghost" />
+          </View>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+}
+
+const sheet = (c: Palette) => StyleSheet.create({
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: space.lg,
+    paddingHorizontal: space.lg, paddingVertical: space.lg,
+    marginTop: space.lg,
+  },
+  ringWrap: { alignItems: 'center' },
+  ringIn: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 104,
+    alignItems: 'center', justifyContent: 'center', gap: 1,
+  },
+  figures: { flex: 1, gap: space.md },
+  figure: { gap: 1 },
+  note: { marginTop: space.sm, lineHeight: 16 },
+  line: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    marginTop: space.md, paddingHorizontal: space.md, paddingVertical: 10,
+    borderRadius: 14, borderWidth: StyleSheet.hairlineWidth,
+  },
+  lineOk: { borderColor: withAlpha(c.accent, 0.3), backgroundColor: withAlpha(c.accent, 0.07) },
+  lineWarn: { borderColor: withAlpha(c.ember, 0.45), backgroundColor: withAlpha(c.ember, 0.1) },
+  scrim: { flex: 1, backgroundColor: withAlpha(c.night, 0.9) },
+  sheet: { flex: 1, justifyContent: 'center', paddingHorizontal: gutter },
+  close: { position: 'absolute', top: space.lg, right: 0, padding: space.sm },
+  prize: {
+    alignItems: 'center', gap: space.sm, overflow: 'hidden',
+    paddingHorizontal: space.lg, paddingVertical: space.xl, borderRadius: 28,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
+    backgroundColor: c.surface,
+  },
+  trophy: {
+    width: 58, height: 58, borderRadius: 29, marginBottom: space.sm,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.45),
+    backgroundColor: withAlpha(c.accent, 0.1),
+  },
+  mid: { textAlign: 'center' },
+  prizeRow: { flexDirection: 'row', gap: space.xl, marginTop: space.md, marginBottom: space.sm },
+  prizeBtns: { marginTop: space.lg, gap: space.xs },
+});

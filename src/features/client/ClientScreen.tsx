@@ -92,12 +92,15 @@ export function ClientScreen({ id }: { id: ClientId }) {
     l'ecran, et s'eteindre a vingt et une : on relit l'horloge toutes les
     trente secondes, comme la page injectee le fait de son cote.
   */
-  const [inValve, setInValve] = useState(() => valveOpen(valve));
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    setInValve(valveOpen(valve));
-    const iv = setInterval(() => setInValve(valveOpen(valve)), 30_000);
+    const iv = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(iv);
-  }, [valve]);
+  }, []);
+  // L'etat garde l'HEURE, et l'ouverture s'en deduit. Poser l'ouverture dans
+  // un effet demandait un setState synchrone a chaque changement de reglage —
+  // un rendu de plus pour une valeur qu'un calcul donne tout de suite.
+  const inValve = useMemo(() => valveOpen(valve, new Date(now)), [valve, now]);
 
   const settingsMap = useAppsStore((st) => st.settings);
   const active = useMemo(() => {
