@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { Settings as SettingsIcon } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -22,9 +23,21 @@ export function Header({
 }: { onSettings: () => void; onProfile: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const router = useRouter();
   return (
     <View style={st.root}>
-      <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
+      {/*
+        Un appui long sur la marque ouvre le plan de demonstration.
+        Il sert a filmer l'app pour la presenter, pas a s'en servir : il n'a
+        donc rien a faire dans les reglages, ou il serait un bouton de plus a
+        comprendre pour tout le monde et utile a une seule personne.
+      */}
+      <Pressable
+        onLongPress={() => { haptics.press(); router.push('/demo'); }}
+        delayLongPress={900}
+      >
+        <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
+      </Pressable>
 
       <View style={{ flex: 1 }} />
 
