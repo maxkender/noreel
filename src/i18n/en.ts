@@ -53,7 +53,7 @@ export const en: Dict = {
   },
 
   s5: {
-    titleA: 'How long a day, would you guess?',
+    titleA: 'How much screen time a day, would you guess?',
     unit: 'a day',
     liveShare: `That's {p}% of your waking day.`,
     liveWeek: '{h} a week.',
@@ -171,6 +171,7 @@ export const en: Dict = {
     loveSub: 'Early romantic love runs on the same circuit: the ventral tegmental area and the caudate nucleus, the dopamine ones.',
     loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology, 2005',
     fix: 'With UnSwipe, you repair your receptors without losing touch with the people you love.',
+    ready: 'Ready?',
     cta: 'Continue',
   },
 

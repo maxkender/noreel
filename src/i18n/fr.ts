@@ -58,7 +58,7 @@ export const fr = {
   },
 
   s5: {
-    titleA: `À ton avis, combien de temps par jour${NNBSP}?`,
+    titleA: `À ton avis, tu as combien de temps d’écran par jour${NNBSP}?`,
     unit: 'par jour',
     liveShare: 'Soit {p}{nbsp}% de ta journée éveillée.',
     liveWeek: '{h} par semaine.',
@@ -176,6 +176,7 @@ export const fr = {
     loveSub: 'L’amour naissant passe par le même circuit : l’aire tegmentale ventrale et le noyau caudé, ceux de la dopamine.',
     loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology, 2005',
     fix: 'Avec UnSwipe, tu répares tes récepteurs sans perdre contact avec tes proches.',
+    ready: `Tu es prêt${NNBSP}?`,
     cta: 'Continuer',
   },
 

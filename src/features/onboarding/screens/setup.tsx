@@ -21,36 +21,35 @@ type P = { onNext: () => void };
 
 /* ---------- Le constat ---------- */
 
+/*
+ * Une question, des reponses, et rien d'autre.
+ *
+ * Chaque reponse portait sa replique, affichee en orange des qu'on la
+ * choisissait — « Aucun. Tu en as pourtant vu des centaines. » On repondait
+ * donc a la personne pour lui dire qu'elle avait tort, sur un ecran dont tout
+ * l'interet est qu'elle fasse le constat elle-meme. La question suffit.
+ */
 type Step =
   | {
       kind: 'ask';
       q: string;
       /** Ajoute « Honnêtement… » sous la question : ça change les réponses. */
       honest?: boolean;
-      options: { label: string; reply: string }[];
+      options: string[];
     }
   | { kind: 'say'; q: string; sub?: string };
 
 const CONSTAT: Step[] = [
   {
     kind: 'ask',
-    q: 'Tu te souviens de combien de reels vus cette {semaine} ?',
+    q: 'Tu te souviens de combien de Reels vus cette {semaine} ?',
     honest: true,
-    options: [
-      { label: 'Aucun', reply: 'Aucun. Tu en as pourtant vu des centaines.' },
-      { label: 'Un ou deux', reply: 'Deux, sur les centaines qui ont défilé.' },
-      { label: 'Quelques-uns', reply: 'Quelques-uns. Tu en as vu des centaines.' },
-      { label: 'Je ne sais plus', reply: 'Personne ne sait. C’est exactement le problème.' },
-    ],
+    options: ['Aucun', 'Un ou deux', 'Quelques-uns', 'Je ne sais plus'],
   },
   {
     kind: 'ask',
     q: 'Ta mémoire, ta concentration, ton plaisir : tu les sens {flancher} ?',
-    options: [
-      { label: 'Oui, nettement', reply: 'Tu l’as senti avant de savoir pourquoi.' },
-      { label: 'Parfois', reply: 'Ça commence toujours par « parfois ».' },
-      { label: 'Non', reply: 'Alors regarde la suite. Tu jugeras après.' },
-    ],
+    options: ['Oui, nettement', 'Parfois', 'Non'],
   },
 ];
 
@@ -113,47 +112,15 @@ export function Constat({ onNext }: P) {
             entering={FadeIn.delay(900).duration(520)}
             style={{ marginTop: space.xl, gap: space.md }}
           >
-            {step.options.map((o, k) => (
+            {step.options.map((label, k) => (
               <SelectCard
-                key={o.label}
-                label={o.label}
+                key={label}
+                label={label}
                 selected={answer === k}
                 onPress={() => setAnswer(k)}
               />
             ))}
           </Animated.View>
-        )}
-
-        {/*
-          La replique ne tombe qu'une fois la reponse donnee, et elle ne
-          DEPLACE rien.
-          Reserver sa place par une hauteur minimale ne suffisait pas : une
-          replique de trois lignes debordait la reserve, et comme l'ecran
-          est centre verticalement, ces quelques points de plus recentraient
-          tout le bloc — les reponses remontaient sous le doigt au moment
-          meme ou on en choisissait une. La boite a donc une hauteur FIXE et
-          le texte y est pose par-dessus, hors du flux : quelle que soit sa
-          longueur, plus rien au-dessus ne peut bouger.
-        */}
-        {step.kind === 'ask' && (
-          <View style={st.reply}>
-            {answer !== null && (
-              <Animated.View
-                entering={FadeIn.duration(420)}
-                style={st.replyLayer}
-                pointerEvents="none"
-              >
-                <Text
-                  variant="lead"
-                  color={c.ember}
-                  numberOfLines={3}
-                  style={st.center}
-                >
-                  {step.options[answer].reply}
-                </Text>
-              </Animated.View>
-            )}
-          </View>
         )}
       </Animated.View>
     </Screen>
@@ -236,7 +203,11 @@ export function Name({ onNext }: P) {
 
   return (
     <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
-      <Typewriter text="Comment t’appelles-tu ?" variant="displayM" style={st.center} />
+      <Typewriter
+        text="Bienvenue sur UnSwipe. Comment devrait-on t’appeler ?"
+        variant="displayM"
+        style={st.center}
+      />
       <Animated.View entering={FadeIn.delay(900).duration(600)}>
         <TextInput
           value={name}
@@ -409,12 +380,6 @@ function PromiseRow({ title }: { title: string }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
-  // Hauteur fixe : la plus longue replique tient sur deux lignes.
-  reply: { height: 62, marginTop: space.xl },
-  replyLayer: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
-  },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.
   faded: { textAlign: 'center', opacity: 0.55 },

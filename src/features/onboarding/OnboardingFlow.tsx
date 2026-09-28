@@ -18,7 +18,7 @@ import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
 import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
-import { Attribution, Commit, Proof, RateAsk, Reveal } from './screens/extra';
+import { Attribution, Proof, RateAsk, Reveal } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -78,9 +78,6 @@ export function OnboardingFlow() {
     l'ecran monte peut l'appeler, donc il ne peut pas se tromper de place.
   */
   const next = useCallback(() => go(step + 1), [go, step]);
-  // Un pas en arriere, pour le seul ecran qui en propose un : celui qui
-  // retourne son chiffre et lui offre de le corriger.
-  const back = useCallback(() => go(Math.max(0, step - 1)), [go, step]);
 
   /**
    * L'ordre suit un arc, pas une liste de reglages.
@@ -97,13 +94,11 @@ export function OnboardingFlow() {
    * paywall tombe dessus, pas trois ecrans plus loin.  9. Les reglages fins
    * viennent apres la decision.
    *
-   * Le rythme compte autant que l'ordre. Apres les ecrans qui pesent vient
-   * une question facile — d'ou viens-tu — puis un ecran en pleine couleur ou
-   * il faut MAINTENIR le doigt : le contraste remet l'oeil a zero, et une
-   * intention tenue deux secondes se retient mieux qu'un bouton tape sans
-   * lire. L'ecran de demonstration est le seul du parcours qui prouve quelque
-   * chose ; il arrive juste apres le manifeste, la ou l'on vient de dire ce
-   * qu'on croit.
+   * Le rythme compte autant que l'ordre. Apres les ecrans qui pesent viennent
+   * deux demandes legeres — d'ou viens-tu, puis le soutien — avant la
+   * promesse. L'ecran de demonstration est le seul du parcours qui prouve
+   * quelque chose ; il arrive juste apres le manifeste, la ou l'on vient de
+   * dire ce qu'on croit.
    *
    * Le code promo a quitte le parcours. Demander « tu as un code ? » avant
    * d'avoir montre le prix apprend a en chercher un : on quitte l'app, on
@@ -116,7 +111,7 @@ export function OnboardingFlow() {
     <S3 key="s3" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <S5 key="s5" onNext={next} />,
-    <Reveal key="rev" onNext={next} onBack={back} />,
+    <Reveal key="rev" onNext={next} />,
     <S6 key="s6" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
@@ -130,7 +125,6 @@ export function OnboardingFlow() {
     <HomeShortcuts key="short" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
-    <Commit key="commit" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];

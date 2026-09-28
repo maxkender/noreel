@@ -1,99 +1,59 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
-import Animated, {
-  Easing, FadeIn, runOnJS, useAnimatedStyle, useSharedValue, withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Star } from 'lucide-react-native';
-import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
-import { gutter, space } from '@/theme/spacing';
+import { useColors } from '@/theme/useColors';
+import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { MockFeed, REELS } from '@/components/MockFeed';
+import { MockFeed } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
-import { formatHours, formatLifeDuration } from '@/lib/format';
 import { track } from '@/services';
 import { useOnboardingStore } from '@/store/onboarding';
+import { screenYears } from '../calculations';
 
 type P = { onNext: () => void };
 
-/* ---------- Le chiffre, retourne dans tous les sens ---------- */
+/* ---------- Le chiffre, mis bout a bout ---------- */
 
 /**
- * Ce que son chiffre veut dire, en unites qu'on se represente.
+ * Ce que son estimation coute, en une seule ligne.
  *
  * L'ecran d'avant lui a fait DEVINER son temps d'ecran. Celui-ci ne lui
  * apprend rien de nouveau : il fait l'arithmetique a sa place. Trois heures
- * quarante par jour ne veut rien dire ; un mois par an, c'est un chiffre
- * qu'on sent.
+ * quarante par jour ne veut rien dire ; des annees de vie, ca se sent.
  *
- * On n'invente aucune moyenne a laquelle se comparer. Un chiffre qu'on ne
- * peut pas verifier decredibilise tous les autres, et celui-la vient de lui :
- * il peut refaire chaque ligne de tete.
+ * Un seul nombre, et rien autour. Il y avait ici trois lignes — par jour, par
+ * an, sur dix ans — plus une invitation a verifier le vrai chiffre dans les
+ * reglages : un tableau qu'on lit, alors qu'il n'y a qu'une chose a encaisser.
  */
-export function Reveal({ onNext, onBack }: P & { onBack: () => void }) {
+export function Reveal({ onNext }: P) {
   const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
+  const st = useMemo(() => sheet(), []);
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
-
-  const perYear = Math.round((minutes * 365) / 60 / 24);          // jours pleins
-  const perTen = formatLifeDuration(Math.round((minutes * 365 * 10) / 60 / 24 / 30.4));
-
-  const rows: [string, string][] = [
-    ['Par jour', formatHours(minutes)],
-    ['Par an', `${perYear} jours pleins`],
-    ['Sur dix ans', perTen],
-  ];
+  const years = Math.round(screenYears(minutes));
 
   return (
-    <Screen
-      cta="Continuer"
-      onPress={onNext}
-      secondary="Ajuster mon chiffre"
-      onSecondary={onBack}
-      center
-      hue="ember"
-      hueLevel={0.7}
-    >
+    <Screen cta="Continuer" onPress={onNext} center hue="ember" hueLevel={0.7}>
       <Text variant="displayM" style={st.mid}>
         Ce que ça fait, mis bout à bout.
       </Text>
 
-      <View style={st.table}>
-        {rows.map(([k, v], i) => (
-          <Animated.View
-            key={k}
-            entering={FadeIn.delay(300 + i * 260).duration(520)}
-            style={st.row}
-          >
-            <Text variant="label" tone="tertiary">{k}</Text>
-            <Text
-              variant={i === 2 ? 'displayM' : 'title'}
-              color={i === 2 ? c.danger : undefined}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {v}
-            </Text>
-          </Animated.View>
-        ))}
-      </View>
-
-      {/*
-        On invite a verifier, on n'affirme rien.
-        « Les gens sous-estiment de tant pour cent » serait un chiffre que je ne
-        peux pas sourcer, pose juste a cote de trois lignes qu'il peut refaire
-        de tete — la seule fausse des quatre discrediterait les trois autres.
-      */}
-      <Animated.View entering={FadeIn.delay(1100).duration(520)}>
-        <Text variant="body" tone="secondary" style={st.mid}>
-          Ton vrai chiffre est dans Réglages → Temps d’écran. S’il est plus
-          haut que ce que tu as deviné, c’est lui qui compte.
+      <Animated.View entering={FadeIn.delay(400).duration(760)}>
+        <Text
+          variant="hero"
+          color={c.danger}
+          style={[st.mid, { marginTop: space.xl }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {years} ans
+        </Text>
+        <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
+          de ta vie, à ce rythme.
         </Text>
       </Animated.View>
     </Screen>
@@ -106,13 +66,13 @@ export function Reveal({ onNext, onBack }: P & { onBack: () => void }) {
  * Le meme fil, avant et apres. Une seule fois, sans qu'on demande rien.
  *
  * Tout ce qui precede se raconte avec des mots. Ici on MONTRE, et c'est le
- * seul ecran du parcours qui prouve quelque chose : trois reels tombent, le
- * reste du fil ne bouge pas. C'est exactement la promesse de l'app, et elle
- * tient en deux secondes de regard.
+ * seul ecran du parcours qui prouve quelque chose : les reels tombent, le
+ * reste du fil ne bouge pas. Ca tient en deux secondes de regard, et il n'y a
+ * donc rien a ecrire autour — une pastille qui compte les reels retires et un
+ * paragraphe explicatif ne faisaient que rediger ce qui etait deja a l'image.
  */
 export function Proof({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
+  const st = useMemo(() => sheet(), []);
   const [filtered, setFiltered] = useState(false);
 
   // On laisse le temps de reconnaitre un fil normal AVANT de le filtrer :
@@ -133,122 +93,7 @@ export function Proof({ onNext }: P) {
           <MockFeed filtered={filtered} />
         </PhoneFrame>
       </View>
-
-      <View style={st.badgeWrap}>
-        {filtered ? (
-          <Animated.View key="on" entering={FadeIn.duration(420)} style={[st.badge, st.badgeOn]}>
-            <Text variant="label" color={c.accent}>{REELS} reels retirés</Text>
-          </Animated.View>
-        ) : (
-          <Animated.View key="off" entering={FadeIn.duration(300)} style={[st.badge, st.badgeOff]}>
-            <Text variant="label" color={c.ember}>Le fil, tel quel</Text>
-          </Animated.View>
-        )}
-      </View>
-
-      <Text variant="body" tone="secondary" style={st.mid}>
-        Tes messages, tes amis, tes photos : tout reste. Ce qui disparaît,
-        c’est ce qui ne s’arrête jamais.
-      </Text>
     </Screen>
-  );
-}
-
-/* ---------- L'engagement ---------- */
-
-const DEEP = '#5B3FD6';
-const MID = '#3F57C9';
-const LOW = '#26307A';
-const INK = '#FFFFFF';
-const HOLD_MS = 1800;
-
-/**
- * Maintenir le doigt pour s'engager.
- *
- * Un ecran de rupture, en pleine couleur au milieu d'un parcours sombre, et
- * le seul ou l'on doit FAIRE quelque chose qui coute un peu. Ce n'est pas un
- * ornement : une intention qu'on tient deux secondes sous le doigt se retient
- * mieux qu'un bouton qu'on tape sans lire. Et le contraste de couleur remet
- * l'oeil a zero avant les deux derniers ecrans.
- *
- * Ses couleurs ne suivent pas le theme : comme l'intro et le final, c'est une
- * scene, pas du mobilier.
- */
-export function Commit({ onNext }: P) {
-  const st = useMemo(() => sheet2(), []);
-  const name = useOnboardingStore((x) => x.firstName);
-  const p = useSharedValue(0);
-  const [done, setDone] = useState(false);
-
-  const finish = () => {
-    if (done) return;
-    setDone(true);
-    haptics.success();
-    // Un temps pour voir l'anneau ferme : passer a l'instant donne
-    // l'impression que le geste n'a servi a rien.
-    setTimeout(onNext, 700);
-  };
-
-  const grab = () => {
-    haptics.press();
-    p.value = withTiming(1, { duration: HOLD_MS, easing: Easing.linear }, (ok) => {
-      if (ok) runOnJS(finish)();
-    });
-  };
-  const release = () => {
-    if (done) return;
-    // On revient vite : un retour lent laisse croire que ca compte encore.
-    p.value = withTiming(0, { duration: 260 });
-  };
-
-  // L'anneau grandit et s'opacifie. Jamais de couleur animee : cette app
-  // tombe des qu'on anime une propriete de couleur.
-  const ring = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.7 + p.value * 0.3 }],
-    opacity: 0.25 + p.value * 0.75,
-  }));
-  const fill = useAnimatedStyle(() => ({ opacity: p.value }));
-
-  return (
-    <View style={st.root}>
-      <LinearGradient
-        colors={[DEEP, MID, LOW]}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
-        <View style={{ flex: 1 }} />
-
-        <Text variant="displayM" color={INK} style={st.mid}>
-          {done
-            ? `C’est noté, ${name || 'promis'}.`
-            : 'Une dernière chose : décide-le vraiment.'}
-        </Text>
-        <Text variant="lead" color={withAlpha(INK, 0.8)} style={[st.mid, { marginTop: space.md }]}>
-          {done
-            ? 'On s’occupe du reste.'
-            : 'Maintiens le cercle le temps de dire oui.'}
-        </Text>
-
-        <Pressable
-          onPressIn={grab}
-          onPressOut={release}
-          style={st.padWrap}
-          accessibilityRole="button"
-          accessibilityLabel="Maintenir pour s’engager"
-        >
-          <Animated.View style={[st.pad, ring]} />
-          <Animated.View style={[st.padFill, fill]} />
-          <Text variant="button" color={INK}>
-            {done ? 'Engagé' : 'Maintiens'}
-          </Text>
-        </Pressable>
-
-        <View style={{ flex: 1 }} />
-      </SafeAreaView>
-    </View>
   );
 }
 
@@ -302,12 +147,16 @@ export function Attribution({ onNext }: P) {
 /* ---------- Les etoiles ---------- */
 
 /**
- * La demande d'avis.
+ * La demande de soutien.
  *
- * Elle est posee ICI, apres la promesse chiffree, parce que c'est le seul
- * moment positif du parcours ou l'on n'a encore rien demande. Elle ne bloque
- * rien : la feuille d'Apple est plafonnee a trois apparitions par an et ne
- * dit jamais si elle s'est montree, donc on avance dans tous les cas.
+ * Elle ne demande pas un service, elle propose d'en rendre un : ce qu'on
+ * soutient, c'est la communaute, pas le chiffre d'affaires d'une app. C'est
+ * aussi pour ca que le bouton dit « Soutenir » et non « mettre cinq etoiles » —
+ * personne n'aime qu'on lui dicte sa note.
+ *
+ * Elle ne bloque rien : la feuille d'Apple est plafonnee a trois apparitions
+ * par an et ne dit jamais si elle s'est montree, donc on avance dans tous les
+ * cas.
  *
  * A savoir : sur une version distribuee par TestFlight, iOS ne montre RIEN.
  * L'ecran reste, le bouton avance, et c'est normal — ca ne se verra qu'une
@@ -315,7 +164,7 @@ export function Attribution({ onNext }: P) {
  */
 export function RateAsk({ onNext }: P) {
   const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
+  const st = useMemo(() => sheet(), []);
   const name = useOnboardingStore((x) => x.firstName);
 
   const ask = async () => {
@@ -330,7 +179,7 @@ export function RateAsk({ onNext }: P) {
 
   return (
     <Screen
-      cta="Mettre cinq étoiles"
+      cta="Soutenir"
       onPress={() => { void ask(); }}
       secondary="Plus tard"
       onSecondary={onNext}
@@ -346,51 +195,21 @@ export function RateAsk({ onNext }: P) {
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        {name ? `${name}, on est une petite équipe.` : 'On est une petite équipe.'}
+        {name
+          ? `${name}, soutiens la communauté UnSwipe.`
+          : 'Soutiens la communauté UnSwipe.'}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        UnSwipe n’a pas de budget publicitaire. Un avis, c’est ce qui le met
-        devant les yeux de quelqu’un d’autre.
+        On essaie de rendre leur temps aux gens.
       </Text>
     </Screen>
   );
 }
 
-const sheet = (c: Palette) => StyleSheet.create({
+// Aucune couleur ici : les trois ecrans qui s'en servent prennent la leur
+// directement sur la palette, au rendu.
+const sheet = () => StyleSheet.create({
   mid: { textAlign: 'center' },
-  table: { alignSelf: 'stretch', marginTop: space.xl, gap: space.lg },
-  row: {
-    alignItems: 'center', gap: 2, paddingBottom: space.md,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.12),
-  },
   stage: { alignItems: 'center', marginTop: space.xl },
-  badgeWrap: { alignItems: 'center', height: 30, marginTop: space.lg },
-  badge: {
-    position: 'absolute',
-    paddingHorizontal: space.md, paddingVertical: 6, borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  badgeOff: { borderColor: withAlpha(c.ember, 0.45), backgroundColor: withAlpha(c.ember, 0.1) },
-  badgeOn: { borderColor: withAlpha(c.accent, 0.5), backgroundColor: withAlpha(c.accent, 0.12) },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
-});
-
-// La scene en couleur a ses propres valeurs : elle ne suit pas la palette.
-const sheet2 = () => StyleSheet.create({
-  root: { flex: 1, backgroundColor: LOW },
-  safe: { flex: 1, paddingHorizontal: gutter },
-  mid: { textAlign: 'center' },
-  padWrap: {
-    alignSelf: 'center', marginTop: space.xxl,
-    width: 168, height: 168, borderRadius: 84,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  pad: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 84, borderWidth: 2, borderColor: INK,
-  },
-  padFill: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 84, backgroundColor: withAlpha(INK, 0.22),
-  },
 });

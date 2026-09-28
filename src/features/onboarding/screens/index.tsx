@@ -1,9 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, {
-  FadeIn, useAnimatedStyle, useSharedValue, withDelay, withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -223,29 +221,22 @@ export function S6Years({ onNext }: P) {
   const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const years = Math.round(screenYears(minutes));
-  const share = Math.round(wakingShare(minutes) * 100);
 
   const [y, setY] = useState(0);
-  const [p, setP] = useState(0);
-  const bar = useSharedValue(0);
 
   useEffect(() => {
-    // 1,6 s pour les deux, quel que soit le chiffre : un petit nombre ne
-    // doit pas defiler plus vite qu'un grand.
+    // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
+    // plus vite qu'un grand.
     const steps = 34;
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       setY(Math.round((years * i) / steps));
-      setP(Math.round((share * i) / steps));
       if (i % 8 === 0) haptics.tick();
       if (i >= steps) clearInterval(id);
     }, 1600 / steps);
-    bar.value = withDelay(200, withTiming(share / 100, { duration: 1400 }));
     return () => clearInterval(id);
-  }, [years, share, bar]);
-
-  const fill = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
+  }, [years]);
 
   return (
     <Screen cta="Récupérer ce temps" onPress={onNext} center hue="ember">
@@ -263,20 +254,6 @@ export function S6Years({ onNext }: P) {
         <Text variant="lead" tone="secondary" style={s.center}>
           {d.s6.bodyShort}
         </Text>
-      </Animated.View>
-
-      <View style={s.split} />
-
-      <Animated.View entering={FadeIn.delay(500).duration(700)} style={s.share}>
-        <View style={s.shareRow}>
-          <Text variant="displayL" color={c.ember}>{p} %</Text>
-          <Text variant="body" tone="secondary" style={{ flex: 1 }}>
-            de ton temps éveillé, chaque jour
-          </Text>
-        </View>
-        <View style={s.track}>
-          <Animated.View style={[s.fill, fill]} />
-        </View>
       </Animated.View>
     </Screen>
   );
@@ -296,7 +273,9 @@ export function S7({ onNext }: P) {
     [d.brain.step2, d.brain.step2b],
     [d.brain.step3, d.brain.step3b],
     [d.brain.love, d.brain.loveSub, d.brain.loveCite],
-    [d.brain.fix],
+    // Le dernier temps pose la question a laquelle tout le reste du parcours
+    // sert de reponse : on ne conclut pas sur une affirmation, on demande.
+    [d.brain.fix, d.brain.ready],
   ];
   const last = i >= steps.length - 1;
   const harm = last ? 0 : (i + 1) / steps.length;
@@ -354,17 +333,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   square: { width: 20.5, height: 20.5, borderRadius: 4 },
   pct: { marginTop: 0, marginBottom: space.sm },
   years: { alignItems: 'center', gap: space.xs },
-  split: {
-    height: StyleSheet.hairlineWidth, alignSelf: 'stretch',
-    marginVertical: space.xl, backgroundColor: withAlpha(c.mist, 0.14),
-  },
-  share: { alignSelf: 'stretch', gap: space.md },
-  shareRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  track: {
-    height: 8, borderRadius: 4, overflow: 'hidden',
-    backgroundColor: withAlpha(c.mist, 0.08),
-  },
-  fill: { height: 8, borderRadius: 4, backgroundColor: c.ember },
   squareOff: { backgroundColor: withAlpha(c.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },
   chainCol: { alignItems: 'center', width: 12 },

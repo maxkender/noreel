@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Commit, Proof, RateAsk, Reveal } from './extra';
+import { Attribution, Proof, RateAsk, Reveal } from './extra';
 import { Paywall } from './Paywall';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
@@ -40,7 +40,7 @@ const noop = () => {};
 
 describe('les ecrans du parcours se montent', () => {
   it('le chiffre retourne', () => {
-    render(<Reveal onNext={noop} onBack={noop} />);
+    render(<Reveal onNext={noop} />);
   });
 
   it('la demonstration', () => {
@@ -53,10 +53,6 @@ describe('les ecrans du parcours se montent', () => {
 
   it('les etoiles', () => {
     render(<RateAsk onNext={noop} />);
-  });
-
-  it('l’engagement en pleine couleur', () => {
-    render(<Commit onNext={noop} />);
   });
 
   /*
