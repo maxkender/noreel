@@ -6,12 +6,15 @@
  * comme un verdict, soit comme une decoration — dans les deux cas on cesse de
  * le regarder, et le jour ou il DESCEND c'est l'app qu'on soupconne.
  */
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, waitFor } from '@testing-library/react-native';
 import { CortiTab } from './CortiTab';
 import { dict } from '@/i18n';
 
 jest.mock('react-native-device-activity', () => ({}));
 jest.mock('expo-router', () => ({ useFocusEffect: (fn: () => void) => fn() }));
+
+const mockClaim = jest.fn((_n: number) => Promise.resolve(false));
+jest.mock('@/services/cheer', () => ({ claimCheer: (n: number) => mockClaim(n) }));
 
 const noop = (() => {}) as never;
 
@@ -48,4 +51,31 @@ it('montre les quatre etats et le depart a 18', () => {
   }
   // Sans registre, l'indice vaut son point de depart — pas zero.
   expect(screen.getByText('18 %')).toBeTruthy();
+});
+
+/*
+  Ce qui a SUIVI Corti sur cet onglet.
+
+  La carte de l'onglet blocage portait sa soucoupe, sa phrase, la celebration
+  des paliers et les trois chiffres qui justifient l'abonnement. En deplacant
+  Corti ici j'ai retire cette carte — et tout ce qu'elle portait a disparu de
+  l'app sans qu'aucun test ne bronche : l'animation de six secondes du studio,
+  trois megaoctets et demi embarques, n'etait plus atteignable nulle part.
+  Ces tests-la sont ce qui rend la suppression sure.
+*/
+describe('ce qui a suivi Corti', () => {
+  // Les chiffres viennent du disque : ils n'existent qu'au second rendu.
+  it('garde les chiffres qui justifient l’abonnement', async () => {
+    render(<CortiTab onScroll={noop} />);
+    expect(await screen.findByText(dict.stats.reelsAvoided)).toBeTruthy();
+    expect(screen.getByText(dict.stats.timeBack)).toBeTruthy();
+    expect(screen.getByText(dict.stats.daysKept)).toBeTruthy();
+  });
+
+  it('demande encore la celebration des paliers', async () => {
+    // Sans cet appel, le septieme et le trentieme jour ne se fetent plus, et
+    // le fichier anime du studio ne sert plus a rien dans le paquet.
+    render(<CortiTab onScroll={noop} />);
+    await waitFor(() => expect(mockClaim).toHaveBeenCalled());
+  });
 });

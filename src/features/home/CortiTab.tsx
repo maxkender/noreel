@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -8,10 +8,13 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
+import { formatHours } from '@/lib/format';
 import { CortiDock } from '@/components/CortiDock';
-import { CortiRig } from '@/components/CortiRig';
-import { cortiLevel, type CortiLevel } from '@/components/Corti';
+import { CortiRecovery } from '@/components/CortiRecovery';
+import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
+import { cortiLevel, cortiLine, type CortiLevel } from '@/components/Corti';
 import { stats, type Stats } from '@/services/protect';
+import { claimCheer } from '@/services/cheer';
 import { useT } from '@/i18n';
 import type { Scroll } from './parts';
 
@@ -38,6 +41,25 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [s, setS] = useState<Stats | null>(null);
 
   useFocusEffect(useCallback(() => { void stats().then(setS); }, []));
+
+  /*
+    Le septieme jour et le trentieme, la scene cede sa place a la sequence
+    complete : Corti passe d'affaisse a rayonnant, une fois, puis la scene
+    reprend — sur un saut de joie, pas sur un arret net. C'est le seul moment
+    ou l'app se rejouit ; le reste du temps elle dit ou l'on en est.
+
+    Elle vivait sur l'onglet blocage. En deplacant Corti ici, je l'ai rendue
+    INATTEIGNABLE : la carte qui la portait n'etait plus rendue nulle part, et
+    les six secondes du studio — trois megaoctets et demi embarques — ne
+    pouvaient plus se jouer. Elle suit donc Corti, comme le reste.
+  */
+  const [cheer, setCheer] = useState(false);
+  const [hooray, setHooray] = useState<CortiReaction | undefined>();
+  useEffect(() => {
+    let alive = true;
+    void claimCheer(cortiLevel(s?.days ?? 0)).then((ok) => { if (alive && ok) setCheer(true); });
+    return () => { alive = false; };
+  }, [s?.days]);
 
   const level = cortiLevel(s?.days ?? 0);
   const brain = s?.brain ?? 18;
@@ -77,8 +99,24 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         revenir sur cet onglet ; une scene qui vit, si.
       */}
       <View style={st.stage}>
-        <CortiDock level={level} size={268} tint={tone} />
+        {cheer ? (
+          <CortiRecovery
+            size={268}
+            loop={false}
+            onDone={() => { setCheer(false); setHooray(cortiReact('celebrate')); }}
+          />
+        ) : (
+          <CortiDock level={level} size={268} tint={tone} reaction={hooray} />
+        )}
       </View>
+
+      {/* Sa phrase a lui. C'est la seule ligne de l'app qui ne rapporte pas un
+          chiffre, et c'est pour elle qu'on revient voir comment il va. */}
+      {s && (
+        <Text variant="lead" color={c.accent} style={st.line}>
+          {cortiLine(level, s.days)}
+        </Text>
+      )}
 
       <Glass radius={24} intensity={50} warmEdge="none" style={st.gauge}>
         <View style={st.gaugeTop}>
@@ -93,11 +131,29 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
             suit reste une theorie : la, on peut refaire le calcul soi-meme. */}
         {s && (
           <View style={st.counts}>
-            <Count n={s.days} label={d.cortiTab.daysL} c={c.accent} />
-            <Count n={s.passes} label={d.cortiTab.passesL} c={c.ember} />
+            <Count v={String(s.days)} label={d.cortiTab.daysL} c={c.accent} />
+            <Count v={String(s.passes)} label={d.cortiTab.passesL} c={c.ember} />
           </View>
         )}
       </Glass>
+
+      {/*
+        Les chiffres qui justifient l'abonnement a la fin du mois.
+
+        Ils vivaient sur la carte de l'onglet blocage. En deplacant Corti ici
+        j'ai retire cette carte, et ces trois-la ont disparu de l'app avec
+        elle : les reels evites, le temps repris, les jours tenus. Ce sont les
+        seuls chiffres qu'on ait le droit de montrer — ceux qu'on a OBSERVES —
+        et les perdre en reorganisant des onglets aurait ete le genre de
+        regression qu'on ne voit qu'au moment de resilier.
+      */}
+      {s && (
+        <View style={st.figures}>
+          <Count v={String(s.blocked)} label={d.stats.reelsAvoided} c={c.accent} />
+          <Count v={formatHours(s.minutes)} label={d.stats.timeBack} c={c.accent} />
+          <Count v={`${s.days} j`} label={d.stats.daysKept} c={c.accent} />
+        </View>
+      )}
 
       <Text variant="button" style={st.h}>{d.cortiTab.howTitle}</Text>
       <View style={st.moves}>
@@ -159,10 +215,10 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   );
 }
 
-function Count({ n, label, c }: { n: number; label: string; c: string }) {
+function Count({ v, label, c }: { v: string; label: string; c: string }) {
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
-      <Text variant="button" color={c}>{n}</Text>
+      <Text variant="button" color={c}>{v}</Text>
       <Text variant="label" tone="tertiary" style={{ textAlign: 'center' }}>{label}</Text>
     </View>
   );
@@ -171,6 +227,7 @@ function Count({ n, label, c }: { n: number; label: string; c: string }) {
 const sheet = (c: Palette) => StyleSheet.create({
   scroll: { paddingHorizontal: gutter, paddingBottom: 140, paddingTop: space.md },
   stage: { alignItems: 'center', marginTop: space.lg },
+  line: { textAlign: 'center', marginTop: space.sm },
   gauge: { padding: space.lg, marginTop: space.md },
   gaugeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   track: {
@@ -179,6 +236,11 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   fill: { height: 8, borderRadius: 4 },
   counts: { flexDirection: 'row', marginTop: space.lg, gap: space.md },
+  figures: {
+    flexDirection: 'row', gap: space.md, marginTop: space.md,
+    paddingVertical: space.lg, borderRadius: 20,
+    backgroundColor: withAlpha(c.mist, 0.06),
+  },
   h: { marginTop: space.xl, marginBottom: space.sm },
   moves: { gap: space.sm },
   move: {

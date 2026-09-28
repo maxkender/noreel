@@ -208,7 +208,6 @@ export const fr = {
   },
 
   cortiTab: {
-    tab: 'Corti',
     title: 'Corti, et ton indice',
     lead: 'Son état suit un seul chiffre. Voici lequel, et comment il bouge.',
     index: 'Indice de récupération',
@@ -234,7 +233,6 @@ export const fr = {
     honestTitle: 'Ce que ce n’est pas',
     honestB: 'Une estimation tirée de deux nombres qu’on observe vraiment : tes journées protégées et tes journées sans filtre. Ce n’est pas une mesure de ton cerveau, et personne ne peut en faire une depuis un téléphone.',
     daysL: 'journées protégées',
-    rawDaysL: 'journées sans filtre',
     passesL: 'laissez-passer',
   },
   nav: {
@@ -348,7 +346,6 @@ export const fr = {
   pay: {
     priceLine: '{n} j d’essai gratuit, puis {m}/mois — facturé {y}/an',
     priceWeek: '{p} par semaine, sans essai. Annulable à tout moment.',
-    pctNow: 'Ton cerveau aujourd’hui',
     pctThen: 'Après 30 jours sans Reels',
     storeDown: 'L’abonnement n’est pas encore ouvert. Réessaie dans un moment.',
     storeSkip: 'Continuer sans abonnement',

@@ -298,6 +298,18 @@ export function CortiRig({
   useEffect(() => {
     if (!reaction || !motion || played.current === reaction.id) return;
     played.current = reaction.id;
+    /*
+      La precedente est ANNULEE avant que celle-ci commence.
+
+      Chaque reaction pose des minuteurs qui lui rendent son visage et ses bras
+      a la fin. Enchainees — deux reels bloques coup sur coup — les minuteurs
+      de la premiere tombaient au milieu de la seconde et la remettaient a
+      zero : Corti reprenait son air neutre en plein « non » de la tete. La
+      liste est aussi videe, sinon elle grossit a chaque reaction pour la
+      duree de vie de l'ecran.
+    */
+    clear.current.forEach(clearTimeout);
+    clear.current = [];
     const k = size / 400;
 
     switch (reaction.kind) {

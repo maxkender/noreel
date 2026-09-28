@@ -11,9 +11,9 @@
  * change rien a l'execution — et un fichier se lit mieux avec ses imports
  * groupes en haut.
  */
-import { render } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import {
-  Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard,
+  Milestone, ProtectionStatus, ReclaimedNote,
 } from './Recovery';
 import { MockFeed } from '@/components/MockFeed';
 import { CortiDock } from '@/components/CortiDock';
@@ -21,6 +21,7 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import type { Stats } from '@/services/protect';
 import { Settings } from './Settings';
 import { HomeScreen } from './HomeScreen';
+import { dict } from '@/i18n';
 
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
@@ -49,13 +50,13 @@ const EMPTY: Stats = {
 
 const BROKEN: Stats = { ...FRESH, shaky: 'instagram' };
 
-describe('la carte de recuperation', () => {
-  it('avec des chiffres', () => { render(<RecoveryCard s={FRESH} />); });
-  it('au premier lancement', () => { render(<RecoveryCard s={EMPTY} />); });
-  // L'anneau plein est le cas qui deborde : cent pour cent de son tour.
-  it('a cent pour cent', () => { render(<RecoveryCard s={{ ...FRESH, brain: 100 }} />); });
-  it('a zero', () => { render(<RecoveryCard s={{ ...FRESH, brain: 0 }} />); });
-});
+/*
+  La carte de recuperation a disparu : Corti a son onglet, et elle y faisait
+  double emploi. Ce qu'elle portait n'a PAS disparu avec elle — la soucoupe,
+  la jauge, sa phrase, la celebration des paliers et les trois chiffres qui
+  justifient l'abonnement sont tous sur l'onglet de Corti, et sa suite de
+  tests les verifie. C'est la seule chose qui rendait cette suppression sure.
+*/
 
 /*
  * La soucoupe : neuf calques empiles et sept mouvements. Une image manquante
@@ -138,5 +139,23 @@ describe('les ecrans modifies', () => {
   it('l’accueil', () => {
     const r = render(<HomeScreen />);
     expect(r.toJSON()).toBeTruthy();
+  });
+
+  /*
+    LES QUATRE ONGLETS, un par un.
+
+    Monter l'accueil ne montait que le premier : les trois autres n'etaient
+    jamais rendus par aucun test. C'est comme ca qu'en deplacant Corti dans
+    son propre onglet j'ai retire de l'app la celebration des paliers et les
+    trois chiffres qui justifient l'abonnement, sans qu'une seule ligne rouge
+    n'apparaisse. Un onglet qu'on n'ouvre jamais en test est un onglet qu'on
+    casse sans le savoir.
+  */
+  it('les quatre onglets s’ouvrent', () => {
+    render(<HomeScreen />);
+    for (const label of [dict.nav.corti, dict.nav.block, dict.nav.account, dict.nav.home]) {
+      fireEvent.press(screen.getByText(label));
+      expect(screen.toJSON()).toBeTruthy();
+    }
   });
 });

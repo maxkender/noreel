@@ -203,7 +203,6 @@ export const en: Dict = {
   },
 
   cortiTab: {
-    tab: 'Corti',
     title: 'Corti, and your index',
     lead: 'His state follows one number. Here it is, and how it moves.',
     index: 'Recovery index',
@@ -229,7 +228,6 @@ export const en: Dict = {
     honestTitle: 'What this is not',
     honestB: 'An estimate drawn from two numbers we actually observe: your protected days and your days without the filter. It is not a measurement of your brain, and nobody can take one from a phone.',
     daysL: 'protected days',
-    rawDaysL: 'days without filter',
     passesL: 'passes',
   },
   nav: { corti: 'Corti', home: 'Home', block: 'Blocking', account: 'Account' },
@@ -328,7 +326,6 @@ export const en: Dict = {
   pay: {
     priceLine: '{n}-day free trial, then {m}/month — billed {y}/year',
     priceWeek: '{p} per week, no trial. Cancel any time.',
-    pctNow: 'Your brain today',
     pctThen: 'After 30 days without Reels',
     storeDown: 'The subscription is not open yet. Try again in a moment.',
     storeSkip: 'Continue without subscribing',

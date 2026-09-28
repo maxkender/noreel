@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,15 +10,8 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
-import { Glass } from '@/components/glass/Glass';
 import { Button } from '@/components/Button';
-import { cortiLevel, cortiLine } from '@/components/Corti';
-import { CortiDock } from '@/components/CortiDock';
-import { CortiRecovery } from '@/components/CortiRecovery';
-import { cortiReact, type CortiReaction } from '@/components/CortiRig';
-import { claimCheer } from '@/services/cheer';
 import { haptics } from '@/lib/haptics';
-import { formatHours } from '@/lib/format';
 import { dict, useT } from '@/i18n';
 import {
   MINUTES_PER_SESSION, claimMilestone, stats, type Stats,
@@ -43,86 +36,6 @@ export function useProtect() {
   return { s, prize, clear: () => setPrize(null) };
 }
 
-/**
- * Corti au centre, et les chiffres autour d'elle.
- *
- * L'onglet ouvrait sur un anneau et trois nombres. C'est juste, et ca ne
- * donne envie de revenir a personne : on ne revient pas voir un tableau de
- * bord, on revient voir si quelqu'un va bien. Corti porte l'etat — elle
- * s'eteint quand on scrolle, elle se rallume jour apres jour — et les
- * chiffres deviennent la LEGENDE de ce qu'on lit deja sur sa figure.
- *
- * Son niveau se lit sur les jours proteges et non sur l'indice : un niveau
- * doit changer par paliers rares et memorables — le septieme jour, le
- * trentieme — la ou l'indice bouge tous les jours.
- */
-export function RecoveryCard({ s }: { s: Stats }) {
-  const c = useColors();
-  const { d } = useT();
-  const st = useMemo(() => sheet(c), [c]);
-  const level = cortiLevel(s.days);
-  const tone = s.brain < 35 ? c.danger : s.brain < 70 ? c.ember : c.accent;
-
-  /*
-    Le septieme jour et le trentieme, la scene cede sa place a la sequence
-    complete : Corti passe d'affaisse a rayonnant, une fois, et la carte
-    reprend ensuite son cours. C'est le seul moment ou l'app se rejouit — le
-    reste du temps elle se contente de dire ou l'on en est.
-  */
-  const [cheer, setCheer] = useState(false);
-  // La scene reprend la main sur un saut de joie, pas sur un arret net.
-  const [hooray, setHooray] = useState<CortiReaction | undefined>();
-  useEffect(() => {
-    let alive = true;
-    claimCheer(level).then((ok) => { if (alive && ok) setCheer(true); });
-    return () => { alive = false; };
-  }, [level]);
-
-  return (
-    <Glass radius={26} intensity={55} warmEdge="none" style={st.card}>
-      {/*
-        Sur sa soucoupe, et jamais immobile.
-        L'onglet blocage est l'ecran ou l'on vient voir comment il va : une
-        vignette posee la ne donne aucune raison de s'attarder. La scene, elle,
-        bouge en permanence — sept mouvements sur sept periodes qui ne se
-        divisent pas — et le halo prend la couleur de l'indice, si bien qu'on
-        sait ou l'on en est avant d'avoir lu le moindre chiffre.
-      */}
-      {cheer ? (
-        <CortiRecovery
-          size={268}
-          loop={false}
-          onDone={() => { setCheer(false); setHooray(cortiReact('celebrate')); }}
-        />
-      ) : (
-        <CortiDock level={level} size={268} tint={tone} reaction={hooray} />
-      )}
-
-      <Text variant="lead" color={c.accent} style={st.mid}>
-        {cortiLine(level, s.days)}
-      </Text>
-
-      {/* La jauge sous Corti plutot qu'un anneau autour : un anneau autour
-          d'un visage fait une cible, et l'oeil lit la cible avant le visage. */}
-      <View style={st.gaugeRow}>
-        <View style={st.gauge}>
-          <View
-            style={[st.gaugeFill, { width: `${s.brain}%`, backgroundColor: tone }]}
-          />
-        </View>
-        <Text variant="button" color={tone}>{s.brain} %</Text>
-      </View>
-
-      <Text variant="label" tone="tertiary">{d.stats.index}</Text>
-
-      <View style={st.figures}>
-        <Figure label={d.stats.reelsAvoided} value={String(s.blocked)} />
-        <Figure label={d.stats.timeBack} value={formatHours(s.minutes)} />
-        <Figure label={d.stats.daysKept} value={`${s.days} j`} />
-      </View>
-    </Glass>
-  );
-}
 
 function Figure({ label, value }: { label: string; value: string }) {
   // Le hook se lit DANS le composant, pas dans le callback du memo : appele
