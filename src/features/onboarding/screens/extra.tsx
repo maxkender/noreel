@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Star } from 'lucide-react-native';
@@ -48,7 +48,7 @@ export function Meet({ onNext }: P) {
           rendait son etat illisible. Elle part fatiguee, elle s'eteint pendant
           le constat, elle se retablit ensuite — un seul arc, dans l'ordre.
         */}
-        <Corti level={1} size={220} />
+        <Corti level={1} size={220} arrive />
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
@@ -318,9 +318,81 @@ const sheet = () => StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFFFFF22' },
   stage: { alignItems: 'center', marginTop: space.xl },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
+  gaugeStage: { height: 190, alignItems: 'center', justifyContent: 'center' },
+  steps: {
+    flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center',
+    gap: space.md, height: 56,
+  },
+  stepHit: { paddingHorizontal: space.sm, paddingVertical: space.sm, justifyContent: 'flex-end' },
+  stepBar: { width: 26, borderRadius: 7, backgroundColor: '#FFFFFF1F' },
+  stepLabels: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignSelf: 'stretch', paddingHorizontal: space.lg, marginTop: space.xs,
+  },
   cloud: { alignSelf: 'stretch', justifyContent: 'center' },
   cloudMid: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
   },
 });
+
+/* ---------- Ou en est ton cerveau ---------- */
+
+/**
+ * Le curseur de sante : on place Corti soi-meme.
+ *
+ * C'est le seul ecran ou l'on ne repond pas a une question mais ou l'on REGLE
+ * quelque chose, et ou la reponse se voit tout de suite : plus on monte, plus
+ * il se redresse ; plus on descend, plus il s'affaisse. On finit presque
+ * toujours par le mettre bas, et on l'a fait soi-meme — c'est ce qui rend le
+ * constat impossible a contester, sans qu'on ait rien affirme.
+ *
+ * Le curseur n'est pas un composant tiers : quatre paliers suffisent, et ce
+ * sont exactement les quatre etats que Corti sait prendre.
+ */
+export function Health({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(), []);
+  const { d } = useT();
+  const [level, setLevel] = useState<CortiLevel>(1);
+
+  return (
+    <Screen cta={d.corti.healthCta} onPress={onNext} center hue="warm">
+      <Text variant="displayM" style={st.mid}>{d.corti.healthTitle}</Text>
+      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
+        {d.corti.healthBody}
+      </Text>
+
+      {/* Sa place est FIXE : il grandit et retrecit selon le palier, et sans
+          reserve tout le bas de l'ecran monterait et descendrait avec lui. */}
+      <View style={st.gaugeStage}>
+        <Corti level={level} size={168} />
+      </View>
+
+      <View style={st.steps}>
+        {([0, 1, 2, 3] as CortiLevel[]).map((n) => (
+          <Pressable
+            key={n}
+            onPress={() => { haptics.tick(); setLevel(n); }}
+            style={st.stepHit}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: level === n }}
+          >
+            <View
+              style={[
+                st.stepBar,
+                { height: 14 + n * 12 },
+                level >= n && { backgroundColor: c.accent },
+              ]}
+            />
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={st.stepLabels}>
+        <Text variant="label" tone="tertiary">{d.corti.healthLow}</Text>
+        <Text variant="label" tone="tertiary">{d.corti.healthHigh}</Text>
+      </View>
+    </Screen>
+  );
+}

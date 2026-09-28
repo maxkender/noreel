@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Meet, Ninety, Proof, RateAsk } from './extra';
+import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
@@ -41,6 +41,11 @@ const noop = () => {};
 describe('les ecrans du parcours se montent', () => {
   it('la rencontre avec Corti', () => {
     render(<Meet onNext={noop} />);
+  });
+
+  it('le curseur de sante', () => {
+    const r = render(<Health onNext={noop} />);
+    expect(r.toJSON()).toBeTruthy();
   });
 
   it('les quatre-vingt-dix jours', () => {

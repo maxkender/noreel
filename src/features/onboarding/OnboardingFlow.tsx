@@ -17,7 +17,7 @@ import {
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
-import { Attribution, Meet, Ninety, Proof, RateAsk } from './screens/extra';
+import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -114,6 +114,7 @@ export function OnboardingFlow() {
     <S1 key="s1" onNext={next} />,
     <Name key="name" onNext={next} />,
     <Meet key="meet" onNext={next} />,
+    <Health key="health" onNext={next} />,
     <S3 key="s3" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <S5 key="s5" onNext={next} />,

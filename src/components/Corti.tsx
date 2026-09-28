@@ -178,8 +178,16 @@ const SPARKS: Record<number, { x: number; y: number; r: number; c: string; delay
  * niveau allume.
  */
 const POSE: { x: [number, number]; y: [number, number]; ms: number }[] = [
-  { x: [1.14, 1.17], y: [0.72, 0.69], ms: 3000 },   // affaisse
-  { x: [1.05, 1.07], y: [0.90, 0.93], ms: 3200 },   // au repos
+  /*
+    Affaisse, mais pas deforme.
+
+    Le dessin d'origine ecrase a 1,14 de large pour 0,72 de haut. A l'ecran ca
+    ne se lit plus comme quelqu'un de fatigue mais comme un dessin aplati :
+    les lobes s'etirent, les yeux s'allongent, et on perd la mascotte. Un tiers
+    de moins suffit a dire l'affaissement en gardant sa silhouette.
+  */
+  { x: [1.08, 1.10], y: [0.82, 0.80], ms: 3000 },   // affaisse
+  { x: [1.04, 1.06], y: [0.93, 0.95], ms: 3200 },   // au repos
   { x: [1.00, 1.02], y: [1.00, 1.04], ms: 3400 },   // il respire
   { x: [1.00, 1.02], y: [1.00, 1.04], ms: 3400 },   // idem, plus le saut
 ];
@@ -187,12 +195,19 @@ const POSE: { x: [number, number]; y: [number, number]; ms: number }[] = [
 /* ---------- La mascotte ---------- */
 
 export function Corti({
-  level, size = 132, animated = true, onPress, style,
+  level, size = 132, animated = true, arrive = false, onPress, style,
 }: {
   level: CortiLevel;
   size?: number;
   /** Faux pour une capture ou une vignette : le dessin doit etre immobile. */
   animated?: boolean;
+  /**
+   * Il ARRIVE : il tombe de quelques points, s'ecrase, et rebondit deux fois.
+   *
+   * Reserve aux ecrans ou il se presente. Apparaitre en fondu comme le reste
+   * de la page en fait une illustration ; entrer en sautant en fait quelqu'un.
+   */
+  arrive?: boolean;
   /** Le rend touchable. Sans ca, il rebondit quand meme quand on le touche. */
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -210,6 +225,7 @@ export function Corti({
   const flick = useSharedValue(0);
   const hit = useSharedValue(0);
   const gaze = useSharedValue(0);
+  const drop = useSharedValue(arrive ? 1 : 0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const eyeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -272,6 +288,19 @@ export function Corti({
     return () => { if (eyeTimer.current) clearTimeout(eyeTimer.current); };
   }, [motion, canBlink, gaze]);
 
+  /*
+    L'arrivee : une chute, un ecrasement a l'atterrissage, deux rebonds qui
+    s'amortissent. C'est l'ecrasement qui fait le poids — sans lui, il flotte.
+  */
+  useEffect(() => {
+    if (!arrive || !motion) { drop.value = 0; return; }
+    drop.value = 1;
+    drop.value = withSequence(
+      withTiming(0, { duration: 420, easing: Easing.bounce }),
+      withTiming(0, { duration: 1 })
+    );
+  }, [arrive, motion, drop]);
+
   const poke = useCallback(() => {
     haptics.tap();
     hit.value = withSequence(
@@ -293,10 +322,14 @@ export function Corti({
     return {
       opacity: 1 - flick.value * 0.6,
       transform: [
-        { translateY: -hop.value * 14 * k - hit.value * size * 0.06 },
+        {
+          translateY: -hop.value * 14 * k - hit.value * size * 0.06
+            // La chute d'arrivee, au-dessus de tout le reste.
+            - drop.value * size * 0.55,
+        },
         { translateY: half },
-        { scaleX: sx + hit.value * 0.03 },
-        { scaleY: sy + hit.value * 0.03 },
+        { scaleX: sx + hit.value * 0.03 + drop.value * 0.06 },
+        { scaleY: sy + hit.value * 0.03 - drop.value * 0.08 },
         { translateY: -half },
       ],
     };

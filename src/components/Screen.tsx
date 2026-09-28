@@ -10,6 +10,7 @@ import { Text } from './type/Text';
 import { Glow, type Hue } from './Glow';
 import { Stars } from './Stars';
 import { ProgressContext } from './ProgressContext';
+import { Corti, type CortiLevel } from './Corti';
 
 /**
  * Coquille unique. Le halo est au fond, le contenu defile, le bouton est
@@ -17,7 +18,7 @@ import { ProgressContext } from './ProgressContext';
  */
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
-  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop,
+  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -43,6 +44,16 @@ export function Screen({
    * ressemble en tout point a celui d'avant ne donne envie de rien.
    */
   backdrop?: ReactNode;
+  /**
+   * Corti, pose en petit au-dessus de la barre de progression.
+   *
+   * Il accompagnait certains ecrans par une bulle qui disait ce qu'il
+   * ressentait. Au milieu d'une question a laquelle on doit repondre, cette
+   * bulle est une phrase de plus a lire : elle encombre au lieu d'aider. En
+   * petit et muet, il se contente d'ETRE la — et comme son etat suit ce qu'on
+   * raconte, il en dit autant sans rien ajouter a lire.
+   */
+  corti?: CortiLevel;
   /** 0 a 1 : intensite du halo, pour les ecrans qui montent en tension. */
   hueLevel?: number;
 }) {
@@ -58,6 +69,11 @@ export function Screen({
       <Glow hue={hue} level={hueLevel} />
       <Stars count={14} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {corti !== undefined && (
+          <View style={styles.mascot} pointerEvents="none">
+            <Corti level={corti} size={46} />
+          </View>
+        )}
         {bar && <View style={styles.progress}>{bar}</View>}
 
         <ScrollView
@@ -110,6 +126,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
   safe: { flex: 1 },
   progress: { paddingHorizontal: gutter, paddingTop: space.sm },
+  mascot: { alignItems: 'center', paddingTop: space.sm },
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space.xl },
   centered: { flexGrow: 1, justifyContent: 'center' },

@@ -16,7 +16,7 @@ import { dict, useT } from '@/i18n';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
-import { Corti, CortiSays } from '@/components/Corti';
+import { Corti } from '@/components/Corti';
 
 type P = { onNext: () => void };
 
@@ -39,16 +39,6 @@ type Step =
       options: string[];
     }
   | { kind: 'say'; q: string; sub?: string };
-
-/*
- * Ce que Corti glisse sous chaque question.
- *
- * Il EST le cerveau dont on parle : c'est donc lui qui a oublie les reels, lui
- * dont la concentration flanche. Dit par nous, « ta memoire flanche » est une
- * affirmation qu'on peut contester ; dit par lui, c'est quelqu'un qui raconte
- * comment il va — et ce quelqu'un, c'est soi.
- */
-const ASIDE = ['aside1', 'aside2'] as const;
 
 const CONSTAT: Step[] = [
   {
@@ -102,12 +92,6 @@ export function Constat({ onNext }: P) {
       hue={i >= 2 ? 'ember' : 'deep'}
     >
       <Animated.View key={i} entering={FadeIn.duration(520)}>
-        {/* Corti d'abord : on voit dans quel etat il est avant de lire la
-            question, et la question n'est plus un reproche. */}
-        <Animated.View entering={FadeIn.delay(1400).duration(600)} style={st.aside}>
-          <CortiSays level={0} size={72} text={d.corti[ASIDE[i] ?? ASIDE[0]]} />
-        </Animated.View>
-
         <Typewriter
           text={step.q}
           variant="displayM"
