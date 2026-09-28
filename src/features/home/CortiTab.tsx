@@ -8,6 +8,7 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
+import { CortiDock } from '@/components/CortiDock';
 import { CortiRig } from '@/components/CortiRig';
 import { cortiLevel, type CortiLevel } from '@/components/Corti';
 import { stats, type Stats } from '@/services/protect';
@@ -64,10 +65,19 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         {d.cortiTab.lead}
       </Text>
 
-      {/* Lui d'abord, le chiffre ensuite : c'est son etat qu'on vient voir,
-          et le pourcentage n'est que la legende de ce qu'on lit sur sa tete. */}
+      {/*
+        Lui d'abord, sur sa soucoupe, et le chiffre ensuite.
+
+        C'est son etat qu'on vient voir ; le pourcentage n'est que la legende
+        de ce qu'on lit deja sur sa figure. Et il est POSE sur la scene du
+        studio plutot que sur du vide : elle ne s'arrete jamais — le socle
+        flotte, l'anneau tourne, les eclats derivent — et le halo prend la
+        couleur de l'indice, si bien qu'on sait ou l'on en est avant d'avoir
+        lu le moindre chiffre. Une vignette immobile ne donne aucune raison de
+        revenir sur cet onglet ; une scene qui vit, si.
+      */}
       <View style={st.stage}>
-        <CortiRig level={level} size={190} />
+        <CortiDock level={level} size={268} tint={tone} />
       </View>
 
       <Glass radius={24} intensity={50} warmEdge="none" style={st.gauge}>

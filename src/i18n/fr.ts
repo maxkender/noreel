@@ -346,6 +346,8 @@ export const fr = {
   },
 
   pay: {
+    priceLine: '{n} j d’essai gratuit, puis {m}/mois — facturé {y}/an',
+    priceWeek: '{p} par semaine, sans essai. Annulable à tout moment.',
     pctNow: 'Ton cerveau aujourd’hui',
     pctThen: 'Après 30 jours sans Reels',
     storeDown: 'L’abonnement n’est pas encore ouvert. Réessaie dans un moment.',

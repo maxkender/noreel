@@ -170,17 +170,20 @@ export function Ninety({ onNext }: P) {
 type Beat = 'raw' | 'filtered' | 'zoom';
 
 /*
- * Les temps de la demonstration, RALLONGES.
+ * Les temps de la demonstration.
  *
- * Elle se jouait en trois secondes et demie : on voyait qu'il se passait
- * quelque chose sans avoir le temps de voir QUOI. Or tout l'ecran tient dans
- * un detail de quatorze points de haut — un bouton qui s'en va. Chaque temps
- * laisse maintenant le regard arriver avant que le suivant commence, et le
- * plus long est celui ou la barre est grossie AVEC son onglet : c'est la
- * seconde et demie pendant laquelle on enregistre ce qui va disparaitre.
+ * Les reels partent TOUT DE SUITE : on arrive sur cet ecran en sachant deja
+ * ce qu'on vient y voir, et deux secondes de fil intact avant que rien ne
+ * bouge se lisent comme un chargement. Le temps de reconnaitre Instagram est
+ * celui d'une image, pas d'une pose.
+ *
+ * Le dernier temps, lui, reste long. C'est le seul qui apprend quelque chose
+ * — un bouton de quatorze points qui s'en va — et c'est la que le regard doit
+ * avoir le temps d'arriver. Accelerer le debut et garder la fin est ce qui
+ * fait la difference entre une animation qu'on subit et une qu'on lit.
  */
-const RAW_MS = 2200;    // le temps de reconnaitre un fil ORDINAIRE
-const FALL_MS = 1600;   // la cascade, plus un vrai temps de pose
+const RAW_MS = 500;     // le temps d'une image : on reconnait, on n'attend pas
+const FALL_MS = 1100;   // la cascade, et un court temps de pose
 const HELD_MS = 1600;   // la barre grossie, l'onglet Reels ENCORE la
 
 /** La largeur du telephone. Le fil est dessine pour 188 points utiles,

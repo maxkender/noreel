@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Platform, Pressable, StyleSheet, View,
+  Platform, Pressable, StyleSheet, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import { Hourglass, Info, RotateCw, Timer } from 'lucide-react-native';
@@ -185,6 +186,16 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
+  /*
+    L'avancement du chargement, de zero a un.
+
+    C'etait une roue qui tourne au milieu de l'ecran. Une roue ne dit rien :
+    elle tourne pareil a dix pour cent et a quatre-vingt-dix, donc au bout de
+    trois secondes on ne sait pas s'il faut attendre ou recharger — et sur une
+    page tierce qu'on n'a pas choisie, le doute se resout en fermant. Un fil
+    qui avance repond a la seule question posee : est-ce que ca progresse ?
+  */
+  const [load, setLoad] = useState(0);
   const [error, setError] = useState<string | null>(null);
   // Chien de garde : si la page n'a rien rendu au bout de 12 s, on propose
   // de recharger plutot que de laisser l'utilisateur devant un ecran mort.
@@ -540,7 +551,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
             }
           }}
           onShouldStartLoadWithRequest={guard}
-          onLoadEnd={() => setReady(true)}
+          onLoadProgress={(e) => setLoad(e.nativeEvent.progress)}
+        onLoadEnd={() => setReady(true)}
           onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
           // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
           onContentProcessDidTerminate={() => web.current?.reload()}
@@ -702,8 +714,17 @@ export function ClientScreen({ id }: { id: ClientId }) {
       )}
 
       {!ready && !error && (
-        <View style={styles.overlay} pointerEvents="none">
-          <ActivityIndicator size="large" color={c.accent} />
+        <View style={styles.wire} pointerEvents="none">
+          <Animated.View
+            layout={LinearTransition.duration(260)}
+            style={[
+              styles.wireOn,
+              // Jamais tout a fait zero : un fil invisible ne se distingue pas
+              // d'une page qui ne charge pas du tout.
+              { flex: Math.max(0.04, load), backgroundColor: c.accent },
+            ]}
+          />
+          <View style={{ flex: Math.max(0.001, 1 - load) }} />
         </View>
       )}
 
@@ -738,6 +759,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
   // paraissait de travers des que la minute passait a deux chiffres.
   info: { position: 'absolute', right: 0, padding: 6 },
+  // Colle sous le bandeau, a la place ou tous les navigateurs la mettent.
+  wire: { flexDirection: 'row', height: 2, overflow: 'hidden' },
+  wireOn: { borderRadius: 1 },
   close: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 38, borderRadius: 19, paddingHorizontal: 14,

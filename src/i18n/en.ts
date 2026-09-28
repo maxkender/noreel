@@ -326,6 +326,8 @@ export const en: Dict = {
   },
 
   pay: {
+    priceLine: '{n}-day free trial, then {m}/month — billed {y}/year',
+    priceWeek: '{p} per week, no trial. Cancel any time.',
     pctNow: 'Your brain today',
     pctThen: 'After 30 days without Reels',
     storeDown: 'The subscription is not open yet. Try again in a moment.',

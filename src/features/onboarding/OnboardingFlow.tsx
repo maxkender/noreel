@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeOut, withTiming } from 'react-native-reanimated';
+import Animated, { FadeOut, LinearTransition, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ForcedTheme, useColors, type Palette } from '@/theme/useColors';
@@ -147,11 +147,23 @@ export function OnboardingFlow() {
   // L'effet a tourne bien avant qu'un doigt puisse toucher quoi que ce soit.
   useEffect(() => { count.current = screens.length; });
 
+  /*
+    Une barre PLEINE, pas dix-neuf tirets.
+
+    Le parcours compte dix-neuf ecrans : dix-neuf segments de deux points de
+    haut separes de trois points font une rangee de pointilles ou l'on ne voit
+    ni ou l'on en est, ni combien il reste — et chaque etape n'en allume qu'un
+    cinquieme de millimetre, si bien que repondre ne semble faire avancer
+    personne. Une seule barre qui GLISSE montre les deux, et son mouvement est
+    la recompense de l'ecran qu'on vient de passer.
+  */
   const bar = step > 0 ? (
     <View style={styles.progress}>
-      {screens.map((sc, i) => (
-        <View key={sc.key} style={[styles.dot, i <= step && styles.dotOn]} />
-      ))}
+      <Animated.View
+        layout={LinearTransition.duration(420)}
+        style={[styles.fill, { flex: Math.max(0.02, (step + 1) / screens.length) }]}
+      />
+      <View style={{ flex: Math.max(0.001, 1 - (step + 1) / screens.length) }} />
     </View>
   ) : undefined;
 
@@ -218,7 +230,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   // Le fond du parcours suit le theme. Fige sur la palette sombre, il
   // apparaissait en noir sous chaque croisement d'ecrans en mode clair.
   root: { flex: 1, backgroundColor: c.night },
-  progress: { flexDirection: 'row', gap: 3 },
-  dot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: c.line },
-  dotOn: { backgroundColor: c.accent },
+  progress: {
+    flexDirection: 'row', height: 3, borderRadius: 2,
+    overflow: 'hidden', backgroundColor: c.line,
+  },
+  fill: { borderRadius: 2, backgroundColor: c.accent },
 });

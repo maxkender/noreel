@@ -1,5 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import {
+  InteractionManager, Linking, Platform, Pressable, StyleSheet, View,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -31,12 +33,33 @@ type Plan = 'annual' | 'weekly';
 // Prix de secours, affiches tant que le magasin n'a pas repondu. Ils
 // doivent coller a ceux d'App Store Connect, sinon l'ecran ment pendant la
 // seconde de chargement.
-const FALLBACK = { annual: '44,99 €', weekly: '4,99 €' };
+const FALLBACK = { annual: '49,99 €', weekly: '4,99 €' };
 // L'essai n'existe que sur l'annuel, et il est porte par App Store Connect :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
 const TRIAL_DAYS = 3;
-const ANNUAL_EUR = 44.99;
+// Le prix reel du magasin, releve au tableau de bord : la valeur de
+// secours servait 44,99 alors que la fiche dit 49,99, et c'est elle qu'on
+// affiche tant que le magasin ne repond pas.
+const ANNUAL_EUR = 49.99;
+
+/**
+ * Le montant d'un forfait, en nombre.
+ *
+ * On le tire du LIBELLE du magasin quand il y en a un, et non de la constante
+ * de secours : le prix change d'un pays a l'autre, et une mensualite calculee
+ * sur un prix francais affichee sous un prix canadien serait fausse pour tout
+ * le monde sauf nous.
+ */
+function euros(p: PurchasesPackage | undefined, fallback: number): number {
+  const n = p?.product.price;
+  return typeof n === 'number' && n > 0 ? n : fallback;
+}
+
+/** Deux decimales, virgule francaise, symbole du magasin quand on l'a. */
+function money(n: number, symbol = '€'): string {
+  return `${n.toFixed(2).replace('.', ',')} ${symbol}`;
+}
 const WEEKLY_EUR = 4.99;
 // 52 semaines, pas 12 mois : c'est la comparaison honnete face a un
 // hebdomadaire, et c'est elle qui rend l'annuel evident.
@@ -266,7 +289,27 @@ export function Paywall(
             : d.pay.cta
       }
       note={
-        storeDown ? (
+        !storeDown ? (
+          /*
+            Le prix, sous le bouton, en toutes lettres.
+
+            Il vivait dans les deux cartes de forfait, au-dessus : au moment
+            d'appuyer, il etait hors du regard. Un bouton qu'on presse sans
+            avoir le montant sous les yeux se presse moins, et se regrette
+            plus. La mensualite est CALCULEE a partir du prix annuel affiche,
+            jamais ecrite a la main : deux chiffres qui ne se repondent pas
+            sur un ecran de paiement, c'est la confiance qui part.
+          */
+          <Text variant="label" tone="tertiary" style={st.center}>
+            {plan === 'annual'
+              ? t(d.pay.priceLine, {
+                n: TRIAL_DAYS,
+                m: money(euros(annual, ANNUAL_EUR) / 12),
+                y: price(annual, FALLBACK.annual),
+              })
+              : t(d.pay.priceWeek, { p: price(weekly, FALLBACK.weekly) })}
+          </Text>
+        ) : (
           <Animated.View entering={FadeIn.duration(320)}>
             <Text variant="label" color={c.ember} style={st.center}>
               {d.pay.storeDown}
@@ -285,7 +328,7 @@ export function Paywall(
               <Text variant="label" tone="tertiary" style={st.center}>{who}</Text>
             )}
           </Animated.View>
-        ) : undefined
+        )
       }
       onPress={() => { void go(); }}
       disabled={busy || loading}
@@ -403,7 +446,14 @@ export function Paywall(
         </Pressable>
       </View>
 
-      <WinBack visible={winback} onClose={() => setWinback(false)} />
+      {/*
+        Refermer l'offre de rattrapage sort du paywall, ne revient pas dessus.
+        On y arrive apres avoir ferme la feuille d'Apple, c'est-a-dire apres
+        avoir dit non une premiere fois ; renvoyer sur l'ecran de vente qu'on
+        vient de quitter, c'est demander une troisieme fois. On a pose la
+        question, la reponse est non : on ouvre l'app.
+      */}
+      <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
 
       <View style={st.tail}>
         <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
@@ -444,6 +494,27 @@ function Healing() {
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
 
+  /*
+    Le decor lourd attend que la TRANSITION soit finie.
+
+    Cet ecran arrive en glissant, et il monte en meme temps quarante-trois
+    calques de mascotte, quatre tuiles de verre floutees et deux degrades. Le
+    fil principal fabrique tout ca pendant que l'animation se joue, et
+    l'animation saute — juste avant l'ecran qui doit donner envie de payer.
+
+    On laisse donc les gestes en cours se terminer, puis on pose le decor.
+    Ce n'est pas un delai fixe : c'est le systeme qui dit quand il a fini,
+    donc l'attente est nulle sur un appareil rapide.
+
+    La place est RESERVEE, sinon tout le contenu sauterait a son arrivee —
+    on aurait echange un a-coup contre un autre.
+  */
+  const [decor, setDecor] = useState(false);
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setDecor(true));
+    return () => task.cancel();
+  }, []);
+
   return (
     <View style={st.heal}>
       {/*
@@ -453,10 +524,14 @@ function Healing() {
         la page la profondeur qui lui manquait.
       */}
       <View style={st.orbit}>
-        <GlassApps height={236} />
-        <View style={st.orbitMid} pointerEvents="none">
-          <CortiRig level={3} size={188} expression="ravi" />
-        </View>
+        {decor && (
+          <Animated.View entering={FadeIn.duration(420)}>
+            <GlassApps height={236} />
+            <View style={st.orbitMid} pointerEvents="none">
+              <CortiRig level={3} size={188} expression="ravi" />
+            </View>
+          </Animated.View>
+        )}
       </View>
 
       <View style={st.healSlot}>
@@ -618,7 +693,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   sub: { marginTop: space.md },
   heal: { alignItems: 'center', marginTop: space.lg },
-  orbit: { alignSelf: 'stretch', justifyContent: 'center' },
+  // Hauteur RESERVEE : le decor arrive apres la transition, et sans
+  // reserve tout ce qui suit sauterait a son arrivee.
+  orbit: { alignSelf: 'stretch', justifyContent: 'center', minHeight: 236 },
   orbitMid: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',

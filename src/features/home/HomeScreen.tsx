@@ -34,7 +34,7 @@ import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
 import {
-  Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
+  Milestone, ProtectionStatus, ReclaimedNote, useProtect,
 } from './Recovery';
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
@@ -326,9 +326,17 @@ function BlockTab({
         bilan. C'est ce second chiffre qui justifie l'abonnement a la fin du
         mois, donc c'est lui qu'on voit en premier.
       */}
+      {/*
+        Corti n'est plus ici : il a son onglet.
+
+        Sa scene tenait le haut de cette page, et elle y faisait double emploi
+        depuis qu'il a le sien — on voyait la meme soucoupe et la meme jauge a
+        deux endroits, et l'onglet blocage, qui parle d'interrupteurs et
+        d'applications choisies, ouvrait sur une mascotte. Il ouvre maintenant
+        sur ce qu'on vient y regler.
+      */}
       {prot && (
         <>
-          <RecoveryCard s={prot} />
           <ReclaimedNote s={prot} />
           <ProtectionStatus
             s={prot}

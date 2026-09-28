@@ -34,8 +34,9 @@ it('deroule les trois temps dans l’ordre', () => {
   expect(screen.getByText(dict.proof.raw)).toBeTruthy();
   expect(screen.queryByText(dict.proof.fall)).toBeNull();
 
-  // 2. Les Reels tombent.
-  tick(2300);
+  // 2. Les Reels tombent — tout de suite. Deux secondes de fil intact avant
+  // que rien ne bouge se lisaient comme un chargement.
+  tick(700);
   expect(screen.getByText(dict.proof.fall)).toBeTruthy();
 
   /*
@@ -44,7 +45,7 @@ it('deroule les trois temps dans l’ordre', () => {
     rien, on ne sait pas ce qu'il y avait avant. Il faut voir la porte, puis
     la voir partir.
   */
-  tick(1600);
+  tick(1200);
   expect(screen.getByTestId('proof-loupe')).toBeTruthy();
   expect(screen.getByText(dict.proof.fall)).toBeTruthy();
 
@@ -57,7 +58,7 @@ it('deroule les trois temps dans l’ordre', () => {
     demie en tout — on voyait qu'il se passait quelque chose sans avoir le
     temps de voir QUOI, alors que tout l'ecran tient dans ce detail-la.
   */
-  tick(1700);
+  tick(1800);
   expect(screen.getByText(dict.proof.tab)).toBeTruthy();
 });
 
