@@ -169,9 +169,19 @@ export function Ninety({ onNext }: P) {
 /** Les trois temps de la demonstration. */
 type Beat = 'raw' | 'filtered' | 'zoom';
 
-const RAW_MS = 1500;    // le temps de reconnaitre un fil ORDINAIRE
-const FALL_MS = 1150;   // la cascade (3 x 130 + 420), plus un temps de pose
-const HELD_MS = 800;    // la barre grossie, l'onglet Reels encore la
+/*
+ * Les temps de la demonstration, RALLONGES.
+ *
+ * Elle se jouait en trois secondes et demie : on voyait qu'il se passait
+ * quelque chose sans avoir le temps de voir QUOI. Or tout l'ecran tient dans
+ * un detail de quatorze points de haut — un bouton qui s'en va. Chaque temps
+ * laisse maintenant le regard arriver avant que le suivant commence, et le
+ * plus long est celui ou la barre est grossie AVEC son onglet : c'est la
+ * seconde et demie pendant laquelle on enregistre ce qui va disparaitre.
+ */
+const RAW_MS = 2200;    // le temps de reconnaitre un fil ORDINAIRE
+const FALL_MS = 1600;   // la cascade, plus un vrai temps de pose
+const HELD_MS = 1600;   // la barre grossie, l'onglet Reels ENCORE la
 
 /** La largeur du telephone. Le fil est dessine pour 188 points utiles,
  *  d'ou le rapport passe a MockFeed : le cadre lui en prend huit. */
@@ -216,7 +226,7 @@ export function Proof({ onNext }: P) {
   const back = useSharedValue(0);
   useEffect(() => {
     back.value = withTiming(beat === 'zoom' ? 1 : 0, {
-      duration: 520, easing: Easing.inOut(Easing.cubic),
+      duration: 900, easing: Easing.inOut(Easing.cubic),
     });
   }, [beat, back]);
   const away = useAnimatedStyle(() => ({
@@ -231,8 +241,10 @@ export function Proof({ onNext }: P) {
   */
   const pop = useSharedValue(0);
   useEffect(() => {
-    pop.value = withDelay(beat === 'zoom' ? 140 : 0, withTiming(beat === 'zoom' ? 1 : 0, {
-      duration: 520, easing: Easing.out(Easing.back(1.4)),
+    // Elle MONTE, elle ne surgit pas : un rebond sec fait sursauter l'oeil et
+    // il arrive apres le mouvement. Un ressort long le laisse suivre.
+    pop.value = withDelay(beat === 'zoom' ? 220 : 0, withTiming(beat === 'zoom' ? 1 : 0, {
+      duration: 900, easing: Easing.out(Easing.back(1.1)),
     }));
   }, [beat, pop]);
   const rise = useAnimatedStyle(() => ({
@@ -280,7 +292,10 @@ export function Proof({ onNext }: P) {
           pointerEvents="none"
           testID="proof-loupe"
         >
-          <MockTabBar u={2.4} gone={!tab} />
+          {/* Le depart de l'onglet dure presque une seconde. A trois cents
+              millisecondes il avait disparu avant qu'on ait fini de compter
+              les boutons — on voyait un changement, pas un depart. */}
+          <MockTabBar u={2.4} gone={!tab} ms={900} />
         </Animated.View>
       </View>
 

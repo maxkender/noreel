@@ -39,6 +39,7 @@ import {
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { nudgeOfTheDay } from '@/services/nudge';
+import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
 
 type Tab = 'home' | 'block' | 'account';
@@ -64,9 +65,13 @@ export function HomeScreen() {
     Le temps passe dans l'Instagram d'origine ne nous est pas accessible, et
     l'inventer serait mentir sur le seul chiffre qu'on vient verifier.
   */
+  const [realFloor, setRealFloor] = useState<number | null>(null);
   const refresh = useCallback(() => {
     void usageToday().then(setToday);
     void usageStreak().then(setStreak);
+    // Lecture SYNCHRONE : les seuils franchis sont deja sur le disque partage
+    // quand on revient sur l'ecran, il n'y a rien a attendre.
+    setRealFloor(realFloorToday());
   }, []);
   useFocusEffect(refresh);
 
@@ -106,6 +111,7 @@ export function HomeScreen() {
             minutes={today.perApp}
             total={today.total}
             streak={streak}
+            realFloor={realFloor}
           />
         )}
         {tab === 'account' && <AccountTab onScroll={onScroll} />}
@@ -222,12 +228,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 /* ---------------- Blocage ---------------- */
 
 function BlockTab({
-  onScroll, minutes, total, streak,
+  onScroll, minutes, total, streak, realFloor,
 }: {
   onScroll: Scroll;
   minutes: Record<string, number>;
   total: number;
   streak: number;
+  /** Le plancher iOS pour les VRAIES apps, ou nul quand on ne sait pas. */
+  realFloor: number | null;
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -272,12 +280,21 @@ function BlockTab({
     setOn(true);
     setSetting('blocking', true);
     await shield.setActive(true, selection);
+    /*
+      Les seuils se posent AVEC le blocage, sur la meme selection.
+      Apple ne dit jamais combien de temps a ete passe dans une app ; il
+      accepte seulement de prevenir quand un seuil est franchi. C'est le seul
+      moyen honnete de savoir quelque chose du vrai temps d'ecran, et il faut
+      l'avoir demande AVANT — un reveil pose ce soir ne raconte pas la matinee.
+    */
+    void watchReal(selection);
   };
 
   const disarm = () => {
     setOn(false);
     setSetting('blocking', false);
     void shield.setActive(false, selection);
+    stopWatching();
   };
 
   const pct = Math.min(100, Math.round((total / Math.max(goal, 1)) * 100));
@@ -412,7 +429,7 @@ function BlockTab({
         onPass={() => { setGate(false); setSetting('hardMode', false); disarm(); }}
       />
 
-      <ScreenTime minutes={minutes} />
+      <ScreenTime minutes={minutes} realFloor={realFloor} />
 
       <Card>
         <Row

@@ -35,7 +35,7 @@ it('deroule les trois temps dans l’ordre', () => {
   expect(screen.queryByText(dict.proof.fall)).toBeNull();
 
   // 2. Les Reels tombent.
-  tick(1600);
+  tick(2300);
   expect(screen.getByText(dict.proof.fall)).toBeTruthy();
 
   /*
@@ -44,13 +44,20 @@ it('deroule les trois temps dans l’ordre', () => {
     rien, on ne sait pas ce qu'il y avait avant. Il faut voir la porte, puis
     la voir partir.
   */
-  tick(1200);
+  tick(1600);
   expect(screen.getByTestId('proof-loupe')).toBeTruthy();
   expect(screen.getByText(dict.proof.fall)).toBeTruthy();
 
-  // 4. L'onglet s'en va, et la phrase ne le dit qu'a ce moment-la. Annoncee
-  // plus tot, elle decrivait un bouton qu'on avait encore sous les yeux.
-  tick(900);
+  /*
+    4. L'onglet s'en va, et la phrase ne le dit qu'a ce moment-la. Annoncee
+    plus tot, elle decrivait un bouton qu'on avait encore sous les yeux.
+
+    Il s'ecoule une seconde et demie entre les deux : c'est le temps qu'il
+    faut pour compter cinq boutons. La sequence durait trois secondes et
+    demie en tout — on voyait qu'il se passait quelque chose sans avoir le
+    temps de voir QUOI, alors que tout l'ecran tient dans ce detail-la.
+  */
+  tick(1700);
   expect(screen.getByText(dict.proof.tab)).toBeTruthy();
 });
 

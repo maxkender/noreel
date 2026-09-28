@@ -364,6 +364,23 @@ export const en: Dict = {
     connected: 'Screen Time connected',
   },
 
+  help: {
+    title: 'Help',
+    sub: 'Quick answers to common questions.',
+    close: 'Close',
+    loginT: 'Login issues',
+    loginH: 'Trouble signing in? Start here.',
+    loginB: `Sign in exactly as you would on the site: username and password. This is Instagram's own page, not ours — we never see either one. If it refuses, open Instagram once in its original app to clear any pending check, then come back.`,
+    whyT: 'Why it opens here',
+    whyH: 'Why Instagram opens inside UnSwipe.',
+    whyB: `Apple lets no app modify another app. The only way to give you Instagram without its endless feed is to open it here, in its web version, where the door to Reels can be removed. You stay on your real account, with your real messages.`,
+    dataT: 'What we see, and what we don’t',
+    dataH: 'Where your data goes.',
+    dataB: `Nothing leaves your phone. Your session stays in iOS's own browser, just like in Safari; we never read your password, your messages, or what you look at. The only numbers kept are the time spent here and the count of Reels avoided — on your device, nowhere else.`,
+    switchT: 'Switching account',
+    switchH: 'Moving between accounts.',
+    switchB: `Open your profile, tap your name at the top, then "Switch account". It is Instagram's own switcher: the accounts you are already signed into are there, and we never sign you out of the current one.`,
+  },
   client: {
     wallTitle: 'Feed blocked',
     wallBody: 'Your home feed is hidden.',
@@ -541,6 +558,9 @@ export const en: Dict = {
   },
 
   misc: {
+    realApps: 'Original apps',
+    atLeast: 'at least {h}',
+    realWhy: 'iOS gives thresholds, not exact totals.',
     open: 'Open',
     openMin: '{n} min today · Open',
     cancel: 'Cancel',

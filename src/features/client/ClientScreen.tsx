@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Hourglass, RotateCw, Timer } from 'lucide-react-native';
+import { Hourglass, Info, RotateCw, Timer } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
+import { HelpSheet } from '@/components/HelpSheet';
 import { firstRunUrl } from './firstrun';
 import { ACCOUNT } from './accounts';
 import { cortiLevel } from '@/components/Corti';
@@ -173,6 +174,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
     ici on veut la reponse a « ca fait combien de temps que j'y suis ? », et
     seule la session y repond.
   */
+  const [help, setHelp] = useState(false);
   const [secs, setSecs] = useState(0);
   useEffect(() => {
     const h = setInterval(() => setSecs((n) => n + 1), 1000);
@@ -408,6 +410,17 @@ export function ClientScreen({ id }: { id: ClientId }) {
         Il suit le theme — un bandeau fige en sombre ferait une barre noire
         au-dessus d'une page claire.
       */}
+      <HelpSheet
+        visible={help}
+        onClose={() => setHelp(false)}
+        topics={[
+          { t: d.help.loginT, h: d.help.loginH, b: d.help.loginB },
+          { t: d.help.switchT, h: d.help.switchH, b: d.help.switchB },
+          { t: d.help.whyT, h: d.help.whyH, b: d.help.whyB },
+          { t: d.help.dataT, h: d.help.dataH, b: d.help.dataB },
+        ]}
+      />
+
       <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: barColour }]}>
         {/*
           Le CHRONO, pas le nom de l'app.
@@ -429,6 +442,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
               <Text variant="label" color={withAlpha(barInk, 0.65)}>{elapsed}</Text>
             </>
           )}
+          {/*
+            Le « i » se tient LA, au bord du doute.
+            Les trois moments qui font fermer l'app sont ici : la page de
+            connexion, qui n'est pas la notre et qui demande un mot de passe ;
+            le changement de compte ; et la question muette « qu'est-ce que
+            vous voyez de tout ca ? ». Une aide rangee dans les reglages
+            n'aide personne — on n'y va qu'apres avoir renonce.
+          */}
+          <Pressable
+            onPress={() => { haptics.tap(); setHelp(true); }}
+            hitSlop={14}
+            style={styles.info}
+            accessibilityLabel={d.help.title}
+            accessibilityRole="button"
+          >
+            <Info size={14} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
+          </Pressable>
         </View>
       </SafeAreaView>
 
@@ -672,6 +702,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     height: 58, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
+  // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
+  // paraissait de travers des que la minute passait a deux chiffres.
+  info: { position: 'absolute', right: 0, padding: 6 },
   close: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 38, borderRadius: 19, paddingHorizontal: 14,

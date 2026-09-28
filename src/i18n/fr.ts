@@ -383,6 +383,23 @@ export const fr = {
     connected: `Temps d'écran connecté`,
   },
 
+  help: {
+    title: 'Aide',
+    sub: 'Les réponses aux questions qui reviennent.',
+    close: 'Fermer',
+    loginT: 'Problème de connexion',
+    loginH: 'Tu n’arrives pas à te connecter ? Commence ici.',
+    loginB: `Connecte-toi comme sur le site : identifiant et mot de passe. C'est la page d'Instagram, pas la nôtre — nous ne voyons ni l'un ni l'autre. Si elle refuse, ouvre Instagram une fois dans son app d'origine pour lever une éventuelle vérification, puis reviens.`,
+    whyT: 'Pourquoi ça s’ouvre ici',
+    whyH: 'Pourquoi Instagram s’ouvre dans UnSwipe.',
+    whyB: `Apple n'autorise aucune app à modifier une autre app. La seule façon de te rendre Instagram sans son fil sans fin est donc de l'ouvrir ici, dans sa version web, où l'on peut retirer la porte des Reels. Tu restes sur ton vrai compte, avec tes vrais messages.`,
+    dataT: 'Ce qu’on voit, et ce qu’on ne voit pas',
+    dataH: 'Où vont tes données.',
+    dataB: `Rien ne sort de ton téléphone. Ta session reste dans le navigateur d'iOS, comme dans Safari ; nous ne lisons ni ton mot de passe, ni tes messages, ni ce que tu regardes. Les seuls chiffres gardés sont le temps passé ici et le nombre de Reels évités — sur ton appareil, et nulle part ailleurs.`,
+    switchT: 'Changer de compte',
+    switchH: 'Passer d’un compte à l’autre.',
+    switchB: `Ouvre ton profil, touche ton nom en haut, puis « Changer de compte ». C'est le sélecteur d'Instagram lui-même : tes comptes déjà connectés y sont, et on ne te déconnecte jamais de celui en cours.`,
+  },
   client: {
     wallTitle: 'Fil bloqué',
     wallBody: 'Ton fil d’accueil est masqué.',
@@ -560,6 +577,9 @@ export const fr = {
   },
 
   misc: {
+    realApps: 'Apps d’origine',
+    atLeast: 'au moins {h}',
+    realWhy: 'iOS ne donne pas le détail, seulement des paliers.',
     open: 'Ouvrir',
     openMin: '{n} min aujourd’hui · Ouvrir',
     cancel: 'Annuler',

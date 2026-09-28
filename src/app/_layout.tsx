@@ -15,6 +15,7 @@ import { colors } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
+import { watchReal } from '@/services/realtime';
 import { shield } from '@/services';
 import { startNotifications } from '@/services/trial';
 import { pullUpdate } from '@/services/refresh';
@@ -60,10 +61,10 @@ export default function RootLayout() {
   // retrouver eteint apres chaque lancement le rendait inutile.
   useEffect(() => {
     const unsub = useSettings.persist?.onFinishHydration?.((s) => {
-      if (s?.blocking) void shield.setActive(true, s.selection);
+      if (s?.blocking) { void shield.setActive(true, s.selection); void watchReal(s.selection); }
     });
     const st = useSettings.getState();
-    if (st.blocking) void shield.setActive(true, st.selection);
+    if (st.blocking) { void shield.setActive(true, st.selection); void watchReal(st.selection); }
     return unsub;
   }, []);
 

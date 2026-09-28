@@ -109,6 +109,25 @@ export async function winbackOffering(): Promise<PurchasesOffering | null> {
   }
 }
 
+/**
+ * L'identifiant RevenueCat de cet appareil.
+ *
+ * Il ne sert a rien a qui utilise l'app, et a tout a qui la construit : c'est
+ * la ligne a chercher dans le tableau de bord pour s'accorder l'acces a la
+ * main — le seul moyen de tester toute l'app tant que les abonnements ne sont
+ * pas ouverts chez Apple. Il est anonyme et lie a ce telephone, il ne dit
+ * donc rien de personne.
+ */
+export async function appUserId(): Promise<string | null> {
+  if (!KEY) return null;
+  try {
+    await initPurchases();
+    return await Purchases.getAppUserID();
+  } catch {
+    return null;
+  }
+}
+
 export async function customerInfo(): Promise<CustomerInfo | null> {
   if (!KEY) return null;
   try {

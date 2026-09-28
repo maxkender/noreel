@@ -220,14 +220,18 @@ function Tray({ u }: { u: number }) {
  * part dans la foulee des publications ou bien plus tard, quand on a eu le
  * temps de venir le regarder de pres.
  */
-function TabBar({ u, gone, wait }: { u: number; gone: boolean; wait: number }) {
+function TabBar({
+  u, gone, wait, ms = 320,
+}: { u: number; gone: boolean; wait: number; ms?: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   const fade = useSharedValue(1);
 
   useEffect(() => {
-    fade.value = withDelay(wait, withTiming(gone ? 0 : 1, { duration: 320 }));
-  }, [gone, wait, fade]);
+    fade.value = withDelay(wait, withTiming(gone ? 0 : 1, {
+      duration: ms, easing: Easing.inOut(Easing.cubic),
+    }));
+  }, [gone, wait, ms, fade]);
 
   // La LARGEUR fait partie de l'animation : sans elle l'onglet s'effacerait en
   // laissant son trou, et un trou se lit comme un bouton casse, pas comme un
@@ -262,8 +266,10 @@ function TabBar({ u, gone, wait }: { u: number; gone: boolean; wait: number }) {
  * parcours la ressort donc du cadre et la montre en grand — ce sont les
  * memes boutons, le meme composant, juste regardes de pres.
  */
-export function MockTabBar({ u = 1, gone = false }: { u?: number; gone?: boolean }) {
-  return <TabBar u={u} gone={gone} wait={0} />;
+export function MockTabBar({
+  u = 1, gone = false, ms,
+}: { u?: number; gone?: boolean; ms?: number }) {
+  return <TabBar u={u} gone={gone} wait={0} ms={ms} />;
 }
 
 function Row({

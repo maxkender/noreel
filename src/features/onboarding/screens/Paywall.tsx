@@ -14,7 +14,9 @@ import { formatHours } from '@/lib/format';
 import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
-import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
+import {
+  PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
+} from '@/services/purchases';
 import { brainIndex } from '@/services/protect';
 import { scheduleTrialReminder } from '@/services/trial';
 import { CortiRig } from '@/components/CortiRig';
@@ -117,6 +119,7 @@ export function Paywall(
   // Le magasin n'a rien rendu : constate au premier appui, dit au second.
   const [storeDown, setStoreDown] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
+  const [who, setWho] = useState<string | null>(null);
   /*
     Le magasin n'a pas encore repondu.
 
@@ -143,6 +146,7 @@ export function Paywall(
         // La RAISON est gardee : c'est elle qu'on affiche si le bouton ne
         // peut rien vendre, au lieu d'un « ca ne marche pas » sans suite.
         setFail(r.fail);
+        if (r.fail) void appUserId().then((u) => { if (alive) setWho(u); });
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; clearTimeout(bell); };
@@ -272,6 +276,13 @@ export function Paywall(
                 d'un produit introuvable — et sans lui, on devine. */}
             {fail && (
               <Text variant="label" tone="tertiary" style={st.center}>{fail}</Text>
+            )}
+            {/* L'identifiant de cet appareil chez RevenueCat : la ligne a
+                chercher au tableau de bord pour s'accorder l'acces a la main,
+                et donc pouvoir essayer toute l'app avant qu'Apple ouvre les
+                abonnements. Il n'apparait que dans ce cas d'echec. */}
+            {who && (
+              <Text variant="label" tone="tertiary" style={st.center}>{who}</Text>
             )}
           </Animated.View>
         ) : undefined
