@@ -183,10 +183,18 @@ const COMMON = `
   const __scanned = new Map();
   const __fresh = (re, n, t) => {
     if (!t) return false;
-    let set = __scanned.get(re);
-    if (!set) { set = new WeakSet(); __scanned.set(re, set); }
-    if (set.has(n)) return false;
-    set.add(n);
+    let seen = __scanned.get(re);
+    if (!seen) { seen = new WeakMap(); __scanned.set(re, seen); }
+    /*
+      Le TEXTE fait partie de la cle, pas seulement le noeud.
+
+      Instagram virtualise son fil : en descendant, il REUTILISE les memes
+      elements pour de nouvelles publications. Un noeud marque « deja examine »
+      ne l'etait donc plus une fois recycle, et la publication suivante
+      echappait a toutes les regles.
+    */
+    if (seen.get(n) === t) return false;
+    seen.set(n, t);
     return true;
   };
 
@@ -313,10 +321,24 @@ const COMMON = `
     (document.head || document.documentElement).appendChild(__sheet);
   };
 
+  /*
+    « Cet element merite-t-il ENCORE d'etre cache ? »
+
+    Chaque site pose ici ses verificateurs, par nom de regle. Sans eux, un
+    element cache le restait tant que la regle etait active — et comme
+    Instagram recycle ses cartes en descendant, celle qui portait un reel
+    finissait par porter une publication ordinaire, cachee pour toujours.
+    C'est ce qui faisait disparaitre le fil au bout d'un moment, et ce qui
+    donnait l'impression qu'une publication se changeait en une autre.
+  */
+  const __still = {};
+
   const __restore = () => {
     document.querySelectorAll('[data-nr]').forEach((el) => {
       const k = el.getAttribute('data-nr');
-      if (k === 'short' ? __short() : __on(k)) return;
+      const on = k === 'short' ? __short() : __on(k);
+      const check = __still[k];
+      if (on && (!check || check(el))) return;
       el.style.removeProperty('display');
       el.removeAttribute('data-nr');
     });
@@ -697,6 +719,17 @@ export const INSTAGRAM_BLOCKER = `
     }
     return false;
   };
+
+  /*
+   * Ce qui fait encore un reel, une publicite, une suggestion.
+   *
+   * Relus a chaque passe sur les elements deja caches : le fil recycle ses
+   * cartes, donc « c'etait un reel » ne veut pas dire « c'en est toujours un ».
+   */
+  __still.short = (el) => !!el.querySelector('a[href*="/reel/"]')
+    || REEL.test((el.textContent || '').slice(0, 200));
+  __still.ads = (el) => AD.test((el.textContent || '').slice(0, 300));
+  __still.suggested = (el) => SUGGEST.test((el.textContent || '').slice(0, 300));
 
   window.__nrSwitch = () => {
     // 1. Le selecteur est deja ouvert, ou son entree est visible.

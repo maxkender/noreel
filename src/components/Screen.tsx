@@ -17,7 +17,7 @@ import { ProgressContext } from './ProgressContext';
  */
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
-  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0,
+  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -34,6 +34,15 @@ export function Screen({
   hintDelay?: number;
   /** Teinte du halo : elle change d'un ecran a l'autre. */
   hue?: Hue;
+  /**
+   * Un fond a soi, pose SOUS le halo.
+   *
+   * Tous les ecrans partagent le meme noir, ce qui est voulu : c'est ce qui
+   * fait qu'on est dans la meme app. Le paywall, lui, doit se distinguer — on
+   * n'y arrive pas pour lire une etape de plus, et un ecran de vente qui
+   * ressemble en tout point a celui d'avant ne donne envie de rien.
+   */
+  backdrop?: ReactNode;
   /** 0 a 1 : intensite du halo, pour les ecrans qui montent en tension. */
   hueLevel?: number;
 }) {
@@ -45,6 +54,7 @@ export function Screen({
 
   return (
     <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
+      {backdrop}
       <Glow hue={hue} level={hueLevel} />
       <Stars count={14} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

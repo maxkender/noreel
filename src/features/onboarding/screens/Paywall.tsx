@@ -204,6 +204,24 @@ export function Paywall(
 
   return (
     <Screen
+      /*
+        Un fond a lui.
+
+        Tous les ecrans partagent le meme noir — c'est ce qui fait qu'on est
+        dans la meme app. Mais on n'arrive pas sur le paywall pour lire une
+        etape de plus, et un ecran de vente identique au precedent ne donne
+        envie de rien. Le degrade violet-bleu dit qu'on a change de piece.
+        Il ne suit pas le theme : c'est une scene, comme l'intro et le final.
+      */
+      backdrop={
+        <LinearGradient
+          colors={['#2A1E63', '#151A46', '#0A0C1C']}
+          locations={[0, 0.45, 1]}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.85, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      }
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
       cta={
         busy || loading
@@ -283,15 +301,23 @@ export function Paywall(
         />
       </View>
 
-      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
+      {/*
+        Quatre cases plutot que quatre lignes.
+        Empilees, elles faisaient une liste de courses qu'on parcourt du regard
+        sans rien lire. Cote a cote, elles se prennent d'un coup d'oeil et
+        rendent la page a la decision.
+      */}
+      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.grid}>
         {ROWS.map((key, i) => (
           <Animated.View
             key={key}
             entering={FadeIn.delay(260 + i * 90).duration(420)}
-            style={st.line}
+            style={st.cell}
           >
-            <Check size={15} strokeWidth={3} color={c.accent} />
-            <Text variant="body" style={{ flex: 1 }}>{d.pay[key]}</Text>
+            <Check size={13} strokeWidth={3} color={c.accent} />
+            <Text variant="label" tone="secondary" style={st.cellText}>
+              {d.pay[key]}
+            </Text>
           </Animated.View>
         ))}
       </Animated.View>
@@ -368,14 +394,14 @@ function Healing() {
 
   return (
     <View style={st.heal}>
-      <Corti level={healed ? 3 : 0} size={126} />
+      <Corti level={healed ? 3 : 0} size={152} />
 
       {/* Hauteur fixe : les deux phrases n'ont pas la meme longueur, et sans
           reserve tout ce qui suit remonterait au moment de la bascule. */}
       <View style={st.healSlot}>
         <Animated.View key={healed ? 'on' : 'off'} entering={FadeIn.duration(520)}>
           <Text
-            variant="body"
+            variant="lead"
             color={healed ? c.accent : c.ember}
             style={st.center}
           >
@@ -529,7 +555,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   sub: { marginTop: space.md },
   heal: { alignItems: 'center', marginTop: space.lg },
   healSlot: {
-    height: 46, justifyContent: 'center', marginTop: space.sm,
+    height: 54, justifyContent: 'center', marginTop: space.sm,
     paddingHorizontal: space.lg,
   },
   wound: {
@@ -555,8 +581,16 @@ const sheet = (c: Palette) => StyleSheet.create({
   bulletOn: { borderColor: withAlpha(c.accent, 0.65), backgroundColor: withAlpha(c.accent, 0.12) },
   wire: { flex: 1, width: 1.5, backgroundColor: withAlpha(c.accent, 0.28) },
   stepText: { flex: 1, paddingBottom: space.md, gap: 1 },
-  list: { marginTop: space.xl, gap: space.md },
-  line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap', marginTop: space.xl, gap: space.sm,
+  },
+  cell: {
+    width: '48%', flexDirection: 'row', gap: space.sm,
+    paddingVertical: space.md, paddingHorizontal: space.md, borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
+    backgroundColor: withAlpha(c.mist, 0.05),
+  },
+  cellText: { flex: 1, lineHeight: 15 },
   plans: { marginTop: space.lg, gap: space.sm },
   plan: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
@@ -564,7 +598,13 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderRadius: 20, overflow: 'hidden',
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
   },
-  planOn: { borderColor: withAlpha(c.accent, 0.6) },
+  /* Le forfait choisi se SOULEVE : un simple lisere se remarque a peine sur
+     un fond deja colore, et c'est le seul endroit de l'ecran ou l'on choisit. */
+  planOn: {
+    borderColor: withAlpha(c.accent, 0.85), borderWidth: 1.5,
+    shadowColor: c.accent, shadowOpacity: 0.5, shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+  },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tick: {
     width: 22, height: 22, borderRadius: 11,
