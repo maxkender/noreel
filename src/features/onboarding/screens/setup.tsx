@@ -16,7 +16,7 @@ import { track } from '@/services';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
-import { Corti } from '@/components/Corti';
+import { Corti, CortiSays } from '@/components/Corti';
 
 type P = { onNext: () => void };
 
@@ -39,6 +39,19 @@ type Step =
       options: string[];
     }
   | { kind: 'say'; q: string; sub?: string };
+
+/*
+ * Ce que Corti glisse sous chaque question.
+ *
+ * Il EST le cerveau dont on parle : c'est donc lui qui a oublie les reels, lui
+ * dont la concentration flanche. Dit par nous, « ta memoire flanche » est une
+ * affirmation qu'on peut contester ; dit par lui, c'est quelqu'un qui raconte
+ * comment il va — et ce quelqu'un, c'est soi.
+ */
+const ASIDE = [
+  'Moi non plus je ne m’en souviens pas. C’est un peu mon travail, pourtant.',
+  'Je fais ce que je peux. Mais on ne me laisse jamais finir une idée.',
+];
 
 const CONSTAT: Step[] = [
   {
@@ -91,6 +104,12 @@ export function Constat({ onNext }: P) {
       hue={i >= 2 ? 'ember' : 'deep'}
     >
       <Animated.View key={i} entering={FadeIn.duration(520)}>
+        {/* Corti d'abord : on voit dans quel etat il est avant de lire la
+            question, et la question n'est plus un reproche. */}
+        <Animated.View entering={FadeIn.delay(1400).duration(600)} style={st.aside}>
+          <CortiSays level={0} size={72} text={ASIDE[i] ?? ASIDE[0]} />
+        </Animated.View>
+
         <Typewriter
           text={step.q}
           variant="displayM"
@@ -398,6 +417,7 @@ function PromiseRow({ title }: { title: string }) {
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   mascot: { alignItems: 'center', marginBottom: space.lg },
+  aside: { marginBottom: space.xl },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.
   faded: { textAlign: 'center', opacity: 0.55 },

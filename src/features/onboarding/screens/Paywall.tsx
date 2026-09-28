@@ -11,6 +11,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
+import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
@@ -44,12 +45,7 @@ const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
  * compte les croix avant de lire les titres. Une liste ne dit que ce qu'on
  * recoit.
  */
-const ROWS = [
-  'TikTok, X et YouTube, filtrés comme Instagram',
-  'Réglages app par app, appliqués tout de suite',
-  'Blocage des apps d’origine, avec mode strict',
-  'Ton temps mesuré, jour après jour',
-];
+const ROWS = ['r1', 'r2', 'r3', 'r4'] as const;
 
 // La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
@@ -102,6 +98,7 @@ export function Paywall(
 ) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(exitDelay === 0);
@@ -209,11 +206,11 @@ export function Paywall(
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
       cta={
         busy || loading
-          ? 'Un instant…'
+          ? d.pay.wait
           // Sans forfait a vendre, le libelle ne promet pas un achat.
           : chosen || !PURCHASES_ENABLED
-            ? 'Reprendre contrôle de mon temps'
-            : 'Continuer'
+            ? d.pay.cta
+            : d.pay.ctaPlain
       }
       onPress={() => { void go(); }}
       disabled={busy || loading}
@@ -238,12 +235,16 @@ export function Paywall(
         parcours — la rencontre, ou l'on vient de le donner, et la promesse
         chiffree, ou il engage.
       */}
+      {/* Le fragment colore est pose au milieu de la phrase par un marqueur :
+          decoupee en trois morceaux, la phrase ne se traduirait pas dans le
+          meme ordre. */}
       <Text variant="displayM" style={st.center}>
-        Reprends <Text variant="displayM" color={c.accent}>le contrôle</Text>
-        {' de ton temps.'}
+        {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
+        <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>
+        {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[1]}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.center, st.sub]}>
-        Sans perdre contact.
+        {d.pay.sub}
       </Text>
 
       {/* Son chiffre, rappele une fois. Il n'est pas la pour convaincre mais
@@ -251,7 +252,7 @@ export function Paywall(
       {minutes > 0 && (
         <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.wound}>
           <Text variant="label" color={c.ember}>
-            {formatHours(minutes)} par jour · {daysLost} jours par an
+            {t(d.pay.wound, { h: formatHours(minutes), d: daysLost })}
           </Text>
         </Animated.View>
       )}
@@ -260,58 +261,60 @@ export function Paywall(
 
       <View style={st.plans}>
         <PlanCard
-          label="Annuel"
+          label={d.pay.annual}
           price={price(annual, FALLBACK.annual)}
-          note={`${TRIAL_DAYS} jours offerts, puis ${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} € par jour`}
+          note={t(d.pay.annualNote, {
+            n: TRIAL_DAYS,
+            p: `${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} €`,
+          })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
         <PlanCard
-          label="Hebdomadaire"
+          label={d.pay.weekly}
           price={price(weekly, FALLBACK.weekly)}
-          note="Sans essai gratuit. Sans engagement."
+          note={d.pay.weeklyNote}
           on={plan === 'weekly'}
           onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
       </View>
 
       <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
-        {ROWS.map((label, i) => (
+        {ROWS.map((key, i) => (
           <Animated.View
-            key={label}
+            key={key}
             entering={FadeIn.delay(260 + i * 90).duration(420)}
             style={st.line}
           >
             <Check size={15} strokeWidth={3} color={c.accent} />
-            <Text variant="body" style={{ flex: 1 }}>{label}</Text>
+            <Text variant="body" style={{ flex: 1 }}>{d.pay[key]}</Text>
           </Animated.View>
         ))}
       </Animated.View>
 
       <Text variant="label" tone="tertiary" style={st.terms}>
         {plan === 'annual'
-          ? `${TRIAL_DAYS} jours gratuits, puis ${price(annual, FALLBACK.annual)} par an, renouvelé automatiquement.`
-          : `${price(weekly, FALLBACK.weekly)} par semaine, renouvelé automatiquement.`}
-        {' Annule quand tu veux.'}
+          ? t(d.pay.termsTrial, { n: TRIAL_DAYS, p: price(annual, FALLBACK.annual) })
+          : t(d.pay.termsWeek, { p: price(weekly, FALLBACK.weekly) })}
+        {' '}
+        {d.pay.cancelAny}
       </Text>
 
       {/* Ce qui rassure vraiment n'est pas une promesse mais un fait
           verifiable : c'est Apple qui encaisse, et c'est Apple qui annule. */}
       <View style={st.trust}>
         <Lock size={12} strokeWidth={2.4} color={withAlpha(c.mist, c.textTertiary)} />
-        <Text variant="label" tone="tertiary">
-          Paiement par Apple · Annulation en deux taps
-        </Text>
+        <Text variant="label" tone="tertiary">{d.pay.trust}</Text>
       </View>
 
       <View style={st.legal}>
         <Pressable onPress={() => { haptics.tap(); void Linking.openURL(TERMS); }} hitSlop={8}>
-          <Text variant="label" tone="tertiary">Conditions d’utilisation</Text>
+          <Text variant="label" tone="tertiary">{d.pay.terms}</Text>
         </Pressable>
         <Text variant="label" tone="tertiary">·</Text>
         <Pressable onPress={() => { haptics.tap(); void Linking.openURL(PRIVACY); }} hitSlop={8}>
-          <Text variant="label" tone="tertiary">Confidentialité</Text>
+          <Text variant="label" tone="tertiary">{d.pay.privacy}</Text>
         </Pressable>
       </View>
 
@@ -320,14 +323,14 @@ export function Paywall(
       <View style={st.tail}>
         <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
           <Text variant="label" tone="tertiary">
-            {PURCHASES_ENABLED ? 'Restaurer mes achats' : 'Gratuit pendant la bêta'}
+            {PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}
           </Text>
         </Pressable>
         {PURCHASES_ENABLED && Platform.OS === 'ios' && (
           <>
             <Text variant="label" tone="tertiary">·</Text>
             <Pressable onPress={() => { void promo(); }} hitSlop={8}>
-              <Text variant="label" tone="tertiary">J’ai un code</Text>
+              <Text variant="label" tone="tertiary">{d.pay.promo}</Text>
             </Pressable>
           </>
         )}
@@ -351,25 +354,25 @@ export function Paywall(
 function Trial({ plan }: { plan: Plan }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { d, t } = useT();
 
   // L'hebdomadaire n'a pas d'essai. Le taire serait laisser croire qu'il en a
   // un, et le prelevement se decouvrirait le jour meme.
   if (plan === 'weekly') {
     return (
       <View style={[st.trial, st.trialFlat]}>
-        <Text variant="label" color={c.ember}>Hebdomadaire · sans essai gratuit</Text>
+        <Text variant="label" color={c.ember}>{d.pay.weekNoTrial}</Text>
         <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
-          Prélevé aujourd’hui, puis chaque semaine. Annulable à tout moment,
-          sans frais.
+          {d.pay.weekNoTrialBody}
         </Text>
       </View>
     );
   }
 
   const steps: [typeof Bell, string, string, boolean][] = [
-    [Unlock, 'Aujourd’hui', 'Tout se débloque. Tu ne paies rien.', true],
-    [Bell, 'Jour 2', 'On te prévient : il te reste 24 h.', true],
-    [CreditCard, `Jour ${TRIAL_DAYS}`, 'L’abonnement commence, sauf si tu as annulé.', false],
+    [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
+    [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
+    [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
   ];
 
   return (
@@ -381,7 +384,7 @@ function Trial({ plan }: { plan: Plan }) {
         style={StyleSheet.absoluteFill}
       />
       <Text variant="label" color={c.accent}>
-        {TRIAL_DAYS} jours d’essai gratuit sur l’annuel
+        {t(d.pay.trialBanner, { n: TRIAL_DAYS })}
       </Text>
 
       <View style={st.steps}>

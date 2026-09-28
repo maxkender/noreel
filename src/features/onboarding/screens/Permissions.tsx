@@ -6,6 +6,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { radii, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
+import { useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
 import { track } from '@/services';
 import { SystemAlert } from '../scenes/SystemAlert';
@@ -21,6 +22,7 @@ import {
  * pour lui.
  */
 export function Permissions({ onDone }: { onDone: () => void }) {
+  const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [state, setState] = useState<AuthState>('notDetermined');
@@ -38,7 +40,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   if (unsupported) {
     return (
       <Screen cta="Continuer" onPress={onDone}>
-        <Text variant="displayM">Ferme la porte de derrière.</Text>
+        <Text variant="displayM">{d.perms.closeBack}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Sans ça, un réflexe suffit : tu rouvres l’app d’origine et tout
           recommence.
@@ -47,8 +49,8 @@ export function Permissions({ onDone }: { onDone: () => void }) {
           <Text variant="title">Pas encore disponible</Text>
           <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
             {Platform.OS === 'ios'
-              ? 'Le blocage utilise Temps d’écran. La fonctionnalité arrive bientôt.'
-              : 'Le blocage Android arrive bientôt.'}
+              ? d.perms.soonIos
+              : d.perms.soonAndroid}
           </Text>
         </View>
       </Screen>
@@ -66,9 +68,9 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   if (state === 'denied') {
     return (
       <Screen
-        cta="Ouvrir Réglages"
+        cta={d.perms.openSettings}
         onPress={() => { void Linking.openSettings(); }}
-        secondary="Continuer sans activer Temps d’écran"
+        secondary={d.perms.skip}
         onSecondary={onDone}
       >
         <View style={st.warnRing}>
@@ -93,7 +95,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   return (
     <View style={{ flex: 1 }}>
       <Screen secondary="Plus tard" onSecondary={onDone} hue="warm">
-        <Text variant="displayM">Connectons UnSwipe à Temps d’écran.</Text>
+        <Text variant="displayM">{d.perms.connect}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Appuie sur Continuer.
         </Text>
@@ -101,7 +103,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
 
       <SystemAlert
         goodSide="left"
-        title="« UnSwipe » souhaite accéder à Temps d’écran"
+        title={d.perms.alertTitle}
         body="Cela permet de voir tes données d’activité et de limiter l’utilisation d’Apps et de sites web."
         good="Continuer"
         bad="Ne pas autoriser"
@@ -114,6 +116,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
 
 /** Confirmation breve, puis la suite. Aucun geste demande. */
 function Granted({ onDone }: { onDone: () => void }) {
+  const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   useEffect(() => {
@@ -127,7 +130,7 @@ function Granted({ onDone }: { onDone: () => void }) {
         <Check size={34} strokeWidth={2.4} color={c.accent} />
       </Animated.View>
       <Animated.View entering={FadeIn.delay(220).duration(420)}>
-        <Text variant="title" style={st.center}>Temps d’écran connecté</Text>
+        <Text variant="title" style={st.center}>{d.perms.connected}</Text>
       </Animated.View>
     </View>
   );

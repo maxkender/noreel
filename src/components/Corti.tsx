@@ -8,6 +8,8 @@ import Animated, {
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { dict, interpolate } from '@/i18n';
+import { Text } from './type/Text';
 
 /*
  * Corti, la mascotte : un petit cerveau qui s'eteint quand on scrolle et se
@@ -48,12 +50,20 @@ export function cortiLevel(days: number): CortiLevel {
   return 3;
 }
 
-/** Ce que Corti dit de son etat, selon son niveau. */
+/**
+ * Ce que Corti dit de son etat, selon son niveau.
+ *
+ * Ce n'est pas un composant : elle est appelee depuis des listes et des
+ * en-tetes, donc elle lit le dictionnaire directement plutot que par un hook.
+ */
 export function cortiLine(level: CortiLevel, days: number): string {
-  if (level === 0) return 'Il a vu trop de Reels. Il ne sait plus pourquoi.';
-  if (level === 1) return `${days} jour${days > 1 ? 's' : ''} sans Reels. Il respire.`;
-  if (level === 2) return `${days} jours sans Reels. Ça se voit, non ?`;
-  return `${days} jours. Il n’a jamais autant brillé.`;
+  const key = (['says0', 'says1', 'says2', 'says3'] as const)[level];
+  return interpolate(dict.corti[key], { n: days, s: days > 1 ? 's' : '' });
+}
+
+/** Le nom du niveau, pour VoiceOver. */
+function levelName(level: CortiLevel): string {
+  return [dict.corti.off, dict.corti.dim, dict.corti.lit, dict.corti.bright][level];
 }
 
 /* ---------- Les formes, reprises du dessin d'origine ---------- */
@@ -181,7 +191,10 @@ export function Corti({
   const hop = useSharedValue(0);
   const flick = useSharedValue(0);
   const hit = useSharedValue(0);
+  // Le regard : -1 a gauche, +1 a droite, 0 de face.
+  const gaze = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eyeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!motion) {
@@ -226,6 +239,32 @@ export function Corti({
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [motion, blink]);
 
+  /*
+    Le regard qui se promene.
+
+    Le clignement dit qu'elle est vivante ; le regard dit qu'elle pense. Les
+    pupilles glissent de trois unites d'un cote, tiennent une seconde, puis
+    reviennent — et rien ne se passe pendant plusieurs secondes entre deux
+    coups d'oeil. C'est l'irregularite qui fait l'effet : un balayage
+    regulier donnerait une camera de surveillance.
+
+    Ca ne coute qu'une translation sur la bande des yeux, deja dessinee a
+    part pour le clignement.
+  */
+  useEffect(() => {
+    if (!motion) { gaze.value = 0; return; }
+    const look = () => {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      gaze.value = withSequence(
+        withTiming(side, { duration: 260, easing: Easing.out(Easing.quad) }),
+        withDelay(900, withTiming(0, { duration: 300, easing: Easing.inOut(Easing.ease) }))
+      );
+      eyeTimer.current = setTimeout(look, 3800 + Math.random() * 4200);
+    };
+    eyeTimer.current = setTimeout(look, 2400 + Math.random() * 2600);
+    return () => { if (eyeTimer.current) clearTimeout(eyeTimer.current); };
+  }, [motion, gaze]);
+
   const poke = useCallback(() => {
     haptics.tap();
     hit.value = withSequence(
@@ -259,7 +298,10 @@ export function Corti({
   // Les yeux se referment dans leur propre bande, dont le centre EST la ligne
   // des yeux : l'echelle verticale suffit, sans rattrapage d'origine.
   const eyes = useAnimatedStyle(() => ({
-    transform: [{ scaleY: 1 - blink.value * 0.92 }],
+    transform: [
+      { translateX: gaze.value * 3 * k },
+      { scaleY: 1 - blink.value * 0.92 },
+    ],
   }));
 
   const Root: React.ElementType = animated ? Pressable : View;
@@ -270,7 +312,7 @@ export function Corti({
       style={[{ width: size, height: size }, style]}
       onPress={animated ? poke : undefined}
       accessibilityRole="image"
-      accessibilityLabel={`Corti, ${pal.name}`}
+      accessibilityLabel={`Corti, ${levelName(level)}`}
     >
       {/* La lueur, derriere tout le reste. Elle n'existe pas au niveau zero. */}
       {pal.aura > 0 && (
@@ -448,3 +490,76 @@ function Twinkle({
     </Animated.View>
   );
 }
+
+/* ---------- Corti prend la parole ---------- */
+
+/**
+ * Corti, et ce qu'il dit.
+ *
+ * Le parcours parle du cerveau de la personne a la troisieme personne : « ta
+ * memoire flanche », « ta dopamine sature ». Ce sont des affirmations, et une
+ * affirmation sur soi se discute. Les memes phrases dites PAR le cerveau
+ * lui-meme ne se discutent plus : ce n'est plus un diagnostic qu'on vous
+ * pose, c'est quelqu'un qui vous dit comment il va. Et comme ce quelqu'un est
+ * vous, on ne peut pas lui en vouloir.
+ *
+ * C'est aussi ce qui fait qu'on comprend l'app sans explication : on voit
+ * Corti eteint avant de lire une seule statistique, et on a deja saisi.
+ */
+export function CortiSays({
+  level, text, size = 84, align = 'row',
+}: {
+  level: CortiLevel;
+  text: string;
+  size?: number;
+  /** En ligne pour un aparte, en colonne quand c'est lui qui porte l'ecran. */
+  align?: 'row' | 'column';
+}) {
+  const column = align === 'column';
+  return (
+    <View style={[says.root, column && says.col]}>
+      <Corti level={level} size={size} />
+      <View style={[says.bubble, column ? says.bubbleDown : says.bubbleSide]}>
+        {/*
+          La pointe de la bulle est un carre tourne, pose a cheval sur le bord.
+          Un triangle dessine demanderait un SVG de plus pour trois pixels, et
+          se decalerait des que le rayon du coin change.
+        */}
+        <View style={[says.tail, column ? says.tailUp : says.tailLeft]} />
+        <Text variant="body" style={says.text}>{text}</Text>
+      </View>
+    </View>
+  );
+}
+
+const SKIN = '#B7DAFF';
+const SKIN_BG = '#B7DAFF16';
+
+const says = StyleSheet.create({
+  root: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  col: { flexDirection: 'column', gap: 14 },
+  bubble: {
+    flex: 1,
+    paddingHorizontal: 16, paddingVertical: 13, borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: SKIN + '55',
+    backgroundColor: SKIN_BG,
+  },
+  bubbleSide: { marginLeft: 4 },
+  bubbleDown: { alignSelf: 'stretch', flex: 0 },
+  tail: {
+    position: 'absolute', width: 12, height: 12,
+    transform: [{ rotate: '45deg' }],
+    borderColor: SKIN + '55', backgroundColor: SKIN_BG,
+  },
+  tailLeft: {
+    left: -6, top: '50%', marginTop: -6,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  tailUp: {
+    top: -6, alignSelf: 'center', left: '50%', marginLeft: -6,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  text: { color: SKIN },
+});

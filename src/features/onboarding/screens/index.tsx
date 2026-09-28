@@ -15,9 +15,32 @@ import { useT } from '@/i18n';
 import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
 import { formatHours } from '@/lib/format';
 import { track } from '@/services';
-import { screenYears, wakingShare } from '../calculations';
+import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
+
+
 import { TimeSlider } from '../scenes/TimeSlider';
 import { AgeInput } from '../scenes/AgeInput';
+
+/*
+ * Huit heures de travail, posees sur la grille.
+ *
+ * La grille compte les seize heures eveillees. Sans le travail, la part
+ * d'ecran se lit sur une journee entierement disponible — ce que personne n'a.
+ * Avec lui, la moitie du tableau est prise d'avance, et le peu qui reste
+ * devient le vrai sujet de l'ecran.
+ *
+ * Huit heures pour tout le monde, et c'est une approximation assumee : la
+ * demander ferait un ecran de plus pour affiner un chiffre qui sert a montrer
+ * un ordre de grandeur.
+ */
+const WORK = Math.round((8 / WAKING_HOURS) * 100);
+
+/*
+ * Le vert du travail ne vient pas de la palette : elle n'en a pas, et il n'y
+ * a aucune raison d'en ajouter un pour un seul ecran. Il tient sur les deux
+ * fonds, c'est tout ce qu'on lui demande.
+ */
+const WORK_GREEN = '#2E9E5B';
 
 const MARK = require('@/assets/brand/mark.png');
 
@@ -135,8 +158,24 @@ export function S6({ onNext }: P) {
   const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
-  const target = Math.round(wakingShare(minutes) * 100);
+  const screen = Math.round(wakingShare(minutes) * 100);
   const [lit, setLit] = useState(0);
+
+  /*
+    L'ecran ne peut pas occuper plus que ce que le travail laisse.
+
+    A onze heures d'ecran par jour, la part calculee depasse la place libre :
+    la legende aurait annonce 73 % pendant que la grille n'en montrait que 50,
+    puisque les cases du travail sont posees les premieres. On plafonne donc
+    ce qu'on montre, et quand ca deborde on le DIT — parce que ca veut dire
+    quelque chose : l'ecran a commence a manger les heures de travail.
+  */
+  const room = 100 - WORK;
+  const shown = Math.min(screen, room);
+  const over = screen > room;
+  const free = room - shown;
+  const freeHours = (free / 100) * WAKING_HOURS;
+  const done = lit >= shown;
 
   // La grille attend que le titre soit ecrit : les deux en meme temps, on
   // ne lisait ni l'un ni l'autre.
@@ -154,12 +193,12 @@ export function S6({ onNext }: P) {
       i += 1;
       setLit(i);
       if (i % 10 === 0) haptics.tick();
-      if (i >= target) clearInterval(id);
+      if (i >= shown) clearInterval(id);
     }, 88);
     return () => clearInterval(id);
-  }, [target, go]);
+  }, [shown, go]);
 
-  const done = lit >= target;
+
 
   return (
     <Screen
@@ -168,44 +207,89 @@ export function S6({ onNext }: P) {
       center
       disabled={!done}
       hue="ember"
-      hueLevel={Math.min(1, lit / Math.max(1, target))}
+      hueLevel={Math.min(1, lit / Math.max(1, shown))}
     >
       <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
 
       <View style={s.hundredWrap}>
         <View style={s.hundred}>
           {Array.from({ length: 100 }, (_, i) => (
-            <Cell key={i} on={i < lit} index={i} />
+            <Cell
+              key={i}
+              // Le travail occupe le bas de la grille et ne bouge jamais :
+              // c'est le decor, pas le propos. L'ecran vient se poser DESSUS,
+              // case par case, et ce qui reste se voit retrecir en direct.
+              kind={i >= 100 - WORK ? 'work' : i < lit ? 'screen' : 'free'}
+            />
           ))}
         </View>
       </View>
 
+      <View style={s.legend}>
+        <Key colour={c.danger} label={`${lit} % écran`} />
+        <Key colour={WORK_GREEN} label={`${WORK} % travail`} />
+        <Key colour={withAlpha(c.mist, 0.14)} label="libre" />
+      </View>
+
+      {/*
+        Le chiffre qui pese n'est pas la part d'ecran : c'est ce qui reste.
+        Vingt-trois pour cent sur un ecran, ca ne veut rien dire. « Il te reste
+        deux heures a toi dans la journee », si.
+      */}
       <Text
         variant="hero"
-        color={c.danger}
+        color={free <= 10 ? c.danger : c.ember}
         style={[s.center, s.pct]}
         numberOfLines={1}
         adjustsFontSizeToFit
       >
-        {lit} %
+        {formatHours(Math.round(freeHours * 60))}
+      </Text>
+      <Text variant="lead" tone="secondary" style={s.center}>
+        {!done ? '…'
+          : over ? 'Ton écran déborde déjà sur tes heures de travail.'
+          : 'de vraiment libre, par jour.'}
       </Text>
 
     </Screen>
   );
 }
 
-/** Chaque case s'allume en fondu : le remplissage devient une vague. */
-function Cell({ on, index }: { on: boolean; index: number }) {
+/** Une entree de legende : une pastille, un mot. */
+function Key({ colour, label }: { colour: string; label: string }) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
-  return on ? (
-    <Animated.View
-      entering={FadeIn.duration(420)}
-      style={[s.square, { backgroundColor: c.danger }]}
-    />
-  ) : (
-    <View key={index} style={[s.square, s.squareOff]} />
+  return (
+    <View style={s.key}>
+      <View style={[s.keyDot, { backgroundColor: colour }]} />
+      <Text variant="label" tone="tertiary">{label}</Text>
+    </View>
   );
+}
+
+/**
+ * Une case de la grille : une heure et demie de journee eveillee, a peu pres.
+ *
+ * Le travail est pose d'emblee, l'ecran s'allume en fondu par-dessus. C'est
+ * ce fondu qui fait le poids de l'ecran : une grille deja remplie se lit
+ * comme un camembert, une grille qui se remplit sous les yeux se subit.
+ */
+function Cell({ kind }: { kind: 'work' | 'screen' | 'free' }) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
+
+  if (kind === 'work') {
+    return <View style={[s.square, { backgroundColor: WORK_GREEN }]} />;
+  }
+  if (kind === 'screen') {
+    return (
+      <Animated.View
+        entering={FadeIn.duration(420)}
+        style={[s.square, { backgroundColor: c.danger }]}
+      />
+    );
+  }
+  return <View style={[s.square, s.squareOff]} />;
 }
 
 /**
@@ -332,6 +416,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   square: { width: 20.5, height: 20.5, borderRadius: 4 },
   pct: { marginTop: 0, marginBottom: space.sm },
+  legend: { flexDirection: 'row', justifyContent: 'center', gap: space.lg, marginBottom: space.lg },
+  key: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  keyDot: { width: 9, height: 9, borderRadius: 3 },
   years: { alignItems: 'center', gap: space.xs },
   squareOff: { backgroundColor: withAlpha(c.mist, 0.07) },
   chain: { flexDirection: 'row', gap: space.md },

@@ -1,31 +1,78 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming, Easing,
 } from 'react-native-reanimated';
+import {
+  Bookmark, ChevronLeft, Clapperboard, Heart, House, MessageCircle,
+  MoreHorizontal, Plus, Search, Send, User,
+} from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { Text } from '@/components/type/Text';
 
-type Post = { who: string; reel: boolean };
-
 /*
- * Un fil imite, pas capture.
+ * Un fil imite, il ne capture pas.
  *
- * On ne peut pas filmer le vrai Instagram pour une video de presentation :
- * ce sont les publications de gens reels, et leur marque. Ce fil-ci n'a que
- * ce qu'il faut pour qu'on reconnaisse la forme — un en-tete, un media, une
- * barre d'actions — et pour que la disparition des reels se VOIE.
+ * On ne peut pas filmer le vrai Instagram pour une demonstration : ce sont les
+ * publications de gens reels, leurs visages, et la marque d'un tiers. Ce fil-ci
+ * en reprend la GRAMMAIRE — la barre du haut, la bande de stories cerclees, le
+ * bandeau d'auteur, le media, la rangee d'actions, la barre d'onglets — assez
+ * pour qu'on reconnaisse l'app au premier coup d'oeil, et pas assez pour la
+ * copier.
+ *
+ * Les photos sont des degrades. Une photo generique tiree d'une banque d'images
+ * se remarque plus qu'un aplat : on cherche a reconnaitre le lieu au lieu de
+ * regarder ce qui disparait.
  */
+
+type Post = {
+  who: string;
+  where?: string;
+  /** Un reel : c'est lui qui tombe quand le filtre passe. */
+  reel: boolean;
+  /** Les deux teintes de la photo. */
+  art: [string, string];
+  /** L'anneau de l'avatar. */
+  face: string;
+  likes: string;
+};
+
 const POSTS: Post[] = [
-  { who: 'lea.mrn', reel: false },
-  { who: 'son original', reel: true },
-  { who: 'thomas_b', reel: false },
-  { who: 'son original', reel: true },
-  { who: 'camille.d', reel: false },
-  { who: 'son original', reel: true },
-  { who: 'basket_hec', reel: false },
+  {
+    who: 'lea.mrn', where: 'Biarritz', reel: false,
+    art: ['#F0A868', '#D9544D'], face: '#E8735A', likes: '1 284',
+  },
+  {
+    who: 'son original', reel: true,
+    art: ['#7A5CE0', '#C2415C'], face: '#9B5DE5', likes: '42,1 k',
+  },
+  {
+    who: 'thomas_b', where: 'Lyon', reel: false,
+    art: ['#4F8DF5', '#2E4E8F'], face: '#5B9DFF', likes: '312',
+  },
+  {
+    who: 'son original', reel: true,
+    art: ['#E0568B', '#8A2E63'], face: '#E0568B', likes: '18,7 k',
+  },
+  {
+    who: 'camille.d', where: 'Paris 11e', reel: false,
+    art: ['#3FBF8F', '#1E6E63'], face: '#3FBF8F', likes: '867',
+  },
+  {
+    who: 'son original', reel: true,
+    art: ['#F2B441', '#C2611E'], face: '#F2B441', likes: '93,4 k',
+  },
+  {
+    who: 'basket_hec', where: 'Jouy-en-Josas', reel: false,
+    art: ['#6E7BF2', '#3A3F8F'], face: '#6E7BF2', likes: '2 041',
+  },
 ];
+
+/** Les anneaux de la bande de stories, dans l'ordre. */
+const RINGS = ['#F2B441', '#E0568B', '#9B5DE5', '#5B9DFF', '#3FBF8F'];
+const NAMES = ['ariesspears', 'matteorbrt', 'corriere', 'valentin.t', 'jules'];
 
 export const REELS = POSTS.filter((p) => p.reel).length;
 
@@ -35,13 +82,9 @@ const STEP = 130;   // decalage entre deux reels : ils tombent en cascade
 /**
  * Le fil, avant et apres le filtre.
  *
- * `filtered` fait tomber les reels un a un, du haut vers le bas. En cascade
- * et non tous ensemble : c'est le decalage qui rend la disparition lisible a
- * l'oeil, et filmable.
- *
- * `u` met tout le fil a l'echelle. Le meme dessin sert en vignette dans une
- * maquette de telephone et en plein ecran pour une video : une seule source
- * de verite pour la forme, un facteur pour la taille.
+ * `filtered` fait tomber les reels un a un, du haut vers le bas — et retire
+ * l'onglet Reels de la barre du bas. Les deux comptent : on bloque un format,
+ * pas seulement des publications, et c'est l'onglet qui manque qui le dit.
  */
 export function MockFeed({
   filtered, u = 1, drift = false,
@@ -49,12 +92,8 @@ export function MockFeed({
   filtered: boolean;
   u?: number;
   /**
-   * Fait descendre le fil tout seul.
-   *
-   * Un fil arrete est une capture d'ecran : on croit voir une image, pas une
-   * app. Quelques dizaines de points de deplacement lent suffisent a ce que
-   * l'oeil lise « ca defile », et c'est ce qui rend la demonstration
-   * credible.
+   * Fait descendre le fil tout seul. Un fil arrete est une capture d'ecran :
+   * on croit voir une image, pas une app.
    */
   drift?: boolean;
 }) {
@@ -66,28 +105,104 @@ export function MockFeed({
   useEffect(() => {
     if (!drift) { slide.value = 0; return; }
     slide.value = withRepeat(
-      withTiming(1, { duration: 9000, easing: Easing.linear }),
-      -1,
-      false
+      withTiming(1, { duration: 11000, easing: Easing.linear }), -1, false
     );
   }, [drift, slide]);
 
   const move = useAnimatedStyle(() => ({
-    transform: [{ translateY: -slide.value * 150 * u }],
+    transform: [{ translateY: -slide.value * 210 * u }],
   }));
 
   return (
-    <Animated.View style={[st.root, drift && move]}>
-      <View style={st.bar}>
-        <Text variant="label" tone="secondary" style={{ fontSize: 7 * u }}>UnSwipe</Text>
-      </View>
-      <View style={st.tray}>
-        {Array.from({ length: 5 }, (_, i) => <View key={i} style={st.ring} />)}
-      </View>
-      {POSTS.map((p, i) => (
-        <Row key={i} post={p} filtered={filtered} rank={p.reel ? rank++ : 0} u={u} />
+    <View style={st.root}>
+      <TopBar u={u} />
+
+      <Animated.View style={drift ? move : undefined}>
+        <Tray u={u} />
+        {POSTS.map((p, i) => (
+          <Row key={i} post={p} filtered={filtered} rank={p.reel ? rank++ : 0} u={u} />
+        ))}
+      </Animated.View>
+
+      <TabBar u={u} filtered={filtered} />
+    </View>
+  );
+}
+
+/** La barre du haut : un titre de fil, et deux actions a droite. */
+function TopBar({ u }: { u: number }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c, u), [c, u]);
+  return (
+    <View style={st.top}>
+      <ChevronLeft size={13 * u} strokeWidth={2.4} color={c.mist} />
+      <Text variant="button" style={{ fontSize: 11 * u, flex: 1 }}>Suivi(e)</Text>
+      <Plus size={12 * u} strokeWidth={2.4} color={c.mist} />
+      <Heart size={12 * u} strokeWidth={2.2} color={c.mist} />
+    </View>
+  );
+}
+
+/** La bande de stories : des anneaux colores, et un prenom dessous. */
+function Tray({ u }: { u: number }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c, u), [c, u]);
+  return (
+    <View style={st.tray}>
+      {RINGS.map((ring, i) => (
+        <View key={ring} style={st.storyCol}>
+          <View style={[st.ring, { borderColor: ring }]}>
+            <View style={[st.ringIn, { backgroundColor: withAlpha(ring, 0.5) }]} />
+          </View>
+          <Text
+            variant="label"
+            tone="tertiary"
+            numberOfLines={1}
+            style={{ fontSize: 4.6 * u, maxWidth: 30 * u }}
+          >
+            {NAMES[i]}
+          </Text>
+        </View>
       ))}
-    </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * La barre d'onglets.
+ *
+ * L'onglet Reels DISPARAIT quand le filtre passe, et les autres se
+ * repartissent. C'est le detail qui fait comprendre l'app sans un mot : on ne
+ * masque pas des publications, on retire une porte.
+ */
+function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c, u), [c, u]);
+  const fade = useSharedValue(1);
+
+  useEffect(() => {
+    fade.value = withDelay(
+      filtered ? 3 * STEP + 200 : 0,
+      withTiming(filtered ? 0 : 1, { duration: 320 })
+    );
+  }, [filtered, fade]);
+
+  const gone = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    width: 14 * u * fade.value,
+    transform: [{ scale: 0.6 + fade.value * 0.4 }],
+  }));
+
+  return (
+    <View style={st.tabs}>
+      <House size={13 * u} strokeWidth={2.2} color={c.mist} />
+      <Search size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+      <Animated.View style={[st.tabGone, gone]}>
+        <Clapperboard size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+      </Animated.View>
+      <Send size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+      <User size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+    </View>
   );
 }
 
@@ -97,9 +212,9 @@ function Row({
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   const open = useSharedValue(1);
-  // La hauteur totale d'une carte, mesuree sur la feuille : elle doit suivre
-  // l'echelle sans etre redonnee a la main a chaque appel.
-  const tall = (post.reel ? 92 : 52) * u + 34 * u;
+  // La hauteur totale d'une carte : en-tete, media, actions, legende.
+  const media = post.reel ? 104 : 74;
+  const tall = (media + 46) * u;
 
   useEffect(() => {
     if (!post.reel) return;
@@ -118,16 +233,38 @@ function Row({
   const body = (
     <>
       <View style={st.head}>
-        <View style={st.avatar} />
-        <View style={{ flex: 1, gap: 3 * u }}>
-          <View style={[st.line, { width: 54 * u }]} />
-          {post.reel && <View style={[st.line, { width: 34 * u, opacity: 0.6 }]} />}
+        <View style={[st.avatar, { backgroundColor: post.face }]} />
+        <View style={{ flex: 1 }}>
+          <Text variant="label" style={{ fontSize: 5.4 * u, letterSpacing: 0 }}>
+            {post.who}
+          </Text>
+          {post.where && (
+            <Text variant="label" tone="tertiary" style={{ fontSize: 4.4 * u, letterSpacing: 0 }}>
+              {post.where}
+            </Text>
+          )}
         </View>
+        <MoreHorizontal size={9 * u} strokeWidth={2.4} color={withAlpha(c.mist, 0.6)} />
       </View>
-      <View style={[st.media, post.reel && st.mediaReel]} />
+
+      <LinearGradient
+        colors={post.art}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[st.media, { height: media * u }]}
+      />
+
       <View style={st.actions}>
-        {Array.from({ length: 3 }, (_, k) => <View key={k} style={st.dot} />)}
+        <Heart size={10 * u} strokeWidth={2.2} color={c.mist} />
+        <MessageCircle size={10 * u} strokeWidth={2.2} color={c.mist} />
+        <Send size={10 * u} strokeWidth={2.2} color={c.mist} />
+        <View style={{ flex: 1 }} />
+        <Bookmark size={10 * u} strokeWidth={2.2} color={c.mist} />
       </View>
+
+      <Text variant="label" tone="secondary" style={{ fontSize: 4.6 * u, letterSpacing: 0 }}>
+        {post.likes} J’aime
+      </Text>
     </>
   );
 
@@ -136,33 +273,29 @@ function Row({
 }
 
 const sheet = (c: Palette, u: number) => StyleSheet.create({
-  root: { flex: 1, paddingTop: 34 * u },
-  bar: {
-    paddingHorizontal: 10 * u, paddingBottom: 6 * u,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.1),
+  root: { flex: 1, paddingTop: 26 * u },
+  top: {
+    flexDirection: 'row', alignItems: 'center', gap: 7 * u,
+    paddingHorizontal: 8 * u, paddingBottom: 6 * u,
   },
-  tray: { flexDirection: 'row', gap: 7 * u, padding: 8 * u },
+  tray: { flexDirection: 'row', gap: 6 * u, paddingHorizontal: 8 * u, paddingBottom: 8 * u },
+  storyCol: { alignItems: 'center', gap: 2 * u },
   ring: {
     width: 26 * u, height: 26 * u, borderRadius: 13 * u,
-    borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.5),
-    backgroundColor: withAlpha(c.mist, 0.07),
+    borderWidth: 1.6, alignItems: 'center', justifyContent: 'center',
   },
-  post: { paddingHorizontal: 8 * u, paddingTop: 6 * u, overflow: 'hidden' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 6 * u },
-  avatar: {
-    width: 18 * u, height: 18 * u, borderRadius: 9 * u,
-    backgroundColor: withAlpha(c.mist, 0.18),
+  ringIn: { width: 21 * u, height: 21 * u, borderRadius: 11 * u },
+  post: { paddingHorizontal: 8 * u, paddingBottom: 6 * u, overflow: 'hidden' },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 5 * u, paddingVertical: 5 * u },
+  avatar: { width: 17 * u, height: 17 * u, borderRadius: 9 * u },
+  media: { borderRadius: 5 * u },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 * u, paddingVertical: 5 * u },
+  tabs: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    paddingVertical: 7 * u, paddingHorizontal: 10 * u,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.12),
   },
-  line: { height: 4 * u, borderRadius: 2 * u, backgroundColor: withAlpha(c.mist, 0.18) },
-  media: {
-    height: 52 * u, borderRadius: 6 * u, marginTop: 5 * u,
-    backgroundColor: withAlpha(c.mist, 0.09),
-  },
-  // Un reel est VERTICAL : c'est sa forme qui le trahit, pas sa couleur.
-  mediaReel: { height: 92 * u, backgroundColor: withAlpha(c.ember, 0.22) },
-  actions: { flexDirection: 'row', gap: 6 * u, paddingVertical: 5 * u },
-  dot: {
-    width: 9 * u, height: 9 * u, borderRadius: 4.5 * u,
-    backgroundColor: withAlpha(c.mist, 0.14),
-  },
+  // La largeur est animee avec l'opacite : sans ca, l'onglet disparait mais
+  // laisse son trou, et les autres ne se rapprochent jamais.
+  tabGone: { alignItems: 'center', overflow: 'hidden' },
 });

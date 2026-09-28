@@ -14,25 +14,34 @@ import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { haptics } from '@/lib/haptics';
 import { LOGOS } from '@/features/home/AppSlider';
+import { useT } from '@/i18n';
 
-type Row = { label: string; locked?: boolean };
+/*
+ * La table ne porte que des CLES, pas des libelles.
+ *
+ * Elle vit au niveau du module, ou le dictionnaire n'est pas encore lu : des
+ * libelles ecrits ici seraient figes en francais pour tout le monde. Le texte
+ * est donc resolu au rendu.
+ */
+type RowKey = 'reels' | 'ads' | 'stories' | 'dmsOnly' | 'shorts' | 'recommended' | 'comments';
+type Row = { key: RowKey; locked?: boolean };
 
 const CARDS: { id: keyof typeof LOGOS; name: string; rows: Row[] }[] = [
   {
     id: 'instagram', name: 'Instagram',
     rows: [
-      { label: 'Bloquer les Reels', locked: true },
-      { label: 'Masquer les publicités' },
-      { label: 'Masquer les stories' },
-      { label: 'Messages uniquement' },
+      { key: 'reels', locked: true },
+      { key: 'ads' },
+      { key: 'stories' },
+      { key: 'dmsOnly' },
     ],
   },
   {
     id: 'youtube', name: 'YouTube',
     rows: [
-      { label: 'Bloquer les Shorts', locked: true },
-      { label: 'Masquer les suggestions' },
-      { label: 'Bloquer les commentaires' },
+      { key: 'shorts', locked: true },
+      { key: 'recommended' },
+      { key: 'comments' },
     ],
   },
 ];
@@ -49,6 +58,7 @@ const STEP = 420;
 export function Tune({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
   const total = CARDS.reduce((n, card) => n + card.rows.filter((r) => !r.locked).length, 0);
   const [lit, setLit] = useState(0);
 
@@ -63,13 +73,13 @@ export function Tune({ onNext }: P) {
 
   return (
     <Screen
-      cta="Appuie pour continuer"
+      cta={d.tune.tap}
       onPress={onNext}
       tapToContinue
       hintDelay={START + total * STEP + 600}
       hue="deep"
     >
-      <Text variant="displayM" style={st.title}>Règle tout, ligne par ligne.</Text>
+      <Text variant="displayM" style={st.title}>{d.tune.title}</Text>
 
       <View style={{ gap: space.md, marginTop: space.xl }}>
         {CARDS.map((card, ci) => (
@@ -83,9 +93,9 @@ export function Tune({ onNext }: P) {
               {card.rows.map((r) => {
                 const idx = r.locked ? -1 : seen++;
                 return (
-                  <View key={r.label} style={st.row}>
+                  <View key={r.key} style={st.row}>
                     <Text variant="body" tone={r.locked ? 'tertiary' : 'primary'} style={{ flex: 1 }}>
-                      {r.label}
+                      {d.tune[r.key]}
                     </Text>
                     {r.locked
                       ? (

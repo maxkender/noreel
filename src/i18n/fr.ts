@@ -250,6 +250,120 @@ export const fr = {
     close: 'Fermer',
   },
 
+  /*
+   * Les ecrans ecrits apres la premiere version du parcours.
+   *
+   * Ils avaient leur texte ecrit en dur dans les composants : correct en
+   * francais, absent en anglais — un telephone regle en anglais affichait donc
+   * la moitie de l'app dans une langue et l'autre moitie dans l'autre, sans
+   * que personne chez nous ne le voie jamais. Le type Dict est deduit de ce
+   * fichier : toute cle ajoutee ici doit exister dans en.ts, sinon la
+   * compilation tombe.
+   */
+  corti: {
+    says0: 'Il a vu trop de Reels. Il ne sait plus pourquoi.',
+    says1: '{n} jour{s} sans Reels. Il respire.',
+    says2: '{n} jours sans Reels. Ça se voit, non ?',
+    says3: `{n} jours. Il n'a jamais autant brillé.`,
+    off: 'éteint',
+    dim: 'en veilleuse',
+    lit: 'allumé',
+    bright: 'rayonnant',
+    meetCta: 'Enchanté',
+    meetTitle: 'Voici Corti.',
+    meetTitleNamed: '{name}, voici Corti.',
+    meetBody: `Ton cerveau, en version mignonne. Il s'éteint quand tu scrolles, et se rallume à chaque jour sans Reels.`,
+    meetKicker: 'TU LE VERRAS CHANGER',
+    day: 'Jour {n}',
+    arc1: 'Éteint. Tout paraît fade.',
+    arc2: 'Il se rallume. Tu tiens plus longtemps sur une page.',
+    arc3: `L'ennui redevient supportable.`,
+    arc4: 'Ta clarté est revenue, entière.',
+    ninety: 'Environ {d} sans stimulation facile pour retrouver toute ta netteté.',
+    ninetyDays: '90 jours',
+    aside1: `Moi non plus je ne m'en souviens pas. C'est un peu mon travail, pourtant.`,
+    aside2: `Je fais ce que je peux. Mais on ne me laisse jamais finir une idée.`,
+  },
+
+  proof: {
+    title: 'Ton Instagram, sans le fil sans fin.',
+  },
+
+  source: {
+    title: 'Comment tu nous as trouvés ?',
+    body: 'Ça nous aide à savoir où parler aux gens comme toi.',
+    friend: `Un ami m'en a parlé`,
+    appstore: `L'App Store`,
+    other: 'Ailleurs',
+  },
+
+  rate: {
+    cta: 'Soutenir',
+    later: 'Plus tard',
+    title: 'Soutiens la communauté UnSwipe.',
+    body: 'On essaie de rendre leur temps aux gens.',
+  },
+
+  pay: {
+    cta: 'Reprendre contrôle de mon temps',
+    ctaPlain: 'Continuer',
+    wait: 'Un instant…',
+    title: 'Reprends {accent} de ton temps.',
+    titleAccent: 'le contrôle',
+    sub: 'Sans perdre contact.',
+    wound: '{h} par jour · {d} jours par an',
+    r1: 'TikTok, X et YouTube, filtrés comme Instagram',
+    r2: 'Réglages app par app, appliqués tout de suite',
+    r3: `Blocage des apps d'origine, avec mode strict`,
+    r4: 'Ton temps mesuré, jour après jour',
+    trialBanner: `{n} jours d'essai gratuit sur l'annuel`,
+    trialToday: `Aujourd'hui`,
+    trialTodayBody: 'Tout se débloque. Tu ne paies rien.',
+    trialWarn: 'Jour 2',
+    trialWarnBody: 'On te prévient : il te reste 24 h.',
+    trialCharge: 'Jour {n}',
+    trialChargeBody: `L'abonnement commence, sauf si tu as annulé.`,
+    weekNoTrial: 'Hebdomadaire · sans essai gratuit',
+    weekNoTrialBody: `Prélevé aujourd'hui, puis chaque semaine. Annulable à tout moment, sans frais.`,
+    annual: 'Annuel',
+    annualNote: '{n} jours offerts, puis {p} par jour',
+    weekly: 'Hebdomadaire',
+    weeklyNote: 'Sans essai gratuit. Sans engagement.',
+    termsTrial: '{n} jours gratuits, puis {p} par an, renouvelé automatiquement.',
+    termsWeek: '{p} par semaine, renouvelé automatiquement.',
+    cancelAny: 'Annule quand tu veux.',
+    trust: 'Paiement par Apple · Annulation en deux taps',
+    terms: `Conditions d'utilisation`,
+    privacy: 'Confidentialité',
+    restore: 'Restaurer mes achats',
+    beta: 'Gratuit pendant la bêta',
+    promo: `J'ai un code`,
+  },
+
+  tune: {
+    reels: 'Bloquer les Reels',
+    ads: 'Masquer les publicités',
+    dmsOnly: 'Messages uniquement',
+    stories: 'Masquer les stories',
+    shorts: 'Bloquer les Shorts',
+    recommended: 'Masquer les suggestions',
+    comments: 'Bloquer les commentaires',
+    tap: 'Appuie pour continuer',
+    title: 'Règle tout, ligne par ligne.',
+  },
+
+  perms: {
+    closeBack: 'Ferme la porte de derrière.',
+    soonIos: `Le blocage utilise Temps d'écran. La fonctionnalité arrive bientôt.`,
+    soonAndroid: 'Le blocage Android arrive bientôt.',
+    openSettings: 'Ouvrir Réglages',
+    skip: `Continuer sans activer Temps d'écran`,
+    connect: `Connectons UnSwipe à Temps d'écran.`,
+    alertTitle: `« UnSwipe » souhaite accéder à Temps d'écran`,
+    alertBody: `Cela permet de voir tes données d'activité et de limiter l'utilisation d'Apps et de sites web.`,
+    connected: `Temps d'écran connecté`,
+  },
+
   duration: {
     lessThanMonth: `moins d'un mois`,
     months: '{m} mois',

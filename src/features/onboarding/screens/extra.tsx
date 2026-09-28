@@ -13,6 +13,7 @@ import { Corti, type CortiLevel } from '@/components/Corti';
 import { MockFeed } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
+import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
 import { screenYears } from '../calculations';
 
@@ -74,34 +75,34 @@ export function Reveal({ onNext }: P) {
 export function Meet({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
+  const { d, t } = useT();
   const name = useOnboardingStore((x) => x.firstName);
 
   return (
-    <Screen cta="Enchanté" onPress={onNext} center hue="accent">
+    <Screen cta={d.corti.meetCta} onPress={onNext} center hue="accent">
       <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
         <Corti level={2} size={220} />
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        {name ? `${name}, voici Corti.` : 'Voici Corti.'}
+        {name ? t(d.corti.meetTitleNamed, { name }) : d.corti.meetTitle}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        Ton cerveau, en version mignonne. Il s’éteint quand tu scrolles, et se
-        rallume à chaque jour sans Reels.
+        {d.corti.meetBody}
       </Text>
       <Text variant="label" color={c.accent} style={[st.mid, { marginTop: space.lg }]}>
-        TU LE VERRAS CHANGER
+        {d.corti.meetKicker}
       </Text>
     </Screen>
   );
 }
 
-/** Les paliers que Corti traverse, et ce qu'ils valent. */
-const ARC: { day: string; level: CortiLevel; line: string }[] = [
-  { day: 'Jour 1', level: 0, line: 'Éteint. Tout paraît fade.' },
-  { day: 'Jour 7', level: 1, line: 'Il se rallume. Tu tiens plus longtemps sur une page.' },
-  { day: 'Jour 30', level: 2, line: 'L’ennui redevient supportable.' },
-  { day: 'Jour 90', level: 3, line: 'Ta clarté est revenue, entière.' },
+/** Les paliers que Corti traverse. Les phrases viennent du dictionnaire. */
+const ARC: { n: number; level: CortiLevel; key: 'arc1' | 'arc2' | 'arc3' | 'arc4' }[] = [
+  { n: 1, level: 0, key: 'arc1' },
+  { n: 7, level: 1, key: 'arc2' },
+  { n: 30, level: 2, key: 'arc3' },
+  { n: 90, level: 3, key: 'arc4' },
 ];
 
 const STEP_MS = 1750;
@@ -120,6 +121,7 @@ const STEP_MS = 1750;
 export function Ninety({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
+  const { d, t } = useT();
   const [i, setI] = useState(0);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export function Ninety({ onNext }: P) {
 
   return (
     <Screen
-      cta="Continuer"
+      cta={d.pay.ctaPlain}
       onPress={onNext}
       // On laisse le trajet aller jusqu'au bout : passer avant la fin, c'est
       // n'avoir rien vu.
@@ -149,23 +151,29 @@ export function Ninety({ onNext }: P) {
       {/* Les deux lignes ont une place FIXE : sans elle, une legende plus
           longue recentrerait Corti a chaque palier. */}
       <View style={st.arcSlot}>
-        <Animated.View key={at.day} entering={FadeIn.duration(520)} style={st.mid}>
-          <Text variant="label" color={c.accent}>{at.day.toUpperCase()}</Text>
+        <Animated.View key={at.n} entering={FadeIn.duration(520)} style={st.mid}>
+          <Text variant="label" color={c.accent}>
+            {t(d.corti.day, { n: at.n }).toUpperCase()}
+          </Text>
           <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.sm }]}>
-            {at.line}
+            {d.corti[at.key]}
           </Text>
         </Animated.View>
       </View>
 
       <View style={st.dots}>
         {ARC.map((a, k) => (
-          <View key={a.day} style={[st.dot, k <= i && { backgroundColor: c.accent }]} />
+          <View key={a.n} style={[st.dot, k <= i && { backgroundColor: c.accent }]} />
         ))}
       </View>
 
+      {/* La duree est un fragment colore au milieu de la phrase : le texte
+          entoure donc un marqueur, plutot que d'etre coupe en trois morceaux
+          qui ne se traduiraient pas dans le meme ordre. */}
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        Environ <Text variant="displayM" color={c.accent}>90 jours</Text> sans
-        stimulation facile pour retrouver toute ta netteté.
+        {t(d.corti.ninety, { d: '\u0000' }).split('\u0000')[0]}
+        <Text variant="displayM" color={c.accent}>{d.corti.ninetyDays}</Text>
+        {t(d.corti.ninety, { d: '\u0000' }).split('\u0000')[1]}
       </Text>
     </Screen>
   );
@@ -184,6 +192,7 @@ export function Ninety({ onNext }: P) {
  */
 export function Proof({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
+  const { d } = useT();
   const [filtered, setFiltered] = useState(false);
 
   // On laisse le temps de reconnaitre un fil normal AVANT de le filtrer :
@@ -194,10 +203,8 @@ export function Proof({ onNext }: P) {
   }, []);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} hue="accent">
-      <Text variant="displayM" style={st.mid}>
-        Ton Instagram, sans le fil sans fin.
-      </Text>
+    <Screen cta={d.pay.ctaPlain} onPress={onNext} hue="accent">
+      <Text variant="displayM" style={st.mid}>{d.proof.title}</Text>
 
       <View style={st.stage}>
         <PhoneFrame width={196}>
@@ -210,12 +217,13 @@ export function Proof({ onNext }: P) {
 
 /* ---------- D'ou viens-tu ---------- */
 
-const SOURCES: [string, string][] = [
+/** Les deux premieres sont des noms propres : elles ne se traduisent pas. */
+const SOURCES: ['tiktok' | 'instagram' | 'friend' | 'appstore' | 'other', string | null][] = [
   ['tiktok', 'TikTok'],
   ['instagram', 'Instagram'],
-  ['friend', 'Un ami m’en a parlé'],
-  ['appstore', 'L’App Store'],
-  ['other', 'Ailleurs'],
+  ['friend', null],
+  ['appstore', null],
+  ['other', null],
 ];
 
 /**
@@ -226,21 +234,22 @@ const SOURCES: [string, string][] = [
  * qu'on aura jamais — l'App Store ne dit pas d'ou viennent les gens.
  */
 export function Attribution({ onNext }: P) {
+  const { d } = useT();
   const [pick, setPick] = useState<string | null>(null);
   const setSource = useOnboardingStore((x) => x.setSource);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={!pick} hue="deep">
-      <Text variant="displayM">Comment tu nous as trouvés ?</Text>
+    <Screen cta={d.pay.ctaPlain} onPress={onNext} disabled={!pick} hue="deep">
+      <Text variant="displayM">{d.source.title}</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-        Ça nous aide à savoir où parler aux gens comme toi.
+        {d.source.body}
       </Text>
 
       <View style={{ marginTop: space.xl, gap: space.md }}>
-        {SOURCES.map(([k, label]) => (
+        {SOURCES.map(([k, proper]) => (
           <SelectCard
             key={k}
-            label={label}
+            label={proper ?? d.source[k as 'friend' | 'appstore' | 'other']}
             selected={pick === k}
             onPress={() => {
               haptics.tick();
@@ -276,6 +285,7 @@ export function Attribution({ onNext }: P) {
 export function RateAsk({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
+  const { d } = useT();
 
   const ask = async () => {
     haptics.press();
@@ -289,9 +299,9 @@ export function RateAsk({ onNext }: P) {
 
   return (
     <Screen
-      cta="Soutenir"
+      cta={d.rate.cta}
       onPress={() => { void ask(); }}
-      secondary="Plus tard"
+      secondary={d.rate.later}
       onSecondary={onNext}
       center
       hue="accent"
@@ -305,10 +315,10 @@ export function RateAsk({ onNext }: P) {
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        Soutiens la communauté UnSwipe.
+        {d.rate.title}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        On essaie de rendre leur temps aux gens.
+        {d.rate.body}
       </Text>
     </Screen>
   );

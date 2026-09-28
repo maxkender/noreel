@@ -6,6 +6,9 @@
  */
 import { render } from '@testing-library/react-native';
 import { Corti, cortiLevel, cortiLine, type CortiLevel } from './Corti';
+import { interpolate } from '@/i18n';
+import { fr } from '@/i18n/fr';
+import { en } from '@/i18n/en';
 
 describe('le niveau de Corti', () => {
   // Les seuils sont ceux du brief, repris tels quels : 0 le premier jour,
@@ -32,9 +35,28 @@ describe('le niveau de Corti', () => {
 });
 
 describe('ce que Corti dit', () => {
-  it('accorde le pluriel au premier jour', () => {
-    expect(cortiLine(1, 1)).toContain('1 jour sans');
-    expect(cortiLine(1, 3)).toContain('3 jours sans');
+  /*
+    Le pluriel se verifie SUR LES DEUX dictionnaires, pas sur la langue que le
+    test se trouve avoir.
+    La version precedente attendait « 1 jour sans » : elle passait tant que les
+    phrases etaient ecrites en dur en francais, et elle est tombee le jour ou
+    elles ont ete traduites — parce que l'environnement de test resout la
+    langue en anglais. Elle testait la langue du test, pas l'accord.
+  */
+  for (const [name, dict] of [['fr', fr], ['en', en]] as const) {
+    it(`accorde le pluriel en ${name}`, () => {
+      const one = interpolate(dict.corti.says1, { n: 1, s: '' });
+      const many = interpolate(dict.corti.says1, { n: 3, s: 's' });
+      expect(one).toContain('1');
+      expect(many).toContain('3');
+      // Le marqueur de pluriel doit reellement changer la phrase.
+      expect(one.replace('1', '')).not.toBe(many.replace('3', ''));
+    });
+  }
+
+  it('affiche le nombre de jours', () => {
+    expect(cortiLine(1, 1)).toContain('1');
+    expect(cortiLine(2, 12)).toContain('12');
   });
 
   for (const level of [0, 1, 2, 3] as CortiLevel[]) {
