@@ -346,7 +346,10 @@ export function PromiseScreen({ onNext }: P) {
         lit ce qu'il vaut.
       */}
       <Animated.View entering={FadeIn.duration(620)} style={st.mascot}>
-        <Corti level={3} size={140} />
+        {/* En cours de retablissement : le sommet est reserve au paywall,
+            qui le propose. Trois ecrans de suite au niveau maximum et le
+            progres ne veut plus rien dire. */}
+        <Corti level={2} size={140} />
       </Animated.View>
 
       <Text variant="displayM" style={st.center}>

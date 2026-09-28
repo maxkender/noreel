@@ -41,7 +41,14 @@ export function Meet({ onNext }: P) {
   return (
     <Screen cta={d.corti.meetCta} onPress={onNext} center hue="accent">
       <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
-        <Corti level={2} size={220} />
+        {/*
+          Elle se presente en VEILLEUSE, pas en pleine forme.
+          Corti est le cerveau de la personne : la montrer rayonnante avant
+          d'avoir dit un mot du probleme, puis eteinte deux ecrans plus loin,
+          rendait son etat illisible. Elle part fatiguee, elle s'eteint pendant
+          le constat, elle se retablit ensuite — un seul arc, dans l'ordre.
+        */}
+        <Corti level={1} size={220} />
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
@@ -275,7 +282,12 @@ export function RateAsk({ onNext }: P) {
       <View style={st.cloud}>
         <FaceCloud height={280} />
         <View style={st.cloudMid} pointerEvents="box-none">
-          <Corti level={3} size={112} />
+          {/*
+            Niveau deux, pas trois : cet ecran precede la promesse, et la
+            montrer au sommet ici puis un cran plus bas juste apres ferait
+            reculer son etat. Le sommet est reserve au paywall, qui le propose.
+          */}
+          <Corti level={2} size={112} />
         </View>
       </View>
 

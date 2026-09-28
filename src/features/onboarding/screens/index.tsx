@@ -20,6 +20,7 @@ import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
 
 import { TimeSlider } from '../scenes/TimeSlider';
 import { AgeInput } from '../scenes/AgeInput';
+import { Corti } from '@/components/Corti';
 
 /*
  * Huit heures de travail, posees sur la grille.
@@ -375,6 +376,17 @@ export function S7({ onNext }: P) {
       hueLevel={harm}
     >
 
+      {/*
+        Corti porte cet ecran : c'est d'ELLE qu'on parle.
+        Les recepteurs qui s'emoussent, la dopamine qui sature, le plaisir qui
+        s'eteint — tout le texte la decrit. L'y montrer eteinte pendant les
+        symptomes et rallumee quand arrive la sortie fait comprendre la page
+        avant de l'avoir lue.
+      */}
+      <View style={s.brainFace}>
+        <Corti level={last ? 2 : 0} size={116} />
+      </View>
+
       <Animated.View key={i} entering={FadeIn.duration(500)}>
         <Typewriter
           text={steps[i][0]}
@@ -426,6 +438,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent, marginTop: 6 },
   chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(c.accent, 0.3) },
   center: { textAlign: 'center' },
+  brainFace: { alignItems: 'center', marginBottom: space.lg },
   mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
   value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
   sliderWrap: { alignItems: 'center', marginBottom: space.lg },

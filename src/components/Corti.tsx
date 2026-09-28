@@ -515,6 +515,9 @@ export function CortiSays({
     <View style={[says.root, column && says.col]}>
       <Corti level={level} size={size} />
       <View style={[says.bubble, column ? says.bubbleDown : says.bubbleSide]}>
+        {/* Son nom au-dessus de ce qu'elle dit. Sans lui, la bulle se lit
+            comme une phrase de plus de l'ecran, et on ne sait plus qui parle. */}
+        <Text variant="label" style={says.who}>CORTI</Text>
         {/*
           La pointe de la bulle est un carre tourne, pose a cheval sur le bord.
           Un triangle dessine demanderait un SVG de plus pour trois pixels, et
@@ -556,5 +559,6 @@ const says = StyleSheet.create({
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  who: { color: SKIN + 'A0', fontSize: 8, marginBottom: 3 },
   text: { color: SKIN },
 });
