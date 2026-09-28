@@ -15,6 +15,7 @@ import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
+import { SwitchSheet } from './SwitchSheet';
 import { firstRunUrl } from './firstrun';
 import { ACCOUNT } from './accounts';
 import { cortiLevel } from '@/components/Corti';
@@ -217,6 +218,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // changer sous nos pieds.
   const [switching, setSwitching] = useState(false);
   const [switchFailed, setSwitchFailed] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
+  /** Le pseudo connecte, lu sur la page. Nul tant qu'on ne l'a pas. */
+  const [who, setWho] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     void stats().then((x) => { if (alive) setDays(x.days); });
@@ -349,8 +353,16 @@ export function ClientScreen({ id }: { id: ClientId }) {
       */
       case 'account':
         if (id === 'instagram') {
-          setSwitching(true);
-          web.current?.injectJavaScript('window.__nrSwitch && window.__nrSwitch(); true;');
+          /*
+            On OUVRE une feuille au lieu de tenter le selecteur en aveugle.
+            L'entree du menu declenchait directement la bascule : quand le
+            selecteur d'Instagram avait bouge, il ne se passait rien, sans un
+            mot, et on ne savait meme pas sur quel compte on etait. La feuille
+            repond d'abord a cette question-la, puis propose d'agir.
+          */
+          setSwitchOpen(true);
+          setSwitchFailed(false);
+          web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;');
         } else {
           web.current?.injectJavaScript(
             `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
@@ -410,6 +422,24 @@ export function ClientScreen({ id }: { id: ClientId }) {
         Il suit le theme — un bandeau fige en sombre ferait une barre noire
         au-dessus d'une page claire.
       */}
+      <SwitchSheet
+        visible={switchOpen}
+        onClose={() => setSwitchOpen(false)}
+        user={who}
+        failed={switchFailed}
+        onSwitch={() => {
+          setSwitching(true);
+          web.current?.injectJavaScript('window.__nrSwitch && window.__nrSwitch(); true;');
+          setSwitchOpen(false);
+        }}
+        onAdd={() => {
+          web.current?.injectJavaScript(
+            `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
+          );
+          setSwitchOpen(false);
+        }}
+      />
+
       <HelpSheet
         visible={help}
         onClose={() => setHelp(false)}
@@ -496,6 +526,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
               */
               if (m && m.t === 'rules' && typeof m.n === 'number' && m.on > 0) {
                 void reportRules(id, m.n);
+              }
+              if (m && m.t === 'who') {
+                setWho(typeof m.u === 'string' && m.u ? m.u : null);
               }
               if (m && m.t === 'switch') {
                 setSwitching(false);

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
-import { Home as HomeIcon, Shield, User } from 'lucide-react-native';
+import { Brain, Home as HomeIcon, Shield, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -21,7 +21,7 @@ import { today as usageToday, streak as usageStreak, type Today } from '@/servic
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Toggle } from './parts';
+import { Card, Row, Toggle, type Scroll } from './parts';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
@@ -38,11 +38,12 @@ import {
 } from './Recovery';
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
+import { CortiTab } from './CortiTab';
 import { nudgeOfTheDay } from '@/services/nudge';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
 
-type Tab = 'home' | 'block' | 'account';
+type Tab = 'home' | 'corti' | 'block' | 'account';
 
 export function HomeScreen() {
   const c = useColors();
@@ -76,8 +77,17 @@ export function HomeScreen() {
   useFocusEffect(refresh);
 
 
+  /*
+    Corti a son onglet a lui.
+
+    Son pourcentage etait affiche a trois endroits sans qu'on dise nulle part
+    ce qu'il mesure. Un chiffre sans regle se lit soit comme un verdict, soit
+    comme une decoration — et dans les deux cas on cesse de le regarder. Il a
+    donc sa page, avec la regle entiere, malus compris.
+  */
   const tabs: [Tab, string, typeof HomeIcon][] = [
     ['home', d.nav.home, HomeIcon],
+    ['corti', d.nav.corti, Brain],
     ['block', d.nav.block, Shield],
     ['account', d.nav.account, User],
   ];
@@ -105,6 +115,7 @@ export function HomeScreen() {
             onCorti={() => setTab('block')}
           />
         )}
+        {tab === 'corti' && <CortiTab onScroll={onScroll} />}
         {tab === 'block' && (
           <BlockTab
             onScroll={onScroll}
@@ -143,7 +154,6 @@ export function HomeScreen() {
 }
 
 /* ---------------- Applis ---------------- */
-type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
 
 /**
  * L'accueil ne montre plus que les applis.

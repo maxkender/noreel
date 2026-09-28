@@ -792,6 +792,37 @@ export const INSTAGRAM_BLOCKER = `
   __still.ads = (el) => AD.test((el.textContent || '').slice(0, 300));
   __still.suggested = (el) => SUGGEST.test((el.textContent || '').slice(0, 300));
 
+  /*
+    Qui est connecte, d'apres la page elle-meme.
+
+    Instagram ne nous dit rien, mais il ECRIT le pseudo : l'onglet profil de
+    la barre du bas pointe sur /pseudo/. C'est la seule source fiable hors
+    d'une page de profil, et elle ne coute qu'une lecture d'attribut.
+
+    Sans ca, la feuille « changer de compte » affichait « compte connecte »,
+    ce qui ne dit pas de QUEL compte on parle — precisement la question qu'on
+    se pose quand on en a deux.
+  */
+  window.__nrWho = () => {
+    try {
+      const links = document.querySelectorAll('nav a[href^="/"], [role="navigation"] a[href^="/"]');
+      for (const a of links) {
+        const h = a.getAttribute('href') || '';
+        // Classe de caracteres plutot que barre echappee : dans un gabarit
+        // de chaine, \/ devient / a l'injection et la regex ne compile plus.
+        const m = h.match(/^[/]([A-Za-z0-9._]{1,30})[/]$/);
+        // Les onglets fixes portent les memes adresses : on les ecarte.
+        if (m && !['explore', 'reels', 'direct', 'accounts'].includes(m[1])) {
+          __post({ t: 'who', u: m[1] });
+          return;
+        }
+      }
+      __post({ t: 'who', u: '' });
+    } catch (e) {
+      __post({ t: 'who', u: '' });
+    }
+  };
+
   window.__nrSwitch = () => {
     // 1. Le selecteur est deja ouvert, ou son entree est visible.
     if (__clickBy(SWITCH)) { __post({ t: 'switch', ok: true }); return; }

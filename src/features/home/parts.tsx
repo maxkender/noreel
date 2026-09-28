@@ -1,3 +1,4 @@
+import { type useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -11,6 +12,9 @@ import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 
 /** Toutes les cartes sont en verre : c'est la matiere de l'app. */
+/** Le gestionnaire de defilement partage par tous les onglets. */
+export type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
+
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
