@@ -8,7 +8,18 @@ export type SocialApp = 'instagram' | 'tiktok';
 type OnboardingState = {
   completed: boolean;
   step: number;
+  /** L'estimation, donnee au doigt. */
   minutesPerDay: number;
+  /**
+   * Le vrai chiffre, recopie depuis Reglages > Temps d'ecran.
+   *
+   * Apple ne le donne a aucune app : le rapport vit dans une extension
+   * isolee et ses nombres ne traversent jamais. Il est donc SAISI, et tant
+   * qu'il ne l'est pas, tout le parcours raisonne sur l'estimation.
+   */
+  realMinutes?: number;
+  /** Prises en main par jour, recopiees au meme endroit. */
+  pickups?: number;
   age: number;
   firstName: string;
   /** Apps que l'utilisateur declare comme ses distractions. */
@@ -26,6 +37,7 @@ type OnboardingState = {
 type OnboardingActions = {
   setStep: (step: number) => void;
   setMinutesPerDay: (minutes: number) => void;
+  setReal: (minutes: number, pickups: number) => void;
   setAge: (age: number) => void;
   setFirstName: (name: string) => void;
   toggleDistraction: (id: string) => void;
@@ -57,6 +69,7 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>()(
       hasHydrated: false,
       setStep: (step) => set({ step }),
       setMinutesPerDay: (minutesPerDay) => set({ minutesPerDay }),
+      setReal: (realMinutes, pickups) => set({ realMinutes, pickups }),
       setAge: (age) => set({ age }),
       // La majuscule est posee ici, pas a l'affichage : sinon chaque ecran
       // doit y penser, et un seul oubli se voit.
@@ -91,3 +104,11 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>()(
     }
   )
 );
+
+/**
+ * Le temps sur lequel le parcours raisonne : le vrai s'il a ete saisi, sinon
+ * l'estimation. UN seul endroit le decide — chaque ecran qui choisirait
+ * lui-meme finirait par montrer deux chiffres differents pour la meme personne.
+ */
+export const effectiveMinutes = (s: { minutesPerDay: number; realMinutes?: number }) =>
+  s.realMinutes ?? s.minutesPerDay;

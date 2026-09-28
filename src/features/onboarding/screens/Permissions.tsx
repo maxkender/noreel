@@ -42,11 +42,10 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       <Screen cta={d.ob.keepGoing} onPress={onDone}>
         <Text variant="displayM">{d.perms.closeBack}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-          Sans ça, un réflexe suffit : tu rouvres l’app d’origine et tout
-          recommence.
+          {d.perms.reflex}
         </Text>
         <View style={st.card}>
-          <Text variant="title">Pas encore disponible</Text>
+          <Text variant="title">{d.perms.notYet}</Text>
           <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
             {Platform.OS === 'ios'
               ? d.perms.soonIos
@@ -77,13 +76,13 @@ export function Permissions({ onDone }: { onDone: () => void }) {
           <ShieldAlert size={26} strokeWidth={2} color={c.danger} />
         </View>
         <Text variant="displayM" style={{ marginTop: space.lg }}>
-          Le bouton bleu, c’était le refus.
+          {d.perms.denied}
         </Text>
 
         <View style={st.card}>
-          <Path n="1" text="Ouvre Réglages → Temps d’écran." />
-          <Path n="2" text="Descends jusqu’à « Applications autorisées »." />
-          <Path n="3" text="Active UnSwipe, puis reviens ici." />
+          <Path n="1" text={d.perms.path1} />
+          <Path n="2" text={d.perms.path2} />
+          <Path n="3" text={d.perms.path3} />
         </View>
       </Screen>
     );
@@ -97,7 +96,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       <Screen secondary={d.rate.later} onSecondary={onDone} hue="warm">
         <Text variant="displayM">{d.perms.connect}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-          Appuie sur Continuer.
+          {d.perms.press}
         </Text>
       </Screen>
 

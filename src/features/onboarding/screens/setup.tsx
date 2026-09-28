@@ -1,6 +1,5 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
-import { Image } from 'expo-image';
 import * as Notifications from 'expo-notifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
@@ -10,13 +9,13 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { SelectCard } from '@/components/SelectCard';
 import { Typewriter } from '@/components/type/Typewriter';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { dict, useT } from '@/i18n';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
-import { LOGOS } from '@/features/home/AppSlider';
 import { CortiRig } from '@/components/CortiRig';
+import { SignaturePad } from '../scenes/SignaturePad';
 
 type P = { onNext: () => void };
 
@@ -40,17 +39,25 @@ type Step =
     }
   | { kind: 'say'; q: string; sub?: string };
 
+/*
+  Tout vient du dictionnaire, options comprises.
+  La premiere question et ses reponses etaient ecrites ici en francais, en
+  dur : l'app en anglais posait une question en francais, puis la suivante
+  en anglais. Une chaine ecrite dans un ecran echappe a la parite des
+  langues que le typage impose au dictionnaire — c'est la seule facon d'en
+  laisser passer une.
+*/
 const CONSTAT: Step[] = [
   {
     kind: 'ask',
-    q: 'Tu te souviens de combien de Reels vus cette {semaine} ?',
+    q: dict.ob.q1,
     honest: true,
-    options: ['Aucun', 'Un ou deux', 'Quelques-uns', 'Je ne sais plus'],
+    options: [dict.ob.q1a, dict.ob.q1b, dict.ob.q1c, dict.ob.q1d],
   },
   {
     kind: 'ask',
     q: dict.ob.q2,
-    options: ['Oui, nettement', 'Parfois', 'Non'],
+    options: [dict.ob.q2a, dict.ob.q2b, dict.ob.q2c],
   },
 ];
 
@@ -102,7 +109,7 @@ export function Constat({ onNext }: P) {
         {step.kind === 'ask' && step.honest ? (
           <Animated.View entering={FadeIn.delay(1300).duration(420)}>
             <Text variant="lead" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>
-              Honnêtement…
+              {d.ob.honestly}
             </Text>
           </Animated.View>
         ) : null}
@@ -171,43 +178,14 @@ export function Name({ onNext }: P) {
   );
 }
 
-/* ---------- Distractions ---------- */
-const PICKABLE = [
+/* ---------- Les distractions : la liste sert a l'analyse du temps d'ecran ---------- */
+export const PICKABLE = [
   { id: 'instagram', name: 'Instagram' },
   { id: 'tiktok', name: 'TikTok' },
   { id: 'twitter', name: 'X' },
   { id: 'youtube', name: 'YouTube' },
 ] as const;
 
-export function Distractions({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  const picked = useOnboardingStore((x) => x.distractions);
-  const toggle = useOnboardingStore((x) => x.toggleDistraction);
-
-  return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="accent">
-      <Text variant="displayM">{d.ob.distTitle}</Text>
-      <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-        {d.ob.distBody}
-      </Text>
-
-      <View style={st.list}>
-        {PICKABLE.map((a) => (
-          <SelectCard
-            key={a.id}
-            shape="check"
-            label={a.name}
-            lead={<Image source={LOGOS[a.id]} style={st.pickLogo} contentFit="contain" />}
-            selected={picked.includes(a.id)}
-            onPress={() => toggle(a.id)}
-          />
-        ))}
-      </View>
-    </Screen>
-  );
-}
 
 
 
@@ -255,21 +233,15 @@ export function PromiseScreen({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
+  const [signed, setSigned] = useState(false);
 
   // Le chiffre vient de SON temps d'ecran : trente pour cent repris sur les
   // annees qu'il y laisse. Un nombre rond invente ne vaut rien ici.
   const years = Math.max(1, Math.round(screenYears(minutes) * 0.3));
-  const hours = Math.round((minutes * 0.3 * 365) / 60);
 
   return (
-    <Screen cta={d.ob.letsGo} onPress={onNext} hue="accent">
-      {/*
-        Corti rayonnante ouvre la promesse.
-        C'etait le dernier ecran du parcours sans rien a regarder, et c'est
-        celui qui porte le plus : elle montre l'etat d'arrivee pendant qu'on
-        lit ce qu'il vaut.
-      */}
+    <Screen cta={d.ob.commit} onPress={onNext} disabled={!signed} hue="accent">
       <Animated.View entering={FadeIn.duration(620)} style={st.mascot}>
         {/* En cours de retablissement : le sommet est reserve au paywall,
             qui le propose. Trois ecrans de suite au niveau maximum et le
@@ -278,29 +250,22 @@ export function PromiseScreen({ onNext }: P) {
       </Animated.View>
 
       <Text variant="displayM" style={st.center}>
-        {name ? `${name}, ` : ''}UnSwipe te rendra{' '}
-        <Text variant="displayM" color={c.accent}>{years} ans</Text>
-        {' de ta vie'}
+        {name ? `${name}, ` : ''}{d.ob.promiseA}{' '}
+        <Text variant="displayM" color={c.accent}>{t(d.ob.promiseYears, { y: years })}</Text>
+        {' '}{d.ob.promiseB}
       </Text>
 
-      <View style={{ marginTop: space.xxl, gap: space.lg }}>
-        <PromiseRow title={d.ob.promise1} />
-        <PromiseRow title={d.ob.promise2} />
-        <PromiseRow title={t(d.ob.promise3, { n: hours })} />
+      {/*
+        Trois promesses a lire ont laisse la place a un carre ou signer.
+        On les lisait, ou pas, et on appuyait. Une signature, meme au doigt,
+        ne se donne pas distraitement : c'est cette seconde d'application
+        qu'on veut juste avant de montrer un prix. Le bouton reste ferme
+        tant que le papier est blanc — s'engager, c'est d'abord ce geste.
+      */}
+      <View style={{ marginTop: space.xl }}>
+        <SignaturePad onInk={setSigned} hint={d.ob.signHint} clearLabel={d.ob.signClear} />
       </View>
     </Screen>
-  );
-}
-
-/** Une promesse : une pastille, une ligne. Rien dessous. */
-function PromiseRow({ title }: { title: string }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  return (
-    <View style={st.promise}>
-      <View style={st.pip} />
-      <Text variant="title" style={{ flex: 1 }}>{title}</Text>
-    </View>
   );
 }
 

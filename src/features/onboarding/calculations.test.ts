@@ -1,7 +1,4 @@
-import {
-  ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats,
-  screenYears, wakingShare,
-} from './calculations';
+import { ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats, screenYears, wakingShare, compareGuess } from './calculations';
 
 describe('lifeStats — les six cas de référence du §9', () => {
   const cases = [
@@ -73,5 +70,29 @@ describe('part du temps eveille (16 h/jour)', () => {
 
   it('4 h par jour = 20 ans', () => {
     expect(Math.round(screenYears(240))).toBe(20);
+  });
+});
+
+/*
+ * L'ecart entre ce qu'on croyait et ce que le telephone dit.
+ *
+ * En pourcentage de l'ESTIMATION, et sans trancher sous dix pour cent :
+ * dire « plus que tu ne pensais » pour six minutes d'ecart serait chercher
+ * la faute, sur l'ecran ou l'on demande justement de se regarder en face.
+ */
+describe('l’estimation face au vrai chiffre', () => {
+  it('mesure en part de l’estimation', () => {
+    expect(compareGuess(120, 180)).toEqual({ pct: 50, verdict: 'more' });
+    expect(compareGuess(200, 150)).toEqual({ pct: 25, verdict: 'less' });
+  });
+
+  it('ne tranche pas sous dix pour cent', () => {
+    expect(compareGuess(120, 126).verdict).toBe('same');
+    expect(compareGuess(120, 114).verdict).toBe('same');
+    expect(compareGuess(120, 132).verdict).toBe('more');
+  });
+
+  it('survit a une estimation nulle', () => {
+    expect(compareGuess(0, 60).verdict).toBe('more');
   });
 });

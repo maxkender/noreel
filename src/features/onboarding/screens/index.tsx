@@ -7,19 +7,12 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Receptors } from '../scenes/Receptors';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { useOnboardingStore } from '@/store/onboarding';
-import { formatHours } from '@/lib/format';
-import { track } from '@/services';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
 
-
-import { TimeSlider } from '../scenes/TimeSlider';
-import { AgeInput } from '../scenes/AgeInput';
-import { CortiRig } from '@/components/CortiRig';
 
 /*
  * Huit heures de travail, posees sur la grille.
@@ -61,72 +54,14 @@ export function S1({ onNext }: P) {
 }
 
 
-/* ---------- 5 ---------- */
-export function S5({ onNext }: P) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
-  const [phase, setPhase] = useState<'time' | 'age'>('time');
-  const stored = useOnboardingStore((x) => x.minutesPerDay);
-  const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
-  // Pendant le geste, la valeur vit ici. Elle ne touche le disque qu'au
-  // relacher — sinon chaque pas du curseur y recopiait tout le magasin.
-  const [minutes, setDraft] = useState(stored);
-  const age = useOnboardingStore((x) => x.age);
-  const setAge = useOnboardingStore((x) => x.setAge);
-  // Les cases partent vides : tant qu'elles le sont, on ne peut pas avancer.
-  const [ageOk, setAgeOk] = useState(false);
-
-  if (phase === 'time') {
-    return (
-      <Screen
-        cta={d.s5.ctaA}
-        onPress={() => {
-          // On pose la valeur avant de partir : si le doigt quitte l'ecran
-          // sans relacher le curseur, rien ne l'aurait enregistree.
-          setMinutes(minutes);
-          track('screen_time_set', { minutes });
-          setPhase('age');
-        }}
-        center
-        hue="accent"
-      >
-        <Typewriter text={d.s5.titleA} variant="displayM" style={s.center} />
-        <Text variant="hero" style={[s.center, s.value]} numberOfLines={1} adjustsFontSizeToFit>
-          {formatHours(minutes)}
-        </Text>
-        <View style={s.sliderWrap}>
-          <TimeSlider minutes={minutes} onChange={setDraft} onCommit={setMinutes} />
-        </View>
-        <Text variant="body" tone="secondary" style={s.center}>
-          {t(d.s5.liveShare, { p: Math.round(wakingShare(minutes) * 100) })}
-        </Text>
-      </Screen>
-    );
-  }
-
-  return (
-    <Screen
-      cta={d.s5.ctaB}
-      onPress={() => { track('age_set', { age }); onNext(); }}
-      disabled={!ageOk}
-      center
-      hue="warm"
-    >
-      <Typewriter text={d.s5.titleB} variant="displayM" style={s.center} />
-      <View style={s.ageWrap}>
-        <AgeInput age={age} onChange={setAge} onReady={setAgeOk} />
-      </View>
-    </Screen>
-  );
-}
-
 /* ---------- 6 ---------- */
 export function S6({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  // Le vrai temps quand il a ete saisi, l'estimation sinon : un seul endroit
+  // en decide, pour que deux ecrans ne montrent jamais deux chiffres.
+  const minutes = useOnboardingStore(effectiveMinutes);
   const screen = Math.round(wakingShare(minutes) * 100);
   const [lit, setLit] = useState(0);
 
@@ -142,8 +77,6 @@ export function S6({ onNext }: P) {
   const room = 100 - WORK;
   const shown = Math.min(screen, room);
   const over = screen > room;
-  const free = room - shown;
-  const freeHours = (free / 100) * WAKING_HOURS;
   const done = lit >= shown;
 
   // La grille attend que le titre soit ecrit : les deux en meme temps, on
@@ -201,23 +134,24 @@ export function S6({ onNext }: P) {
       </View>
 
       {/*
-        Le chiffre qui pese n'est pas la part d'ecran : c'est ce qui reste.
-        Vingt-trois pour cent sur un ecran, ca ne veut rien dire. « Il te reste
-        deux heures a toi dans la journee », si.
+        La part PARTIE, pas le temps qui reste.
+
+        L'ecran concluait sur les heures encore libres — un chiffre qu'on lit
+        comme une bonne nouvelle, alors que la grille vient de montrer le
+        contraire. Ce qui pese, c'est ce que l'ecran a pris : « 31 % de ta
+        journee, partis » se recoit comme la grille se regarde.
       */}
       <Text
         variant="hero"
-        color={free <= 10 ? c.danger : c.ember}
+        color={c.danger}
         style={[s.center, s.pct]}
         numberOfLines={1}
         adjustsFontSizeToFit
       >
-        {formatHours(Math.round(freeHours * 60))}
+        {done ? `${screen}${'\u202f'}%` : '…'}
       </Text>
       <Text variant="lead" tone="secondary" style={s.center}>
-        {!done ? '…'
-          : over ? d.misc.overflow
-          : d.misc.freePerDay}
+        {!done ? '…' : over ? d.misc.overflow : d.s6.gone}
       </Text>
 
     </Screen>
@@ -272,7 +206,7 @@ export function S6Years({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
   const years = Math.round(screenYears(minutes));
 
   const [y, setY] = useState(0);
@@ -294,7 +228,7 @@ export function S6Years({ onNext }: P) {
   return (
     <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
       <Animated.View entering={FadeIn.duration(700)} style={s.years}>
-        <Text variant="label" tone="tertiary">SUR UNE VIE DE 80 ANS</Text>
+        <Text variant="label" tone="tertiary">{d.s6.lifeOf}</Text>
         <Text
           variant="hero"
           color={c.danger}
@@ -307,76 +241,6 @@ export function S6Years({ onNext }: P) {
         <Text variant="lead" tone="secondary" style={s.center}>
           {d.s6.bodyShort}
         </Text>
-      </Animated.View>
-    </Screen>
-  );
-}
-
-/* ---------- 7 ---------- */
-export function S7({ onNext }: P) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  const [i, setI] = useState(0);
-
-  // Trois symptomes, un fait qui frappe, une sortie. Pas d'ecran d'accroche
-  // et pas de rappel des etapes passees : la ligne de temps du haut suffit.
-  const steps: [string, string?, string?][] = [
-    [d.brain.step1, d.brain.step1b],
-    [d.brain.step2, d.brain.step2b],
-    [d.brain.step3, d.brain.step3b],
-    [d.brain.love, d.brain.loveSub, d.brain.loveCite],
-    // Le dernier temps pose la question a laquelle tout le reste du parcours
-    // sert de reponse : on ne conclut pas sur une affirmation, on demande.
-    [d.brain.fix, d.brain.ready],
-  ];
-  const last = i >= steps.length - 1;
-  const harm = last ? 0 : (i + 1) / steps.length;
-
-  return (
-    <Screen
-      cta={d.tapHint}
-      onPress={() => (last ? onNext() : setI((n) => n + 1))}
-      tapToContinue
-      hintDelay={2400}
-      center
-      hue="ember"
-      hueLevel={harm}
-    >
-
-      {/*
-        Corti porte cet ecran : c'est d'ELLE qu'on parle.
-        Les recepteurs qui s'emoussent, la dopamine qui sature, le plaisir qui
-        s'eteint — tout le texte la decrit. L'y montrer eteinte pendant les
-        symptomes et rallumee quand arrive la sortie fait comprendre la page
-        avant de l'avoir lue.
-      */}
-      <View style={s.brainFace}>
-        <CortiRig level={last ? 2 : 0} size={116} />
-      </View>
-
-      <Animated.View key={i} entering={FadeIn.duration(500)}>
-        <Typewriter
-          text={steps[i][0]}
-          variant={last ? 'displayM' : 'displayL'}
-          speed={42}
-          style={s.center}
-        />
-        {steps[i][1] ? (
-          <Animated.View entering={FadeIn.delay(900).duration(500)}>
-            <Text variant="lead" tone="secondary" style={[s.center, { marginTop: space.lg }]}>
-              {steps[i][1]}
-            </Text>
-          </Animated.View>
-        ) : null}
-        {i === 1 ? <Receptors /> : null}
-        {steps[i][2] ? (
-          <Animated.View entering={FadeIn.delay(1500).duration(500)}>
-            <Text variant="label" tone="tertiary" style={[s.center, { marginTop: space.lg }]}>
-              {steps[i][2]}
-            </Text>
-          </Animated.View>
-        ) : null}
       </Animated.View>
     </Screen>
   );

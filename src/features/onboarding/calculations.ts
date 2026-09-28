@@ -71,3 +71,19 @@ export function activityCount(hoursPerYear: number, costHours: number): number {
 export function friendEveningsPerWeek(hoursPerWeek: number): number {
   return Math.min(Math.floor(hoursPerWeek / 4), 7);
 }
+
+export type GuessVerdict = 'less' | 'more' | 'same';
+
+/**
+ * L'ecart entre ce qu'on croyait et ce que le telephone dit.
+ *
+ * En pourcentage DE L'ESTIMATION : « 30 % de plus que ce que tu pensais »
+ * se comprend, « 45 minutes de plus » demande de refaire le calcul. Sous dix
+ * pour cent on ne tranche pas — dire « plus que tu ne pensais » pour six
+ * minutes d'ecart serait chercher la faute.
+ */
+export function compareGuess(guess: number, real: number): { pct: number; verdict: GuessVerdict } {
+  const pct = Math.round((Math.abs(real - guess) / Math.max(1, guess)) * 100);
+  if (pct < 10) return { pct, verdict: 'same' };
+  return { pct, verdict: real < guess ? 'less' : 'more' };
+}

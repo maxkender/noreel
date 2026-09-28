@@ -5,6 +5,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
+import { useT } from '@/i18n';
 
 const BARS = 14;
 const H = 132;
@@ -24,6 +25,7 @@ const TOP = 26;
 export function Receptors() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
 
   // Decroissance geometrique : chaque video rend un peu moins que la
   // precedente, et la chute ralentit sans jamais remonter.
@@ -38,7 +40,7 @@ export function Receptors() {
           <View style={st.rule}>
             {Array.from({ length: 22 }, (_, i) => <View key={i} style={st.dash} />)}
           </View>
-          <Text variant="label" tone="tertiary" style={st.ruleLabel}>niveau normal</Text>
+          <Text variant="label" tone="tertiary" style={st.ruleLabel}>{d.receptors.normal}</Text>
         </View>
 
         <View style={st.bars}>
@@ -53,8 +55,8 @@ export function Receptors() {
       </View>
 
       <View style={st.axis}>
-        <Text variant="label" tone="tertiary">1re vidéo</Text>
-        <Text variant="label" tone="tertiary">300e</Text>
+        <Text variant="label" tone="tertiary">{d.receptors.first}</Text>
+        <Text variant="label" tone="tertiary">{d.receptors.nth}</Text>
       </View>
     </View>
   );

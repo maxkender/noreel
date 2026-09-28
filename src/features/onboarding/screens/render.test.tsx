@@ -18,6 +18,10 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
+import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
+import { Dopamine, LovePage, NothingLands, Reclaim, ReceptorsPage } from './science';
+import { PromiseScreen } from './setup';
+import { useOnboardingStore } from '@/store/onboarding';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
 // doivent afficher leurs prix de secours et non tomber.
@@ -78,4 +82,36 @@ describe('les ecrans du parcours se montent', () => {
   it('le paywall ouvert depuis un cadenas', () => {
     render(<Paywall onDone={noop} exitDelay={0} />);
   });
+});
+
+/*
+  Le milieu du parcours, refait : une estimation a la jauge, le vrai chiffre
+  recopie, la comparaison, l'analyse, puis une page par idee et le bouton
+  qu'on maintient. Huit ecrans nouveaux ou reecrits — chacun est monte, et
+  la comparaison l'est dans ses trois verdicts, puisque c'est elle qui
+  choisit son titre.
+*/
+describe('le temps d’ecran, en quatre ecrans', () => {
+  it('l’estimation a la jauge', () => { render(<Guess onNext={noop} />); });
+  it('le vrai chiffre', () => { render(<RealTime onNext={noop} />); });
+  it('l’age', () => { render(<AgeAsk onNext={noop} />); });
+  it('l’analyse', () => { render(<Analysis onNext={noop} />); });
+
+  it('la comparaison, dans ses trois verdicts', () => {
+    for (const real of [60, 150, 300]) {
+      useOnboardingStore.setState({ minutesPerDay: 150, realMinutes: real });
+      const r = render(<Compare onNext={noop} />);
+      expect(r.toJSON()).toBeTruthy();
+      r.unmount();
+    }
+  });
+});
+
+describe('une page par idee', () => {
+  it('la dose', () => { render(<Dopamine onNext={noop} />); });
+  it('les recepteurs', () => { render(<ReceptorsPage onNext={noop} />); });
+  it('plus rien ne fait d’effet', () => { render(<NothingLands onNext={noop} />); });
+  it('l’amour', () => { render(<LovePage onNext={noop} />); });
+  it('le bouton qu’on maintient', () => { render(<Reclaim onNext={noop} />); });
+  it('le serment, a signer', () => { render(<PromiseScreen onNext={noop} />); });
 });

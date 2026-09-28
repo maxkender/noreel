@@ -10,15 +10,15 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { S1, S5, S6, S6Years, S7 } from './screens';
-import {
-  Constat, Distractions, Name, NotificationsAsk, PromiseScreen,
-} from './screens/setup';
+import { S1, S6, S6Years } from './screens';
+import { Constat, Name, NotificationsAsk, PromiseScreen } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
+import { AgeAsk, Analysis, Compare, Guess, RealTime } from './screens/time';
+import { Dopamine, LovePage, NothingLands, Reclaim, ReceptorsPage } from './screens/science';
 
 /**
  * Le parcours : on accroche, on comprend, on mesure, on parametre, on
@@ -121,21 +121,43 @@ export function OnboardingFlow() {
    * fouille, on ne revient pas. Il vit desormais en lien sur le paywall,
    * APRES le prix — et la promesse tombe directement sur lui.
    */
+  /*
+    L'ordre raconte quelque chose, et il a change.
+
+    On demandait le temps d'ecran, puis on enchainait sur ce qu'il coute.
+    Sauf que le chiffre etait une estimation, et tout le monde sous-estime :
+    la suite reposait sur un nombre trop petit. Le vrai chiffre est demande
+    juste apres l'estimation — Temps d'ecran connecte, puis recopie depuis
+    Reglages — et les deux sont mis cote a cote avant qu'on aille plus loin.
+    Tout ce qui suit raisonne sur le vrai.
+
+    Le milieu est devenu une page par idee : la dose, les recepteurs, le
+    plaisir qui s'eteint, l'amour. Elles vivaient sur un ecran qu'on tapait
+    quatre fois sans que la barre bouge. Et la premiere decision se prend en
+    tenant un bouton deux secondes — pas avec le geste qui vaut zero.
+  */
   const screens = [
     <S1 key="s1" onNext={next} />,
     <Name key="name" onNext={next} />,
     <Meet key="meet" onNext={next} />,
     <Health key="health" onNext={next} />,
     <Constat key="con" onNext={next} />,
-    <S5 key="s5" onNext={next} />,
+    <Guess key="guess" onNext={next} />,
+    <Permissions key="perm" onDone={next} />,
+    <RealTime key="real" onNext={next} />,
+    <Compare key="cmp" onNext={next} />,
+    <Analysis key="ana" onNext={next} />,
+    <AgeAsk key="age" onNext={next} />,
     <S6 key="s6" onNext={next} />,
-    <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
-    <S7 key="s7" onNext={next} />,
+    <Dopamine key="dopa" onNext={next} />,
+    <ReceptorsPage key="rec" onNext={next} />,
+    <NothingLands key="flat" onNext={next} />,
+    <LovePage key="love" onNext={next} />,
+    <S6Years key="s6y" onNext={next} />,
+    <Reclaim key="hold" onNext={next} />,
     <Ninety key="90" onNext={next} />,
     <Proof key="proof" onNext={next} />,
-    <Distractions key="dis" onNext={next} />,
-    <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
