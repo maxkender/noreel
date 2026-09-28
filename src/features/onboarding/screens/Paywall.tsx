@@ -17,6 +17,7 @@ import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
 import { scheduleTrialReminder } from '@/services/trial';
 import { Corti } from '@/components/Corti';
+import { GlassApps } from '@/components/GlassApps';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
@@ -394,7 +395,18 @@ function Healing() {
 
   return (
     <View style={st.heal}>
-      <Corti level={healed ? 3 : 0} size={152} />
+      {/*
+        Les quatre apps flottent AUTOUR de lui.
+        L'ecran disait ce qu'on obtient sans jamais montrer sur quoi ; les
+        logos le disent en une image, et le verre au-dessus du degrade donne a
+        la page la profondeur qui lui manquait.
+      */}
+      <View style={st.orbit}>
+        <GlassApps height={176} />
+        <View style={st.orbitMid} pointerEvents="none">
+          <Corti level={healed ? 3 : 0} size={152} recover={healed} />
+        </View>
+      </View>
 
       {/* Hauteur fixe : les deux phrases n'ont pas la meme longueur, et sans
           reserve tout ce qui suit remonterait au moment de la bascule. */}
@@ -554,6 +566,11 @@ const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   sub: { marginTop: space.md },
   heal: { alignItems: 'center', marginTop: space.lg },
+  orbit: { alignSelf: 'stretch', justifyContent: 'center' },
+  orbitMid: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+  },
   healSlot: {
     height: 54, justifyContent: 'center', marginTop: space.sm,
     paddingHorizontal: space.lg,
@@ -565,11 +582,20 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: withAlpha(c.ember, 0.1),
   },
   trial: {
+    /*
+      Hauteur FIXE.
+      Les deux forfaits n'ont pas le meme contenu — une frise de trois temps
+      pour l'annuel, deux lignes pour l'hebdomadaire — et le bloc changeait
+      donc de taille en changeant de choix. Tout ce qui suit sautait, y compris
+      les deux cartes de forfait, au moment precis ou le doigt les vise.
+    */
+    minHeight: 196, justifyContent: 'center',
     marginTop: space.xl, borderRadius: 22, overflow: 'hidden',
     paddingHorizontal: space.lg, paddingVertical: space.lg,
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
   },
   trialFlat: { borderColor: withAlpha(c.ember, 0.4) },
+  trialInner: { alignSelf: 'stretch' },
   steps: { marginTop: space.md },
   step: { flexDirection: 'row', gap: space.md },
   rail: { alignItems: 'center', width: 22 },

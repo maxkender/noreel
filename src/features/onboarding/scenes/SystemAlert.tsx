@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
   Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withRepeat,
-  withSequence, withTiming,
+  withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -63,13 +63,39 @@ export function SystemAlert({
     opacity: 0.25 + (1 - pulse.value) * 0.35,
   }));
 
+  /*
+    L'arrivee : le voile monte, puis la boite se pose. Un ressort ferme —
+    elle ne doit pas rebondir, une alerte systeme n'est pas un jouet.
+  */
+  const enter = useSharedValue(0);
+  useEffect(() => {
+    enter.value = withDelay(260, withSpring(1, { damping: 18, stiffness: 190 }));
+  }, [enter]);
+  const pop = useAnimatedStyle(() => ({
+    opacity: enter.value,
+    transform: [{ scale: 1.14 - enter.value * 0.14 }],
+  }));
+  const dim = useAnimatedStyle(() => ({ opacity: enter.value * 0.5 }));
+
   const buttons: { label: string; on: boolean }[] = goodSide === 'left'
     ? [{ label: good, on: true }, { label: bad, on: false }]
     : [{ label: bad, on: false }, { label: good, on: true }];
 
   return (
     <View style={st.layer} pointerEvents="box-none">
-      <Animated.View entering={FadeIn.delay(300).duration(520)} style={st.alert}>
+      {/*
+        Le fond s'assombrit d'abord, la boite arrive ensuite.
+        Elle apparaissait en fondu, seule, sur une page restee nette : elle
+        avait l'air posee dessus plutot qu'ouverte par-dessus. iOS assombrit
+        toujours ce qu'il y a derriere, et fait entrer la boite en la
+        retrecissant depuis un peu plus grand — c'est ce raccourci de deux
+        gestes qui fait qu'on la reconnait avant de l'avoir lue.
+      */}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, st.scrim, dim]}
+        pointerEvents="none"
+      />
+      <Animated.View style={[st.alert, pop]}>
         <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={st.material} />
 
@@ -127,6 +153,7 @@ export function SystemAlert({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
+  scrim: { backgroundColor: '#000000' },
   layer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',

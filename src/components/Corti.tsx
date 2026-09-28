@@ -4,8 +4,8 @@ import Svg, {
   Circle, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Stop,
 } from 'react-native-svg';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence,
-  withSpring, withTiming,
+  Easing, interpolate as lerp, useAnimatedStyle, useSharedValue, withDelay, withRepeat,
+  withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
@@ -101,6 +101,16 @@ const MOUTH_SAD = 'M94 140q6-4 12 0';
 const MOUTH_SOFT = 'M94 137q6 6 12 0';
 const MOUTH_OPEN = 'M88 134q12 14 24 0z';
 
+/**
+ * Le reflet, en haut a gauche.
+ *
+ * C'est lui qui transforme un aplat en matiere : sans reflet, le degrade seul
+ * donne un autocollant. Il est pose la ou la lumiere tombe dans le degrade du
+ * corps — au meme endroit, sinon les deux se contredisent et l'oeil le voit
+ * sans savoir pourquoi.
+ */
+const SHINE = { cx: 76, cy: 72, rx: 34, ry: 24, tilt: -22 };
+
 /** Les zigzags de fatigue, au niveau zero. */
 const TIRED = 'M22 54l8 6-6 5 8 6M178 44l-8 6 6 5-8 6';
 
@@ -113,6 +123,10 @@ type Pal = {
   shade: string;
   rim: string; rimOp: number;
   gyri: string; limb: string; foot: string; dim: string;
+  /** La crete du sillon : le bord eclaire, juste au-dessus du creux. */
+  crest: string; crestOp: number;
+  /** La force du reflet. */
+  shine: number;
   aura: number; blush: number;
 };
 
@@ -121,24 +135,28 @@ const PALETTES: Pal[] = [
     body: ['#6B7286', '#2C3140'], shade: '#0B0D14',
     rim: '#8B93A6', rimOp: 0.5,
     gyri: '#3E4455', limb: '#4A5063', foot: '#3E4455', dim: '#6B7386',
+    crest: '#8D95A8', crestOp: 0.22, shine: 0.1,
     aura: 0, blush: 0,
   },
   {
     body: ['#C9DCF5', '#7FA6DE', '#4A7CC4'], shade: '#2F63C9',
     rim: '#FFFFFF', rimOp: 0.5,
     gyri: '#3A6BC4', limb: '#6A97D6', foot: '#4A7CC4', dim: '#7F9CC9',
+    crest: '#DCE9FF', crestOp: 0.3, shine: 0.34,
     aura: 0.22, blush: 0.45,
   },
   {
     body: ['#EAF3FF', '#9CC6FF', '#5B9DFF'], shade: '#2F63C9',
     rim: '#FFFFFF', rimOp: 0.75,
     gyri: '#3F79E6', limb: '#7FB3FF', foot: '#5B9DFF', dim: '#FFFFFF',
+    crest: '#F2F8FF', crestOp: 0.38, shine: 0.5,
     aura: 0.55, blush: 0.6,
   },
   {
     body: ['#F6FAFF', '#B7DAFF', '#7FB3FF'], shade: '#2F63C9',
     rim: '#FFFFFF', rimOp: 0.85,
     gyri: '#4C86F0', limb: '#9CC6FF', foot: '#7FB3FF', dim: '#FFFFFF',
+    crest: '#FFFFFF', crestOp: 0.42, shine: 0.58,
     aura: 0.85, blush: 0.65,
   },
 ];
@@ -169,6 +187,25 @@ const SPARKS: Record<number, { x: number; y: number; r: number; c: string; delay
   ],
 };
 
+/*
+ * Le retablissement, image par image.
+ *
+ * Repris de la page « Corti se remet en forme » du studio : il s'affaisse
+ * D'ABORD un peu plus — l'elan avant l'effort — puis se redresse, depasse sa
+ * taille, retombe juste, s'ecrase et saute. C'est cette anticipation qui fait
+ * qu'on y croit ; sans elle, il se contente de grandir.
+ *
+ * Les valeurs de depart sont les notres, adoucies : celles du studio aplatissent
+ * trop le dessin.
+ */
+const RECOVER = {
+  t: [0, 0.08, 0.12, 0.40, 0.48, 0.54, 0.68, 0.71, 0.76, 0.86, 1],
+  x: [1.08, 1.08, 1.10, 1.03, 0.98, 1.00, 1.00, 1.12, 0.94, 1.00, 1.00],
+  y: [0.82, 0.82, 0.80, 0.96, 1.04, 1.00, 1.00, 0.88, 1.10, 1.00, 1.00],
+  ty: [0, 0, 0, 0, 0, 0, 0, 0, -0.12, 0, 0],
+};
+const RECOVER_MS = 2600;
+
 /**
  * La pose, par niveau.
  *
@@ -195,7 +232,7 @@ const POSE: { x: [number, number]; y: [number, number]; ms: number }[] = [
 /* ---------- La mascotte ---------- */
 
 export function Corti({
-  level, size = 132, animated = true, arrive = false, onPress, style,
+  level, size = 132, animated = true, arrive = false, recover = false, onPress, style,
 }: {
   level: CortiLevel;
   size?: number;
@@ -208,6 +245,13 @@ export function Corti({
    * de la page en fait une illustration ; entrer en sautant en fait quelqu'un.
    */
   arrive?: boolean;
+  /**
+   * Il se REMET EN FORME : la sequence complete du studio, jouee une fois.
+   *
+   * Reserve au moment ou l'on montre ce qu'il deviendrait. Passer d'un niveau
+   * a l'autre sans elle, c'est un dessin qu'on remplace par un autre.
+   */
+  recover?: boolean;
   /** Le rend touchable. Sans ca, il rebondit quand meme quand on le touche. */
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -226,8 +270,11 @@ export function Corti({
   const hit = useSharedValue(0);
   const gaze = useSharedValue(0);
   const drop = useSharedValue(arrive ? 1 : 0);
+  const rec = useSharedValue(1);
+  const sigh = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const eyeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sighTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!motion) {
@@ -301,6 +348,38 @@ export function Corti({
     );
   }, [arrive, motion, drop]);
 
+  /*
+    Le retablissement, joue UNE fois quand on le demande. La valeur va de zero
+    a un en ligne droite, et la pose est lue dans la table : c'est la facon la
+    plus fidele de rejouer une suite d'images cle.
+  */
+  useEffect(() => {
+    if (!recover || !motion) { rec.value = 1; return; }
+    rec.value = 0;
+    rec.value = withTiming(1, { duration: RECOVER_MS, easing: Easing.linear });
+  }, [recover, motion, rec]);
+
+  /*
+    Le soupir : de loin en loin, il s'affaisse un peu plus puis se reprend.
+    Une respiration reguliere finit par se lire comme une machine ; un geste
+    rare et plus ample donne de la fatigue a celui qui est eteint, et de la vie
+    aux autres.
+  */
+  useEffect(() => {
+    if (!motion) { sigh.value = 0; return; }
+    let alive = true;
+    const breathe = () => {
+      if (!alive) return;
+      sigh.value = withSequence(
+        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1400, easing: Easing.inOut(Easing.ease) })
+      );
+      sighTimer.current = setTimeout(breathe, 6000 + Math.random() * 5000);
+    };
+    sighTimer.current = setTimeout(breathe, 3000 + Math.random() * 4000);
+    return () => { alive = false; if (sighTimer.current) clearTimeout(sighTimer.current); };
+  }, [motion, sigh]);
+
   const poke = useCallback(() => {
     haptics.tap();
     hit.value = withSequence(
@@ -317,13 +396,21 @@ export function Corti({
   */
   const half = size / 2;
   const character = useAnimatedStyle(() => {
-    const sx = pose.x[0] + breath.value * (pose.x[1] - pose.x[0]);
-    const sy = pose.y[0] + breath.value * (pose.y[1] - pose.y[0]);
+    // Pendant le retablissement, la table remplace la pose : les deux
+    // gouverneraient la meme echelle, et elles se battraient.
+    const busy = rec.value < 1;
+    const sx = busy
+      ? lerp(rec.value, RECOVER.t, RECOVER.x)
+      : pose.x[0] + breath.value * (pose.x[1] - pose.x[0]) - sigh.value * 0.02;
+    const sy = busy
+      ? lerp(rec.value, RECOVER.t, RECOVER.y)
+      : pose.y[0] + breath.value * (pose.y[1] - pose.y[0]) - sigh.value * 0.035;
+    const ty = busy ? lerp(rec.value, RECOVER.t, RECOVER.ty) * size : 0;
     return {
       opacity: 1 - flick.value * 0.6,
       transform: [
         {
-          translateY: -hop.value * 14 * k - hit.value * size * 0.06
+          translateY: ty - hop.value * 14 * k - hit.value * size * 0.06
             // La chute d'arrivee, au-dessus de tout le reste.
             - drop.value * size * 0.55,
         },
@@ -350,6 +437,7 @@ export function Corti({
   const sparks = SPARKS[level] ?? [];
   const grad = `corti-body-${level}`;
   const shade = `corti-shade-${level}`;
+  const rim = `corti-rim-${level}`;
 
   return (
     <Root
@@ -398,6 +486,31 @@ export function Corti({
               <Stop offset="0.55" stopColor={pal.shade} stopOpacity={0} />
               <Stop offset="1" stopColor={pal.shade} stopOpacity={0.45} />
             </LinearGradient>
+            {/*
+              Le lisere SUIT la lumiere : vif en haut, eteint en bas.
+              Un contour d'epaisseur et d'opacite constantes fait le tour de
+              la forme sans rien eclairer — c'est ce qui donne l'air d'un
+              autocollant decoupe. Un lisere qui s'efface vers le bas devient
+              un reflet de bord, et la forme reprend du volume.
+            */}
+            <LinearGradient id={rim} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={pal.rim} stopOpacity={pal.rimOp} />
+              <Stop offset="0.55" stopColor={pal.rim} stopOpacity={pal.rimOp * 0.45} />
+              <Stop offset="1" stopColor={pal.rim} stopOpacity={pal.rimOp * 0.12} />
+            </LinearGradient>
+            {/* Le reflet s'eteint vers ses bords : un ovale blanc net ferait
+                une tache, un ovale degrade fait de la lumiere. */}
+            <RadialGradient id="corti-shine" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={pal.shine} />
+              <Stop offset="0.6" stopColor="#FFFFFF" stopOpacity={pal.shine * 0.35} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </RadialGradient>
+            {/* La pupille n'est pas un disque plat : elle a un fond. */}
+            <RadialGradient id="corti-eye" cx="38%" cy="32%" r="80%">
+              <Stop offset="0" stopColor="#243356" />
+              <Stop offset="0.55" stopColor="#0B1220" />
+              <Stop offset="1" stopColor="#05080F" />
+            </RadialGradient>
           </Defs>
 
           {/* Les zigzags de fatigue, de part et d'autre de la tete. */}
@@ -424,16 +537,38 @@ export function Corti({
           <Path
             d={BODY}
             fill={`url(#${grad})`}
-            stroke={pal.rim} strokeOpacity={pal.rimOp}
+            stroke={`url(#${rim})`}
             strokeWidth={2.5} strokeLinejoin="round"
           />
           <Path d={BODY} fill={`url(#${shade})`} />
 
+          {/*
+            Les sillons sont GRAVES, pas dessines.
+            Un trait sombre, et le meme trait clair decale d'un point et demi
+            vers le haut : l'oeil lit un creux au lieu d'un trait pose dessus.
+            C'est le meme principe qu'un lettrage grave, et ca ne coute qu'un
+            chemin de plus.
+          */}
           <Path
             d={GYRI}
             fill="none" stroke={pal.gyri} strokeOpacity={0.55}
             strokeWidth={3.5} strokeLinecap="round"
           />
+          <G transform="translate(0,-1.6)">
+            <Path
+              d={GYRI}
+              fill="none" stroke={pal.crest} strokeOpacity={pal.crestOp}
+              strokeWidth={2.2} strokeLinecap="round"
+            />
+          </G>
+
+          {/* Le reflet, par-dessus la matiere et sous le visage. */}
+          <G transform={`rotate(${SHINE.tilt} ${SHINE.cx} ${SHINE.cy})`}>
+            <Ellipse
+              cx={SHINE.cx} cy={SHINE.cy} rx={SHINE.rx} ry={SHINE.ry}
+              fill="url(#corti-shine)"
+            />
+          </G>
 
           {/* Les points eteints. Ceux qui s'allument sont poses par-dessus. */}
           {DOTS.filter((dt) => level < dt.from).map((dt) => (
@@ -497,8 +632,15 @@ export function Corti({
             pointerEvents="none"
           >
             <Svg width={size} height={40 * k} viewBox={`0 0 ${VB} 40`}>
-              <Circle cx={76} cy={20} r={12.5} fill={EYE} />
-              <Circle cx={124} cy={20} r={12.5} fill={EYE} />
+              <Defs>
+                <RadialGradient id="corti-pupil" cx="38%" cy="32%" r="80%">
+                  <Stop offset="0" stopColor="#243356" />
+                  <Stop offset="0.55" stopColor="#0B1220" />
+                  <Stop offset="1" stopColor="#05080F" />
+                </RadialGradient>
+              </Defs>
+              <Circle cx={76} cy={20} r={12.5} fill="url(#corti-pupil)" />
+              <Circle cx={124} cy={20} r={12.5} fill="url(#corti-pupil)" />
               <Circle cx={71.5} cy={15.5} r={4.2} fill="#FFFFFF" />
               <Circle cx={119.5} cy={15.5} r={4.2} fill="#FFFFFF" />
               <Circle cx={80.5} cy={24.5} r={1.8} fill="#FFFFFF" />
