@@ -18,7 +18,7 @@ import { Corti, type CortiLevel } from './Corti';
  */
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
-  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti,
+  tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti, note,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -56,6 +56,15 @@ export function Screen({
   corti?: CortiLevel;
   /** 0 a 1 : intensite du halo, pour les ecrans qui montent en tension. */
   hueLevel?: number;
+  /**
+   * Une ligne posee JUSTE au-dessus du bouton.
+   *
+   * Quand une action echoue, l'explication doit arriver la ou l'oeil se
+   * trouve — c'est-a-dire sur le bouton qu'on vient de toucher. Placee dans
+   * le contenu qui defile, elle apparaissait hors champ : on appuyait, rien
+   * ne semblait se passer, et on recommencait.
+   */
+  note?: ReactNode;
 }) {
   const bar = useContext(ProgressContext);
   const c = useColors();
@@ -91,6 +100,8 @@ export function Screen({
           style={styles.hem}
           pointerEvents="none"
         />
+
+        {note && <View style={styles.note}>{note}</View>}
 
         {!cta ? (
           secondary && onSecondary ? (
@@ -130,6 +141,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space.xl },
   centered: { flexGrow: 1, justifyContent: 'center' },
+  note: { paddingHorizontal: gutter, paddingBottom: space.xs },
   footer: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: space.xs },
   hem: { height: 36, marginTop: -36 },
   hint: { alignItems: 'center', paddingBottom: space.xl, paddingTop: space.md },

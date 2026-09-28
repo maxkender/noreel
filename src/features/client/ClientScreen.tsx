@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Hourglass, RotateCw } from 'lucide-react-native';
+import { Hourglass, RotateCw, Timer } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
+import { firstRunUrl } from './firstrun';
 import { ACCOUNT } from './accounts';
 import { cortiLevel } from '@/components/Corti';
 import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
@@ -145,11 +146,40 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
   const script = useMemo(
     () => buildScript(
-      client.script, active, theme, valve, tinted ? tint.rgb : null, openUntil
+      client.script, active, theme, valve, tinted ? tint.rgb : null, openUntil,
+      { title: d.client.wallTitle, body: d.client.wallBody, hint: d.client.wallHint }
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]
   );
+  /*
+    L'adresse d'arrivee. Nulle tant qu'on n'a pas interroge le disque : partir
+    sur le fil puis sauter vers la connexion ferait charger deux pages, et on
+    verrait le fil vide clignoter avant d'etre redirige.
+  */
+  const [entry, setEntry] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void firstRunUrl(id, 'login' in client ? client.login : undefined)
+      .then((u) => { if (alive) setEntry(u ?? client.url); });
+    return () => { alive = false; };
+  }, [id, client]);
+
+  /*
+    Le temps passe ici, en minutes et secondes.
+
+    Il repart de zero a chaque ouverture : c'est une SESSION qu'on mesure, pas
+    un cumul. Le cumul de la journee vit sur l'accueil, ou on va le consulter ;
+    ici on veut la reponse a « ca fait combien de temps que j'y suis ? », et
+    seule la session y repond.
+  */
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const h = setInterval(() => setSecs((n) => n + 1), 1000);
+    return () => clearInterval(h);
+  }, []);
+  const elapsed = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +203,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
     tete — le meme evenement devient quelqu'un qui tient la porte pour vous.
   */
   const [refuse, setRefuse] = useState<CortiReaction | undefined>();
-  useEffect(() => { if (wall) setRefuse(cortiReact('no')); }, [wall]);
+  const raise = () => { setWall(true); setRefuse(cortiReact('no')); };
   // Le numero du reel referme. Un compteur qui monte se lit comme un score ;
   // « Bloque » tout seul se lit comme un reproche.
   const [nth, setNth] = useState(0);
@@ -348,7 +378,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
     if (u.hostname.endsWith(client.host) && client.blocked(u.pathname)) {
       if (strict) {
-        setWall(true);
+        raise();
         setTimeout(() => setWall(false), 2600);
       }
       // On annule la navigation, point. Rien d'autre.
@@ -379,74 +409,96 @@ export function ClientScreen({ id }: { id: ClientId }) {
         au-dessus d'une page claire.
       */}
       <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: barColour }]}>
+        {/*
+          Le CHRONO, pas le nom de l'app.
+
+          « Instagram » ecrit au-dessus d'Instagram n'apprend rien a personne :
+          le bandeau prenait de la hauteur pour redire ce qu'on avait sous les
+          yeux. Le temps passe depuis l'ouverture, lui, est la seule chose que
+          le site ne dira jamais — et c'est celle qui fait reposer le telephone.
+
+          « Sans filtre » garde sa place : quand la protection est levee, le
+          dire prime sur toute autre information.
+        */}
         <View style={styles.barRow}>
-          <Text variant="label" color={withAlpha(barInk, 0.65)}>
-            {raw ? d.client.noFilter : LABELS[id]}
-          </Text>
+          {raw ? (
+            <Text variant="label" color={withAlpha(barInk, 0.65)}>{d.client.noFilter}</Text>
+          ) : (
+            <>
+              <Timer size={12} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
+              <Text variant="label" color={withAlpha(barInk, 0.65)}>{elapsed}</Text>
+            </>
+          )}
         </View>
       </SafeAreaView>
 
-      <WebView
-        key={raw ? 'raw' : 'filtered'}
-        ref={web}
-        source={{ uri: client.url }}
-        userAgent={UA}
-        injectedJavaScriptBeforeContentLoaded={raw ? 'true;' : script}
-        onMessage={(e) => {
-          try {
-            const m = JSON.parse(e.nativeEvent.data);
-            if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
-              setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
+      {/* Rien tant qu'on ne sait pas OU aller. Montee sur le fil puis
+          redirigee vers la connexion, elle chargerait deux pages et on
+          verrait le fil vide clignoter avant d'etre envoye ailleurs.
+          Le disque repond en une image : personne ne voit l'attente. */}
+      {entry && (
+        <WebView
+          key={raw ? 'raw' : 'filtered'}
+          ref={web}
+          source={{ uri: entry }}
+          userAgent={UA}
+          injectedJavaScriptBeforeContentLoaded={raw ? 'true;' : script}
+          onMessage={(e) => {
+            try {
+              const m = JSON.parse(e.nativeEvent.data);
+              if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
+                setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
+              }
+              // Un format court reconnu a sa forme : la page est deja repartie
+              // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
+              if (m && m.t === 'short') {
+                raise();
+                void countBlocked().then(setNth);
+                setTimeout(() => setWall(false), 2000);
+              }
+              /*
+                Le filtre se surveille lui-meme.
+                Une regle qui ne trouve plus rien est une regle morte, et un
+                utilisateur qui revoit un reel ne nous ecrit pas : il annule. La
+                page rend donc compte de ses prises, et l'app decide — jamais
+                sur un seul chargement, et jamais quand tous les reglages sont
+                eteints, ou zero prise est la reponse juste.
+              */
+              if (m && m.t === 'rules' && typeof m.n === 'number' && m.on > 0) {
+                void reportRules(id, m.n);
+              }
+              if (m && m.t === 'switch') {
+                setSwitching(false);
+                setSwitchFailed(!m.ok);
+                if (!m.ok) setTimeout(() => setSwitchFailed(false), 4000);
+              }
+            } catch {
+              /* message qui ne vient pas de nous */
             }
-            // Un format court reconnu a sa forme : la page est deja repartie
-            // en arriere. Sans un mot, ce demi-tour passe pour un plantage.
-            if (m && m.t === 'short') {
-              setWall(true);
-              void countBlocked().then(setNth);
-              setTimeout(() => setWall(false), 2000);
-            }
-            /*
-              Le filtre se surveille lui-meme.
-              Une regle qui ne trouve plus rien est une regle morte, et un
-              utilisateur qui revoit un reel ne nous ecrit pas : il annule. La
-              page rend donc compte de ses prises, et l'app decide — jamais
-              sur un seul chargement, et jamais quand tous les reglages sont
-              eteints, ou zero prise est la reponse juste.
-            */
-            if (m && m.t === 'rules' && typeof m.n === 'number' && m.on > 0) {
-              void reportRules(id, m.n);
-            }
-            if (m && m.t === 'switch') {
-              setSwitching(false);
-              setSwitchFailed(!m.ok);
-              if (!m.ok) setTimeout(() => setSwitchFailed(false), 4000);
-            }
-          } catch {
-            /* message qui ne vient pas de nous */
-          }
-        }}
-        onShouldStartLoadWithRequest={guard}
-        onLoadEnd={() => setReady(true)}
-        onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
-        // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
-        onContentProcessDidTerminate={() => web.current?.reload()}
-        onRenderProcessGone={() => web.current?.reload()}
-        sharedCookiesEnabled
-        thirdPartyCookiesEnabled
-        domStorageEnabled
-        javaScriptEnabled
-        allowsBackForwardNavigationGestures
-        // Sur iOS il entre en conflit avec le defilement des pages lourdes :
-        // le bouton recharger de la barre fait le meme travail sans risque.
-        pullToRefreshEnabled={Platform.OS !== 'ios'}
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
-        setSupportMultipleWindows={false}
-        // Sans cette liste, iOS remet les schemas inconnus au systeme,
-        // qui ouvre l'app native.
-        originWhitelist={['http://*', 'https://*']}
-        style={[styles.web, { backgroundColor: chrome }]}
-      />
+          }}
+          onShouldStartLoadWithRequest={guard}
+          onLoadEnd={() => setReady(true)}
+          onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
+          // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
+          onContentProcessDidTerminate={() => web.current?.reload()}
+          onRenderProcessGone={() => web.current?.reload()}
+          sharedCookiesEnabled
+          thirdPartyCookiesEnabled
+          domStorageEnabled
+          javaScriptEnabled
+          allowsBackForwardNavigationGestures
+          // Sur iOS il entre en conflit avec le defilement des pages lourdes :
+          // le bouton recharger de la barre fait le meme travail sans risque.
+          pullToRefreshEnabled={Platform.OS !== 'ios'}
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
+          setSupportMultipleWindows={false}
+          // Sans cette liste, iOS remet les schemas inconnus au systeme,
+          // qui ouvre l'app native.
+          originWhitelist={['http://*', 'https://*']}
+          style={[styles.web, { backgroundColor: chrome }]}
+        />
+      )}
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
           voler les touches. */}
@@ -616,7 +668,10 @@ const sheet = (c: Palette) => StyleSheet.create({
     l'ilot dynamique. 44 points, c'est la hauteur qu'iOS donne a ses propres
     barres, et elle ne depend pas du site affiche.
   */
-  barRow: { height: 58, alignItems: 'center', justifyContent: 'center' },
+  barRow: {
+    height: 58, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6,
+  },
   close: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 38, borderRadius: 19, paddingHorizontal: 14,

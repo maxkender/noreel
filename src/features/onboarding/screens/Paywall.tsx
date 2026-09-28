@@ -15,6 +15,7 @@ import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
+import { brainIndex } from '@/services/protect';
 import { scheduleTrialReminder } from '@/services/trial';
 import { CortiRecovery } from '@/components/CortiRecovery';
 import { GlassApps } from '@/components/GlassApps';
@@ -113,6 +114,8 @@ export function Paywall(
   }, [exitDelay]);
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
+  // Le magasin n'a rien rendu : constate au premier appui, dit au second.
+  const [storeDown, setStoreDown] = useState(false);
   /*
     Le magasin n'a pas encore repondu.
 
@@ -161,7 +164,25 @@ export function Paywall(
       desactive a la derniere etape du parcours enfermerait la personne
       dehors.
     */
-    if (!PURCHASES_ENABLED || !chosen) { onDone(); return; }
+    /*
+      Rien a vendre. On le DIT, on ne referme pas.
+
+      Le bouton menait droit a l'accueil : vu de l'exterieur, « Continuer »
+      ne faisait rien — pas de feuille de paiement, pas de message, juste la
+      page d'accueil. Impossible de distinguer un bug d'un refus, et c'est le
+      seul ecran de l'app ou une seconde de doute coute un abonnement.
+
+      La cause est rarement dans le code : un produit encore en revue chez
+      Apple n'est pas servi par StoreKit, donc l'offre revient vide. Le dire
+      permet au moins de savoir qu'il faut regarder la-bas.
+
+      La sortie reste ouverte — la croix est la, et le second appui passe.
+    */
+    if (!PURCHASES_ENABLED || !chosen) {
+      if (!storeDown) { setStoreDown(true); haptics.stop(); return; }
+      onDone();
+      return;
+    }
     setBusy(true);
     const r = await buy(chosen);
     setBusy(false);
@@ -227,10 +248,20 @@ export function Paywall(
       cta={
         busy || loading
           ? d.pay.wait
-          // Sans forfait a vendre, le libelle ne promet pas un achat.
-          : chosen || !PURCHASES_ENABLED
-            ? d.pay.cta
-            : d.pay.ctaPlain
+          // Une fois qu'on sait qu'il n'y a rien a vendre, le libelle ne
+          // promet plus un achat : il dit ou il mene.
+          : storeDown
+            ? d.pay.storeSkip
+            : d.pay.cta
+      }
+      note={
+        storeDown ? (
+          <Animated.View entering={FadeIn.duration(320)}>
+            <Text variant="label" color={c.ember} style={st.center}>
+              {d.pay.storeDown}
+            </Text>
+          </Animated.View>
+        ) : undefined
       }
       onPress={() => { void go(); }}
       disabled={busy || loading}
@@ -418,16 +449,31 @@ function Healing() {
         </View>
       </View>
 
-      {/* Hauteur fixe : les deux phrases n'ont pas la meme longueur, et sans
-          reserve tout ce qui suit remonterait au moment de la bascule. */}
+      {/*
+        Un CHIFFRE, pas une phrase.
+
+        « Il a vu trop de Reels, ses recepteurs sont grilles » decrit un
+        dessin : on le lit, on acquiesce, on n'en retient rien. Le meme
+        moment chiffre se retient — et ce n'est pas un chiffre invente pour
+        la vente, c'est l'indice de recuperation que l'app affiche ensuite
+        tous les jours sur l'onglet blocage. Dix-huit au premier jour, cent
+        apres trente jours sans reels : la promesse et la jauge disent la
+        meme chose, sinon l'une des deux ment.
+
+        Hauteur fixe : les deux etats n'ont pas la meme longueur de legende,
+        et sans reserve tout ce qui suit remonterait a la bascule.
+      */}
       <View style={st.healSlot}>
         <Animated.View key={healed ? 'on' : 'off'} entering={FadeIn.duration(520)}>
           <Text
-            variant="lead"
+            variant="displayM"
             color={healed ? c.accent : c.ember}
             style={st.center}
           >
-            {healed ? d.pay.healed : d.pay.burnt}
+            {healed ? `${brainIndex(30, 0)} %` : `${brainIndex(0, 0)} %`}
+          </Text>
+          <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.xs }]}>
+            {healed ? d.pay.pctThen : d.pay.pctNow}
           </Text>
         </Animated.View>
       </View>
@@ -452,24 +498,30 @@ function Trial({ plan }: { plan: Plan }) {
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
 
-  // L'hebdomadaire n'a pas d'essai. Le taire serait laisser croire qu'il en a
-  // un, et le prelevement se decouvrirait le jour meme.
-  if (plan === 'weekly') {
-    return (
-      <View style={[st.trial, st.trialFlat]}>
-        <Text variant="label" color={c.ember}>{d.pay.weekNoTrial}</Text>
-        <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
-          {d.pay.weekNoTrialBody}
-        </Text>
-      </View>
-    );
-  }
+  /*
+    L'hebdomadaire garde la MEME frise.
 
-  const steps: [typeof Bell, string, string, boolean][] = [
-    [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
-    [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
-    [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
-  ];
+    Il avait droit a un pave a lui, plus court : changer de forfait faisait
+    donc sauter tout le bas de la page, et on perdait l'endroit ou l'on
+    regardait au moment precis ou l'on compare deux prix. Trois etapes des
+    deux cotes, meme hauteur, rien ne bouge — seul le contenu change.
+
+    Il n'a pas d'essai, et la frise le dit en toutes lettres : le taire
+    laisserait croire le contraire, et le prelevement se decouvrirait le jour
+    meme.
+  */
+  const weekly = plan === 'weekly';
+  const steps: [typeof Bell, string, string, boolean][] = weekly
+    ? [
+      [Unlock, d.pay.weekToday, d.pay.weekTodayBody, true],
+      [CreditCard, d.pay.weekEvery, d.pay.weekEveryBody, true],
+      [Bell, d.pay.weekStop, d.pay.weekStopBody, false],
+    ]
+    : [
+      [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
+      [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
+      [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
+    ];
 
   return (
     <View style={st.trial}>
@@ -479,8 +531,8 @@ function Trial({ plan }: { plan: Plan }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <Text variant="label" color={c.accent}>
-        {t(d.pay.trialBanner, { n: TRIAL_DAYS })}
+      <Text variant="label" color={weekly ? c.ember : c.accent}>
+        {weekly ? d.pay.weekBanner : t(d.pay.trialBanner, { n: TRIAL_DAYS })}
       </Text>
 
       <View style={st.steps}>
@@ -582,7 +634,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   healSlot: {
-    height: 54, justifyContent: 'center', marginTop: space.sm,
+    height: 84, justifyContent: 'center', marginTop: space.sm,
     paddingHorizontal: space.lg,
   },
   wound: {

@@ -37,7 +37,7 @@ import {
   Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
 } from './Recovery';
 import { cortiLevel, cortiLine } from '@/components/Corti';
-import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
+import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { nudgeOfTheDay } from '@/services/nudge';
 import { pullAndRestart } from '@/services/refresh';
 

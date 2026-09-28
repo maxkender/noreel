@@ -36,13 +36,22 @@ export function buildScript(
   /** Triplet RGB nu, ou null pour laisser au site ses propres couleurs. */
   tint: string | null = null,
   /** Horodatage de fin du laissez-passer, ou 0 : les reels passent jusque-la. */
-  openUntil = 0
+  openUntil = 0,
+  /**
+   * Les mots du panneau « fil bloque ».
+   *
+   * Ils viennent du dictionnaire de l'app et non du script : un texte ecrit
+   * en dur dans une chaine injectee echappe au typage, aux tests de parite
+   * des langues, et se retrouve en francais dans une app en anglais.
+   */
+  wall: { title: string; body: string; hint: string } | null = null
 ): string {
   return `window.__NR = ${JSON.stringify(settings)};\n`
     + `window.__nrTheme = ${JSON.stringify(theme)};\n`
     + `window.__nrValve = ${JSON.stringify(valve ?? { on: false, day: 6, from: 20, to: 21 })};\n`
     + `window.__nrTint = ${JSON.stringify(tint)};\n`
     + `window.__nrOpenUntil = ${JSON.stringify(openUntil)};\n`
+    + `window.__nrWall = ${JSON.stringify(wall)};\n`
     + base;
 }
 
@@ -597,6 +606,58 @@ export const INSTAGRAM_BLOCKER = `
   const REEL = /\\breels?\\b|son original|original audio|audio original/i;
 
   const posts = () => document.querySelectorAll('article');
+  /** Le fil d'accueil, le seul endroit qu'on s'interdit de toucher. */
+  const __home = () => location.pathname === '/';
+
+  /*
+    Le fil bloque en entier.
+
+    Une regle CSS et un panneau : UN noeud ajoute, zero examen par passe, et
+    les publications qu'Instagram ajoute ensuite sont cachees par le
+    navigateur sans qu'on ait rien a faire. C'est tout l'inverse de ce qu'on
+    faisait, et c'est pour ca que c'est fluide.
+
+    La barre du bas reste : on veut pouvoir aller aux messages, a la
+    recherche et aux profils — c'est exactement ce que le panneau propose.
+  */
+  let __wallEl = null;
+  const __wall = () => {
+    if (__wallEl && document.body.contains(__wallEl)) return;
+    const w = window.__nrWall;
+    if (!w) return;
+    let css = document.getElementById('nr-wall-css');
+    if (!css) {
+      css = document.createElement('style');
+      css.id = 'nr-wall-css';
+      css.textContent = 'article{display:none!important}';
+      (document.head || document.documentElement).appendChild(css);
+    }
+    const box = document.createElement('div');
+    box.id = 'nr-wall';
+    box.setAttribute('style', [
+      'display:flex', 'flex-direction:column', 'align-items:center',
+      'justify-content:center', 'gap:10px', 'padding:64px 28px',
+      'min-height:52vh', 'text-align:center',
+      'font-family:-apple-system,system-ui,sans-serif',
+    ].join(';'));
+    const h = document.createElement('div');
+    h.textContent = w.title;
+    h.setAttribute('style', 'font-size:22px;font-weight:700;color:#F4F7FF');
+    const b = document.createElement('div');
+    b.textContent = w.body;
+    b.setAttribute('style', 'font-size:15px;color:#9AA6C2');
+    const k = document.createElement('div');
+    k.textContent = w.hint;
+    k.setAttribute('style', 'font-size:15px;color:#5B9DFF');
+    box.appendChild(h); box.appendChild(b); box.appendChild(k);
+    (document.querySelector('main') || document.body).appendChild(box);
+    __wallEl = box;
+  };
+  const __unwall = () => {
+    const css = document.getElementById('nr-wall-css');
+    if (css) css.remove();
+    if (__wallEl) { __wallEl.remove(); __wallEl = null; }
+  };
 
   /**
    * Le bloc qu'une etiquette coiffe.
@@ -777,17 +838,35 @@ export const INSTAGRAM_BLOCKER = `
       && location.pathname !== '/';
     if (window.__nrShorts) __shorts();
 
-    // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans
-    // l'explore c'est une tuile. Les deux partent, et le post entier avec.
-    document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
-      __hide(__safe(a.closest('article')) || a, 'short');
-    });
+    /*
+      SUR LE FIL, ON NE TOUCHE A RIEN.
 
-    // Filet de securite : un post qui porte la mention d'un son original
-    // ou le mot Reel est un reel, meme sans lien /reel/ visible.
-    posts().forEach((art) => {
-      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(__safe(art), 'short');
-    });
+      C'est le renoncement qui repare l'app. Retirer les reels publication par
+      publication demande de lire le texte de chaque <article> a chaque passe,
+      sur une liste qu'Instagram VIRTUALISE : il recycle ses cartes en
+      descendant, si bien qu'une carte cachee pour un reel se retrouve a
+      porter une publication ordinaire. D'ou les trois symptomes qu'on a
+      chasses tour a tour — le fil qui se vide, les posts qui se changent en
+      d'autres, le scroll qui saute tout seul. Chaque correctif (marques par
+      noeud ET par texte, verificateurs, attente de 250 ms d'immobilite du
+      doigt) a rendu le suivant plus cher, et aucun n'a rendu le fil fluide.
+
+      Ce qui reste bloque ne coute rien, parce que rien n'est examine :
+      l'onglet Reels disparait de la barre, et l'URL /reels/ renvoie au fil.
+      On bloque une PORTE, pas mille cartes. Et qui ne veut plus du fil du
+      tout le bloque en entier, plus bas — un seul noeud, pas mille.
+
+      Hors du fil, l'examen reste peu couteux : l'explore est une grille finie
+      et une conversation n'a pas de recyclage.
+    */
+    if (!__home()) {
+      document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
+        __hide(__safe(a.closest('article')) || a, 'short');
+      });
+      posts().forEach((art) => {
+        if (REEL.test((art.textContent || '').slice(0, 200))) __hide(__safe(art), 'short');
+      });
+    }
 
     if (__on('ads')) __byLabel(AD, 'ads');
     if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
@@ -831,7 +910,7 @@ export const INSTAGRAM_BLOCKER = `
 
     if (__on('stories')) __hide(__tray(), 'stories');
     else if (__on('feed')) __hide(__tray(), 'feed');
-    if (__on('feed')) posts().forEach((el) => __hide(el, 'feed'));
+    if (__on('feed') && __home()) __wall(); else __unwall();
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
       __go('/direct/inbox/');
@@ -1094,6 +1173,16 @@ export const CLIENTS = {
       pour qui le veut ; l'imposer coutait plus cher que ce qu'il rapportait.
     */
     url: 'https://www.instagram.com/',
+    /*
+      La toute premiere ouverture mene ICI.
+
+      Le fil renvoie une page quasi vide tant qu'on n'est pas connecte : on
+      arrivait devant du blanc, sans rien qui dise qu'il fallait se connecter
+      ni ou. YouTube n'en a pas : Google refuse ses formulaires de connexion
+      dans une vue web integree (« navigateur non securise »), et y envoyer
+      quelqu'un serait l'envoyer dans un mur.
+    */
+    login: 'https://www.instagram.com/accounts/login/',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
     blocked: (p: string) => /^\/reels?(\/|$)/.test(p),
@@ -1101,6 +1190,7 @@ export const CLIENTS = {
   },
   tiktok: {
     url: 'https://www.tiktok.com/following',
+    login: 'https://www.tiktok.com/login',
     host: 'tiktok.com',
     script: TIKTOK_BLOCKER,
     blocked: (p: string) => p === '/' || p.startsWith('/foryou'),
@@ -1108,6 +1198,7 @@ export const CLIENTS = {
   },
   twitter: {
     url: 'https://x.com/home',
+    login: 'https://x.com/i/flow/login',
     host: 'x.com',
     script: TWITTER_BLOCKER,
     blocked: (p: string) => p.startsWith('/explore'),
