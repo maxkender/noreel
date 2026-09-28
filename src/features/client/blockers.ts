@@ -580,11 +580,27 @@ export const INSTAGRAM_BLOCKER = `
 
   // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
   // masque : lui couper l'icone emportait aussi la recherche.
+  /*
+    LA PORTE, ET RIEN QUE LA PORTE.
+
+    Cette feuille cachait « a[href*=/reel/] » et « [aria-label*=Reels] » sur
+    TOUT le document. Les deux attrapent du contenu de fil : le premier est le
+    lien qui enveloppe la video d'une publication, le second n'importe quel
+    conteneur dont l'etiquette mentionne Reels. Le navigateur les applique en
+    continu, a chaque noeud qu'Instagram ajoute en descendant — et une regle
+    CSS ne se defait pas, contrairement a nos marques. Le fil se vidait donc
+    en scrollant, jusqu'au noir, et aucun des deux correctifs precedents ne
+    pouvait y changer quoi que ce soit : ils ne touchaient que le JavaScript.
+
+    Les selecteurs sont donc ancres dans la BARRE de navigation. C'est la que
+    se trouve l'onglet Reels, c'est un element fixe, et il n'y a aucun risque
+    d'y rencontrer une publication.
+  */
   const css = \`
-    a[href^="/reels"], a[href$="/reels/"], a[href*="/reel/"],
-    svg[aria-label="Reels" i],
-    [aria-label="Reels" i], [aria-label*="Reels" i],
-    section[aria-labelledby*="reel" i] { display: none !important; }
+    nav a[href^="/reels"], nav a[href$="/reels/"],
+    [role="navigation"] a[href^="/reels"], [role="navigation"] a[href$="/reels/"],
+    nav [aria-label="Reels" i], [role="navigation"] [aria-label="Reels" i],
+    div[class*="tabbar" i] a[href^="/reels"] { display: none !important; }
   \`;
   __css(css);
 
@@ -715,10 +731,21 @@ export const INSTAGRAM_BLOCKER = `
    * d'une vignette. Aucun nom de classe, aucune langue : ce qui a ete
    * verifie tient tant qu'Instagram dessine ses anneaux ainsi.
    */
+  /*
+    Le carrousel de stories, RETENU une fois pour toutes.
+
+    La recherche repartait de zero a chaque passe : un element cache a une
+    hauteur nulle, donc le test « hauteur entre 0 et 220 » ne le retrouvait
+    plus, et la passe suivante partait en chercher un AUTRE. Chaque tour
+    designait donc une nouvelle victime parmi les listes de la page. En
+    gardant la reference, on cache le meme element ou rien du tout.
+  */
+  let __trayEl = null;
   const __tray = () => {
+    if (__trayEl && document.body.contains(__trayEl)) return __trayEl;
     for (const u of document.querySelectorAll('ul')) {
       if (u.querySelectorAll('canvas').length < 3) continue;
-      if (u.offsetHeight > 0 && u.offsetHeight < 220) return u;
+      if (u.offsetHeight > 0 && u.offsetHeight < 220) { __trayEl = u; return u; }
     }
     return null;
   };

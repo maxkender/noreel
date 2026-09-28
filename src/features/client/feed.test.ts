@@ -64,6 +64,42 @@ describe('le fil qu’on ne touche plus', () => {
     expect(src).toContain('__unwall()');
   });
 
+  /*
+    Le vrai coupable du fil noir, et le plus long a trouver : une feuille CSS.
+
+    Elle cachait « a[href*=/reel/] » et « [aria-label*=Reels] » sur tout le
+    document. Le premier est le lien qui enveloppe la video d'une publication,
+    le second n'importe quel conteneur dont l'etiquette mentionne Reels. Le
+    navigateur les applique a chaque noeud ajoute en descendant, et une regle
+    CSS ne se defait pas — contrairement a nos marques, que __restore sait
+    retirer. Deux correctifs successifs n'ont rien change parce qu'ils ne
+    touchaient que le JavaScript.
+  */
+  it('ne cache par CSS que la barre de navigation', () => {
+    const css = src.slice(src.indexOf('const css ='), src.indexOf('__css(css)'));
+
+    // Aucun selecteur libre : chacun est ancre dans la barre.
+    for (const line of css.split('\n')) {
+      const sel = line.trim();
+      if (!sel || sel.startsWith('/') || sel.startsWith('*') || !sel.includes('[')) continue;
+      for (const one of sel.split(',')) {
+        const t = one.replace(/\{[^}]*\}/, '').trim();
+        if (!t) continue;
+        expect(t).toMatch(/^(nav|\[role="navigation"\]|div\[class\*="tabbar" i\])\s/);
+      }
+    }
+
+    // Et surtout : plus jamais ces deux-la, qui visent du contenu de fil.
+    expect(css).not.toContain('a[href*="/reel/"]');
+    expect(css).not.toMatch(/^\s*\[aria-label\*="Reels" i\]/m);
+  });
+
+  it('retient le carrousel de stories au lieu d’en chercher un nouveau', () => {
+    // Un element cache a une hauteur nulle : la recherche ne le retrouvait
+    // plus et designait une nouvelle victime a chaque passe.
+    expect(src).toContain('if (__trayEl && document.body.contains(__trayEl)) return __trayEl;');
+  });
+
   it('emporte les mots du panneau avec les reglages', () => {
     // Ecrits en dur dans le script, ils echapperaient au typage et a la
     // parite des langues — et sortiraient en francais dans l'app anglaise.
