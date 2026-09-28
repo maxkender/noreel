@@ -12,7 +12,8 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { Button } from '@/components/Button';
-import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
+import { cortiLevel, cortiLine } from '@/components/Corti';
+import { CortiDock } from '@/components/CortiDock';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { dict, useT } from '@/i18n';
@@ -61,7 +62,15 @@ export function RecoveryCard({ s }: { s: Stats }) {
 
   return (
     <Glass radius={26} intensity={55} warmEdge="none" style={st.card}>
-      <Corti level={level} size={148} />
+      {/*
+        Sur sa soucoupe, et jamais immobile.
+        L'onglet blocage est l'ecran ou l'on vient voir comment il va : une
+        vignette posee la ne donne aucune raison de s'attarder. La scene, elle,
+        bouge en permanence — sept mouvements sur sept periodes qui ne se
+        divisent pas — et le halo prend la couleur de l'indice, si bien qu'on
+        sait ou l'on en est avant d'avoir lu le moindre chiffre.
+      */}
+      <CortiDock level={level} size={268} tint={tone} />
 
       <Text variant="lead" color={c.accent} style={st.mid}>
         {cortiLine(level, s.days)}

@@ -16,6 +16,7 @@ import {
   Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard,
 } from './Recovery';
 import { MockFeed } from '@/components/MockFeed';
+import { CortiDock } from '@/components/CortiDock';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import type { Stats } from '@/services/protect';
 import { Settings } from './Settings';
@@ -54,6 +55,19 @@ describe('la carte de recuperation', () => {
   // L'anneau plein est le cas qui deborde : cent pour cent de son tour.
   it('a cent pour cent', () => { render(<RecoveryCard s={{ ...FRESH, brain: 100 }} />); });
   it('a zero', () => { render(<RecoveryCard s={{ ...FRESH, brain: 0 }} />); });
+});
+
+/*
+ * La soucoupe : neuf calques empiles et sept mouvements. Une image manquante
+ * ou un calque mal nomme ne se verrait qu'a l'ecran.
+ */
+describe('la soucoupe', () => {
+  for (const level of [0, 1, 2, 3] as const) {
+    it(`niveau ${level}`, () => {
+      const r = render(<CortiDock level={level} tint="#5B9DFF" />);
+      expect(r.toJSON()).toBeTruthy();
+    });
+  }
 });
 
 describe('la note d’estimation', () => {
