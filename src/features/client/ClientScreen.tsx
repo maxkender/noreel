@@ -13,7 +13,9 @@ import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
+import { ACCOUNT } from './accounts';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
+import { tintById } from '@/theme/tints';
 import { NavBar, type NavAction } from './NavBar';
 import { GlassSweep } from '@/components/GlassSweep';
 import { ClientSettings } from './ClientSettings';
@@ -21,6 +23,7 @@ import { useSettings } from '@/store/settings';
 import { record, today } from '@/services/usage';
 import { countBlocked, markDay, markRaw, reportRules } from '@/services/protect';
 import { useProStore } from '@/store/pro';
+import { PURCHASES_ENABLED } from '@/services/purchases';
 import { ProGate } from '@/features/home/ProGate';
 
 const LABELS: Record<ClientId, string> = {
@@ -83,6 +86,18 @@ export function ClientScreen({ id }: { id: ClientId }) {
   */
   const chrome = client.chrome[theme === 'dark' ? 'dark' : 'light'];
 
+  /*
+    La teinte choisie pour cette app.
+    Elle peint NOTRE bandeau et les accents du site — boutons, liens, ses
+    propres bulles de message. Sans teinte, le bandeau reprend la couleur du
+    site et la page garde ses couleurs d'origine.
+  */
+  const tintId = useAppsStore((st) => st.tints[id]);
+  const tint = useMemo(() => tintById(tintId), [tintId]);
+  const tinted = tintId && tintId !== 'default';
+  const barColour = tinted ? tint.hex : chrome;
+  const barInk = tinted ? tint.ink : c.mist;
+
   // La fenetre du samedi soir. Elle voyage avec le script : la page doit
   // pouvoir decider seule, a la minute, sans qu'on lui reparle.
   const valve = useSettings((x) => x.valve);
@@ -117,7 +132,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // chargement de la page, changer la propriete ensuite ne change rien.
   // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
   const script = useMemo(
-    () => buildScript(client.script, active, theme, valve),
+    () => buildScript(client.script, active, theme, valve, tinted ? tint.rgb : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]
   );
@@ -151,7 +166,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
     fin. On ajoute donc le temps ecoule depuis l'entree.
   */
   useEffect(() => {
-    if (pro) return;
+    /*
+      On ne plafonne pas ce qu'on ne peut pas vendre.
+      Sans boutique configuree il n'existe aucun moyen de lever le mur : le
+      plafond deviendrait une impasse, et le bouton « debloquer » un bouton
+      qui ne fait rien.
+    */
+    if (pro || !PURCHASES_ENABLED) return;
     let alive = true;
     const t0 = Date.now();
     const check = async () => {
@@ -177,6 +198,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
       `window.__nrApply && window.__nrApply(${JSON.stringify(active)}); true;`
     );
   }, [active]);
+
+  // La teinte voyage par le meme canal : on la change dans le panneau, sans
+  // quitter la page ni la recharger.
+  useEffect(() => {
+    web.current?.injectJavaScript(
+      `window.__nrApplyTint && window.__nrApplyTint(${JSON.stringify(tinted ? tint.rgb : null)}); true;`
+    );
+  }, [tinted, tint.rgb]);
 
   // Le theme voyage comme les reglages : la page est deja chargee, on ne
   // peut plus remplacer le script, mais on peut lui parler.
@@ -229,17 +258,22 @@ export function ClientScreen({ id }: { id: ClientId }) {
       case 'back': web.current?.goBack(); break;
       case 'forward': web.current?.goForward(); break;
       case 'reload': reload(); break;
-      // « Accueil » est celui du SITE : on revient a la page saine, pas a
-      // l'app. C'est la croix et « Quitter » qui ramenent a UnSwipe.
-      case 'home':
+      /*
+        Le selecteur de comptes est celui du SITE.
+        Isoler deux sessions de notre cote demanderait un magasin de cookies
+        par compte, et WKWebView n'en expose qu'un. Instagram, lui, garde deja
+        ses sessions : sa page de connexion liste les comptes enregistres et
+        bascule sans deconnecter le premier.
+      */
+      case 'account':
         web.current?.injectJavaScript(
-          `location.assign(${JSON.stringify(client.url)}); true;`
+          `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
         );
         break;
       case 'settings': setPanel(true); break;
       case 'exit': exit(); break;
     }
-  }, [client.url, exit, reload]);
+  }, [exit, id, reload]);
 
   const guard = useCallback((req: { url: string }) => {
     let u: URL;
@@ -289,9 +323,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
         Il suit le theme — un bandeau fige en sombre ferait une barre noire
         au-dessus d'une page claire.
       */}
-      <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: chrome }]}>
+      <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: barColour }]}>
         <View style={styles.barRow}>
-          <Text variant="label" color={withAlpha(c.mist, 0.5)}>
+          <Text variant="label" color={withAlpha(barInk, 0.65)}>
             {raw ? 'SANS FILTRE' : LABELS[id]}
           </Text>
         </View>
@@ -396,7 +430,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
         Le plafond du jour. Il explique AVANT de vendre : un paywall qui tombe
         sans un mot se lit comme une panne.
       */}
-      {capped && !gate && (
+      {/*
+        Le mur suit l'etat Pro, il ne se souvient pas d'avoir ete leve.
+        Il ne tombait qu'en repassant par la fermeture du paywall : un achat
+        arrive autrement — une restauration, un code promo, le renouvellement
+        signale par RevenueCat — laissait le mur en place alors que
+        l'abonnement etait actif.
+      */}
+      {capped && !pro && !gate && (
         <View style={styles.cap}>
           <View style={styles.wallRing}>
             <Hourglass size={28} strokeWidth={2} color={c.ember} />
@@ -418,14 +459,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         </View>
       )}
 
-      <ProGate
-        visible={gate}
-        onClose={() => {
-          setGate(false);
-          // Achete : le plafond tombe. Refuse : il reste, et la sortie est la.
-          if (useProStore.getState().pro) setCapped(false);
-        }}
-      />
+      <ProGate visible={gate} onClose={() => setGate(false)} />
 
       <ClientSettings
         id={id}

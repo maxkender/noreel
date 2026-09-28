@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { SlideInDown } from 'react-native-reanimated';
-import { LogOut, Lock, UserRoundCog } from 'lucide-react-native';
+import { Check, LogOut, Lock, UserRoundCog } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -14,39 +14,10 @@ import { Toggle } from '@/features/home/parts';
 import { LockedPill } from '@/features/home/LockedPill';
 import { useProStore } from '@/store/pro';
 import { LOGOS, APPS } from '@/features/home/AppSlider';
+import { TINTS } from '@/theme/tints';
 import type { ClientId } from './blockers';
+import { ACCOUNT } from './accounts';
 
-/**
- * Changer de compte, par la porte du site lui-meme.
- *
- * Isoler deux sessions cote app demanderait un magasin de cookies par
- * compte, et WKWebView n'en expose qu'un seul a react-native-webview. Mais
- * Instagram, X et TikTok savent deja tenir plusieurs comptes a la fois :
- * se connecter depuis leur page ajoute le compte a LEUR selecteur sans
- * chasser le premier. On y mene, plutot que d'imiter mal.
- */
-const ACCOUNT: Record<ClientId, { add: string; out: string; note?: string }> = {
-  instagram: {
-    add: 'https://www.instagram.com/accounts/login/',
-    out: 'https://www.instagram.com/accounts/logout/',
-  },
-  twitter: {
-    add: 'https://x.com/i/flow/login',
-    out: 'https://x.com/logout',
-  },
-  tiktok: {
-    add: 'https://www.tiktok.com/login',
-    out: 'https://www.tiktok.com/logout',
-  },
-  youtube: {
-    add: 'https://accounts.google.com/AccountChooser?continue=https://m.youtube.com/',
-    out: 'https://accounts.google.com/Logout',
-    // Google refuse souvent la connexion depuis un navigateur integre. On
-    // le dit ici plutot que de laisser son message d'erreur passer pour une
-    // panne de notre cote.
-    note: 'Google refuse parfois la connexion depuis un navigateur intégré.',
-  },
-};
 
 /**
  * Les reglages de l'app, atteignables SANS la quitter.
@@ -65,6 +36,10 @@ export function ClientSettings({
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
   useAppsStore((s) => s.settings);
+  // « tint » est deja pris plus haut par la teinte du FLOU de la feuille :
+  // celle-ci est la couleur choisie pour l'app.
+  const colour = useAppsStore((s) => s.tints[id]);
+  const setColour = useAppsStore((s) => s.setTint);
 
   const name = APPS.find((a) => a.id === id)?.name ?? id;
 
@@ -100,6 +75,40 @@ export function ClientSettings({
               Les changements s’appliquent tout de suite.
             </Text>
 
+
+            {/*
+              La teinte.
+              Instagram publie sa palette en proprietes CSS personnalisees :
+              on remplace les variables d'ACCENT — boutons, liens, ses propres
+              bulles de message — et le bandeau du haut suit. Les fonds ne
+              bougent pas : un fil sur vert sature ne se lit plus, et ce n'est
+              pas ce qu'on demande en demandant un Instagram vert.
+            */}
+            <Text variant="label" tone="tertiary" style={st.section}>COULEUR</Text>
+
+            <View style={st.tints}>
+              {TINTS.map((t) => {
+                const on = (colour ?? 'default') === t.id;
+                return (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => { haptics.tick(); setColour(id, t.id); }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                    accessibilityLabel={t.label}
+                    style={[st.swatch, { backgroundColor: t.hex }, on && st.swatchOn]}
+                  >
+                    {on && <Check size={15} strokeWidth={3} color={t.ink} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text variant="label" tone="tertiary" style={st.note}>
+              {id === 'instagram'
+                ? 'Change les boutons, les liens et tes bulles de message.'
+                : 'Change le bandeau du haut. Les couleurs du site ne bougent que sur Instagram.'}
+            </Text>
 
             <Text variant="label" tone="tertiary" style={st.section}>COMPTE</Text>
 
@@ -154,6 +163,15 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   note: { marginTop: space.lg, lineHeight: 17 },
   section: { marginTop: space.xl, marginBottom: space.xs },
+  tints: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
+  swatch: {
+    width: 38, height: 38, borderRadius: 19,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.2),
+  },
+  // Le choix se voit a l'anneau, pas a la taille : une pastille qui grandit
+  // decale toutes les autres.
+  swatchOn: { borderWidth: 2.5, borderColor: c.mist },
   action: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),

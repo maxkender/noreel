@@ -5,7 +5,7 @@ import Animated, {
   FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import {
-  ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, X,
+  ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, UsersRound, X,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -16,7 +16,15 @@ import { Text } from '@/components/type/Text';
 const SIZE = 58;
 const MARGIN = 14;
 
-export type NavAction = 'back' | 'home' | 'reload' | 'forward' | 'settings' | 'exit';
+/*
+ * « Accueil » veut dire l'accueil d'UNSWIPE, pas celui du site.
+ *
+ * La maison ramenait a la page d'accueil d'Instagram, et la croix quittait
+ * Instagram. Les deux disaient donc le contraire de ce qu'on attend : dans
+ * une barre qui appartient a UnSwipe, la maison est celle d'UnSwipe, et une
+ * croix ferme ce qu'elle surmonte — la barre.
+ */
+export type NavAction = 'back' | 'reload' | 'forward' | 'account' | 'settings' | 'exit';
 
 /**
  * La barre de navigation, et la poignee qui l'ouvre.
@@ -90,14 +98,30 @@ export function NavBar({
         >
           <View style={styles.bar}>
             <Key icon={ChevronLeft} label="Retour" onPress={() => act('back')} />
-            <Key icon={House} label="Accueil du site" onPress={() => act('home')} />
+            <Key icon={House} label="Accueil UnSwipe" onPress={() => act('exit')} />
             <Key icon={RotateCw} label="Recharger" onPress={() => act('reload')} />
             <Key icon={ChevronRight} label="Suivant" onPress={() => act('forward')} />
+            {/*
+              Changer de compte en un geste.
+              Instagram tient lui-meme plusieurs sessions : sa page de
+              connexion liste les comptes deja enregistres et bascule sans
+              deconnecter le premier. On y mene donc par son ADRESSE, comme
+              partout ailleurs ici — un selecteur reconnu a sa forme ne
+              survivrait pas au prochain remaniement, une adresse si.
+            */}
+            <Key icon={UsersRound} label="Changer de compte" onPress={() => act('account')} />
             <Key icon={Gear} label="Réglages" onPress={() => act('settings')} colour={c.accent} />
           </View>
 
+          {/* La croix ferme la barre, elle ne quitte pas le site : c'est la
+              maison qui ramene a UnSwipe. */}
           <Animated.View entering={FadeIn.delay(80).duration(220)} style={styles.quitWrap}>
-            <Key icon={X} label="Quitter" onPress={() => act('exit')} big />
+            <Key
+              icon={X}
+              label="Fermer"
+              onPress={() => { haptics.tap(); setOpen(false); }}
+              big
+            />
           </Animated.View>
         </Animated.View>
       )}

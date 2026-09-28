@@ -102,12 +102,25 @@ export function Paywall(
   }, [exitDelay]);
   const [packs, setPacks] = useState<PurchasesPackage[]>([]);
   const [busy, setBusy] = useState(false);
+  /*
+    Le magasin n'a pas encore repondu.
+
+    Sans cet etat, appuyer sur le bouton pendant la seconde de chargement
+    tombait dans la branche « aucun forfait » : le paywall se refermait en
+    silence, sans rien acheter. Vu depuis un mur de blocage, ca donne un
+    bouton « debloquer » qui ne debloque rien — le defaut le plus couteux
+    possible, puisqu'il frappe au moment ou quelqu'un voulait payer.
+  */
+  const [loading, setLoading] = useState(PURCHASES_ENABLED);
   const setPro = useProStore((x) => x.setPro);
   const restorePro = useProStore((x) => x.restore);
 
   useEffect(() => {
+    if (!PURCHASES_ENABLED) return;
     let alive = true;
-    void currentOffering().then((o) => { if (alive && o) setPacks(o.availablePackages); });
+    void currentOffering()
+      .then((o) => { if (alive && o) setPacks(o.availablePackages); })
+      .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, []);
 
@@ -124,8 +137,13 @@ export function Paywall(
   const daysLost = Math.round((minutes * 365) / 60 / 24);
 
   const go = async () => {
-    // Sans achat configure, le bouton continue vers l'app : jamais de mur.
-    if (!PURCHASES_ENABLED || !chosen) { onDone(); return; }
+    // Sans achat configure DU TOUT, le bouton continue vers l'app : c'est le
+    // mode beta, et il ne doit jamais enfermer personne.
+    if (!PURCHASES_ENABLED) { onDone(); return; }
+    // Le magasin repond encore : on attend plutot que de refermer l'ecran.
+    // C'est la distinction qui manquait — « pas de boutique » et « boutique
+    // pas encore prete » menaient au meme endroit.
+    if (loading || !chosen) return;
     setBusy(true);
     const r = await buy(chosen);
     setBusy(false);
@@ -170,9 +188,9 @@ export function Paywall(
   return (
     <Screen
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
-      cta={busy ? 'Un instant…' : 'Reprendre contrôle de mon temps'}
+      cta={busy || loading ? 'Un instant…' : 'Reprendre contrôle de mon temps'}
       onPress={() => { void go(); }}
-      disabled={busy}
+      disabled={busy || loading || (PURCHASES_ENABLED && !chosen)}
       hue="warm"
     >
       <View style={st.head}>

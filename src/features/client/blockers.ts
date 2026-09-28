@@ -32,11 +32,14 @@ export function buildScript(
   base: string,
   settings: Record<string, boolean>,
   theme: 'light' | 'dark' = 'dark',
-  valve?: Valve
+  valve?: Valve,
+  /** Triplet RGB nu, ou null pour laisser au site ses propres couleurs. */
+  tint: string | null = null
 ): string {
   return `window.__NR = ${JSON.stringify(settings)};\n`
     + `window.__nrTheme = ${JSON.stringify(theme)};\n`
     + `window.__nrValve = ${JSON.stringify(valve ?? { on: false, day: 6, from: 20, to: 21 })};\n`
+    + `window.__nrTint = ${JSON.stringify(tint)};\n`
     + base;
 }
 
@@ -70,6 +73,10 @@ const COMMON = `
     }, 300);
   };
   const __watch = (fn) => {
+    // La teinte se pose UNE fois : elle vit sur l'element racine, que les
+    // navigations internes ne remplacent jamais. La reposer a chaque passe
+    // ferait quatorze ecritures de style par mouvement de doigt.
+    try { __tint(); } catch (e) { /* le site n'a pas ces variables */ }
     // La soupape est relue A CHAQUE passe, avant les regles : c'est elle qui
     // decide si la feuille toujours-active s'applique ou dort.
     const pass = () => {
@@ -116,6 +123,106 @@ const COMMON = `
     deja cache est deja compte, et chaque passe repasse dessus.
   */
   let __hits = 0;
+  /*
+    Ce qu'une regle n'a JAMAIS le droit de masquer.
+
+    Les regles trouvent une etiquette — « Suggestions pour vous », « Ad » —
+    puis remontent jusqu'a un ancetre assez grand pour etre la publication.
+    Or Instagram affiche ces memes etiquettes DANS ses fenetres : la liste des
+    likes, celle des abonnes, le panneau de commentaires. La remontee y trouve
+    la fenetre elle-meme, et display:none sur une fenetre laisse un ecran
+    noir dont on ne sort pas. C'est exactement ce qu'on voyait en ouvrant ses
+    likes pour la premiere fois.
+
+    Un conteneur qui porte un dialogue, ou plus d'une publication, n'est pas
+    une publication.
+  */
+  /*
+    Un noeud deja examine PAR CETTE REGLE.
+
+    Reparcourir tous les spans du fil a chaque passe, plusieurs fois par
+    seconde pendant qu'on fait defiler, est ce qui coutait le plus cher — et
+    ce qui rendait le defilement saccade.
+
+    Le cache est tenu par regle et non globalement : YouTube passe quatre
+    motifs differents sur les memes noeuds dans une seule passe, et un
+    marqueur commun aurait laisse le premier motif consommer tous les noeuds
+    avant que les trois autres ne les voient.
+
+    Un noeud sans texte n'est jamais marque : React pose parfois le texte un
+    instant apres le noeud, et le marquer vide reviendrait a ne plus jamais
+    le regarder.
+  */
+  const __scanned = new Map();
+  const __fresh = (re, n, t) => {
+    if (!t) return false;
+    let set = __scanned.get(re);
+    if (!set) { set = new WeakSet(); __scanned.set(re, set); }
+    if (set.has(n)) return false;
+    set.add(n);
+    return true;
+  };
+
+  /*
+    La teinte.
+
+    Instagram publie sa palette en proprietes CSS personnalisees, sous forme
+    de triplets RGB nus qu'il consomme en rgb(var(--...)). On remplace donc
+    la valeur des variables d'ACCENT, et rien d'autre ne bouge : les photos
+    gardent leurs couleurs et les textes leur contraste. C'est tout l'interet
+    par rapport a un hue-rotate sur la page, qui repeindrait aussi les photos.
+
+    On ne touche pas aux variables de FOND. Un fil sur fond vert sature ne se
+    lit plus, et ce n'est pas ce qu'on demande quand on demande un Instagram
+    vert : ce sont les boutons, les liens et ses propres bulles de message.
+
+    Les noms sont ceux d'Instagram. Les poser sur un autre site ne fait rien —
+    une propriete personnalisee que personne ne lit ne coute rien — donc la
+    fonction reste commune aux quatre.
+  */
+  const __TINTED = [
+    '--ig-primary-button',
+    '--ig-primary-button-hover',
+    '--ig-colors-button-primary-background',
+    '--ig-colors-button-primary-background--hover',
+    '--ig-colors-button-primary-background--pressed',
+    '--ig-colors-link-text',
+    '--ig-colors-button-borderless-text',
+    '--ig-colors-button-borderless-text--hover',
+    '--ig-colors-button-borderless-text--pressed',
+    '--ig-colors-button-primary-link-text',
+    '--ig-colors-button-primary-link-text--hover',
+    '--ig-colors-button-primary-link-text--pressed',
+    '--ig-outgoing-message-bubble',
+    '--ig-temporary-highlight',
+  ];
+  const __tint = () => {
+    const t = window.__nrTint;
+    const root = document.documentElement;
+    if (!root || !root.style) return;
+    for (const v of __TINTED) {
+      // Sans teinte on RETIRE la surcharge au lieu d'ecrire la couleur du
+      // site : ainsi le jour ou Instagram change son bleu, on le suit.
+      if (t) root.style.setProperty(v, t);
+      else root.style.removeProperty(v);
+    }
+  };
+  window.__nrApplyTint = (t) => {
+    window.__nrTint = t;
+    try { __tint(); } catch (e) { /* le site n'a pas ces variables */ }
+  };
+
+  const __safe = (el) => {
+    if (!el) return null;
+    if (el === document.body || el === document.documentElement) return null;
+    const tag = el.tagName;
+    if (tag === 'BODY' || tag === 'HTML' || tag === 'MAIN' || tag === 'SECTION') return null;
+    if (el.getAttribute && el.getAttribute('role') === 'dialog') return null;
+    if (el.querySelector && el.querySelector('[role="dialog"]')) return null;
+    if (el.querySelectorAll && el.querySelectorAll('article').length > 1) return null;
+    return el;
+  };
+
   const __hide = (el, key) => {
     if (!el) return;
     if (key) el.setAttribute('data-nr', key);
@@ -432,6 +539,9 @@ export const INSTAGRAM_BLOCKER = `
     if (art) return art;
     let el = n;
     for (let i = 0; i < 10 && el && el.parentElement; i += 1) {
+      // On ne franchit pas le bord d'une fenetre en remontant : au-dela, le
+      // premier ancetre « assez grand » est la fenetre entiere.
+      if (el.getAttribute && el.getAttribute('role') === 'dialog') return n;
       if (el.offsetHeight > 220) return el;
       el = el.parentElement;
     }
@@ -449,8 +559,16 @@ export const INSTAGRAM_BLOCKER = `
   const __byLabel = (re, key) => {
     document.querySelectorAll('span, h2, h3, div[role="heading"]').forEach((n) => {
       if (n.children.length) return;
+      /*
+        Les publicites et les suggestions se masquent DANS LE FIL, pas dans
+        une fenetre. Instagram ecrit « Suggestions pour vous » au bas de la
+        liste des likes et de celle des abonnes : la regle y remontait
+        jusqu'a la fenetre et la faisait disparaitre entiere.
+      */
+      if (n.closest('[role="dialog"]')) return;
       const t = (n.textContent || '').trim();
-      if (t.length > 0 && t.length < 64 && re.test(t)) __hide(__block(n), key);
+      if (!__fresh(re, n, t)) return;
+      if (t.length < 64 && re.test(t)) __hide(__safe(__block(n)), key);
     });
   };
 
@@ -547,13 +665,13 @@ export const INSTAGRAM_BLOCKER = `
     // Un reel du fil est un <article> contenant un lien /reel/xxx ; dans
     // l'explore c'est une tuile. Les deux partent, et le post entier avec.
     document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
-      __hide(a.closest('article') || a, 'short');
+      __hide(__safe(a.closest('article')) || a, 'short');
     });
 
     // Filet de securite : un post qui porte la mention d'un son original
     // ou le mot Reel est un reel, meme sans lien /reel/ visible.
     posts().forEach((art) => {
-      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(art, 'short');
+      if (REEL.test((art.textContent || '').slice(0, 200))) __hide(__safe(art), 'short');
     });
 
     if (__on('ads')) __byLabel(AD, 'ads');
@@ -668,7 +786,8 @@ export const YOUTUBE_BLOCKER = `
     document.querySelectorAll('span, h2, h3, div[role="heading"], a').forEach((n) => {
       if (n.children.length) return;
       const t = (n.textContent || '').trim();
-      if (t && t.length < 40 && re.test(t)) fn(n);
+      if (!__fresh(re, n, t)) return;
+      if (t.length < 40 && re.test(t)) fn(n);
     });
   };
 
