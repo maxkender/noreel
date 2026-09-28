@@ -100,10 +100,19 @@ const STEP = 130;   // decalage entre deux reels : ils tombent en cascade
  * pas seulement des publications, et c'est l'onglet qui manque qui le dit.
  */
 export function MockFeed({
-  filtered, u = 1, drift = false,
+  filtered, u = 1, drift = false, tab,
 }: {
   filtered: boolean;
   u?: number;
+  /**
+   * L'onglet Reels est-il encore la ?
+   *
+   * Par defaut il suit `filtered`, avec le retard de la cascade : il s'en va
+   * une fois les publications tombees. L'onboarding, lui, veut separer les
+   * deux temps — on regarde d'abord tomber les Reels, PUIS on va voir la
+   * barre du bas de pres. Passer ce booleen prend la main sur le retard.
+   */
+  tab?: boolean;
   /**
    * Fait descendre le fil tout seul. Un fil arrete est une capture d'ecran :
    * on croit voir une image, pas une app.
@@ -140,7 +149,11 @@ export function MockFeed({
         ))}
       </Animated.View>
 
-      <TabBar u={u} filtered={filtered} />
+      <TabBar
+        u={u}
+        gone={tab === undefined ? filtered : !tab}
+        wait={tab === undefined && filtered ? 3 * STEP + 200 : 0}
+      />
     </View>
   );
 }
@@ -202,20 +215,24 @@ function Tray({ u }: { u: number }) {
  * L'onglet Reels DISPARAIT quand le filtre passe, largeur comprise pour que les
  * autres se rapprochent. C'est le detail qui fait comprendre l'app sans un mot :
  * on ne masque pas des publications, on retire une porte.
+ *
+ * Le retard lui est DONNE au lieu d'etre calcule ici : selon l'ecran, l'onglet
+ * part dans la foulee des publications ou bien plus tard, quand on a eu le
+ * temps de venir le regarder de pres.
  */
-function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
+function TabBar({ u, gone, wait }: { u: number; gone: boolean; wait: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   const fade = useSharedValue(1);
 
   useEffect(() => {
-    fade.value = withDelay(
-      filtered ? 3 * STEP + 200 : 0,
-      withTiming(filtered ? 0 : 1, { duration: 320 })
-    );
-  }, [filtered, fade]);
+    fade.value = withDelay(wait, withTiming(gone ? 0 : 1, { duration: 320 }));
+  }, [gone, wait, fade]);
 
-  const gone = useAnimatedStyle(() => ({
+  // La LARGEUR fait partie de l'animation : sans elle l'onglet s'effacerait en
+  // laissant son trou, et un trou se lit comme un bouton casse, pas comme un
+  // bouton retire. Les quatre autres se rapprochent, et la barre se referme.
+  const shrink = useAnimatedStyle(() => ({
     opacity: fade.value,
     width: 16 * u * fade.value,
     transform: [{ scale: 0.6 + fade.value * 0.4 }],
@@ -225,7 +242,7 @@ function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
     <View style={st.tabs}>
       <House size={14 * u} strokeWidth={2.4} color={c.mist} fill={c.mist} />
       <Search size={14 * u} strokeWidth={2.2} color={c.mist} />
-      <Animated.View style={[st.tabGone, gone]}>
+      <Animated.View style={[st.tabGone, shrink]}>
         <Clapperboard size={14 * u} strokeWidth={2.2} color={c.mist} />
       </Animated.View>
       <View>
@@ -235,6 +252,18 @@ function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
       <User size={14 * u} strokeWidth={2.2} color={c.mist} />
     </View>
   );
+}
+
+/**
+ * La barre d'onglets seule, a l'echelle qu'on veut.
+ *
+ * Dans un telephone de 196 points, un bouton fait quatorze points de haut :
+ * on voit bien qu'il se passe quelque chose en bas, on ne voit pas QUOI. Le
+ * parcours la ressort donc du cadre et la montre en grand — ce sont les
+ * memes boutons, le meme composant, juste regardes de pres.
+ */
+export function MockTabBar({ u = 1, gone = false }: { u?: number; gone?: boolean }) {
+  return <TabBar u={u} gone={gone} wait={0} />;
 }
 
 function Row({

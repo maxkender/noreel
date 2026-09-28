@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming,
+} from 'react-native-reanimated';
 import { Star } from 'lucide-react-native';
+import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
@@ -11,7 +14,7 @@ import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { Corti, type CortiLevel } from '@/components/Corti';
 import { FaceCloud } from '@/components/FaceCloud';
-import { MockFeed } from '@/components/MockFeed';
+import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
 import { useT } from '@/i18n';
@@ -157,26 +160,135 @@ export function Ninety({ onNext }: P) {
  * donc rien a ecrire autour — une pastille qui compte les reels retires et un
  * paragraphe explicatif ne faisaient que rediger ce qui etait deja a l'image.
  */
+/** Les trois temps de la demonstration. */
+type Beat = 'raw' | 'filtered' | 'zoom';
+
+const RAW_MS = 1500;    // le temps de reconnaitre un fil ORDINAIRE
+const FALL_MS = 1150;   // la cascade (3 x 130 + 420), plus un temps de pose
+const HELD_MS = 800;    // la barre grossie, l'onglet Reels encore la
+
+/** La largeur du telephone. Le fil est dessine pour 188 points utiles,
+ *  d'ou le rapport passe a MockFeed : le cadre lui en prend huit. */
+const PHONE = 172;
+/** La hauteur de la barre du bas a cette echelle : deux marges de 8 et une
+ *  icone de 14, le tout mis a l'echelle du fil. Le repere s'y ajuste. */
+const BAR = Math.round(((PHONE - 8) / 188) * 30);
+
+/**
+ * La preuve, en trois temps — parce que deux ne suffisaient pas.
+ *
+ * On voyait les Reels tomber, et on en concluait qu'UnSwipe CACHE des
+ * publications. Ce qui laisse entiere la seule question que tout le monde se
+ * pose : « et si j'appuie sur l'onglet Reels ? ». La barre du bas y repond
+ * depuis le debut, mais elle fait quatorze points de haut dans une maquette
+ * de telephone — personne ne la regarde. On vient donc la chercher : elle
+ * sort du cadre, grossie, son onglet Reels ENCORE LA, puis il s'efface sous
+ * les yeux et les autres boutons se rapprochent pour combler le trou.
+ *
+ * L'ordre fait tout. Montrer la barre deja amputee ne prouve rien, on ne sait
+ * pas ce qu'il y avait avant. Il faut voir la porte, PUIS la voir partir.
+ */
 export function Proof({ onNext }: P) {
+  const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
-  const [filtered, setFiltered] = useState(false);
+  const [beat, setBeat] = useState<Beat>('raw');
+  const [tab, setTab] = useState(true);
 
-  // On laisse le temps de reconnaitre un fil normal AVANT de le filtrer :
-  // filtre tout de suite, il n'y a plus rien a comparer.
   useEffect(() => {
-    const t = setTimeout(() => { setFiltered(true); haptics.success(); }, 1900);
-    return () => clearTimeout(t);
+    const ts = [
+      setTimeout(() => { setBeat('filtered'); haptics.success(); }, RAW_MS),
+      setTimeout(() => setBeat('zoom'), RAW_MS + FALL_MS),
+      setTimeout(() => { setTab(false); haptics.stop(); }, RAW_MS + FALL_MS + HELD_MS),
+    ];
+    return () => ts.forEach(clearTimeout);
   }, []);
 
+  // Le telephone s'efface pendant qu'on regarde la barre. Deux choses nettes
+  // au meme instant et l'oeil ne sait pas laquelle suivre ; il ne reste alors
+  // de la sequence qu'une impression de mouvement.
+  const back = useSharedValue(0);
+  useEffect(() => {
+    back.value = withTiming(beat === 'zoom' ? 1 : 0, {
+      duration: 520, easing: Easing.inOut(Easing.cubic),
+    });
+  }, [beat, back]);
+  const away = useAnimatedStyle(() => ({
+    opacity: 1 - back.value * 0.5,
+    transform: [{ scale: 1 - back.value * 0.05 }],
+  }));
+
+  /*
+    La barre montee reste MONTEE (pas de demontage a chaque temps) : c'est ce
+    qui lui permet d'animer la disparition de son propre onglet. Remontee au
+    moment ou l'onglet part, elle apparaitrait deja sans lui.
+  */
+  const pop = useSharedValue(0);
+  useEffect(() => {
+    pop.value = withDelay(beat === 'zoom' ? 140 : 0, withTiming(beat === 'zoom' ? 1 : 0, {
+      duration: 520, easing: Easing.out(Easing.back(1.4)),
+    }));
+  }, [beat, pop]);
+  const rise = useAnimatedStyle(() => ({
+    // Le rebond depasse 1 : on borne l'opacite, pas l'echelle — c'est l'echelle
+    // qui fait le saut hors du cadre.
+    opacity: Math.min(1, pop.value * 2),
+    transform: [{ translateY: (1 - pop.value) * 30 }, { scale: 0.7 + pop.value * 0.3 }],
+  }));
+
+  // Elle suit l'ONGLET, pas le temps : pendant les huit dixiemes de seconde
+  // ou la barre est grossie mais complete, elle annoncait deja son depart.
+  const line = beat === 'raw' ? d.proof.raw : tab ? d.proof.fall : d.proof.tab;
+
   return (
-    <Screen cta={d.pay.ctaPlain} onPress={onNext} hue="accent">
+    <Screen cta={d.pay.ctaPlain} onPress={onNext} hue="accent" center>
       <Text variant="displayM" style={st.mid}>{d.proof.title}</Text>
 
-      <View style={st.stage}>
-        <PhoneFrame width={196}>
-          <MockFeed filtered={filtered} drift />
-        </PhoneFrame>
+      <View style={st.proofStage}>
+        <View style={st.phoneWrap}>
+          <Animated.View style={away}>
+            {/* Le telephone tient dans l'ecran SANS defilement. A 196 points il
+                mesurait 425 de haut, et la barre du bas — tout l'objet de cette
+                sequence — passait sous la ligne de flottaison : l'animation se
+                jouait en entier pour quelqu'un qui n'en voyait que le debut. */}
+            <PhoneFrame width={PHONE}>
+              <MockFeed filtered={beat !== 'raw'} tab={tab} drift u={(PHONE - 8) / 188} />
+            </PhoneFrame>
+          </Animated.View>
+
+          {/* Le repere. Sans lui, la barre grossie flotte au-dessus du
+              telephone sans qu'on sache d'ou elle sort — on lit une barre
+              d'outils de plus, pas un agrandissement. Il cerne l'original,
+              et le lien se fait tout seul. */}
+          <Animated.View
+            style={[st.ring, rise, { borderColor: c.accent, shadowColor: c.accent }]}
+            pointerEvents="none"
+          />
+        </View>
+
+        <Animated.View
+          style={[
+            st.loupe, rise,
+            { backgroundColor: c.night, borderColor: withAlpha(c.accent, 0.4) },
+          ]}
+          pointerEvents="none"
+          testID="proof-loupe"
+        >
+          <MockTabBar u={2.4} gone={!tab} />
+        </Animated.View>
+      </View>
+
+      {/* Une reserve de hauteur FIXE : la phrase change a chaque temps, et
+          sans elle le telephone remonterait a chaque fois qu'elle raccourcit. */}
+      <View style={st.sayings}>
+        <Animated.View
+          key={beat}
+          style={st.saying}
+          entering={FadeIn.duration(420)}
+          exiting={FadeOut.duration(200)}
+        >
+          <Text variant="lead" tone="secondary" style={st.mid}>{line}</Text>
+        </Animated.View>
       </View>
     </Screen>
   );
@@ -317,6 +429,21 @@ const sheet = () => StyleSheet.create({
   dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.md },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFFFFF22' },
   stage: { alignItems: 'center', marginTop: space.xl },
+  proofStage: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.md },
+  phoneWrap: { width: PHONE },
+  ring: {
+    position: 'absolute', left: 3, right: 3, bottom: 3, height: BAR + 2,
+    borderWidth: 1.5, borderRadius: 11,
+    shadowOpacity: 0.55, shadowRadius: 10, shadowOffset: { width: 0, height: 0 },
+  },
+  loupe: {
+    position: 'absolute', left: 0, right: 0, bottom: 58,
+    borderRadius: 20, borderWidth: 1, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.7, shadowRadius: 26,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  sayings: { height: 56, marginTop: space.lg },
+  saying: { position: 'absolute', left: 0, right: 0, top: 0 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
   gaugeStage: { height: 190, alignItems: 'center', justifyContent: 'center' },
   steps: {

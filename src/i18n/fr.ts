@@ -174,7 +174,7 @@ export const fr = {
     step3b: 'Ressentir du plaisir, te concentrer : tout devient plus fade.',
     love: 'Ça peut même limiter ta capacité à {tomber amoureux}.',
     loveSub: 'L’amour naissant passe par le même circuit : l’aire tegmentale ventrale et le noyau caudé, ceux de la dopamine.',
-    loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology, 2005',
+    loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology',
     fix: 'Avec UnSwipe, tu répares tes récepteurs sans perdre contact avec tes proches.',
     ready: `Tu es prêt${NNBSP}?`,
     cta: 'Continuer',
@@ -261,6 +261,7 @@ export const fr = {
    * compilation tombe.
    */
   corti: {
+    recoveryAlt: 'Corti passe d’éteint à rayonnant',
     says0: 'Il a vu trop de Reels. Il ne sait plus pourquoi.',
     says1: '{n} jour{s} sans Reels. Il respire.',
     says2: '{n} jours sans Reels. Ça se voit, non ?',
@@ -292,6 +293,9 @@ export const fr = {
 
   proof: {
     title: 'Ton Instagram, sans le fil sans fin.',
+    raw: 'Ton fil, comme d’habitude.',
+    fall: 'Les Reels tombent, un par un.',
+    tab: 'Et l’onglet Reels s’en va. Il n’y a plus de porte à pousser.',
   },
 
   source: {
@@ -569,6 +573,29 @@ export const fr = {
     workKey: '{n} % travail',
     freeKey: 'libre',
   },
+
+  nudge: {
+    title: 'RAPPEL',
+    early: 'Encore deux ou trois jours et je saurai te dire ce que tu as repris.',
+    l1: 'À ce rythme, tu reprends {h} en trois mois. De quoi {what} {n} fois.',
+    l2: '{h} d’ici trois mois. Soit {what}, {n} fois, sans rien changer d’autre.',
+    l3: 'Trois mois à ce rythme font {h}. Personne ne te les rendra deux fois.',
+    l4: 'Tu es sur {h} pour le trimestre. Assez pour {what}.',
+    l5: '{h} en trois mois. Le genre de temps où l’on commence quelque chose.',
+    l6: 'Sur les trois prochains mois, {h} t’attendent. De quoi {what} {n} fois.',
+    l7: '{h} repris d’ici trois mois — pas gagnés, repris. Ils étaient déjà à toi.',
+    p1: 'À ce rythme, tu reprends {h} en trois mois. Soit {p} % du chemin pour {what}.',
+    p2: '{h} d’ici trois mois. {p} % de ce qu’il faut pour {what}.',
+    p3: 'Trois mois à ce rythme font {h}. Un début : {p} % pour {what}.',
+    plain1: 'À ce rythme, tu reprends {h} en trois mois. À toi de voir pour quoi.',
+    plain2: '{h} d’ici trois mois. C’est peu, et c’est déjà à toi.',
+    books: 'lire un livre',
+    chinese: 'apprendre le chinois',
+    instrument: 'apprendre un instrument',
+    marathon: 'préparer un marathon',
+    code: 'suivre une formation au code',
+  },
+
 
   duration: {
     lessThanMonth: `moins d'un mois`,

@@ -16,7 +16,7 @@ import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
 import { scheduleTrialReminder } from '@/services/trial';
-import { Corti } from '@/components/Corti';
+import { CortiRecovery } from '@/components/CortiRecovery';
 import { GlassApps } from '@/components/GlassApps';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
@@ -377,10 +377,17 @@ export function Paywall(
  * coche — et une liste ne fait rien ressentir. Une tete qui va mal et qui va
  * mieux, si, et c'est la meme promesse.
  *
- * La bascule se fait UNE fois, apres un temps de pose : assez long pour qu'on
- * ait vu dans quel etat il est, assez court pour qu'on n'ait pas fini de lire
- * le titre. Elle ne rejoue pas — ce n'est pas une boucle de demonstration,
- * c'est une phrase.
+ * C'est la sequence du studio qui joue, pas une reconstitution.
+ *
+ * Je la refaisais a la main : deux etats de la mascotte vectorielle et une
+ * table d'images cles pour aller de l'un a l'autre. Ca tenait debout, mais le
+ * moteur d'animation n'anime ici que des transformations — pas les couleurs du
+ * corps, pas les plis, pas la lueur. Or tout le virage est LA, dans le gris qui
+ * devient bleu. Le fichier du studio le fait image par image.
+ *
+ * Elle joue UNE fois et se fige sur Corti rayonnant. En boucle, elle
+ * raconterait « tu vas mieux, puis tu retombes, puis tu vas mieux » — sur la
+ * page ou l'on decide de payer, c'est exactement la phrase a ne pas dire.
  */
 function Healing() {
   const c = useColors();
@@ -388,8 +395,11 @@ function Healing() {
   const { d } = useT();
   const [healed, setHealed] = useState(false);
 
+  // La phrase change quand la COULEUR change, pas a la fin : le studio fait
+  // virer le corps au bleu entre la seconde et demie et les deux secondes et
+  // demie, et le mot doit arriver avec elle, pas quatre secondes plus tard.
   useEffect(() => {
-    const t = setTimeout(() => { setHealed(true); haptics.success(); }, 1800);
+    const t = setTimeout(() => { setHealed(true); haptics.success(); }, 2600);
     return () => clearTimeout(t);
   }, []);
 
@@ -402,9 +412,9 @@ function Healing() {
         la page la profondeur qui lui manquait.
       */}
       <View style={st.orbit}>
-        <GlassApps height={176} />
+        <GlassApps height={236} />
         <View style={st.orbitMid} pointerEvents="none">
-          <Corti level={healed ? 3 : 0} size={152} recover={healed} />
+          <CortiRecovery size={236} loop={false} />
         </View>
       </View>
 

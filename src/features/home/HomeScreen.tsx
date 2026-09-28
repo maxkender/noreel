@@ -37,6 +37,7 @@ import {
   Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
 } from './Recovery';
 import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
+import { nudgeOfTheDay } from '@/services/nudge';
 import { pullAndRestart } from '@/services/refresh';
 
 type Tab = 'home' | 'block' | 'account';
@@ -157,6 +158,9 @@ function HomeTab({
   const st = useMemo(() => sheet(c), [c]);
   const { s: prot } = useProtect();
   const level = cortiLevel(prot?.days ?? 0);
+  // Le tirage est deterministe : la meme journee donne toujours la meme
+  // phrase. Tire au hasard, elle changerait a chaque ouverture de l'app.
+  const nudge = useMemo(() => nudgeOfTheDay(prot), [prot]);
 
   return (
     <Animated.ScrollView
@@ -182,6 +186,18 @@ function HomeTab({
       </Pressable>
 
       <AppSlider minutes={minutes} />
+
+      {/*
+        Le rappel du jour, sous les applis.
+        Il part du temps qu'on a VRAIMENT repris et le projette sur trois mois.
+        Ce n'est pas une citation motivante — de celles-la on se lasse en trois
+        jours — c'est son propre chiffre, tourne autrement, et il change chaque
+        matin.
+      */}
+      <Glass radius={22} intensity={50} warmEdge="none" style={st.nudge}>
+        <Text variant="label" color={c.accent}>{nudge.title}</Text>
+        <Text variant="body" style={{ marginTop: space.xs }}>{nudge.body}</Text>
+      </Glass>
     </Animated.ScrollView>
   );
 }
@@ -462,6 +478,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   greet: { alignItems: 'center', gap: space.sm, paddingBottom: space.lg },
+  nudge: { marginTop: space.lg, paddingHorizontal: space.lg, paddingVertical: space.lg },
   stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(c.mist, 0.14) },
   cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

@@ -169,7 +169,7 @@ export const en: Dict = {
     step3b: 'Feeling pleasure, focusing: everything gets duller.',
     love: 'It can even blunt your ability to {fall in love}.',
     loveSub: 'Early romantic love runs on the same circuit: the ventral tegmental area and the caudate nucleus, the dopamine ones.',
-    loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology, 2005',
+    loveCite: 'Fisher, Aron & Brown · Journal of Comparative Neurology',
     fix: 'With UnSwipe, you repair your receptors without losing touch with the people you love.',
     ready: 'Ready?',
     cta: 'Continue',
@@ -242,6 +242,7 @@ export const en: Dict = {
   },
 
   corti: {
+    recoveryAlt: 'Corti goes from burnt out to radiant',
     says0: `He has seen too many Reels. He no longer knows why.`,
     says1: '{n} day{s} without Reels. He can breathe.',
     says2: '{n} days without Reels. You can tell, right?',
@@ -273,6 +274,9 @@ export const en: Dict = {
 
   proof: {
     title: 'Your Instagram, without the endless feed.',
+    raw: 'Your feed, just as it is.',
+    fall: 'The Reels drop out, one by one.',
+    tab: 'And the Reels tab goes with them. There is no door left to push.',
   },
 
   source: {
@@ -550,6 +554,29 @@ export const en: Dict = {
     workKey: '{n}% work',
     freeKey: 'free',
   },
+
+  nudge: {
+    title: 'REMINDER',
+    early: 'Give me two or three more days and I can tell you what you have reclaimed.',
+    l1: 'At this rate you reclaim {h} in three months. Enough to {what} {n} times.',
+    l2: '{h} within three months. That is {what}, {n} times over, changing nothing else.',
+    l3: 'Three months at this rate is {h}. Nobody gives those back twice.',
+    l4: 'You are on track for {h} this quarter. Enough to {what}.',
+    l5: '{h} in three months. The kind of time you start something with.',
+    l6: 'Over the next three months, {h} are waiting for you. Enough to {what} {n} times.',
+    l7: '{h} reclaimed within three months — not won, reclaimed. They were already yours.',
+    p1: 'At this rate you reclaim {h} in three months. That is {p}% of the way to {what}.',
+    p2: '{h} within three months. {p}% of what it takes to {what}.',
+    p3: 'Three months at this rate is {h}. A start: {p}% towards {what}.',
+    plain1: 'At this rate you reclaim {h} in three months. What you do with it is yours.',
+    plain2: '{h} within three months. It is not much, and it is already yours.',
+    books: 'read a book',
+    chinese: 'learn Chinese',
+    instrument: 'learn an instrument',
+    marathon: 'train for a marathon',
+    code: 'take a coding course',
+  },
+
 
   duration: {
     lessThanMonth: 'less than a month',

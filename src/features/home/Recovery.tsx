@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +14,8 @@ import { Glass } from '@/components/glass/Glass';
 import { Button } from '@/components/Button';
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiDock } from '@/components/CortiDock';
+import { CortiRecovery } from '@/components/CortiRecovery';
+import { claimCheer } from '@/services/cheer';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { dict, useT } from '@/i18n';
@@ -60,6 +62,19 @@ export function RecoveryCard({ s }: { s: Stats }) {
   const level = cortiLevel(s.days);
   const tone = s.brain < 35 ? c.danger : s.brain < 70 ? c.ember : c.accent;
 
+  /*
+    Le septieme jour et le trentieme, la scene cede sa place a la sequence
+    complete : Corti passe d'affaisse a rayonnant, une fois, et la carte
+    reprend ensuite son cours. C'est le seul moment ou l'app se rejouit — le
+    reste du temps elle se contente de dire ou l'on en est.
+  */
+  const [cheer, setCheer] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    claimCheer(level).then((ok) => { if (alive && ok) setCheer(true); });
+    return () => { alive = false; };
+  }, [level]);
+
   return (
     <Glass radius={26} intensity={55} warmEdge="none" style={st.card}>
       {/*
@@ -70,7 +85,11 @@ export function RecoveryCard({ s }: { s: Stats }) {
         divisent pas — et le halo prend la couleur de l'indice, si bien qu'on
         sait ou l'on en est avant d'avoir lu le moindre chiffre.
       */}
-      <CortiDock level={level} size={268} tint={tone} />
+      {cheer ? (
+        <CortiRecovery size={268} loop={false} onDone={() => setCheer(false)} />
+      ) : (
+        <CortiDock level={level} size={268} tint={tone} />
+      )}
 
       <Text variant="lead" color={c.accent} style={st.mid}>
         {cortiLine(level, s.days)}
