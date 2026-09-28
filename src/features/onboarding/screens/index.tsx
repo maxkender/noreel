@@ -156,7 +156,7 @@ export function S5({ onNext }: P) {
 export function S6({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
+  const { d, t } = useT();
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const screen = Math.round(wakingShare(minutes) * 100);
   const [lit, setLit] = useState(0);
@@ -226,9 +226,9 @@ export function S6({ onNext }: P) {
       </View>
 
       <View style={s.legend}>
-        <Key colour={c.danger} label={`${lit} % écran`} />
-        <Key colour={WORK_GREEN} label={`${WORK} % travail`} />
-        <Key colour={withAlpha(c.mist, 0.14)} label="libre" />
+        <Key colour={c.danger} label={t(d.misc.screenKey, { n: lit })} />
+        <Key colour={WORK_GREEN} label={t(d.misc.workKey, { n: WORK })} />
+        <Key colour={withAlpha(c.mist, 0.14)} label={d.misc.freeKey} />
       </View>
 
       {/*
@@ -247,8 +247,8 @@ export function S6({ onNext }: P) {
       </Text>
       <Text variant="lead" tone="secondary" style={s.center}>
         {!done ? '…'
-          : over ? 'Ton écran déborde déjà sur tes heures de travail.'
-          : 'de vraiment libre, par jour.'}
+          : over ? d.misc.overflow
+          : d.misc.freePerDay}
       </Text>
 
     </Screen>
@@ -323,7 +323,7 @@ export function S6Years({ onNext }: P) {
   }, [years]);
 
   return (
-    <Screen cta="Récupérer ce temps" onPress={onNext} center hue="ember">
+    <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
       <Animated.View entering={FadeIn.duration(700)} style={s.years}>
         <Text variant="label" tone="tertiary">SUR UNE VIE DE 80 ANS</Text>
         <Text

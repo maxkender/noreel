@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { haptics } from '@/lib/haptics';
+import { dict } from '@/i18n';
 
 export function BackButton({ onPress }: { onPress: () => void }) {
   const c = useColors();
@@ -11,7 +12,7 @@ export function BackButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Retour"
+      accessibilityLabel={dict.client.back}
       hitSlop={12}
       onPress={() => { haptics.tap(); onPress(); }}
       style={styles.root}

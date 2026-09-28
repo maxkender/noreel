@@ -38,8 +38,10 @@ const DAYS: [number, string][] = [
 const HOURS = [18, 19, 20, 21, 22];
 
 const GOALS = [60, 90, 120, 180, 240];
-const THEMES: [ThemeName, string][] = [
-  ['system', 'Système'], ['dark', 'Sombre'], ['light', 'Clair'],
+/* Les libelles sont lus au rendu : la table vit au niveau du module, ou le
+   dictionnaire n'est pas encore charge. */
+const THEMES: [ThemeName, 'themeSystem' | 'themeDark' | 'themeLight'][] = [
+  ['system', 'themeSystem'], ['dark', 'themeDark'], ['light', 'themeLight'],
 ];
 
 /** Feuille de reglages : tout ce qu'il y a dedans agit reellement. */
@@ -47,7 +49,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
+  const { d, t } = useT();
   /*
     La feuille SORT, elle ne disparait pas.
 
@@ -102,7 +104,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
           <View style={st.head}>
             <View style={{ width: 44 }} />
-            <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>Paramètres</Text>
+            <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>{d.prefs.title}</Text>
             <Pressable onPress={close} style={st.done} hitSlop={10}>
               <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
@@ -111,10 +113,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
             <Group title="Blocage" />
             <Line
-              label="Temps d’écran"
-              sub={auth === 'approved'
-                ? 'Autorisé. UnSwipe peut mettre les apps en pause.'
-                : 'Nécessaire pour bloquer les apps d’origine.'}
+              label={d.prefs.screenTime}
+              sub={auth === 'approved' ? d.prefs.screenTimeOk : d.prefs.screenTimeNeed}
               right={
                 <Text variant="label" color={auth === 'approved' ? c.accent : c.mist}>
                   {auth === 'approved' ? 'OK' : 'Activer'}
@@ -125,8 +125,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 : () => { void requestAuthorization().then(setAuth); }}
             />
             <Line
-              label="Blocage strict des reels"
-              sub="Un reel touché affiche un mur, au lieu de ne rien faire."
+              label={d.prefs.strictReels}
+              sub={d.prefs.strictReelsBody}
               right={<Toggle on={s.strictMode} onChange={(v) => s.set('strictMode', v)} />}
             />
 
@@ -144,7 +144,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               et personne ne l'y a trouvee. Un reglage qu'on ne decouvre qu'en
               sachant deja qu'il existe n'existe pas.
             */}
-            <Group title="Couleur d’Instagram" />
+            <Group title={d.prefs.colour} />
             <View style={st.chips}>
               {TINTS.map((t) => {
                 const on = (instaTint ?? 'default') === t.id;
@@ -161,16 +161,19 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               })}
             </View>
             <Text variant="label" tone="tertiary" style={st.hint}>
-              Boutons, liens et tes bulles de message. Chaque app a la sienne,
-              dans ses réglages depuis la barre flottante.
+              {d.prefs.colourBody}
             </Text>
 
-            <Group title="Fenêtre autorisée" />
+            <Group title={d.prefs.valve} />
             <Line
-              label="Une heure par semaine"
+              label={d.prefs.valveRow}
               sub={s.valve.on
-                ? `${DAYS.find(([k]) => k === s.valve.day)?.[1] ?? ''} de ${s.valve.from} h à ${s.valve.to} h, les reels passent.`
-                : 'Une heure choisie où les reels passent. Mieux tenue qu’un blocage total.'}
+                ? t(d.prefs.valveOn, {
+                    day: DAYS.find(([k]) => k === s.valve.day)?.[1] ?? '',
+                    from: s.valve.from,
+                    to: s.valve.to,
+                  })
+                : d.prefs.valveOff}
               right={
                 <Toggle
                   on={s.valve.on}
@@ -221,9 +224,9 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               </>
             )}
 
-            <Group title="Apparence" />
+            <Group title={d.prefs.look} />
             <View style={st.chips}>
-              {THEMES.map(([k, label]) => {
+              {THEMES.map(([k, key]) => {
                 const on = s.theme === k;
                 return (
                   <Pressable
@@ -232,14 +235,14 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                     style={[st.chip, on && st.chipOn]}
                   >
                     <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
-                      {label}
+                      {d.ob[key]}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
 
-            <Group title="Plafond quotidien" />
+            <Group title={d.prefs.cap} />
             <View style={st.chips}>
               {GOALS.map((g) => {
                 const on = s.goalMinutes === g;
@@ -257,11 +260,11 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               })}
             </View>
 
-            <Group title="Personnaliser" />
-            <Line label="Vibrations" right={
+            <Group title={d.prefs.custom} />
+            <Line label={d.prefs.haptics} right={
               <Toggle on={s.haptics} onChange={(v) => s.set('haptics', v)} />
             } />
-            <Line label="Réduire les animations" right={
+            <Line label={d.prefs.reduceMotion} right={
               <Toggle on={s.reduceMotion} onChange={(v) => s.set('reduceMotion', v)} />
             } />
 
@@ -272,14 +275,14 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               se suivaient. Un reglage qui ne fait rien de particulier n’a pas
               besoin de sa ligne.
             */}
-            <Group title="Aide" />
+            <Group title={d.prefs.help} />
             <Line
-              label="Faire un retour"
-              sub="Un bug, une idée, une app qui résiste au filtre."
+              label={d.prefs.feedback}
+              sub={d.prefs.feedbackBody}
               onPress={() => setFeedback(true)}
             />
             <Line
-              label="Écrire au support"
+              label={d.prefs.support}
               sub={SUPPORT_EMAIL}
               onPress={() => {
                 void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${
@@ -287,12 +290,12 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               }}
             />
             <Line
-              label="Réglages iOS de UnSwipe"
-              sub="Notifications, Temps d’écran, autorisations."
+              label={d.prefs.iosSettings}
+              sub={d.prefs.iosSettingsBody}
               onPress={() => void Linking.openSettings()}
             />
 
-            <Group title="À propos" />
+            <Group title={d.prefs.about} />
             <Line
               label="Partager UnSwipe"
               onPress={() => {
@@ -302,13 +305,13 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               }}
             />
             <Line
-              label="Sources médicales"
-              sub="D’où viennent les chiffres sur le cerveau, et leurs limites."
+              label={d.prefs.medical}
+              sub={d.prefs.medicalBody}
               onPress={() => setSources(true)}
             />
             <Line
-              label="Confidentialité"
-              sub="Rien ne quitte ton téléphone. Aucun compte, aucun serveur."
+              label={d.prefs.privacy}
+              sub={d.prefs.privacyBody}
             />
             {/*
               Le NUMERO DE BUILD, pas seulement la version.
@@ -323,7 +326,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               </Text>
             } />
             <Line
-              label={cleared ? 'Données effacées' : 'Effacer mes données'}
+              label={cleared ? d.prefs.wiped : d.prefs.wipe}
               danger
               onPress={async () => {
                 await AsyncStorage.clear();

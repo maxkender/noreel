@@ -39,7 +39,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
 
   if (unsupported) {
     return (
-      <Screen cta="Continuer" onPress={onDone}>
+      <Screen cta={d.ob.keepGoing} onPress={onDone}>
         <Text variant="displayM">{d.perms.closeBack}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Sans ça, un réflexe suffit : tu rouvres l’app d’origine et tout
@@ -94,7 +94,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   // bon pixel quand elle apparait.
   return (
     <View style={{ flex: 1 }}>
-      <Screen secondary="Plus tard" onSecondary={onDone} hue="warm">
+      <Screen secondary={d.rate.later} onSecondary={onDone} hue="warm">
         <Text variant="displayM">{d.perms.connect}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Appuie sur Continuer.
@@ -104,9 +104,9 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       <SystemAlert
         goodSide="left"
         title={d.perms.alertTitle}
-        body="Cela permet de voir tes données d’activité et de limiter l’utilisation d’Apps et de sites web."
-        good="Continuer"
-        bad="Ne pas autoriser"
+        body={d.perms.alertBody}
+        good={d.ob.keepGoing}
+        bad={d.ob.deny}
         onGood={() => { void ask(); }}
         onBad={() => { void ask(); }}
       />

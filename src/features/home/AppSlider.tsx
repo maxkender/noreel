@@ -22,6 +22,7 @@ import { Toggle } from './parts';
 import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
+import { dict } from '@/i18n';
 
 /**
  * Ce que la version gratuite ouvre.
@@ -247,7 +248,11 @@ function Open({
       }}
     >
       <Text variant="label" color={c.accent}>
-        {locked ? 'Débloquer' : minutes > 0 ? `${minutes} min aujourd’hui · Ouvrir` : 'Ouvrir'}
+        {locked
+          ? dict.blockTab.unlock
+          : minutes > 0
+            ? dict.misc.openMin.replace('{n}', String(minutes))
+            : dict.misc.open}
       </Text>
       <ChevronRight size={15} strokeWidth={2.2} color={c.accent} />
     </Pressable>

@@ -9,6 +9,7 @@ import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { formatHours } from '@/lib/format';
 import { APPS, LOGOS } from './AppSlider';
+import { dict } from '@/i18n';
 
 /**
  * Le temps du jour, app par app — en second plan, sous le reste.
@@ -28,7 +29,7 @@ export function ScreenTime({ minutes }: { minutes: Record<string, number> }) {
   return (
     <Glass radius={20} intensity={40} warmEdge="none" style={st.card}>
       <View style={st.head}>
-        <Text variant="label" tone="tertiary">TEMPS D’ÉCRAN · AUJOURD’HUI</Text>
+        <Text variant="label" tone="tertiary">{dict.misc.screenToday}</Text>
         <Text variant="label" tone="secondary">{formatHours(total)}</Text>
       </View>
 

@@ -16,52 +16,11 @@ import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
 import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
-import { screenYears } from '../calculations';
 
 type P = { onNext: () => void };
 
 /* ---------- Le chiffre, mis bout a bout ---------- */
 
-/**
- * Ce que son estimation coute, en une seule ligne.
- *
- * L'ecran d'avant lui a fait DEVINER son temps d'ecran. Celui-ci ne lui
- * apprend rien de nouveau : il fait l'arithmetique a sa place. Trois heures
- * quarante par jour ne veut rien dire ; des annees de vie, ca se sent.
- *
- * Un seul nombre, et rien autour. Il y avait ici trois lignes — par jour, par
- * an, sur dix ans — plus une invitation a verifier le vrai chiffre dans les
- * reglages : un tableau qu'on lit, alors qu'il n'y a qu'une chose a encaisser.
- */
-export function Reveal({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(), []);
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
-  const years = Math.round(screenYears(minutes));
-
-  return (
-    <Screen cta="Continuer" onPress={onNext} center hue="ember" hueLevel={0.7}>
-      <Text variant="displayM" style={st.mid}>
-        Ce que ça fait, mis bout à bout.
-      </Text>
-
-      <Animated.View entering={FadeIn.delay(400).duration(760)}>
-        <Text
-          variant="hero"
-          color={c.danger}
-          style={[st.mid, { marginTop: space.xl }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {years} ans
-        </Text>
-        <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-          de ta vie, à ce rythme.
-        </Text>
-      </Animated.View>
-    </Screen>
-  );
-}
 
 /* ---------- Corti ---------- */
 

@@ -4,6 +4,7 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from './type/Text';
 import { Button } from './Button';
+import { dict } from '@/i18n';
 
 type Props = { children: ReactNode; onSkip: () => void };
 type State = { failed: boolean };
@@ -46,12 +47,12 @@ function Fallback({ onSkip }: { onSkip: () => void }) {
 
   return (
       <View style={st.root}>
-        <Text variant="displayM">Cette étape a calé.</Text>
+        <Text variant="displayM">{dict.misc.stepFailed}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           Rien n’est perdu, on passe à la suivante.
         </Text>
         <View style={st.cta}>
-          <Button label="Continuer" onPress={onSkip} />
+          <Button label={dict.ob.keepGoing} onPress={onSkip} />
         </View>
       </View>
   );

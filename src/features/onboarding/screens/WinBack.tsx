@@ -12,6 +12,7 @@ import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
 import { buy, winbackOffering } from '@/services/purchases';
 import type { PurchasesPackage } from 'react-native-purchases';
+import { dict } from '@/i18n';
 
 /*
  * Les couleurs de cet ecran ne suivent PAS le theme.
@@ -98,7 +99,7 @@ export function WinBack({ visible, onClose }: { visible: boolean; onClose: () =>
 
           <Pressable style={st.cta} onPress={() => { haptics.press(); void go(); }} disabled={busy}>
             <Text variant="button" color={LOW}>
-              {busy ? 'Un instant…' : 'Prendre l’offre'}
+              {busy ? dict.pay.wait : dict.misc.takeOffer}
             </Text>
           </Pressable>
         </SafeAreaView>

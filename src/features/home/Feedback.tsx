@@ -9,6 +9,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
+import { dict } from '@/i18n';
 
 export const SUPPORT_EMAIL = 'maximilien@vikstudios.com';
 
@@ -46,7 +47,7 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
         <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           <View style={st.head}>
             <Pressable onPress={() => { haptics.tap(); onClose(); }} hitSlop={12}>
-              <Text variant="label" color={c.accent}>Annuler</Text>
+              <Text variant="label" color={c.accent}>{dict.misc.cancel}</Text>
             </Pressable>
             <Text variant="label" tone="tertiary">Faire un retour</Text>
             <View style={{ width: 54 }} />
@@ -85,7 +86,7 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
               value={body}
               onChangeText={setBody}
               multiline
-              placeholder="Ce qui s’est passé, et ce que tu attendais."
+              placeholder={dict.misc.feedbackHint}
               placeholderTextColor={withAlpha(c.mist, 0.3)}
             />
 
@@ -96,7 +97,7 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <View style={st.foot}>
-            <Button label="Préparer le message" disabled={!ok} onPress={send} />
+            <Button label={dict.misc.feedbackSend} disabled={!ok} onPress={send} />
           </View>
         </SafeAreaView>
       </View>

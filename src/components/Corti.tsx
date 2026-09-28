@@ -106,7 +106,6 @@ function sparklePath(r: number): string {
 /* ---------- Les couleurs, par niveau ---------- */
 
 type Pal = {
-  name: string;
   inner: string; mid: string; outer: string;
   rim: string; line: string; limb: string; dim: string;
   aura: number; blush: number;
@@ -114,25 +113,21 @@ type Pal = {
 
 const PALETTES: Pal[] = [
   {
-    name: 'éteint',
     inner: '#6B7286', mid: '#4A5063', outer: '#2C3140',
     rim: '#8B93A699', line: '#8B93A699', limb: '#4A5063', dim: '#6B7386',
     aura: 0, blush: 0,
   },
   {
-    name: 'en veilleuse',
     inner: '#C9DCF5', mid: '#7FA6DE', outer: '#4A7CC4',
     rim: '#FFFFFF80', line: '#FFFFFF73', limb: '#6A97D6', dim: '#7F9CC9',
     aura: 0.22, blush: 0.45,
   },
   {
-    name: 'allumé',
     inner: '#EAF3FF', mid: '#9CC6FF', outer: '#5B9DFF',
     rim: '#FFFFFFBF', line: '#FFFFFF99', limb: '#7FB3FF', dim: '#FFFFFF',
     aura: 0.55, blush: 0.6,
   },
   {
-    name: 'rayonnant',
     inner: '#F6FAFF', mid: '#B7DAFF', outer: '#7FB3FF',
     rim: '#FFFFFFD9', line: '#FFFFFFB3', limb: '#9CC6FF', dim: '#FFFFFF',
     aura: 0.85, blush: 0.65,

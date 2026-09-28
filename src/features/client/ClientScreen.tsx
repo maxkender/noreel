@@ -588,7 +588,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
           <Text variant="title">Impossible de charger</Text>
           <Text variant="body" tone="secondary" style={styles.errText}>{error}</Text>
           <View style={{ width: 220 }}>
-            <Button label="Réessayer" onPress={() => { setError(null); web.current?.reload(); }} />
+            <Button label={d.client.retry} onPress={() => { setError(null); web.current?.reload(); }} />
           </View>
         </View>
       )}

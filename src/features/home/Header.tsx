@@ -7,6 +7,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { haptics } from '@/lib/haptics';
+import { dict } from '@/i18n';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
 const PROFILE = require('@/assets/brand/profile.png');
@@ -46,7 +47,7 @@ export function Header({
         hitSlop={12}
         style={st.icon}
         accessibilityRole="button"
-        accessibilityLabel="Réglages"
+        accessibilityLabel={dict.client.settings}
       >
         <SettingsIcon size={18} strokeWidth={1.8} color={withAlpha(c.mist, 0.8)} />
       </Pressable>

@@ -8,6 +8,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { LOGOS } from '@/features/home/AppSlider';
+import { useT } from '@/i18n';
 
 type P = { onNext: () => void };
 
@@ -23,11 +24,12 @@ const APPS = ['instagram', 'tiktok', 'twitter', 'youtube'] as const;
  * suivre attend dans l'onglet Blocage, le jour ou elle sera voulue.
  */
 export function HomeShortcuts({ onNext }: P) {
+  const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} hue="accent" center>
+    <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent" center>
       {/* La maquette : les quatre apps filtrees a la place qu'elles
           occuperont, le reste en creux. */}
       <Animated.View entering={FadeIn.delay(200).duration(600)} style={st.phone}>

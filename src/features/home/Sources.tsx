@@ -7,24 +7,18 @@ import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
+import { dict, useT } from '@/i18n';
 import { LIFE_YEARS, WAKING_HOURS } from '@/features/onboarding/calculations';
 
+/* La CITATION ne se traduit pas — auteurs, revue, annee, pages sont la
+   reference elle-meme. Seuls le titre et le resume passent au dictionnaire. */
 const REFS = [
-  {
-    t: 'Tomber amoureux passe par le circuit de la récompense',
-    a: 'Fisher, Aron & Brown — Journal of Comparative Neurology, 2005, 493(1), 58-62',
-    d: 'L’imagerie de l’amour naissant montre une activation de l’aire tegmentale ventrale et du noyau caudé, les régions dopaminergiques de la récompense — les mêmes que sollicite une gratification immédiate répétée.',
-  },
-  {
-    t: 'Les récepteurs s’émoussent sous stimulation répétée',
-    a: 'Volkow, Fowler, Wang, Swanson & Telang — Archives of Neurology, 2007, 64(11), 1575-1579',
-    d: 'Une stimulation intense et répétée du circuit de la récompense s’accompagne d’une disponibilité réduite des récepteurs D2, et d’une réponse émoussée aux plaisirs ordinaires.',
-  },
-  {
-    t: 'Le même mécanisme, imagé',
-    a: 'Volkow et coll. — Neuropharmacology, 2009, 56 (suppl. 1), 3-8',
-    d: 'Revue des travaux d’imagerie sur le rôle de la dopamine dans la perte de contrôle et la recherche compulsive de récompense.',
-  },
+  { t: dict.refs.r1t, d: dict.refs.r1d,
+    a: 'Fisher, Aron & Brown — Journal of Comparative Neurology, 2005, 493(1), 58-62' },
+  { t: dict.refs.r2t, d: dict.refs.r2d,
+    a: 'Volkow, Fowler, Wang, Swanson & Telang — Archives of Neurology, 2007, 64(11), 1575-1579' },
+  { t: dict.refs.r3t, d: dict.refs.r3d,
+    a: 'Volkow et coll. — Neuropharmacology, 2009, 56 (suppl. 1), 3-8' },
 ];
 
 /*
@@ -36,11 +30,7 @@ const REFS = [
  * quelqu'un lui doit cette distinction : sans elle, on emprunte l'autorite
  * d'une science sans en accepter les limites.
  */
-const CAVEAT = 'Ces travaux portent sur la dépendance et sur des '
-  + 'stimulations intenses, pas sur les vidéos courtes. Le rapprochement '
-  + 'que fait UnSwipe est une inférence raisonnable, pas un résultat '
-  + 'démontré. Les durées affichées sont des estimations calculées à partir '
-  + 'de ce que tu as déclaré.';
+const CAVEAT = dict.refs.caveat;
 
 /**
  * Sources et methode.
@@ -49,6 +39,7 @@ const CAVEAT = 'Ces travaux portent sur la dépendance et sur des '
  * viennent. La ligne des sources ouvrait sur rien.
  */
 export function Sources({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { d } = useT();
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
@@ -60,14 +51,14 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
           <View style={st.tint} />
 
           <View style={st.head}>
-            <Text variant="title" style={{ flex: 1 }}>Sources et méthode</Text>
+            <Text variant="title" style={{ flex: 1 }}>{d.refs.title}</Text>
             <Pressable onPress={() => { haptics.tap(); onClose(); }} style={st.done} hitSlop={10}>
               <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
 
           <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
-            <Text variant="label" tone="tertiary" style={st.group}>CALCUL</Text>
+            <Text variant="label" tone="tertiary" style={st.group}>{d.refs.calc}</Text>
             <Text variant="body" tone="secondary" style={st.body}>
               On part de ton temps quotidien et de ton âge, jusqu’à {LIFE_YEARS} ans.
               Les années passées devant un écran valent ton temps quotidien

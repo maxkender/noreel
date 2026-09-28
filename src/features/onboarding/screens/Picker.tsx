@@ -6,6 +6,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
+import { useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
 // Le paquet fournit une version neutre hors iOS : un import statique est
 // donc sans risque, et il evite un require() au milieu du rendu.
@@ -27,6 +28,7 @@ type P = { onNext: () => void };
  * emporte des apps auxquelles personne ne pense.
  */
 export function Picker({ onNext }: P) {
+  const { d, t } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const saved = useSettings((s) => s.selection);
@@ -40,14 +42,14 @@ export function Picker({ onNext }: P) {
   if (FAMILY_CONTROLS_ENABLED && Platform.OS === 'ios' && auth !== 'approved') {
     return (
       <Screen
-        cta="Autoriser Temps d’écran"
+        cta={d.picker.authorize}
         onPress={() => { void requestAuthorization().then(setAuth); }}
-        secondary="Plus tard"
+        secondary={d.rate.later}
         onSecondary={onNext}
         center
         hue="accent"
       >
-        <Text variant="displayM" style={st.center}>Choisis ce qu’on met en pause.</Text>
+        <Text variant="displayM" style={st.center}>{d.picker.choose}</Text>
         <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
           Le sélecteur d’apps appartient à iOS. Il lui faut l’accès à Temps
           d’écran pour t’afficher tes apps — sans lui, il reste vide.
@@ -58,8 +60,8 @@ export function Picker({ onNext }: P) {
 
   if (!FAMILY_CONTROLS_ENABLED || Platform.OS !== 'ios') {
     return (
-      <Screen cta="Continuer" onPress={onNext} center hue="accent">
-        <Text variant="displayM" style={st.center}>Choisis ce qu’on met en pause.</Text>
+      <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
+        <Text variant="displayM" style={st.center}>{d.picker.choose}</Text>
         <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
           Le sélecteur d’Apple arrive sur cet appareil.
         </Text>
@@ -68,8 +70,8 @@ export function Picker({ onNext }: P) {
   }
 
   return (
-    <Screen cta="Continuer" onPress={onNext} hue="accent">
-      <Text variant="displayM">Choisis ce qu’on met en pause.</Text>
+    <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
+      <Text variant="displayM">{d.picker.choose}</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.sm }}>
         Ces apps deviendront inaccessibles hors de UnSwipe.
       </Text>
@@ -110,7 +112,7 @@ export function Picker({ onNext }: P) {
 
       {counts.apps + counts.cats > 0 && counts.cats === 0 && (
         <Text variant="label" tone="tertiary" style={{ marginTop: space.md }}>
-          {counts.apps} app{counts.apps > 1 ? 's' : ''} sélectionnée{counts.apps > 1 ? 's' : ''}.
+          {t(d.picker.selected, { n: counts.apps, s: counts.apps > 1 ? 's' : '' })}
         </Text>
       )}
     </Screen>

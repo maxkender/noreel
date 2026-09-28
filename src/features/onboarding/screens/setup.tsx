@@ -95,7 +95,7 @@ export function Constat({ onNext }: P) {
         remontait d'autant, et les cases se relevaient sous le doigt au moment
         precis ou l'on en choisissait une.
       */
-      cta="Continuer"
+      cta={d.ob.keepGoing}
       onPress={advance}
       disabled={!answered}
       center
@@ -161,13 +161,9 @@ export function Constat({ onNext }: P) {
  * ecrites s'effacent d'un cran pour que l'oeil suive celle qui s'ecrit.
  */
 const LINES = [
-  'Instagram ne fera jamais de bouton pour éteindre les Reels.',
-  'Ils y perdraient trop.',
-  'Alors on s’est frayé un chemin dans leur algorithme.',
-  'Tes amis, tes messages, tes stories : tout reste.',
-  'Ce qui disparaît, c’est seulement ce qui te retenait.',
+  dict.ob.man1, dict.ob.man4, dict.ob.man2, dict.ob.man5, dict.ob.man3,
 ];
-const LAST = 'Bienvenue dans {UnSwipe}.';
+const LAST = dict.ob.manLast;
 const SPEED = 26;
 
 export function Manifesto({ onNext }: P) {
@@ -227,7 +223,7 @@ export function Name({ onNext }: P) {
   const setName = useOnboardingStore((x) => x.setFirstName);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
+    <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
       <Typewriter
         text={d.ob.namePrompt}
         variant="displayM"
@@ -261,14 +257,15 @@ const PICKABLE = [
 export function Distractions({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
   const picked = useOnboardingStore((x) => x.distractions);
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
 
   return (
-    <Screen cta="Continuer" onPress={onNext} disabled={picked.length === 0} hue="accent">
-      <Text variant="displayM">Choisis tes plus grandes distractions.</Text>
+    <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="accent">
+      <Text variant="displayM">{d.ob.distTitle}</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-        UnSwipe garde ta sélection sur ton téléphone.
+        {d.ob.distBody}
       </Text>
 
       <View style={st.list}>
@@ -307,7 +304,7 @@ export function NotificationsAsk({ onNext }: P) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Screen secondary="Plus tard" onSecondary={onNext} hue="deep">
+      <Screen secondary={d.rate.later} onSecondary={onNext} hue="deep">
         <Text variant="displayM">{d.ob.notifTitle}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           {d.ob.notifBody}

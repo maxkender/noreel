@@ -15,6 +15,7 @@ import { Stars } from '@/components/Stars';
 import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { APPS, LOGOS } from './AppSlider';
+import { dict } from '@/i18n';
 
 
 /**
@@ -46,12 +47,12 @@ export function Widgets() {
           <Pressable onPress={() => router.back()} hitSlop={12} style={st.back}>
             <ChevronLeft size={20} strokeWidth={2} color={c.mist} />
           </Pressable>
-          <Text variant="title">Écran d’accueil</Text>
+          <Text variant="title">{dict.misc.homeScreen}</Text>
           <View style={st.back} />
         </View>
 
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-          <Text variant="displayM">Tes apps filtrées, à côté des autres.</Text>
+          <Text variant="displayM">{dict.misc.homeScreenBody}</Text>
 
           <Glass radius={22} intensity={45} warmEdge="none" style={st.steps}>
             <Step n="1" text="Copie le lien de l’app ci-dessous." />

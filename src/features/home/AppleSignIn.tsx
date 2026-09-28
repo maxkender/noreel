@@ -10,6 +10,7 @@ import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/store/settings';
 import { useProStore } from '@/store/pro';
 import { linkAccount } from '@/services/purchases';
+import { dict } from '@/i18n';
 
 /**
  * Connexion Apple, au seul endroit ou elle sert : rattacher les achats.
@@ -41,7 +42,7 @@ export function AppleSignIn() {
           <Check size={14} strokeWidth={2.8} color={c.accent} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
-          <Text variant="body">Achats rattachés</Text>
+          <Text variant="body">{dict.misc.purchasesLinked}</Text>
           <Text variant="label" tone="tertiary">
             Ton abonnement te suivra sur un nouveau téléphone.
           </Text>

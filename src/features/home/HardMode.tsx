@@ -13,6 +13,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 import { formatHours } from '@/lib/format';
+import { dict } from '@/i18n';
 
 const WAIT = 60;      // secondes
 const SUMS = 3;       // operations a resoudre
@@ -72,7 +73,7 @@ export function HardMode({
         <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           <View style={st.bar}>
             <Pressable onPress={() => { haptics.tap(); onCancel(); }} hitSlop={12}>
-              <Text variant="label" color={c.accent}>Annuler</Text>
+              <Text variant="label" color={c.accent}>{dict.misc.cancel}</Text>
             </Pressable>
             <Text variant="label" tone="tertiary">Étape {step + 1} sur {steps.length}</Text>
             <View style={{ width: 54 }} />
@@ -102,7 +103,7 @@ function Wait({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={st.center}>
-      <Text variant="displayM" style={st.mid}>Une minute, d’abord.</Text>
+      <Text variant="displayM" style={st.mid}>{dict.misc.hardWait}</Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
         Tu récupérais {formatHours(minutes)} par jour. Si l’envie tient encore
         dans une minute, tu passeras.
@@ -113,7 +114,9 @@ function Wait({ onDone }: { onDone: () => void }) {
 
       <View style={st.foot}>
         <Button
-          label={left > 0 ? `Attendre ${left} s` : 'Continuer'}
+          label={left > 0
+            ? dict.misc.waitFor.replace('{n}', String(left))
+            : dict.ob.keepGoing}
           disabled={left > 0}
           onPress={onDone}
         />
@@ -170,7 +173,7 @@ function Pledge({ onDone }: { onDone: () => void }) {
       )}
 
       <View style={st.foot}>
-        <Button label="Continuer" disabled={!ok} onPress={onDone} />
+        <Button label={dict.ob.keepGoing} disabled={!ok} onPress={onDone} />
       </View>
     </View>
   );
@@ -226,7 +229,7 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
       )}
 
       <View style={st.foot}>
-        <Button label="Valider" disabled={answer.trim().length === 0} onPress={submit} />
+        <Button label={dict.pass.validate} disabled={answer.trim().length === 0} onPress={submit} />
       </View>
     </View>
   );
@@ -257,7 +260,7 @@ export function HardModeIntro({
           </Text>
 
           <View style={{ flex: 1 }} />
-          <Button label="Je l’active" onPress={onConfirm} />
+          <Button label={dict.misc.hardOn} onPress={onConfirm} />
           <Pressable onPress={() => { haptics.tap(); onCancel(); }} style={st.later}>
             <Text variant="label" color={withAlpha(c.mist, 0.8)}>Pas maintenant</Text>
           </Pressable>

@@ -11,7 +11,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
-import { useT } from '@/i18n';
+import { dict, useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
 
 const SIZE = 58;
@@ -120,7 +120,7 @@ export function NavBar({
           <Animated.View entering={FadeIn.delay(80).duration(220)} style={styles.quitWrap}>
             <Key
               icon={X}
-              label="Fermer"
+              label={dict.misc.close}
               onPress={() => { haptics.tap(); setOpen(false); }}
               big
             />
@@ -132,7 +132,7 @@ export function NavBar({
         <Animated.View
           style={[styles.handle, handle]}
           accessibilityRole="button"
-          accessibilityLabel={open ? 'Fermer la navigation' : 'Ouvrir la navigation'}
+          accessibilityLabel={open ? dict.misc.closeNav : dict.misc.openNav}
         >
           <View style={styles.grip}>
             <View style={styles.line} />
