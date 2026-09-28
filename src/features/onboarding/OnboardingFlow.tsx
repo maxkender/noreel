@@ -15,7 +15,6 @@ import {
   Constat, Distractions, Manifesto, Name, NotificationsAsk, PromiseScreen,
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
-import { Tune } from './screens/Tune';
 import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Attribution, Meet, Ninety, Proof, RateAsk } from './screens/extra';
@@ -100,6 +99,12 @@ export function OnboardingFlow() {
    * quelque chose ; il arrive juste apres le manifeste, la ou l'on vient de
    * dire ce qu'on croit.
    *
+   * L'ecran des reglages fins a quitte le parcours lui aussi. Il faisait
+   * defiler des interrupteurs que PERSONNE ne touchait : une demonstration de
+   * ce que l'app sait faire, au milieu d'un parcours ou chaque ecran devrait
+   * demander ou donner quelque chose. Les memes reglages sont a un geste, une
+   * fois dans l'app, le jour ou on les veut.
+   *
    * Le code promo a quitte le parcours. Demander « tu as un code ? » avant
    * d'avoir montre le prix apprend a en chercher un : on quitte l'app, on
    * fouille, on ne revient pas. Il vit desormais en lien sur le paywall,
@@ -119,7 +124,6 @@ export function OnboardingFlow() {
     <Ninety key="90" onNext={next} />,
     <Manifesto key="man" onNext={next} />,
     <Proof key="proof" onNext={next} />,
-    <Tune key="tune" onNext={next} />,
     <Distractions key="dis" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
