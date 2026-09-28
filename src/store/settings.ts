@@ -41,6 +41,13 @@ type State = {
    * ouverte qu'un blocage parfait garde neuf jours.
    */
   valve: Valve;
+  /**
+   * Fin du laissez-passer minute, en horodatage. 0 quand il n'y en a pas.
+   *
+   * Une echeance et non un booleen : le temps la perime tout seul, sans
+   * minuterie a tenir ni etat a rattraper si l'app est fermee entre-temps.
+   */
+  reelsUntil: number;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -62,6 +69,7 @@ export const useSettings = create<State>()(
       // Samedi 20 h - 21 h : une heure, le soir ou personne n'a de raison de
       // se lever tot. Le jour et les heures se changent dans les reglages.
       valve: { on: false, day: 6, from: 20, to: 21 },
+      reelsUntil: 0,
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.
@@ -82,8 +90,8 @@ export const useSettings = create<State>()(
         if (from < 2) return { ...s, theme: 'dark' as ThemeName };
         return s;
       },
-      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve }) =>
-        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve }),
+      partialize: ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve, reelsUntil }) =>
+        ({ haptics, reduceMotion, goalMinutes, strictMode, hardMode, winbackSeen, blocking, selection, appleUser, theme, valve, reelsUntil }),
       onRehydrateStorage: () => (s) => {
         if (s) setHapticsEnabled(s.haptics);
       },

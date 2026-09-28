@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { SlideInDown } from 'react-native-reanimated';
-import { Check, LogOut, Lock, UserRoundCog } from 'lucide-react-native';
+import { Check, Hourglass, LogOut, Lock, UserRoundCog } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -15,6 +15,7 @@ import { LockedPill } from '@/features/home/LockedPill';
 import { useProStore } from '@/store/pro';
 import { LOGOS, APPS } from '@/features/home/AppSlider';
 import { TINTS } from '@/theme/tints';
+import { PASS_MINUTES } from './ReelsPass';
 import type { ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
 
@@ -27,8 +28,16 @@ import { ACCOUNT } from './accounts';
  * cacher. Il n'y a donc plus rien a recharger.
  */
 export function ClientSettings({
-  id, visible, onClose, onGo,
-}: { id: ClientId; visible: boolean; onClose: () => void; onGo: (url: string) => void }) {
+  id, visible, onClose, onGo, onPass,
+}: {
+  id: ClientId;
+  visible: boolean;
+  onClose: () => void;
+  onGo: (url: string) => void;
+  /** Ouvre l'epreuve du laissez-passer. Jouee par l'ecran, pas par la feuille :
+   *  deux fenetres modales empilees se comportent mal sur iOS. */
+  onPass: () => void;
+}) {
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
@@ -84,6 +93,29 @@ export function ClientSettings({
               bougent pas : un fil sur vert sature ne se lit plus, et ce n'est
               pas ce qu'on demande en demandant un Instagram vert.
             */}
+            <Text variant="label" tone="tertiary" style={st.section}>LAISSEZ-PASSER</Text>
+
+            {/*
+              Cinq minutes de reels, gagnees.
+              Ce qui fait desinstaller un bloqueur, c'est l'impasse : qui veut
+              vraiment voir un reel le verra, ici ou en supprimant l'app. La
+              seule chose qu'on choisisse, c'est le prix du passage.
+            */}
+            <Pressable
+              style={st.action}
+              onPress={() => { haptics.press(); onClose(); onPass(); }}
+            >
+              <Hourglass size={15} strokeWidth={2} color={c.ember} />
+              <Text variant="body" style={{ flex: 1 }}>
+                Débloquer les Reels {PASS_MINUTES} minutes
+              </Text>
+            </Pressable>
+
+            <Text variant="label" tone="tertiary" style={st.note}>
+              Une attente, trois calculs et une suite à retenir. C’est long
+              exprès.
+            </Text>
+
             <Text variant="label" tone="tertiary" style={st.section}>COULEUR</Text>
 
             <View style={st.tints}>

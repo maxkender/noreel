@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
+import { PASS_MINUTES, ReelsPass } from './ReelsPass';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { tintById } from '@/theme/tints';
 import { NavBar, type NavAction } from './NavBar';
@@ -101,6 +102,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // La fenetre du samedi soir. Elle voyage avec le script : la page doit
   // pouvoir decider seule, a la minute, sans qu'on lui reparle.
   const valve = useSettings((x) => x.valve);
+  // Le laissez-passer : une echeance, que le temps perime tout seul.
+  const openUntil = useSettings((x) => x.reelsUntil);
+  const setSetting = useSettings((x) => x.set);
+  const [pass, setPass] = useState(false);
   /*
     La fenetre s'ouvre a une heure, pas a un geste.
     Le bandeau doit s'allumer a vingt heures meme si personne ne touche
@@ -116,6 +121,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // un effet demandait un setState synchrone a chaque changement de reglage —
   // un rendu de plus pour une valeur qu'un calcul donne tout de suite.
   const inValve = useMemo(() => valveOpen(valve, new Date(now)), [valve, now]);
+  // Les minutes qu'il reste au laissez-passer. Zero quand il n'y en a pas, ou
+  // quand il a expire : l'horloge le perime sans qu'on ait rien a eteindre.
+  const passLeft = openUntil > now ? Math.ceil((openUntil - now) / 60_000) : 0;
 
   const settingsMap = useAppsStore((st) => st.settings);
   const active = useMemo(() => {
@@ -132,7 +140,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // chargement de la page, changer la propriete ensuite ne change rien.
   // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
   const script = useMemo(
-    () => buildScript(client.script, active, theme, valve, tinted ? tint.rgb : null),
+    () => buildScript(
+      client.script, active, theme, valve, tinted ? tint.rgb : null, openUntil
+    ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]
   );
@@ -206,6 +216,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
       `window.__nrApplyTint && window.__nrApplyTint(${JSON.stringify(tinted ? tint.rgb : null)}); true;`
     );
   }, [tinted, tint.rgb]);
+
+  // L'echeance aussi : la page decide seule, en comparant a l'horloge.
+  useEffect(() => {
+    web.current?.injectJavaScript(
+      `window.__nrApplyOpen && window.__nrApplyOpen(${JSON.stringify(openUntil)}); true;`
+    );
+  }, [openUntil]);
 
   // Le theme voyage comme les reglages : la page est deja chargee, on ne
   // peut plus remplacer le script, mais on peut lui parler.
@@ -418,10 +435,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La fenetre ouverte se dit. Une permission qu'on ne voit pas ne
           rassure personne, et on croit le filtre casse. */}
-      {inValve && !capped && (
+      {(inValve || passLeft > 0) && !capped && (
         <View style={styles.valve} pointerEvents="none">
           <Text variant="label" color={c.ember}>
-            Fenêtre ouverte jusqu’à {valve.to} h
+            {passLeft > 0
+              ? `Reels ouverts encore ${passLeft} min`
+              : `Fenêtre ouverte jusqu’à ${valve.to} h`}
           </Text>
         </View>
       )}
@@ -461,9 +480,20 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       <ProGate visible={gate} onClose={() => setGate(false)} />
 
+      <ReelsPass
+        visible={pass}
+        onCancel={() => setPass(false)}
+        onPass={() => {
+          setPass(false);
+          haptics.success();
+          setSetting('reelsUntil', Date.now() + PASS_MINUTES * 60_000);
+        }}
+      />
+
       <ClientSettings
         id={id}
         visible={panel}
+        onPass={() => setPass(true)}
         onClose={() => setPanel(false)}
         onGo={(url) => {
           setPanel(false);

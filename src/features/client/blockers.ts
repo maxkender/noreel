@@ -34,12 +34,15 @@ export function buildScript(
   theme: 'light' | 'dark' = 'dark',
   valve?: Valve,
   /** Triplet RGB nu, ou null pour laisser au site ses propres couleurs. */
-  tint: string | null = null
+  tint: string | null = null,
+  /** Horodatage de fin du laissez-passer, ou 0 : les reels passent jusque-la. */
+  openUntil = 0
 ): string {
   return `window.__NR = ${JSON.stringify(settings)};\n`
     + `window.__nrTheme = ${JSON.stringify(theme)};\n`
     + `window.__nrValve = ${JSON.stringify(valve ?? { on: false, day: 6, from: 20, to: 21 })};\n`
     + `window.__nrTint = ${JSON.stringify(tint)};\n`
+    + `window.__nrOpenUntil = ${JSON.stringify(openUntil)};\n`
     + base;
 }
 
@@ -80,7 +83,7 @@ const COMMON = `
     // La soupape est relue A CHAQUE passe, avant les regles : c'est elle qui
     // decide si la feuille toujours-active s'applique ou dort.
     const pass = () => {
-      if (__sheet) __sheet.disabled = __valve();
+      if (__sheet) __sheet.disabled = __open();
       fn();
     };
     window.__nrPass = pass;
@@ -253,7 +256,29 @@ const COMMON = `
     regle plutot que rien du tout : sans nom, un masquage ne peut pas etre
     defait, et la fenetre du samedi soir n'aurait rien ouvert.
   */
-  const __short = () => !__valve();
+  /*
+    La deuxieme facon d'ouvrir : un laissez-passer minute, gagne.
+
+    La soupape est une fenetre PREVUE, inscrite au calendrier. Celui-ci est
+    ponctuel et se merite — on ne l'obtient qu'en traversant une attente, des
+    calculs et une suite a retenir. Les deux ouvrent la meme porte, donc tout
+    ce que la soupape sait deja faire s'applique : la feuille toujours-active
+    s'eteint, les reels du fil reviennent, et la sortie automatique se tait.
+
+    L'echeance est comparee a l'horloge a chaque passe : rien a eteindre, le
+    temps s'en charge.
+  */
+  const __open = () => {
+    const until = window.__nrOpenUntil;
+    if (until && Date.now() < until) return true;
+    return __valve();
+  };
+  window.__nrApplyOpen = (until) => {
+    window.__nrOpenUntil = until;
+    try { if (window.__nrPass) window.__nrPass(); } catch (e) { /* idem */ }
+  };
+
+  const __short = () => !__open();
 
   // La feuille des regles toujours actives, gardee sous la main : la soupape
   // l'eteint a l'heure dite et la rallume apres, sans recharger la page.
@@ -427,8 +452,8 @@ const COMMON = `
   let __exits = 0;
   const __escape = () => {
     if (__auth()) return;
-    // Pendant la fenetre, on ne sort pas : c'est le moment qu'elle autorise.
-    if (__valve()) return;
+    // Pendant une ouverture, on ne sort pas : c'est le moment qu'elle autorise.
+    if (__open()) return;
     /*
       Trois sorties au plus, puis plus jamais.
       Le frein d'une seconde et demie ne bornait que la CADENCE, pas le
@@ -471,7 +496,7 @@ const COMMON = `
    * s'ouvre PAR-DESSUS une conversation.
    */
   const __shorts = () => {
-    if (__valve()) return;
+    if (__open()) return;
     const tall = Array.from(document.querySelectorAll('video')).filter(__tall);
     if (tall.length < 2) return;
     const big = tall.filter((v) => {

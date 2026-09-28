@@ -13,7 +13,10 @@
  */
 import { render } from '@testing-library/react-native';
 import { ClientScreen } from './ClientScreen';
-import { CLIENTS, type ClientId } from './blockers';
+import { CLIENTS, buildScript, type ClientId } from './blockers';
+import { ReelsPass } from './ReelsPass';
+import { ClientSettings } from './ClientSettings';
+import { TINTS } from '@/theme/tints';
 
 /*
  * Une fausse WebView qui expose les methodes qu'on lui appelle.
@@ -71,4 +74,78 @@ describe('chaque app a la couleur de son site', () => {
       expect(chrome.light).toMatch(/^#[0-9A-F]{6}$/i);
     });
   }
+});
+
+
+/*
+ * L'epreuve du laissez-passer, et le panneau qui la propose.
+ */
+describe('le laissez-passer', () => {
+  it('se monte', () => {
+    const r = render(
+      <ReelsPass visible onCancel={() => {}} onPass={() => {}} />
+    );
+    expect(r.toJSON()).toBeTruthy();
+  });
+
+  it('ne rend rien quand il est ferme', () => {
+    render(<ReelsPass visible={false} onCancel={() => {}} onPass={() => {}} />);
+  });
+});
+
+describe('le panneau de reglages du client', () => {
+  for (const id of Object.keys(CLIENTS) as ClientId[]) {
+    it(id, () => {
+      const r = render(
+        <ClientSettings
+          id={id}
+          visible
+          onClose={() => {}}
+          onGo={() => {}}
+          onPass={() => {}}
+        />
+      );
+      expect(r.toJSON()).toBeTruthy();
+    });
+  }
+});
+
+/*
+ * Les teintes doivent etre lisibles : l'encre est choisie sur la luminance,
+ * pas a l'oeil, et une pastille sans encre contrastee donne un bandeau dont
+ * on ne lit plus le titre.
+ */
+describe('les teintes', () => {
+  for (const t of TINTS) {
+    it(`${t.label} a une couleur et une encre`, () => {
+      expect(t.hex).toMatch(/^#[0-9A-F]{6}$/i);
+      expect(t.rgb).toMatch(/^\d{1,3}, \d{1,3}, \d{1,3}$/);
+      expect(['#0C1014', '#FFFFFF']).toContain(t.ink);
+    });
+  }
+
+  // Le triplet doit correspondre a l'hexadecimal : les deux decrivent la meme
+  // couleur, l'un pour notre bandeau, l'autre pour les variables du site.
+  it('le triplet suit l’hexadecimal', () => {
+    for (const t of TINTS) {
+      const n = parseInt(t.hex.slice(1), 16);
+      expect(t.rgb).toBe(`${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`);
+    }
+  });
+});
+
+/*
+ * Le script transporte l'echeance du laissez-passer, et la ferme par defaut.
+ * Un defaut ouvert laisserait passer les reels a toute page construite sans
+ * qu'on y pense.
+ */
+describe('le script transporte le laissez-passer', () => {
+  it('est ferme par defaut', () => {
+    expect(buildScript('', {}, 'dark')).toContain('window.__nrOpenUntil = 0');
+  });
+
+  it('porte l’echeance quand il y en a une', () => {
+    const s = buildScript('', {}, 'dark', undefined, null, 1893456000000);
+    expect(s).toContain('window.__nrOpenUntil = 1893456000000');
+  });
 });
