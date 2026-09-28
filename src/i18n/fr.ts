@@ -261,6 +261,7 @@ export const fr = {
    * compilation tombe.
    */
   corti: {
+    rigAlt: 'Corti, la mascotte d’UnSwipe',
     recoveryAlt: 'Corti passe d’éteint à rayonnant',
     says0: 'Il a vu trop de Reels. Il ne sait plus pourquoi.',
     says1: '{n} jour{s} sans Reels. Il respire.',

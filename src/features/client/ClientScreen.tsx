@@ -15,7 +15,8 @@ import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
-import { Corti, cortiLevel } from '@/components/Corti';
+import { cortiLevel } from '@/components/Corti';
+import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { PASS_MINUTES, ReelsPass } from './ReelsPass';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { tintById } from '@/theme/tints';
@@ -165,6 +166,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
   const [wall, setWall] = useState(false);
+  /*
+    Corti REFUSE, il ne se contente pas d'etre la.
+    Le mur montrait une mascotte immobile pendant que le reel disparaissait :
+    on lisait une panne. Il se campe, prend son air decide et fait non de la
+    tete — le meme evenement devient quelqu'un qui tient la porte pour vous.
+  */
+  const [refuse, setRefuse] = useState<CortiReaction | undefined>();
+  useEffect(() => { if (wall) setRefuse(cortiReact('no')); }, [wall]);
   // Le numero du reel referme. Un compteur qui monte se lit comme un score ;
   // « Bloque » tout seul se lit comme un reproche.
   const [nth, setNth] = useState(0);
@@ -454,7 +463,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             meme evenement, et ce n'est pas le meme souvenir — or c'est
             l'ecran qu'on voit le plus souvent dans cette app.
           */}
-          <Corti level={cortiLevel(days)} size={120} />
+          <CortiRig level={cortiLevel(days)} size={120} reaction={refuse} />
           {/*
             Le mur porte un NUMERO.
             « Bloque. » tout seul est un reproche, et on finit par en vouloir a

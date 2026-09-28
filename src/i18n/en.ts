@@ -242,6 +242,7 @@ export const en: Dict = {
   },
 
   corti: {
+    rigAlt: 'Corti, the UnSwipe mascot',
     recoveryAlt: 'Corti goes from burnt out to radiant',
     says0: `He has seen too many Reels. He no longer knows why.`,
     says1: '{n} day{s} without Reels. He can breathe.',

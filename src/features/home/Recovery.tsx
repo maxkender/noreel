@@ -15,6 +15,7 @@ import { Button } from '@/components/Button';
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
+import { cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { claimCheer } from '@/services/cheer';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
@@ -69,6 +70,8 @@ export function RecoveryCard({ s }: { s: Stats }) {
     reste du temps elle se contente de dire ou l'on en est.
   */
   const [cheer, setCheer] = useState(false);
+  // La scene reprend la main sur un saut de joie, pas sur un arret net.
+  const [hooray, setHooray] = useState<CortiReaction | undefined>();
   useEffect(() => {
     let alive = true;
     claimCheer(level).then((ok) => { if (alive && ok) setCheer(true); });
@@ -86,9 +89,13 @@ export function RecoveryCard({ s }: { s: Stats }) {
         sait ou l'on en est avant d'avoir lu le moindre chiffre.
       */}
       {cheer ? (
-        <CortiRecovery size={268} loop={false} onDone={() => setCheer(false)} />
+        <CortiRecovery
+          size={268}
+          loop={false}
+          onDone={() => { setCheer(false); setHooray(cortiReact('celebrate')); }}
+        />
       ) : (
-        <CortiDock level={level} size={268} tint={tone} />
+        <CortiDock level={level} size={268} tint={tone} reaction={hooray} />
       )}
 
       <Text variant="lead" color={c.accent} style={st.mid}>

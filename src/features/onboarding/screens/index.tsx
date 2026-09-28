@@ -19,7 +19,7 @@ import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
 
 import { TimeSlider } from '../scenes/TimeSlider';
 import { AgeInput } from '../scenes/AgeInput';
-import { Corti } from '@/components/Corti';
+import { CortiRig } from '@/components/CortiRig';
 
 /*
  * Huit heures de travail, posees sur la grille.
@@ -352,7 +352,7 @@ export function S7({ onNext }: P) {
         avant de l'avoir lue.
       */}
       <View style={s.brainFace}>
-        <Corti level={last ? 2 : 0} size={116} />
+        <CortiRig level={last ? 2 : 0} size={116} />
       </View>
 
       <Animated.View key={i} entering={FadeIn.duration(500)}>

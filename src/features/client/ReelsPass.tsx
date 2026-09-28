@@ -9,7 +9,8 @@ import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { Corti, cortiLevel } from '@/components/Corti';
+import { cortiLevel } from '@/components/Corti';
+import { CortiRig } from '@/components/CortiRig';
 import { countPass, stats } from '@/services/protect';
 
 /** Cinq minutes, et pas une de plus. */
@@ -330,7 +331,7 @@ function Cost({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={st.center}>
-      <Corti level={cortiLevel(days)} size={150} />
+      <CortiRig level={cortiLevel(days)} size={150} />
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
         {t(d.pass.openTitle, { n: PASS_MINUTES })}

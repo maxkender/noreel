@@ -5,7 +5,8 @@ import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { Corti, type CortiLevel } from './Corti';
+import type { CortiLevel } from './Corti';
+import { CortiRig, type CortiReaction } from './CortiRig';
 
 /*
  * Corti sur sa soucoupe.
@@ -63,13 +64,21 @@ function useCycle(ms: number, on: boolean) {
 }
 
 export function CortiDock({
-  level, size = 300, tint, style,
+  level, size = 300, tint, style, reaction,
 }: {
   level: CortiLevel;
   size?: number;
   /** La teinte du halo et du coeur : celle de l'indice de recuperation. */
   tint: string;
   style?: StyleProp<ViewStyle>;
+  /**
+   * Ce qu'il fait a l'instant : voir cortiReact.
+   *
+   * La scene tourne toute seule, mais elle doit pouvoir REPONDRE — un reel
+   * bloque pendant qu'on regarde la page, et Corti fait non de la tete. Une
+   * scene qui ne reagit a rien finit par se regarder comme un fond d'ecran.
+   */
+  reaction?: CortiReaction;
 }) {
   const reduced = useReducedMotion();
   const on = !reduced;
@@ -166,7 +175,12 @@ export function CortiDock({
           {/* Anime : le socle flotte, lui respire, cligne et promene son
               regard. Fige ici, la scene bougerait tout entiere autour d'une
               statue. */}
-          <Corti level={level} size={272 * k} />
+          <CortiRig
+            level={level}
+            size={272 * k}
+            pose={level === 0 ? 'idle' : 'sit'}
+            reaction={reaction}
+          />
         </View>
 
         <Animated.View style={[StyleSheet.absoluteFill, coreStyle]}>

@@ -36,7 +36,8 @@ import { HardMode, HardModeIntro } from './HardMode';
 import {
   Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
 } from './Recovery';
-import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
+import { cortiLevel, cortiLine } from '@/components/Corti';
+import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { nudgeOfTheDay } from '@/services/nudge';
 import { pullAndRestart } from '@/services/refresh';
 
@@ -161,6 +162,9 @@ function HomeTab({
   // Le tirage est deterministe : la meme journee donne toujours la meme
   // phrase. Tire au hasard, elle changerait a chaque ouverture de l'app.
   const nudge = useMemo(() => nudgeOfTheDay(prot), [prot]);
+  // Cree UNE fois : la demande porte un numero, et c'est lui qui declenche.
+  // Refabriquee a chaque rendu, elle ferait saluer Corti sans arret.
+  const [hello] = useState(() => cortiReact('wave'));
 
   return (
     <Animated.ScrollView
@@ -176,8 +180,10 @@ function HomeTab({
         aucune raison d'ouvrir l'app autrement que pour aller scroller. Une
         tete qui va bien ou mal, elle, donne une raison de regarder.
       */}
+      {/* Il SALUE en arrivant. Reagir au toucher n'aurait servi a rien : la
+          pression ouvre l'onglet blocage, on serait deja parti. */}
       <Pressable onPress={onCorti} style={st.greet} accessibilityRole="button">
-        <Corti level={level} size={104} onPress={onCorti} />
+        <CortiRig level={level} size={104} reaction={hello} />
         {prot && (
           <Text variant="body" color={c.accent} style={{ textAlign: 'center' }}>
             {cortiLine(level, prot.days)}

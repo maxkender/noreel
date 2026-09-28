@@ -16,7 +16,7 @@ import { dict, useT } from '@/i18n';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
-import { Corti } from '@/components/Corti';
+import { CortiRig } from '@/components/CortiRig';
 
 type P = { onNext: () => void };
 
@@ -274,7 +274,7 @@ export function PromiseScreen({ onNext }: P) {
         {/* En cours de retablissement : le sommet est reserve au paywall,
             qui le propose. Trois ecrans de suite au niveau maximum et le
             progres ne veut plus rien dire. */}
-        <Corti level={2} size={140} />
+        <CortiRig level={2} size={140} />
       </Animated.View>
 
       <Text variant="displayM" style={st.center}>

@@ -12,7 +12,8 @@ import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { Corti, type CortiLevel } from '@/components/Corti';
+import { type CortiLevel } from '@/components/Corti';
+import { CortiRig } from '@/components/CortiRig';
 import { FaceCloud } from '@/components/FaceCloud';
 import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
@@ -51,7 +52,7 @@ export function Meet({ onNext }: P) {
           rendait son etat illisible. Elle part fatiguee, elle s'eteint pendant
           le constat, elle se retablit ensuite — un seul arc, dans l'ordre.
         */}
-        <Corti level={1} size={220} arrive />
+        <CortiRig level={1} size={220} arrive />
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
@@ -115,7 +116,7 @@ export function Ninety({ onNext }: P) {
       hueLevel={i / (ARC.length - 1)}
     >
       <View style={st.mid}>
-        <Corti level={at.level} size={190} />
+        <CortiRig level={at.level} size={190} />
       </View>
 
       {/* Les deux lignes ont une place FIXE : sans elle, une legende plus
@@ -399,7 +400,7 @@ export function RateAsk({ onNext }: P) {
             montrer au sommet ici puis un cran plus bas juste apres ferait
             reculer son etat. Le sommet est reserve au paywall, qui le propose.
           */}
-          <Corti level={2} size={112} />
+          <CortiRig level={2} size={112} />
         </View>
       </View>
 
@@ -493,7 +494,7 @@ export function Health({ onNext }: P) {
       {/* Sa place est FIXE : il grandit et retrecit selon le palier, et sans
           reserve tout le bas de l'ecran monterait et descendrait avec lui. */}
       <View style={st.gaugeStage}>
-        <Corti level={level} size={168} />
+        <CortiRig level={level} size={168} />
       </View>
 
       <View style={st.steps}>
