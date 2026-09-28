@@ -12,6 +12,7 @@ import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
+import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
 import { Corti, cortiLevel } from '@/components/Corti';
@@ -55,6 +56,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const c = useColors();
   const theme = useResolvedTheme();
   const pro = useProStore((p) => p.pro);
+  const { d, t } = useT();
   /*
     Le verrou est ici AUSSI, pas seulement sur l'icone.
     On arrive dans cet ecran par la roue, mais aussi par un raccourci de
@@ -370,7 +372,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
       <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: barColour }]}>
         <View style={styles.barRow}>
           <Text variant="label" color={withAlpha(barInk, 0.65)}>
-            {raw ? 'SANS FILTRE' : LABELS[id]}
+            {raw ? d.client.noFilter : LABELS[id]}
           </Text>
         </View>
       </SafeAreaView>
@@ -461,12 +463,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
             chiffre qui justifie l'abonnement a la fin du mois.
           */}
           <Text variant="title" style={styles.wallText}>
-            {nth > 0 ? `Reel nº ${nth} évité` : 'Bloqué.'}
+            {nth > 0 ? t(d.client.blockedNth, { n: nth }) : d.client.blocked}
           </Text>
           <Text variant="body" tone="secondary" style={styles.wallText}>
             {days > 0
-              ? `Corti tient depuis ${days} jour${days > 1 ? 's' : ''}.`
-              : 'C’est exactement pour ça que tu es là.'}
+              ? t(d.client.holds, { n: days, s: days > 1 ? 's' : '' })
+              : d.client.because}
           </Text>
         </View>
       )}
@@ -477,8 +479,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
         <View style={styles.valve} pointerEvents="none">
           <Text variant="label" color={switchFailed ? c.danger : c.accent}>
             {switchFailed
-              ? 'Comptes introuvables. Profil, puis « Changer de compte ».'
-              : 'Ouverture des comptes…'}
+              ? d.client.switchFailed
+              : d.client.switchOpening}
           </Text>
         </View>
       )}
@@ -489,8 +491,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
         <View style={styles.valve} pointerEvents="none">
           <Text variant="label" color={c.ember}>
             {passLeft > 0
-              ? `Reels ouverts encore ${passLeft} min`
-              : `Fenêtre ouverte jusqu’à ${valve.to} h`}
+              ? t(d.client.passLeft, { n: passLeft })
+              : t(d.client.valveOpen, { h: valve.to })}
           </Text>
         </View>
       )}
@@ -512,18 +514,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
             <Hourglass size={28} strokeWidth={2} color={c.ember} />
           </View>
           <Text variant="displayM" style={styles.wallText}>
-            Tes {FREE_MINUTES} minutes du jour sont passées.
+            {t(d.client.capTitle, { n: FREE_MINUTES })}
           </Text>
           <Text variant="body" tone="secondary" style={styles.wallText}>
-            C’est le principe : ton temps est fini. Passe en illimité pour
-            choisir toi-même combien tu t’accordes.
+            {d.client.capBody}
           </Text>
           <View style={styles.capBtns}>
             <Button
-              label="Débloquer mes 3 jours gratuits"
+              label={d.client.capUnlock}
               onPress={() => { haptics.press(); setGate(true); }}
             />
-            <Button label="Fermer Instagram" onPress={exit} variant="ghost" />
+            <Button
+              label={t(d.client.capClose, { app: LABELS[id].split(' ·')[0] })}
+              onPress={exit}
+              variant="ghost"
+            />
           </View>
         </View>
       )}
@@ -558,16 +563,16 @@ export function ClientScreen({ id }: { id: ClientId }) {
           <View style={styles.rescueRow}>
             <Pressable style={styles.stuck} onPress={reload}>
               <RotateCw size={15} strokeWidth={2.2} color={c.night} />
-              <Text variant="label" color={c.night}>Recharger</Text>
+              <Text variant="label" color={c.night}>{d.client.reload}</Text>
             </Pressable>
             <Pressable style={styles.plain} onPress={toggleRaw}>
               <Text variant="label" color={c.mist}>
-                {raw ? 'Remettre le filtre' : 'Sans filtre'}
+                {raw ? d.client.rawBack : d.client.raw}
               </Text>
             </Pressable>
           </View>
           <Text variant="label" tone="tertiary" numberOfLines={2} style={styles.diag}>
-            {pageError ?? 'La page tarde. Recharge, ou passe sans filtre pour savoir d’où ça vient.'}
+            {pageError ?? d.client.stalling}
           </Text>
         </View>
       )}

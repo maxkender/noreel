@@ -11,6 +11,7 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
+import { useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
 
 const SIZE = 58;
@@ -38,6 +39,7 @@ export function NavBar({
 }: { onAction: (a: NavAction) => void }) {
   const c = useColors();
   const styles = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
   const { width, height } = useWindowDimensions();
   const x = useSharedValue(width - SIZE - MARGIN);
   const y = useSharedValue(height * 0.56);
@@ -97,10 +99,10 @@ export function NavBar({
           style={styles.barWrap}
         >
           <View style={styles.bar}>
-            <Key icon={ChevronLeft} label="Retour" onPress={() => act('back')} />
-            <Key icon={House} label="Accueil UnSwipe" onPress={() => act('exit')} />
-            <Key icon={RotateCw} label="Recharger" onPress={() => act('reload')} />
-            <Key icon={ChevronRight} label="Suivant" onPress={() => act('forward')} />
+            <Key icon={ChevronLeft} label={d.client.back} onPress={() => act('back')} />
+            <Key icon={House} label={d.client.home} onPress={() => act('exit')} />
+            <Key icon={RotateCw} label={d.client.reload} onPress={() => act('reload')} />
+            <Key icon={ChevronRight} label={d.client.forward} onPress={() => act('forward')} />
             {/*
               Changer de compte en un geste.
               Instagram tient lui-meme plusieurs sessions : sa page de
@@ -109,8 +111,8 @@ export function NavBar({
               partout ailleurs ici — un selecteur reconnu a sa forme ne
               survivrait pas au prochain remaniement, une adresse si.
             */}
-            <Key icon={UsersRound} label="Changer de compte" onPress={() => act('account')} />
-            <Key icon={Gear} label="Réglages" onPress={() => act('settings')} colour={c.accent} />
+            <Key icon={UsersRound} label={d.client.switchAccount} onPress={() => act('account')} />
+            <Key icon={Gear} label={d.client.settings} onPress={() => act('settings')} colour={c.accent} />
           </View>
 
           {/* La croix ferme la barre, elle ne quitte pas le site : c'est la

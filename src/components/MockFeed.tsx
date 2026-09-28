@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming, Easing,
@@ -28,46 +29,73 @@ import { Text } from '@/components/type/Text';
  */
 
 type Post = {
+  /** Sa place dans la liste : elle choisit le visage, et ne change jamais. */
+  idx: number;
   who: string;
   where?: string;
   /** Un reel : c'est lui qui tombe quand le filtre passe. */
   reel: boolean;
   /** Les deux teintes de la photo. */
   art: [string, string];
-  /** L'anneau de l'avatar. */
-  face: string;
   likes: string;
 };
 
 const POSTS: Post[] = [
   {
+    idx: 0,
     who: 'lea.mrn', where: 'Biarritz', reel: false,
-    art: ['#F0A868', '#D9544D'], face: '#E8735A', likes: '1 284',
+    art: ['#F0A868', '#D9544D'], likes: '1 284',
   },
   {
+    idx: 1,
     who: 'son original', reel: true,
-    art: ['#7A5CE0', '#C2415C'], face: '#9B5DE5', likes: '42,1 k',
+    art: ['#7A5CE0', '#C2415C'], likes: '42,1 k',
   },
   {
+    idx: 2,
     who: 'thomas_b', where: 'Lyon', reel: false,
-    art: ['#4F8DF5', '#2E4E8F'], face: '#5B9DFF', likes: '312',
+    art: ['#4F8DF5', '#2E4E8F'], likes: '312',
   },
   {
+    idx: 3,
     who: 'son original', reel: true,
-    art: ['#E0568B', '#8A2E63'], face: '#E0568B', likes: '18,7 k',
+    art: ['#E0568B', '#8A2E63'], likes: '18,7 k',
   },
   {
+    idx: 4,
     who: 'camille.d', where: 'Paris 11e', reel: false,
-    art: ['#3FBF8F', '#1E6E63'], face: '#3FBF8F', likes: '867',
+    art: ['#3FBF8F', '#1E6E63'], likes: '867',
   },
   {
+    idx: 5,
     who: 'son original', reel: true,
-    art: ['#F2B441', '#C2611E'], face: '#F2B441', likes: '93,4 k',
+    art: ['#F2B441', '#C2611E'], likes: '93,4 k',
   },
   {
+    idx: 6,
     who: 'basket_hec', where: 'Jouy-en-Josas', reel: false,
-    art: ['#6E7BF2', '#3A3F8F'], face: '#6E7BF2', likes: '2 041',
+    art: ['#6E7BF2', '#3A3F8F'], likes: '2 041',
   },
+];
+
+/*
+ * Les visages, fournis par le studio.
+ *
+ * Ce sont eux qui font la difference entre « une maquette » et « mon
+ * Instagram ». Des aplats de couleur a la place des avatars se lisent comme un
+ * squelette de page ; des visages ronds dans des anneaux colores se lisent
+ * comme un fil. Les photos des publications restent des degrades : c'est la
+ * FORME verticale du reel qui doit se remarquer, pas son contenu.
+ */
+const FACES = [
+  require('@/assets/faces/face-1.webp'),
+  require('@/assets/faces/face-2.webp'),
+  require('@/assets/faces/face-3.webp'),
+  require('@/assets/faces/face-4.webp'),
+  require('@/assets/faces/face-5.webp'),
+  require('@/assets/faces/face-6.webp'),
+  require('@/assets/faces/face-7.webp'),
+  require('@/assets/faces/face-8.webp'),
 ];
 
 /** Les anneaux de la bande de stories, dans l'ordre. */
@@ -152,7 +180,7 @@ function Tray({ u }: { u: number }) {
       {RINGS.map((ring, i) => (
         <View key={ring} style={st.storyCol}>
           <View style={[st.ring, { borderColor: ring }]}>
-            <View style={[st.ringIn, { backgroundColor: withAlpha(ring, 0.5) }]} />
+            <Image source={FACES[i]} style={st.ringIn} contentFit="cover" />
           </View>
           <Text
             variant="label"
@@ -233,7 +261,11 @@ function Row({
   const body = (
     <>
       <View style={st.head}>
-        <View style={[st.avatar, { backgroundColor: post.face }]} />
+        <Image
+          source={FACES[(post.idx + 3) % FACES.length]}
+          style={st.avatar}
+          contentFit="cover"
+        />
         <View style={{ flex: 1 }}>
           <Text variant="label" style={{ fontSize: 5.4 * u, letterSpacing: 0 }}>
             {post.who}
@@ -284,10 +316,10 @@ const sheet = (c: Palette, u: number) => StyleSheet.create({
     width: 26 * u, height: 26 * u, borderRadius: 13 * u,
     borderWidth: 1.6, alignItems: 'center', justifyContent: 'center',
   },
-  ringIn: { width: 21 * u, height: 21 * u, borderRadius: 11 * u },
+  ringIn: { width: 21 * u, height: 21 * u, borderRadius: 11 * u, overflow: 'hidden' },
   post: { paddingHorizontal: 8 * u, paddingBottom: 6 * u, overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 5 * u, paddingVertical: 5 * u },
-  avatar: { width: 17 * u, height: 17 * u, borderRadius: 9 * u },
+  avatar: { width: 17 * u, height: 17 * u, borderRadius: 9 * u, overflow: 'hidden' },
   media: { borderRadius: 5 * u },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 * u, paddingVertical: 5 * u },
   tabs: {

@@ -291,11 +291,11 @@ function BlockTab({
       {/* Puis les trois chiffres du jour : le temps passe dans les versions
           filtrees, les jours d'affilee, et la part du plafond du jour. */}
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
-        <Stat label="Aujourd’hui" value={formatHours(total)} />
+        <Stat label={d.blockTab.today} value={formatHours(total)} />
         <View style={st.stripLine} />
-        <Stat label="Série" value={`${streak} j`} />
+        <Stat label={d.blockTab.streak} value={`${streak} j`} />
         <View style={st.stripLine} />
-        <Stat label="Du plafond" value={`${pct} %`} />
+        <Stat label={d.blockTab.ofCap} value={`${pct} %`} />
       </Glass>
 
       <View style={[st.status, on ? st.statusOn : st.statusOff, !pro && st.dimmed]}>
@@ -303,14 +303,12 @@ function BlockTab({
           <Shield size={26} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.5)} />
         </View>
         <Text variant="title" style={{ textAlign: 'center' }}>
-          {on ? 'Les apps d’origine sont bloquées' : 'Bloquer les apps d’origine'}
+          {on ? d.blockTab.onTitle : d.blockTab.offTitle}
         </Text>
         <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
           {needsAuth
-            ? 'Temps d’écran doit d’abord donner son accord.'
-            : selection
-              ? 'Instagram, TikTok, X et YouTube s’ouvrent ici, pas ailleurs.'
-              : 'Choisis Instagram, TikTok, X et YouTube dans la liste d’Apple.'}
+            ? d.blockTab.needAuth
+            : selection ? d.blockTab.ready : d.blockTab.pick}
         </Text>
         <Pressable
           onPress={() => {
@@ -329,18 +327,18 @@ function BlockTab({
             minimumFontScale={0.85}
             color={on ? c.night : c.mist}
           >
-            {!pro ? 'Débloquer'
+            {!pro ? d.blockTab.unlock
               : needsAuth ? d.block.authorize
-              : !selection ? 'Choisir les apps'
-              : on ? 'Désactiver' : 'Activer'}
+              : !selection ? d.blockTab.choose
+              : on ? d.blockTab.turnOff : d.blockTab.turnOn}
           </Text>
         </Pressable>
       </View>
 
       <Card>
         <Row
-          title="Bloquer d’autres apps"
-          body={selection ? 'Ajoute ce que tu veux à la liste.' : 'Jeux, actualités, tout ce qui te happe.'}
+          title={d.blockTab.more}
+          body={selection ? d.blockTab.moreOn : d.blockTab.moreOff}
           onPress={() => (pro ? router.push('/picker') : setPaywall(true))}
           right={pro
             ? <Text variant="body" tone="tertiary">›</Text>
@@ -348,9 +346,7 @@ function BlockTab({
         />
         <Row
           title="Mode strict"
-          body={hard
-            ? 'Rendre le blocage demande une minute, une phrase et trois calculs.'
-            : 'Rend la désactivation volontairement pénible. Environ trois minutes.'}
+          body={hard ? d.blockTab.hardOn : d.blockTab.hardOff}
           right={!pro ? <LockedPill label="Pro" onPress={() => setPaywall(true)} /> : (
             <Toggle
               on={hard}
@@ -444,7 +440,7 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
 
       <Text variant="label" tone="secondary" style={st.section}>Assistance</Text>
       <Card>
-        <Row title="Apps sur l’écran d’accueil" onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />

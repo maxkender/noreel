@@ -8,11 +8,11 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Glass } from '@/components/glass/Glass';
 import { SelectCard } from '@/components/SelectCard';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
+import { dict, useT } from '@/i18n';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
@@ -48,10 +48,7 @@ type Step =
  * affirmation qu'on peut contester ; dit par lui, c'est quelqu'un qui raconte
  * comment il va — et ce quelqu'un, c'est soi.
  */
-const ASIDE = [
-  'Moi non plus je ne m’en souviens pas. C’est un peu mon travail, pourtant.',
-  'Je fais ce que je peux. Mais on ne me laisse jamais finir une idée.',
-];
+const ASIDE = ['aside1', 'aside2'] as const;
 
 const CONSTAT: Step[] = [
   {
@@ -62,7 +59,7 @@ const CONSTAT: Step[] = [
   },
   {
     kind: 'ask',
-    q: 'Ta mémoire, ta concentration, ton plaisir : tu les sens {flancher} ?',
+    q: dict.ob.q2,
     options: ['Oui, nettement', 'Parfois', 'Non'],
   },
 ];
@@ -73,6 +70,7 @@ const CONSTAT: Step[] = [
  * personne — pas notre affirmation — qui fait le constat.
  */
 export function Constat({ onNext }: P) {
+  const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [i, setI] = useState(0);
@@ -107,7 +105,7 @@ export function Constat({ onNext }: P) {
         {/* Corti d'abord : on voit dans quel etat il est avant de lire la
             question, et la question n'est plus un reproche. */}
         <Animated.View entering={FadeIn.delay(1400).duration(600)} style={st.aside}>
-          <CortiSays level={0} size={72} text={ASIDE[i] ?? ASIDE[0]} />
+          <CortiSays level={0} size={72} text={d.corti[ASIDE[i] ?? ASIDE[0]]} />
         </Animated.View>
 
         <Typewriter
@@ -222,6 +220,7 @@ export function Manifesto({ onNext }: P) {
 
 /* ---------- Prenom ---------- */
 export function Name({ onNext }: P) {
+  const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
@@ -230,7 +229,7 @@ export function Name({ onNext }: P) {
   return (
     <Screen cta="Continuer" onPress={onNext} disabled={name.trim().length < 2} center hue="deep">
       <Typewriter
-        text="Bienvenue sur UnSwipe. Comment devrait-on t’appeler ?"
+        text={d.ob.namePrompt}
         variant="displayM"
         style={st.center}
       />
@@ -238,7 +237,7 @@ export function Name({ onNext }: P) {
         <TextInput
           value={name}
           onChangeText={setName}
-          placeholder="Ton prénom"
+          placeholder={d.ob.namePlaceholder}
           placeholderTextColor={withAlpha(c.mist, 0.28)}
           autoCapitalize="words"
           autoCorrect={false}
@@ -288,46 +287,11 @@ export function Distractions({ onNext }: P) {
   );
 }
 
-/* ---------- Apps essentielles ---------- */
-const ESSENTIAL = [
-  { n: 'Messages', src: require('@/assets/essential/messages.png') },
-  { n: 'WhatsApp', src: require('@/assets/essential/whatsapp.png') },
-  { n: 'Plans', src: require('@/assets/essential/maps.png') },
-  { n: 'Calendrier', src: require('@/assets/essential/calendar.png') },
-  { n: 'Gmail', src: require('@/assets/essential/gmail.png') },
-  { n: 'Outlook', src: require('@/assets/essential/outlook.png') },
-] as const;
 
-export function Essentials({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  return (
-    <Screen cta="Continuer" onPress={onNext} center hue="warm">
-      <Text variant="displayM" style={st.center}>
-        Les apps essentielles restent toujours accessibles.
-      </Text>
-
-      <Glass radius={26} intensity={50} warmEdge="none" style={st.essential}>
-        <Text variant="label" tone="tertiary">TOUJOURS AUTORISÉ</Text>
-        <View style={st.essGrid}>
-          {ESSENTIAL.map((a, i) => (
-            <Animated.View
-              key={a.n}
-              entering={FadeIn.delay(160 + i * 90).duration(420)}
-              style={st.essTile}
-            >
-              <Image source={a.src} style={st.essIcon} contentFit="contain" />
-              <Text variant="label" tone="secondary" numberOfLines={1}>{a.n}</Text>
-            </Animated.View>
-          ))}
-        </View>
-      </Glass>
-    </Screen>
-  );
-}
 
 /* ---------- Notifications ---------- */
 export function NotificationsAsk({ onNext }: P) {
+  const { d } = useT();
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; }, []);
 
@@ -344,18 +308,18 @@ export function NotificationsAsk({ onNext }: P) {
   return (
     <View style={{ flex: 1 }}>
       <Screen secondary="Plus tard" onSecondary={onNext} hue="deep">
-        <Text variant="displayM">Reçois ton rapport chaque semaine.</Text>
+        <Text variant="displayM">{d.ob.notifTitle}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-          Un résumé, jamais de relance.
+          {d.ob.notifBody}
         </Text>
       </Screen>
 
       <SystemAlert
         goodSide="right"
-        title="« UnSwipe » souhaite t’envoyer des notifications"
-        body="Les notifications peuvent inclure des alertes, des sons et des pastilles d’icône."
-        good="Autoriser"
-        bad="Ne pas autoriser"
+        title={d.ob.notifAlert}
+        body={d.ob.notifAlertBody}
+        good={d.ob.allow}
+        bad={d.ob.deny}
         onGood={() => { void ask(); }}
         onBad={() => { void ask(); }}
       />
@@ -365,6 +329,7 @@ export function NotificationsAsk({ onNext }: P) {
 
 /* ---------- La promesse ---------- */
 export function PromiseScreen({ onNext }: P) {
+  const { d, t } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
@@ -376,7 +341,7 @@ export function PromiseScreen({ onNext }: P) {
   const hours = Math.round((minutes * 0.3 * 365) / 60);
 
   return (
-    <Screen cta="👊  C’est parti" onPress={onNext} hue="accent">
+    <Screen cta={d.ob.letsGo} onPress={onNext} hue="accent">
       {/*
         Corti rayonnante ouvre la promesse.
         C'etait le dernier ecran du parcours sans rien a regarder, et c'est
@@ -394,9 +359,9 @@ export function PromiseScreen({ onNext }: P) {
       </Text>
 
       <View style={{ marginTop: space.xxl, gap: space.lg }}>
-        <PromiseRow title="Rétablissement de tes récepteurs de dopamine" />
-        <PromiseRow title="Du temps libre pour faire ce que tu veux : lire, écrire, apprendre une langue" />
-        <PromiseRow title={`${hours} heures récupérées dès cette année`} />
+        <PromiseRow title={d.ob.promise1} />
+        <PromiseRow title={d.ob.promise2} />
+        <PromiseRow title={t(d.ob.promise3, { n: hours })} />
       </View>
     </Screen>
   );

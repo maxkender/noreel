@@ -15,6 +15,7 @@ import { Button } from '@/components/Button';
 import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
+import { dict, useT } from '@/i18n';
 import {
   MINUTES_PER_SESSION, claimMilestone, stats, type Stats,
 } from '@/services/protect';
@@ -53,6 +54,7 @@ export function useProtect() {
  */
 export function RecoveryCard({ s }: { s: Stats }) {
   const c = useColors();
+  const { d } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const level = cortiLevel(s.days);
   const tone = s.brain < 35 ? c.danger : s.brain < 70 ? c.ember : c.accent;
@@ -76,12 +78,12 @@ export function RecoveryCard({ s }: { s: Stats }) {
         <Text variant="button" color={tone}>{s.brain} %</Text>
       </View>
 
-      <Text variant="label" tone="tertiary">INDICE DE RÉCUPÉRATION</Text>
+      <Text variant="label" tone="tertiary">{d.stats.index}</Text>
 
       <View style={st.figures}>
-        <Figure label="Reels évités" value={String(s.blocked)} />
-        <Figure label="Temps repris" value={formatHours(s.minutes)} />
-        <Figure label="Jours protégés" value={`${s.days} j`} />
+        <Figure label={d.stats.reelsAvoided} value={String(s.blocked)} />
+        <Figure label={d.stats.timeBack} value={formatHours(s.minutes)} />
+        <Figure label={d.stats.daysKept} value={`${s.days} j`} />
       </View>
     </Glass>
   );
@@ -111,12 +113,11 @@ function Figure({ label, value }: { label: string; value: string }) {
  */
 export function ReclaimedNote({ s }: { s: Stats }) {
   const c = useColors();
+  const { d, t } = useT();
   const st = useMemo(() => sheet(c), [c]);
   return (
     <Text variant="label" tone="tertiary" style={st.note}>
-      Estimation : {s.avoided} entrées dans un fil de reels refermées,
-      comptées {MINUTES_PER_SESSION} min chacune. Le temps passé dans
-      l’application d’origine ne nous est pas accessible.
+      {t(d.stats.estimate, { n: s.avoided, m: MINUTES_PER_SESSION })}
     </Text>
   );
 }
@@ -131,13 +132,14 @@ export function ReclaimedNote({ s }: { s: Stats }) {
  */
 export function ProtectionStatus({ s, onFix }: { s: Stats; onFix: () => void }) {
   const c = useColors();
+  const { d } = useT();
   const st = useMemo(() => sheet(c), [c]);
   if (s.shaky) {
     return (
       <Pressable onPress={onFix} style={[st.line, st.lineWarn]}>
         <ShieldAlert size={15} strokeWidth={2.2} color={c.ember} />
         <Text variant="label" color={c.ember} style={{ flex: 1 }}>
-          Le filtre n’a rien trouvé à masquer. Vérifier la mise à jour.
+          {d.stats.shaky}
         </Text>
       </Pressable>
     );
@@ -147,17 +149,18 @@ export function ProtectionStatus({ s, onFix }: { s: Stats; onFix: () => void }) 
     <View style={[st.line, st.lineOk]}>
       <CircleCheck size={15} strokeWidth={2.2} color={c.accent} />
       <Text variant="label" tone="secondary" style={{ flex: 1 }}>
-        {s.fresh ? 'Protection active, vérifiée aujourd’hui' : 'Protection active'}
+        {s.fresh ? d.stats.activeToday : d.stats.active}
       </Text>
     </View>
   );
 }
 
-const WORDS: Record<string, [string, string]> = {
-  'days:7': ['Une semaine', 'Sept jours sans fil infini.'],
-  'days:30': ['Un mois', 'Trente jours. Ce n’est plus un essai, c’est une habitude.'],
-  'days:100': ['Cent jours', 'Cent jours. Tu as change de rapport a ton telephone.'],
-  'reels:1000': ['Mille reels', 'Mille reels qui ne sont jamais arrives jusqu’a toi.'],
+/** Les paliers et leurs mots. Lus dans le dictionnaire, pas ecrits ici. */
+const WORDS: Record<string, ['m7' | 'm30' | 'm100' | 'm1000', 'm7b' | 'm30b' | 'm100b' | 'm1000b']> = {
+  'days:7': ['m7', 'm7b'],
+  'days:30': ['m30', 'm30b'],
+  'days:100': ['m100', 'm100b'],
+  'reels:1000': ['m1000', 'm1000b'],
 };
 
 /**
@@ -180,7 +183,9 @@ export function Milestone({
   const card = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const id = `${prize.kind}:${prize.at}`;
-  const [title, body] = WORDS[id] ?? ['Palier atteint', ''];
+  const keys = WORDS[id];
+  const title = keys ? dict.stats[keys[0]] : dict.stats.milestone;
+  const body = keys ? dict.stats[keys[1]] : '';
 
   const share = async () => {
     setBusy(true);
@@ -214,19 +219,19 @@ export function Milestone({
             <Text variant="displayM" style={st.mid}>{title}</Text>
             <Text variant="body" tone="secondary" style={st.mid}>{body}</Text>
             <View style={st.prizeRow}>
-              <Figure label="Jours protégés" value={`${days} j`} />
-              <Figure label="Reels évités" value={String(blocked)} />
+              <Figure label={dict.stats.daysKept} value={`${days} j`} />
+              <Figure label={dict.stats.reelsAvoided} value={String(blocked)} />
             </View>
             <Text variant="label" tone="tertiary">UNSWIPE</Text>
           </Animated.View>
 
           <View style={st.prizeBtns}>
             <Button
-              label={busy ? 'Un instant…' : 'Partager'}
+              label={busy ? dict.pay.wait : dict.stats.share}
               onPress={() => { haptics.press(); void share(); }}
               disabled={busy}
             />
-            <Button label="Plus tard" onPress={onClose} variant="ghost" />
+            <Button label={dict.stats.later} onPress={onClose} variant="ghost" />
           </View>
         </SafeAreaView>
       </View>

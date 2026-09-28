@@ -16,6 +16,7 @@ import { useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
 import { scheduleTrialReminder } from '@/services/trial';
+import { Corti } from '@/components/Corti';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
@@ -247,6 +248,8 @@ export function Paywall(
         {d.pay.sub}
       </Text>
 
+      <Healing />
+
       {/* Son chiffre, rappele une fois. Il n'est pas la pour convaincre mais
           pour rappeler ce que coute le statu quo, juste avant de lire un prix. */}
       {minutes > 0 && (
@@ -336,6 +339,51 @@ export function Paywall(
         )}
       </View>
     </Screen>
+  );
+}
+
+/**
+ * Corti qui se repare, sous les yeux.
+ *
+ * C'est l'argument de vente en une image : il arrive grille, il repart
+ * rayonnant. Le paywall enumerait des fonctionnalites — quatre lignes avec une
+ * coche — et une liste ne fait rien ressentir. Une tete qui va mal et qui va
+ * mieux, si, et c'est la meme promesse.
+ *
+ * La bascule se fait UNE fois, apres un temps de pose : assez long pour qu'on
+ * ait vu dans quel etat il est, assez court pour qu'on n'ait pas fini de lire
+ * le titre. Elle ne rejoue pas — ce n'est pas une boucle de demonstration,
+ * c'est une phrase.
+ */
+function Healing() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
+  const [healed, setHealed] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => { setHealed(true); haptics.success(); }, 1800);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <View style={st.heal}>
+      <Corti level={healed ? 3 : 0} size={126} />
+
+      {/* Hauteur fixe : les deux phrases n'ont pas la meme longueur, et sans
+          reserve tout ce qui suit remonterait au moment de la bascule. */}
+      <View style={st.healSlot}>
+        <Animated.View key={healed ? 'on' : 'off'} entering={FadeIn.duration(520)}>
+          <Text
+            variant="body"
+            color={healed ? c.accent : c.ember}
+            style={st.center}
+          >
+            {healed ? d.pay.healed : d.pay.burnt}
+          </Text>
+        </Animated.View>
+      </View>
+    </View>
   );
 }
 
@@ -479,6 +527,11 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   center: { textAlign: 'center' },
   sub: { marginTop: space.md },
+  heal: { alignItems: 'center', marginTop: space.lg },
+  healSlot: {
+    height: 46, justifyContent: 'center', marginTop: space.sm,
+    paddingHorizontal: space.lg,
+  },
   wound: {
     alignSelf: 'center', marginTop: space.lg,
     paddingHorizontal: space.md, paddingVertical: 6, borderRadius: 999,

@@ -9,6 +9,7 @@ import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
+import { useT } from '@/i18n';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { Toggle } from '@/features/home/parts';
 import { LockedPill } from '@/features/home/LockedPill';
@@ -41,6 +42,7 @@ export function ClientSettings({
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
   const pro = useProStore((p) => p.pro);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
@@ -180,7 +182,7 @@ export function ClientSettings({
               onPress={() => { haptics.press(); onGo(ACCOUNT[id].add); }}
             >
               <UserRoundCog size={15} strokeWidth={2} color={c.accent} />
-              <Text variant="body" style={{ flex: 1 }}>Changer de compte</Text>
+              <Text variant="body" style={{ flex: 1 }}>{d.client.switchAccount}</Text>
             </Pressable>
 
             <Pressable
@@ -188,7 +190,7 @@ export function ClientSettings({
               onPress={() => { haptics.press(); onGo(ACCOUNT[id].out); }}
             >
               <LogOut size={15} strokeWidth={2} color={withAlpha(c.mist, 0.45)} />
-              <Text variant="body" tone="secondary" style={{ flex: 1 }}>Se déconnecter</Text>
+              <Text variant="body" tone="secondary" style={{ flex: 1 }}>{d.client.signOut}</Text>
             </Pressable>
 
             <Text variant="label" tone="tertiary" style={st.note}>

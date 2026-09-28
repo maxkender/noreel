@@ -10,6 +10,7 @@ import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { Corti, type CortiLevel } from '@/components/Corti';
+import { FaceCloud } from '@/components/FaceCloud';
 import { MockFeed } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
@@ -306,15 +307,28 @@ export function RateAsk({ onNext }: P) {
       center
       hue="accent"
     >
-      <Animated.View entering={FadeIn.duration(520)} style={st.stars}>
+      {/*
+        Les visages derivent AUTOUR de Corti.
+        Une grille de portraits carres se lit comme une page d'equipe ; des
+        ronds qui flottent se lisent comme des gens, et c'est le seul point de
+        cet ecran. Corti au centre relie la communaute a ce qu'on y fait.
+      */}
+      <View style={st.cloud}>
+        <FaceCloud height={280} />
+        <View style={st.cloudMid} pointerEvents="box-none">
+          <Corti level={3} size={112} />
+        </View>
+      </View>
+
+      <Animated.View entering={FadeIn.delay(600).duration(520)} style={st.stars}>
         {Array.from({ length: 5 }, (_, i) => (
-          <Animated.View key={i} entering={FadeIn.delay(200 + i * 110).duration(360)}>
-            <Star size={26} strokeWidth={1.6} color={c.accent} fill={c.accent} />
+          <Animated.View key={i} entering={FadeIn.delay(700 + i * 110).duration(360)}>
+            <Star size={22} strokeWidth={1.6} color={c.accent} fill={c.accent} />
           </Animated.View>
         ))}
       </Animated.View>
 
-      <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
+      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
         {d.rate.title}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
@@ -333,4 +347,9 @@ const sheet = () => StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFFFFF22' },
   stage: { alignItems: 'center', marginTop: space.xl },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
+  cloud: { alignSelf: 'stretch', justifyContent: 'center' },
+  cloudMid: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+  },
 });

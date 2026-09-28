@@ -8,6 +8,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
+import { useT } from '@/i18n';
 import { Corti, cortiLevel } from '@/components/Corti';
 import { countPass, stats } from '@/services/protect';
 
@@ -38,6 +39,7 @@ export function ReelsPass({
   visible, onCancel, onPass,
 }: { visible: boolean; onCancel: () => void; onPass: () => void }) {
   const c = useColors();
+  const { d, t } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const [step, setStep] = useState(0);
   const [quiz, setQuiz] = useState<Sum[]>([]);
@@ -64,10 +66,10 @@ export function ReelsPass({
         <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           <View style={st.bar}>
             <Pressable onPress={() => { haptics.tap(); onCancel(); }} hitSlop={12}>
-              <Text variant="label" color={c.accent}>Renoncer</Text>
+              <Text variant="label" color={c.accent}>{d.pass.giveUp}</Text>
             </Pressable>
             <Text variant="label" tone="tertiary">
-              Étape {step + 1} sur {steps.length}
+              {t(d.pass.step, { i: step + 1, n: steps.length })}
             </Text>
             <View style={{ width: 62 }} />
           </View>
@@ -85,6 +87,7 @@ export function ReelsPass({
 
 function Wait({ onDone }: { onDone: () => void }) {
   const c = useColors();
+  const { d, t } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const [left, setLeft] = useState(WAIT);
 
@@ -98,10 +101,9 @@ function Wait({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={st.center}>
-      <Text variant="displayM" style={st.mid}>Une minute et demie, d’abord.</Text>
+      <Text variant="displayM" style={st.mid}>{d.pass.waitTitle}</Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        Si l’envie tient encore après ça, tu passeras. Sinon, elle sera passée
-        toute seule — et c’est exactement le but.
+        {d.pass.waitBody}
       </Text>
 
       <Text variant="hero" color={left > 0 ? c.ember : c.accent} style={st.clock}>
@@ -110,7 +112,7 @@ function Wait({ onDone }: { onDone: () => void }) {
 
       <View style={st.action}>
         <Button
-          label={left > 0 ? `Encore ${left} s` : 'Continuer'}
+          label={left > 0 ? t(d.pass.waitLeft, { n: left }) : d.pass.validate}
           onPress={() => { haptics.press(); onDone(); }}
           disabled={left > 0}
         />
@@ -143,6 +145,7 @@ function makeQuiz(): Sum[] {
 
 function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
   const c = useColors();
+  const { d, t } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const [i, setI] = useState(0);
   const [val, setVal] = useState('');
@@ -167,7 +170,9 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
 
   return (
     <View style={st.center}>
-      <Text variant="label" tone="tertiary">CALCUL {i + 1} SUR {quiz.length}</Text>
+      <Text variant="label" tone="tertiary">
+        {t(d.pass.sum, { i: i + 1, n: quiz.length })}
+      </Text>
       <Text variant="hero" style={[st.mid, { marginTop: space.md }]} numberOfLines={1} adjustsFontSizeToFit>
         {sum.q}
       </Text>
@@ -186,12 +191,12 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
           bouton vers le bas au moment ou le doigt y va. */}
       <View style={st.slot}>
         {wrong && (
-          <Text variant="label" color={c.danger}>Non. Recommence celui-là.</Text>
+          <Text variant="label" color={c.danger}>{d.pass.wrong}</Text>
         )}
       </View>
 
       <View style={st.action}>
-        <Button label="Valider" onPress={submit} disabled={val.trim().length === 0} />
+        <Button label={d.pass.validate} onPress={submit} disabled={val.trim().length === 0} />
       </View>
     </View>
   );
@@ -213,6 +218,7 @@ function makeCode(): string {
  */
 function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
   const c = useColors();
+  const { d } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const [val, setVal] = useState('');
   const [wrong, setWrong] = useState(false);
@@ -252,7 +258,7 @@ function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
   return (
     <View style={st.center}>
       <Text variant="displayM" style={st.mid}>
-        {shown ? 'Retiens ces chiffres.' : 'Écris-les à l’envers.'}
+        {shown ? d.pass.remember : d.pass.reverse}
       </Text>
 
       <View style={st.codeSlot}>
@@ -275,12 +281,12 @@ function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
       </View>
 
       <View style={st.slot}>
-        {wrong && <Text variant="label" color={c.danger}>Non. On recommence.</Text>}
+        {wrong && <Text variant="label" color={c.danger}>{d.pass.again}</Text>}
       </View>
 
       <View style={st.action}>
         <Button
-          label={shown ? 'Encore un instant…' : 'Valider'}
+          label={shown ? d.pass.wait : d.pass.validate}
           onPress={submit}
           disabled={shown || val.trim().length < DIGITS}
         />
@@ -301,6 +307,7 @@ function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
  */
 function Cost({ onDone }: { onDone: () => void }) {
   const c = useColors();
+  const { d, t } = useT();
   const st = useMemo(() => sheet(c), [c]);
   const [before, setBefore] = useState<number | null>(null);
   const [after, setAfter] = useState<number | null>(null);
@@ -326,7 +333,7 @@ function Cost({ onDone }: { onDone: () => void }) {
       <Corti level={cortiLevel(days)} size={150} />
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
-        C’est ouvert. {PASS_MINUTES} minutes.
+        {t(d.pass.openTitle, { n: PASS_MINUTES })}
       </Text>
 
       {/* La place du chiffre est reservee : il arrive du disque, et sans
@@ -334,15 +341,15 @@ function Cost({ onDone }: { onDone: () => void }) {
       <View style={st.costSlot}>
         {after !== null && (
           <Text variant="lead" color={c.ember} style={st.mid}>
-            {lost > 0
-              ? `Corti descend à ${after} %. Il avait ${before} %.`
-              : `Corti est à ${after} %.`}
+            {lost > 0 && before !== null
+              ? t(d.pass.cost, { a: after, b: before })
+              : t(d.pass.costFlat, { a: after })}
           </Text>
         )}
       </View>
 
       <View style={st.action}>
-        <Button label="J’y vais" onPress={() => { haptics.tap(); onDone(); }} />
+        <Button label={d.pass.go} onPress={() => { haptics.tap(); onDone(); }} />
       </View>
     </View>
   );
