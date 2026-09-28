@@ -581,26 +581,34 @@ export const INSTAGRAM_BLOCKER = `
   // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
   // masque : lui couper l'icone emportait aussi la recherche.
   /*
-    LA PORTE, ET RIEN QUE LA PORTE.
+    LA PORTE, ET RIEN QUE LA PORTE — designee par son adresse EXACTE.
 
-    Cette feuille cachait « a[href*=/reel/] » et « [aria-label*=Reels] » sur
-    TOUT le document. Les deux attrapent du contenu de fil : le premier est le
-    lien qui enveloppe la video d'une publication, le second n'importe quel
-    conteneur dont l'etiquette mentionne Reels. Le navigateur les applique en
-    continu, a chaque noeud qu'Instagram ajoute en descendant — et une regle
-    CSS ne se defait pas, contrairement a nos marques. Le fil se vidait donc
-    en scrollant, jusqu'au noir, et aucun des deux correctifs precedents ne
-    pouvait y changer quoi que ce soit : ils ne touchaient que le JavaScript.
+    Trois versions de cette feuille, trois lecons, verifiees dans un vrai
+    navigateur sur instagram.com plutot que devinees :
 
-    Les selecteurs sont donc ancres dans la BARRE de navigation. C'est la que
-    se trouve l'onglet Reels, c'est un element fixe, et il n'y a aucun risque
-    d'y rencontrer une publication.
+    1. « a[href*=/reel/] » et « [aria-label*=Reels] » attrapaient du contenu de
+       fil. Les vignettes portent des etiquettes comme « peter_mai_ reels »,
+       que la recherche par sous-chaine ramasse ; et le navigateur applique
+       une regle CSS a chaque noeud ajoute en descendant, sans qu'on puisse la
+       defaire. Le fil se vidait jusqu'au noir.
+
+    2. Les ancrer dans « nav » ou « [role=navigation] » ne cachait plus RIEN :
+       la page d'Instagram ne contient aucun des deux. Zero element. Le bouton
+       Reels etait donc revenu intact.
+
+    3. Distinguer le pluriel du singulier ne marche pas non plus : un reel
+       isole vit aussi a /reels/{id}/.
+
+    Ce qui distingue vraiment l'onglet, c'est que son adresse est la RACINE —
+    /reels/ sans identifiant. On la designe donc exactement. Une publication,
+    qui porte toujours un identifiant, ne peut pas correspondre.
+
+    Et si le bouton reapparaissait malgre tout, le filet est plus bas :
+    l'adresse /reels/ renvoie au fil, bouton ou pas.
   */
   const css = \`
-    nav a[href^="/reels"], nav a[href$="/reels/"],
-    [role="navigation"] a[href^="/reels"], [role="navigation"] a[href$="/reels/"],
-    nav [aria-label="Reels" i], [role="navigation"] [aria-label="Reels" i],
-    div[class*="tabbar" i] a[href^="/reels"] { display: none !important; }
+    a[href="/reels/"], a[href="/reels"], a[href^="/reels/?"],
+    [aria-label="Reels" i], svg[aria-label="Reels" i] { display: none !important; }
   \`;
   __css(css);
 

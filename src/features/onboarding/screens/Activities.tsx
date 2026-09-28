@@ -85,7 +85,9 @@ export function Activities({ onNext }: P) {
   const whole = Math.floor(row.n);
   const text = whole >= 2 ? a.other.replace('{n}', String(whole))
     : whole === 1 ? a.one
-    : t('s6.progress', { p: String(Math.round(row.n * 100)), what: a.one });
+    // t() prend le TEXTE, pas la cle : ecrite entre guillemets, la cle
+    // ressortait telle quelle a l'ecran — « s6.progress » en toutes lettres.
+    : t(d.s6.progress, { p: String(Math.round(row.n * 100)), what: a.one });
 
   return (
     <Screen

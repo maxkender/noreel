@@ -203,6 +203,18 @@ export const en: Dict = {
   },
 
   cortiTab: {
+    careTitle: 'Repair it yourself',
+    careBody: 'Blocking Reels stops the bleeding. These do the rest — we take your word for it, so they count for little: one point each, three a day at most.',
+    careDone: 'Done today',
+    careLeft: '{n} of 3 today',
+    careFull: 'All three done for today. See you tomorrow.',
+    water: 'Drink a large glass of water',
+    move: 'Move for 20 minutes',
+    sleep: 'Go to bed before midnight',
+    read: 'Read ten pages',
+    outside: 'Go out without your phone',
+    plainTitle: 'The index, in one sentence',
+    plainBody: 'It starts at 18 and rises every day the filter does its job. It falls when you go raw or open yourself some Reels. It does not measure your brain — it counts what you do.',
     title: 'Corti, and your index',
     lead: 'His state follows one number. Here it is, and how it moves.',
     index: 'Recovery index',

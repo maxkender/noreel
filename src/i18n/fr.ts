@@ -208,6 +208,18 @@ export const fr = {
   },
 
   cortiTab: {
+    careTitle: 'Le réparer, toi aussi',
+    careBody: 'Bloquer les Reels arrête l’hémorragie. Ces gestes-là font le reste — on te croit sur parole, alors ils comptent peu : un point chacun, trois par jour au plus.',
+    careDone: 'Fait aujourd’hui',
+    careLeft: '{n} sur 3 aujourd’hui',
+    careFull: 'Les trois du jour sont faits. À demain.',
+    water: 'Boire un grand verre d’eau',
+    move: 'Bouger 20 minutes',
+    sleep: 'Se coucher avant minuit',
+    read: 'Lire dix pages',
+    outside: 'Sortir sans le téléphone',
+    plainTitle: 'L’indice, en une phrase',
+    plainBody: 'Il part de 18 et monte chaque jour où le filtre te sert. Il descend quand tu repasses en mode brut ou que tu t’ouvres des Reels. Il ne mesure pas ton cerveau — il compte ce que tu fais.',
     title: 'Corti, et ton indice',
     lead: 'Son état suit un seul chiffre. Voici lequel, et comment il bouge.',
     index: 'Indice de récupération',

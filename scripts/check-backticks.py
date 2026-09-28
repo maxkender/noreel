@@ -24,3 +24,30 @@ if bad:
         print('  ligne %d : %s' % (n, t))
     sys.exit(1)
 print('aucun backtick dans un commentaire')
+
+
+def cles_en_dur() -> int:
+    """
+    Une CLE passee a t() au lieu du texte.
+
+    `t` interpole une chaine ; recevoir « s6.progress » lui donne un texte sans
+    trou a remplir, qu'il rend tel quel. La cle s'affichait donc en toutes
+    lettres au milieu d'un ecran, et ni le typage ni les tests ne s'en
+    apercevaient : c'est une chaine valide, et l'ecran se monte tres bien.
+    """
+    import pathlib
+    import re
+    faute = re.compile(r"\bt\(\s*'[a-z][a-zA-Z0-9]*\.[a-zA-Z0-9]")
+    mauvais = []
+    for f in pathlib.Path('src').rglob('*.ts*'):
+        for n, ligne in enumerate(f.read_text().splitlines(), 1):
+            if faute.search(ligne):
+                mauvais.append(f'{f}:{n}  {ligne.strip()}')
+    for m in mauvais:
+        print('cle passee a t() au lieu du texte :', m)
+    return len(mauvais)
+
+
+if cles_en_dur():
+    raise SystemExit(1)
+print('aucune cle de traduction passee en dur')

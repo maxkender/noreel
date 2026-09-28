@@ -7,7 +7,7 @@
 // L'import est en tete : babel-jest hisse les appels a jest.mock au-dessus
 // des imports de toute facon, donc l'ordre ecrit ici ne change rien a
 // l'execution — et un fichier se lit mieux avec ses imports en haut.
-import { brainIndex } from './protect';
+import { brainIndex, careScore } from './protect';
 
 // Un disque en memoire. Le vrai module n'a rien a faire ici : on teste le
 // comptage, pas la persistance d'AsyncStorage.
@@ -176,5 +176,42 @@ describe('les paliers', () => {
     // Sept et trente ont ete marques au passage : sans ca, ils ressortiraient
     // un a un aux ouvertures suivantes.
     expect(await claimMilestone()).toBeNull();
+  });
+});
+
+/*
+ * Les gestes declares.
+ *
+ * On ne peut RIEN verifier : aucun telephone ne sait si quelqu'un a bu un
+ * verre d'eau. D'ou deux garde-fous — un point chacun, trois par jour au plus
+ * — sans lesquels l'indice se remplirait en martelant une liste, et ne
+ * voudrait plus rien dire.
+ */
+describe('les gestes du jour', () => {
+  it('vaut un point chacun', () => {
+    expect(brainIndex(0, 0, 0, 0)).toBe(18);
+    expect(brainIndex(0, 0, 0, 3)).toBe(21);
+  });
+
+  it('en compte trois par jour au plus', () => {
+    // Sept gestes le meme jour valent trois : au-dela, le quatrieme ne change
+    // plus rien a ce qu'on veut mesurer.
+    expect(careScore({ '2026-01-01': ['a', 'b', 'c', 'd', 'e', 'f', 'g'] })).toBe(3);
+  });
+
+  it('additionne les journees', () => {
+    expect(careScore({
+      '2026-01-01': ['a', 'b'],
+      '2026-01-02': ['a', 'b', 'c', 'd'],
+    })).toBe(5);
+  });
+
+  it('ne fait pas exploser l’indice', () => {
+    // Trente jours au plafond ajoutent quatre-vingt-dix : l'indice est borne
+    // a cent, donc les gestes seuls ne peuvent pas simuler un mois protege
+    // sans que les jours suivent.
+    expect(brainIndex(0, 0, 0, careScore(
+      Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`d${i}`, ['a', 'b', 'c']]))
+    ))).toBe(100);
   });
 });

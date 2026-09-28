@@ -79,3 +79,27 @@ describe('ce qui a suivi Corti', () => {
     await waitFor(() => expect(mockClaim).toHaveBeenCalled());
   });
 });
+
+describe('reparer l’indice', () => {
+  it('propose des gestes, et dit qu’on te croit sur parole', () => {
+    /*
+      L'indice ne descendait que par des malus et ne montait qu'en attendant
+      le lendemain : aucune prise dans l'instant, donc un compteur qu'on
+      regarde une fois. Et comme rien de tout cela n'est verifiable, la page
+      doit l'ecrire — un chiffre qui prend ta parole sans le dire est un
+      chiffre que personne ne peut contester.
+    */
+    render(<CortiTab onScroll={noop} />);
+    expect(screen.getByText(dict.cortiTab.careTitle)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.water)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.move)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.careBody)).toBeTruthy();
+  });
+
+  it('explique l’indice en une phrase avant le detail', () => {
+    // Le tableau chiffre repondait a « comment » avant qu'on ait compris
+    // « quoi ».
+    render(<CortiTab onScroll={noop} />);
+    expect(screen.getByText(dict.cortiTab.plainBody)).toBeTruthy();
+  });
+});

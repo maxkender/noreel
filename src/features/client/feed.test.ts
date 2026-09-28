@@ -75,23 +75,25 @@ describe('le fil qu’on ne touche plus', () => {
     retirer. Deux correctifs successifs n'ont rien change parce qu'ils ne
     touchaient que le JavaScript.
   */
-  it('ne cache par CSS que la barre de navigation', () => {
+  it('ne cache par CSS que l’onglet, jamais une publication', () => {
     const css = src.slice(src.indexOf('const css ='), src.indexOf('__css(css)'));
 
-    // Aucun selecteur libre : chacun est ancre dans la barre.
-    for (const line of css.split('\n')) {
-      const sel = line.trim();
-      if (!sel || sel.startsWith('/') || sel.startsWith('*') || !sel.includes('[')) continue;
-      for (const one of sel.split(',')) {
-        const t = one.replace(/\{[^}]*\}/, '').trim();
-        if (!t) continue;
-        expect(t).toMatch(/^(nav|\[role="navigation"\]|div\[class\*="tabbar" i\])\s/);
-      }
-    }
+    /*
+      Verifie dans un vrai navigateur sur instagram.com :
+      - la page ne contient AUCUN <nav> ni [role=navigation], donc y ancrer
+        les selecteurs ne cachait plus rien et le bouton revenait intact ;
+      - un reel isole vit a /reels/{id}/, donc le prefixe « ^=/reels » attrape
+        aussi des publications ;
+      - les vignettes portent des etiquettes comme « peter_mai_ reels », donc
+        la recherche par sous-chaine en ramasse.
 
-    // Et surtout : plus jamais ces deux-la, qui visent du contenu de fil.
+      Ce qui distingue l'onglet est son adresse RACINE, sans identifiant.
+    */
+    expect(css).toContain('a[href="/reels/"]');
+    expect(css).not.toContain('a[href^="/reels"]');
     expect(css).not.toContain('a[href*="/reel/"]');
-    expect(css).not.toMatch(/^\s*\[aria-label\*="Reels" i\]/m);
+    expect(css).not.toContain('[aria-label*="Reels" i]');
+    expect(css).not.toMatch(/\bnav\s/);
   });
 
   it('retient le carrousel de stories au lieu d’en chercher un nouveau', () => {

@@ -141,7 +141,12 @@ const sheet = (c: Palette) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space.xl },
   centered: { flexGrow: 1, justifyContent: 'center' },
-  note: { paddingHorizontal: gutter, paddingBottom: space.xs },
+  // De l'air AU-DESSUS : collee au contenu qui la precede, la ligne se
+  // lisait comme la derniere phrase du texte et non comme la mention du
+  // bouton qu'elle accompagne.
+  note: {
+    paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xs,
+  },
   footer: { paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: space.xs },
   hem: { height: 36, marginTop: -36 },
   hint: { alignItems: 'center', paddingBottom: space.xl, paddingTop: space.md },

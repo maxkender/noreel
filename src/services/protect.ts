@@ -34,6 +34,17 @@ type Ledger = {
    * cette repetition-la qu'on veut rendre visible.
    */
   passes: number;
+  /**
+   * Les gestes declares, par jour.
+   *
+   * Boire de l'eau, bouger, dormir tot, lire, sortir. On ne peut RIEN
+   * verifier de tout cela — aucun telephone ne sait si quelqu'un a bu un
+   * verre d'eau — et c'est pour ca qu'ils rapportent peu, et qu'on ecrit a
+   * l'ecran qu'on le croit sur parole. Un compteur qui prend la parole de
+   * quelqu'un sans le dire fabrique un chiffre que personne ne peut
+   * contester, et c'est exactement ce qu'on reproche a ces apps-la.
+   */
+  care: Record<string, string[]>;
   /** Paliers deja annonces, sous la forme « days:30 ». */
   seen: string[];
   /** Derniere fois qu'une regle a mordu, par app. */
@@ -44,7 +55,7 @@ type Ledger = {
 
 const EMPTY: Ledger = {
   blocked: 0, avoided: 0, lastAvoid: 0, passes: 0,
-  days: {}, raw: {}, seen: [], ok: {}, miss: {},
+  days: {}, raw: {}, care: {}, seen: [], ok: {}, miss: {},
 };
 
 /**
@@ -218,6 +229,8 @@ export type Stats = {
   shaky: ClientId | null;
   /** Laissez-passer utilises, au total. */
   passes: number;
+  /** Les gestes declares AUJOURD'HUI. */
+  careToday: string[];
 };
 
 /**
@@ -236,11 +249,33 @@ export type Stats = {
  * gele le chiffre au lieu de l'effacer. Un compteur remis a zero enseigne
  * « c'est perdu de toute facon », et c'est la que les gens desinstallent.
  */
-export function brainIndex(days: number, rawDays: number, passes = 0): number {
+export function brainIndex(
+  days: number, rawDays: number, passes = 0, cares = 0
+): number {
   return Math.max(
     0,
-    Math.min(100, Math.round(18 + days * 2.4 - rawDays * 7 - passes * 4))
+    Math.min(100, Math.round(18 + days * 2.4 - rawDays * 7 - passes * 4 + cares))
   );
+}
+
+/**
+ * Au plus trois gestes comptes par jour.
+ *
+ * Sans plafond, l'indice se remplirait en tapant sept fois de suite sur la
+ * meme liste, et il ne voudrait plus rien dire. Trois est le nombre a partir
+ * duquel une journee compte vraiment, et au-dela le quatrieme geste ne
+ * change plus rien a ce qu'on veut mesurer.
+ */
+export const CARE_PER_DAY = 3;
+
+/** Les gestes qu'on peut declarer. Ils valent UN point chacun, pas plus. */
+export const CARE_IDS = ['water', 'move', 'sleep', 'read', 'outside'] as const;
+export type CareId = (typeof CARE_IDS)[number];
+
+/** Le total des gestes comptes, plafond du jour applique. */
+export function careScore(care: Record<string, string[]>): number {
+  return Object.values(care)
+    .reduce((n, list) => n + Math.min(CARE_PER_DAY, list.length), 0);
 }
 
 export async function stats(): Promise<Stats> {
@@ -255,7 +290,8 @@ export async function stats(): Promise<Stats> {
     avoided: l.avoided,
     minutes: l.avoided * MINUTES_PER_SESSION,
     days,
-    brain: brainIndex(days, rawDays, l.passes),
+    brain: brainIndex(days, rawDays, l.passes, careScore(l.care ?? {})),
+    careToday: (l.care ?? {})[dayKey()] ?? [],
     passes: l.passes,
     checkedAt,
     fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,
@@ -284,4 +320,24 @@ export async function claimMilestone(): Promise<typeof MILESTONES[number] | null
   l.seen = [...l.seen, ...hit.map((m) => m.id)];
   await save(l);
   return top;
+}
+
+/**
+ * Declarer un geste du jour.
+ *
+ * Un seul par jour et par geste : boire deux verres d'eau ne vaut pas deux
+ * fois, sinon la liste devient un bouton a marteler. Rend la liste du jour
+ * une fois posee, pour que l'ecran se mette a jour sans relire le registre.
+ */
+export async function logCare(id: CareId): Promise<string[]> {
+  const l = await load();
+  const k = dayKey();
+  const care = l.care ?? {};
+  const day = care[k] ?? [];
+  if (!day.includes(id)) {
+    care[k] = [...day, id];
+    l.care = care;
+    await save(l);
+  }
+  return l.care[k];
 }
