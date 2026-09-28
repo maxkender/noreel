@@ -17,14 +17,43 @@ describe('le fil qu’on ne touche plus', () => {
 
   it('n’examine les publications qu’en DEHORS du fil', () => {
     // La premiere occurrence du selecteur est une regle CSS (l'onglet Reels
-    // de la barre, qui lui reste bloque) : c'est l'appel JS qu'on vise.
+    // de la barre, qui lui reste bloque) : c'est l'appel JS qu'on vise, et il
+    // doit tomber du cote « pas le fil » de la garde.
     const i = src.indexOf('querySelectorAll(\'a[href*="/reel/"]\')');
     expect(i).toBeGreaterThan(0);
-    expect(src.slice(Math.max(0, i - 300), i)).toContain('if (!__home())');
+    const branch = src.lastIndexOf('} else {', i);
+    const guard = src.lastIndexOf('if (__home())', i);
+    expect(branch).toBeGreaterThan(guard);
   });
 
   it('sait reconnaitre le fil', () => {
     expect(src).toContain("const __home = () => location.pathname === '/'");
+  });
+
+  /*
+    Le correctif precedent n'a rien repare parce qu'il ne visait qu'une regle
+    sur trois. Les publicites et les « suggestions pour vous » lisent le texte
+    de chaque carte et remontent en cacher le conteneur — exactement ce qu'on
+    venait de retirer pour les reels — et « Suggestions pour vous » revient
+    dans le fil bien plus souvent qu'un reel. Le fil devenait noir.
+  */
+  it('ne laisse AUCUNE regle par publication tourner sur le fil', () => {
+    const inFeed = src.slice(src.indexOf('if (__home())'), src.indexOf("__on('dmsOnly')"));
+    const guard = inFeed.indexOf('} else {');
+    expect(guard).toBeGreaterThan(0);
+    const untouched = inFeed.slice(0, guard);
+    for (const rule of ["__byLabel(AD", "__byLabel(SUGGEST", 'a[href*="/reel/"]']) {
+      expect(untouched).not.toContain(rule);
+    }
+  });
+
+  it('efface les marques laissees ailleurs en revenant au fil', () => {
+    // Instagram est une seule page : une carte cachee sur l'explore est
+    // recyclee pour porter un post du fil, et reste cachee. C'est ce qui
+    // vidait le fil poste par poste jusqu'au noir.
+    const inFeed = src.slice(src.indexOf('if (__home())'), src.indexOf('} else {'));
+    expect(inFeed).toContain("querySelectorAll('[data-nr]')");
+    expect(inFeed).toContain("removeAttribute('data-nr')");
   });
 
   it('bloque le fil entier par une regle CSS, pas post par post', () => {

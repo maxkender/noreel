@@ -859,17 +859,44 @@ export const INSTAGRAM_BLOCKER = `
       Hors du fil, l'examen reste peu couteux : l'explore est une grille finie
       et une conversation n'a pas de recyclage.
     */
-    if (!__home()) {
+    if (__home()) {
+      /*
+        Et on DEFAIT ce qui aurait ete fait ailleurs.
+
+        Instagram est une seule page : les elements masques sur l'explore sont
+        toujours la quand on revient au fil, et il les RECYCLE pour porter des
+        publications ordinaires. Une carte cachee pour une tuile de reel se
+        retrouvait a cacher un post normal, puis deux, puis dix — le fil se
+        vidait et finissait noir. Les verificateurs ne suffisent pas : tant
+        que la regle est active, un texte qui ressemble encore au motif garde
+        la carte cachee. Sur le fil, on efface donc toutes les marques, sans
+        condition. C'est la seule garantie qui ne depende de rien.
+      */
+      document.querySelectorAll('[data-nr]').forEach((el) => {
+        el.style.removeProperty('display');
+        el.removeAttribute('data-nr');
+      });
+    } else {
       document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
         __hide(__safe(a.closest('article')) || a, 'short');
       });
       posts().forEach((art) => {
         if (REEL.test((art.textContent || '').slice(0, 200))) __hide(__safe(art), 'short');
       });
-    }
 
-    if (__on('ads')) __byLabel(AD, 'ads');
-    if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
+      /*
+        Les publicites et les « suggestions pour vous » sont du MEME bois.
+
+        Je les avais laissees tourner sur le fil en n'en sortant que les
+        reels, comme si le probleme venait des reels. Il ne venait pas d'eux :
+        il vient de lire le texte de chaque carte et de remonter en cacher le
+        conteneur, sur une liste que le site recycle. Ces deux regles font
+        exactement ca — et « Suggestions pour vous » apparait dans le fil bien
+        plus souvent qu'un reel. Le fil noir venait de la.
+      */
+      if (__on('ads')) __byLabel(AD, 'ads');
+      if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
+    }
 
     /*
       Une story sponsorisee ne se cache pas : elle OCCUPE l'ecran entier.
