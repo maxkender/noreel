@@ -16,6 +16,7 @@ import { track } from '@/services';
 import { screenYears } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { LOGOS } from '@/features/home/AppSlider';
+import { Corti } from '@/components/Corti';
 
 type P = { onNext: () => void };
 
@@ -357,6 +358,16 @@ export function PromiseScreen({ onNext }: P) {
 
   return (
     <Screen cta="👊  C’est parti" onPress={onNext} hue="accent">
+      {/*
+        Corti rayonnante ouvre la promesse.
+        C'etait le dernier ecran du parcours sans rien a regarder, et c'est
+        celui qui porte le plus : elle montre l'etat d'arrivee pendant qu'on
+        lit ce qu'il vaut.
+      */}
+      <Animated.View entering={FadeIn.duration(620)} style={st.mascot}>
+        <Corti level={3} size={140} />
+      </Animated.View>
+
       <Text variant="displayM" style={st.center}>
         {name ? `${name}, ` : ''}UnSwipe te rendra{' '}
         <Text variant="displayM" color={c.accent}>{years} ans</Text>
@@ -386,6 +397,7 @@ function PromiseRow({ title }: { title: string }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
+  mascot: { alignItems: 'center', marginBottom: space.lg },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.
   faded: { textAlign: 'center', opacity: 0.55 },

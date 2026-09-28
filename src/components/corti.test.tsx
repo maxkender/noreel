@@ -44,6 +44,12 @@ describe('ce que Corti dit', () => {
   }
 });
 
+/*
+ * Corti est DESSINEE et non affichee : le clignement ferme les yeux a 8 % de
+ * leur hauteur, ce qu'aucune image ne sait faire. Ces rendus verifient que
+ * chaque niveau produit bien son dessin — bras leves ou le long du corps,
+ * yeux ouverts, fermes ou plisses, etincelles ou non.
+ */
 describe('Corti se dessine', () => {
   for (const level of [0, 1, 2, 3] as CortiLevel[]) {
     it(`niveau ${level}`, () => {
@@ -52,8 +58,25 @@ describe('Corti se dessine', () => {
     });
   }
 
-  // Immobile pour les captures et les vignettes.
+  // Immobile pour les captures et les vignettes : les boucles ne doivent
+  // meme pas demarrer.
   it('sans animation', () => {
     render(<Corti level={2} animated={false} />);
+  });
+
+  // Les tailles extremes : la mascotte est posee a 104 sur l'accueil, a 220
+  // dans le parcours. Toutes ses mesures derivent d'un seul facteur, donc une
+  // erreur d'echelle ne se verrait qu'a l'une des deux.
+  for (const size of [40, 104, 220]) {
+    it(`a ${size} points`, () => {
+      const r = render(<Corti level={2} size={size} />);
+      expect(r.toJSON()).toBeTruthy();
+    });
+  }
+
+  it('repond quand on la touche', () => {
+    const onPress = jest.fn();
+    const r = render(<Corti level={2} onPress={onPress} />);
+    expect(r.toJSON()).toBeTruthy();
   });
 });
