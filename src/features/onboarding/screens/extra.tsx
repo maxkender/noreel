@@ -9,6 +9,7 @@ import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
+import { Corti, type CortiLevel } from '@/components/Corti';
 import { MockFeed } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
@@ -56,6 +57,116 @@ export function Reveal({ onNext }: P) {
           de ta vie, à ce rythme.
         </Text>
       </Animated.View>
+    </Screen>
+  );
+}
+
+/* ---------- Corti ---------- */
+
+/**
+ * La rencontre.
+ *
+ * Elle arrive juste apres le prenom, pour que Corti puisse dire bonjour par
+ * son nom : une mascotte qui se presente a quelqu'un d'anonyme n'est qu'un
+ * dessin de plus. Et elle arrive AVANT les ecrans qui pesent, pour qu'on ait
+ * quelqu'un a cote de soi pendant qu'on regarde ses propres chiffres.
+ */
+export function Meet({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(), []);
+  const name = useOnboardingStore((x) => x.firstName);
+
+  return (
+    <Screen cta="Enchanté" onPress={onNext} center hue="accent">
+      <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
+        <Corti level={2} size={220} />
+      </Animated.View>
+
+      <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
+        {name ? `${name}, voici Corti.` : 'Voici Corti.'}
+      </Text>
+      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
+        Ton cerveau, en version mignonne. Il s’éteint quand tu scrolles, et se
+        rallume à chaque jour sans Reels.
+      </Text>
+      <Text variant="label" color={c.accent} style={[st.mid, { marginTop: space.lg }]}>
+        TU LE VERRAS CHANGER
+      </Text>
+    </Screen>
+  );
+}
+
+/** Les paliers que Corti traverse, et ce qu'ils valent. */
+const ARC: { day: string; level: CortiLevel; line: string }[] = [
+  { day: 'Jour 1', level: 0, line: 'Éteint. Tout paraît fade.' },
+  { day: 'Jour 7', level: 1, line: 'Il se rallume. Tu tiens plus longtemps sur une page.' },
+  { day: 'Jour 30', level: 2, line: 'L’ennui redevient supportable.' },
+  { day: 'Jour 90', level: 3, line: 'Ta clarté est revenue, entière.' },
+];
+
+const STEP_MS = 1750;
+
+/**
+ * Quatre-vingt-dix jours, montres et non dits.
+ *
+ * C'est le seul ecran du parcours qui promet quelque chose de LONG, et une
+ * promesse longue ecrite en une phrase ne se ressent pas. Corti la traverse
+ * sous les yeux : elle s'allume palier par palier, et on regarde le trajet
+ * plutot que de lire une duree.
+ *
+ * Le defilement est automatique et ne se rejoue pas : on le regarde une fois,
+ * comme on regarderait quelqu'un aller mieux.
+ */
+export function Ninety({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(), []);
+  const [i, setI] = useState(0);
+
+  useEffect(() => {
+    if (i >= ARC.length - 1) return;
+    const t = setTimeout(() => { setI(i + 1); haptics.tick(); }, STEP_MS);
+    return () => clearTimeout(t);
+  }, [i]);
+
+  const at = ARC[i];
+  const done = i >= ARC.length - 1;
+
+  return (
+    <Screen
+      cta="Continuer"
+      onPress={onNext}
+      // On laisse le trajet aller jusqu'au bout : passer avant la fin, c'est
+      // n'avoir rien vu.
+      disabled={!done}
+      center
+      hue="accent"
+      hueLevel={i / (ARC.length - 1)}
+    >
+      <View style={st.mid}>
+        <Corti level={at.level} size={190} />
+      </View>
+
+      {/* Les deux lignes ont une place FIXE : sans elle, une legende plus
+          longue recentrerait Corti a chaque palier. */}
+      <View style={st.arcSlot}>
+        <Animated.View key={at.day} entering={FadeIn.duration(520)} style={st.mid}>
+          <Text variant="label" color={c.accent}>{at.day.toUpperCase()}</Text>
+          <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.sm }]}>
+            {at.line}
+          </Text>
+        </Animated.View>
+      </View>
+
+      <View style={st.dots}>
+        {ARC.map((a, k) => (
+          <View key={a.day} style={[st.dot, k <= i && { backgroundColor: c.accent }]} />
+        ))}
+      </View>
+
+      <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
+        Environ <Text variant="displayM" color={c.accent}>90 jours</Text> sans
+        stimulation facile pour retrouver toute ta netteté.
+      </Text>
     </Screen>
   );
 }
@@ -209,7 +320,10 @@ export function RateAsk({ onNext }: P) {
 // Aucune couleur ici : les trois ecrans qui s'en servent prennent la leur
 // directement sur la palette, au rendu.
 const sheet = () => StyleSheet.create({
-  mid: { textAlign: 'center' },
+  mid: { textAlign: 'center', alignItems: 'center' },
+  arcSlot: { height: 96, justifyContent: 'center', marginTop: space.lg },
+  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.md },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFFFFF22' },
   stage: { alignItems: 'center', marginTop: space.xl },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
 });

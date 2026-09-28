@@ -36,14 +36,14 @@ jest.mock('react-native-view-shot', () => ({ captureRef: () => Promise.resolve('
 
 const FRESH: Stats = {
   blocked: 412, avoided: 34, minutes: 408, days: 12,
-  brain: 47, checkedAt: Date.now(), fresh: true, shaky: null,
+  brain: 47, checkedAt: Date.now(), fresh: true, shaky: null, passes: 2,
 };
 
 /* Un registre tout neuf : tous les compteurs a zero, rien de verifie. C'est
    l'etat du premier lancement, celui qu'on oublie de regarder. */
 const EMPTY: Stats = {
   blocked: 0, avoided: 0, minutes: 0, days: 0,
-  brain: 18, checkedAt: 0, fresh: false, shaky: null,
+  brain: 18, checkedAt: 0, fresh: false, shaky: null, passes: 0,
 };
 
 const BROKEN: Stats = { ...FRESH, shaky: 'instagram' };

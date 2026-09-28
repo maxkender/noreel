@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Ban, Hourglass, RotateCw } from 'lucide-react-native';
+import { Hourglass, RotateCw } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
+import { Corti, cortiLevel } from '@/components/Corti';
 import { PASS_MINUTES, ReelsPass } from './ReelsPass';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { tintById } from '@/theme/tints';
@@ -22,7 +23,7 @@ import { GlassSweep } from '@/components/GlassSweep';
 import { ClientSettings } from './ClientSettings';
 import { useSettings } from '@/store/settings';
 import { record, today } from '@/services/usage';
-import { countBlocked, markDay, markRaw, reportRules } from '@/services/protect';
+import { countBlocked, markDay, markRaw, reportRules, stats } from '@/services/protect';
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED } from '@/services/purchases';
 import { ProGate } from '@/features/home/ProGate';
@@ -165,6 +166,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // Le numero du reel referme. Un compteur qui monte se lit comme un score ;
   // « Bloque » tout seul se lit comme un reproche.
   const [nth, setNth] = useState(0);
+  // Les jours proteges, pour savoir a quel niveau dessiner Corti sur le mur.
+  // Lus une fois a l'ouverture : ils ne changent pas en cours de seance.
+  const [days, setDays] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    void stats().then((x) => { if (alive) setDays(x.days); });
+    return () => { alive = false; };
+  }, []);
   // Le plafond du jour, en gratuit. Et le paywall qu'il propose.
   const [capped, setCapped] = useState(false);
   const [gate, setGate] = useState(false);
@@ -234,7 +243,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
   useEffect(() => {
     if (ready) { setStuck(false); return; }
-    const id = setTimeout(() => setStuck(true), 12000);
+    // Huit secondes et non douze : au-dela, on a deja conclu que l'app est
+    // cassee. Le secours doit arriver pendant qu'on attend encore.
+    const id = setTimeout(() => setStuck(true), 8000);
     return () => clearTimeout(id);
   }, [ready]);
 
@@ -414,9 +425,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {wall && (
         <View style={styles.wall} pointerEvents="none">
-          <View style={styles.wallRing}>
-            <Ban size={30} strokeWidth={2} color={c.danger} />
-          </View>
+          {/*
+            Corti tient la porte, a la place d'un panneau d'interdiction.
+            Un rond barre reproche ; une tete qui va bien felicite. C'est le
+            meme evenement, et ce n'est pas le meme souvenir — or c'est
+            l'ecran qu'on voit le plus souvent dans cette app.
+          */}
+          <Corti level={cortiLevel(days)} size={120} />
           {/*
             Le mur porte un NUMERO.
             « Bloque. » tout seul est un reproche, et on finit par en vouloir a
@@ -428,7 +443,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
             {nth > 0 ? `Reel nº ${nth} évité` : 'Bloqué.'}
           </Text>
           <Text variant="body" tone="secondary" style={styles.wallText}>
-            C’est exactement pour ça que tu es là.
+            {days > 0
+              ? `Corti tient depuis ${days} jour${days > 1 ? 's' : ''}.`
+              : 'C’est exactement pour ça que tu es là.'}
           </Text>
         </View>
       )}
@@ -516,11 +533,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
               </Text>
             </Pressable>
           </View>
-          {pageError && (
-            <Text variant="label" tone="tertiary" numberOfLines={2} style={styles.diag}>
-              {pageError}
-            </Text>
-          )}
+          <Text variant="label" tone="tertiary" numberOfLines={2} style={styles.diag}>
+            {pageError ?? 'La page tarde. Recharge, ou passe sans filtre pour savoir d’où ça vient.'}
+          </Text>
         </View>
       )}
 

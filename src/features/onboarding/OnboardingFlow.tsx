@@ -18,7 +18,7 @@ import { Permissions } from './screens/Permissions';
 import { Tune } from './screens/Tune';
 import { Activities } from './screens/Activities';
 import { HomeShortcuts } from './screens/HomeShortcuts';
-import { Attribution, Proof, RateAsk, Reveal } from './screens/extra';
+import { Attribution, Meet, Ninety, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 
@@ -108,14 +108,15 @@ export function OnboardingFlow() {
   const screens = [
     <S1 key="s1" onNext={next} />,
     <Name key="name" onNext={next} />,
+    <Meet key="meet" onNext={next} />,
     <S3 key="s3" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <S5 key="s5" onNext={next} />,
-    <Reveal key="rev" onNext={next} />,
     <S6 key="s6" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
     <S7 key="s7" onNext={next} />,
+    <Ninety key="90" onNext={next} />,
     <Manifesto key="man" onNext={next} />,
     <Proof key="proof" onNext={next} />,
     <Tune key="tune" onNext={next} />,

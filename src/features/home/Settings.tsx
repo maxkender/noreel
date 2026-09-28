@@ -14,6 +14,8 @@ import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours } from '@/lib/format';
 import { useSettings } from '@/store/settings';
+import { useAppsStore } from '@/store/apps';
+import { TINTS } from '@/theme/tints';
 import { Toggle } from './parts';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
@@ -47,6 +49,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const s = useSettings();
+  const instaTint = useAppsStore((x) => x.tints.instagram);
+  const setTint = useAppsStore((x) => x.setTint);
   const [cleared, setCleared] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const [sources, setSources] = useState(false);
@@ -98,6 +102,34 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               desinstallant, une heure annoncee d'avance se respecte. Eteinte
               par defaut — on ne l'impose pas, on la rend possible.
             */}
+            {/*
+              La couleur est AUSSI ici.
+              Elle ne vivait que dans le panneau qu'on ouvre depuis la barre
+              flottante, a l'interieur d'Instagram : c'est l'endroit logique,
+              et personne ne l'y a trouvee. Un reglage qu'on ne decouvre qu'en
+              sachant deja qu'il existe n'existe pas.
+            */}
+            <Group title="Couleur d’Instagram" />
+            <View style={st.chips}>
+              {TINTS.map((t) => {
+                const on = (instaTint ?? 'default') === t.id;
+                return (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => { haptics.tick(); setTint('instagram', t.id); }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                    accessibilityLabel={t.label}
+                    style={[st.swatch, { backgroundColor: t.hex }, on && st.swatchOn]}
+                  />
+                );
+              })}
+            </View>
+            <Text variant="label" tone="tertiary" style={st.hint}>
+              Boutons, liens et tes bulles de message. Chaque app a la sienne,
+              dans ses réglages depuis la barre flottante.
+            </Text>
+
             <Group title="Fenêtre autorisée" />
             <Line
               label="Une heure par semaine"
@@ -321,6 +353,13 @@ const sheet = (c: Palette) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line,
   },
+  swatch: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.2),
+  },
+  // Le choix se voit a l'anneau : une pastille qui grandit decale les autres.
+  swatchOn: { borderWidth: 2.5, borderColor: c.mist },
+  hint: { marginTop: space.xs, lineHeight: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: 999,

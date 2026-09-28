@@ -77,8 +77,15 @@ export function Constat({ onNext }: P) {
 
   return (
     <Screen
-      cta={answered ? 'Continuer' : ''}
-      onPress={answered ? advance : undefined}
+      /*
+        Le bouton est TOUJOURS la, desactive tant qu'on n'a pas repondu.
+        Un libelle vide ne desactive pas le pied de page : il le supprime. La
+        reponse le faisait donc apparaitre, le contenu centre verticalement
+        remontait d'autant, et les cases se relevaient sous le doigt au moment
+        precis ou l'on en choisissait une.
+      */
+      cta="Continuer"
+      onPress={advance}
       disabled={!answered}
       center
       hue={i >= 2 ? 'ember' : 'deep'}

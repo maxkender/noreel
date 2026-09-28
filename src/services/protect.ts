@@ -26,6 +26,14 @@ type Ledger = {
   days: Record<string, 1>;
   /** Jours ou le mode brut a servi : le seul recul qu'on puisse constater. */
   raw: Record<string, 1>;
+  /**
+   * Laissez-passer utilises. Chacun coute a Corti.
+   *
+   * Compte en nombre et non en jours, contrairement au mode brut : trois
+   * passages dans la meme soiree sont trois fois la meme decision, et c'est
+   * cette repetition-la qu'on veut rendre visible.
+   */
+  passes: number;
   /** Paliers deja annonces, sous la forme « days:30 ». */
   seen: string[];
   /** Derniere fois qu'une regle a mordu, par app. */
@@ -35,7 +43,7 @@ type Ledger = {
 };
 
 const EMPTY: Ledger = {
-  blocked: 0, avoided: 0, lastAvoid: 0,
+  blocked: 0, avoided: 0, lastAvoid: 0, passes: 0,
   days: {}, raw: {}, seen: [], ok: {}, miss: {},
 };
 
@@ -106,6 +114,20 @@ export async function markRaw(): Promise<void> {
   if (l.raw[k]) return;
   l.raw[k] = 1;
   await save(l);
+}
+
+/**
+ * Un laissez-passer vient d'etre utilise.
+ *
+ * Rend l'indice APRES la depense : c'est ce qu'on affiche a l'ecran, « ton
+ * cerveau est passe de tant a tant ». Un cout qu'on ne voit pas n'en est pas
+ * un, et c'est tout ce qui separe une porte de sortie d'un abandon.
+ */
+export async function countPass(): Promise<number> {
+  const l = await load();
+  l.passes += 1;
+  await save(l);
+  return brainIndex(Object.keys(l.days).length, Object.keys(l.raw).length, l.passes);
 }
 
 /**
@@ -194,6 +216,8 @@ export type Stats = {
   fresh: boolean;
   /** Une app dont le filtre semble ne plus rien trouver. */
   shaky: ClientId | null;
+  /** Laissez-passer utilises, au total. */
+  passes: number;
 };
 
 /**
@@ -212,8 +236,11 @@ export type Stats = {
  * gele le chiffre au lieu de l'effacer. Un compteur remis a zero enseigne
  * « c'est perdu de toute facon », et c'est la que les gens desinstallent.
  */
-export function brainIndex(days: number, rawDays: number): number {
-  return Math.max(0, Math.min(100, Math.round(18 + days * 2.4 - rawDays * 7)));
+export function brainIndex(days: number, rawDays: number, passes = 0): number {
+  return Math.max(
+    0,
+    Math.min(100, Math.round(18 + days * 2.4 - rawDays * 7 - passes * 4))
+  );
 }
 
 export async function stats(): Promise<Stats> {
@@ -228,7 +255,8 @@ export async function stats(): Promise<Stats> {
     avoided: l.avoided,
     minutes: l.avoided * MINUTES_PER_SESSION,
     days,
-    brain: brainIndex(days, rawDays),
+    brain: brainIndex(days, rawDays, l.passes),
+    passes: l.passes,
     checkedAt,
     fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,
     shaky,

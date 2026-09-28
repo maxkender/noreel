@@ -8,6 +8,8 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
+import { Corti, cortiLevel } from '@/components/Corti';
+import { countPass, stats } from '@/services/protect';
 
 /** Cinq minutes, et pas une de plus. */
 export const PASS_MINUTES = 5;
@@ -44,7 +46,8 @@ export function ReelsPass({
   const steps = [
     <Wait key="w" onDone={() => { setQuiz(makeQuiz()); setStep(1); }} />,
     <Sums key="s" quiz={quiz} onDone={() => { setCode(makeCode()); setStep(2); }} />,
-    <Sequence key="q" code={code} onDone={onPass} />,
+    <Sequence key="q" code={code} onDone={() => setStep(3)} />,
+    <Cost key="c" onDone={onPass} />,
   ];
 
   return (
@@ -286,6 +289,65 @@ function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
   );
 }
 
+/* ---------- 4. Le prix ---------- */
+
+/**
+ * Ce que le passage coute, montre avant d'en profiter.
+ *
+ * Un cout qu'on ne voit pas n'en est pas un. Corti perd des points a chaque
+ * laissez-passer, et c'est ICI qu'on le lit — pas dans un ecran de
+ * statistiques ouvert trois jours plus tard. La porte reste ouverte, mais on
+ * sait ce qu'on vient de payer pour la franchir.
+ */
+function Cost({ onDone }: { onDone: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const [before, setBefore] = useState<number | null>(null);
+  const [after, setAfter] = useState<number | null>(null);
+  const [days, setDays] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    // On lit l'avant, puis on depense : les deux chiffres cote a cote sont
+    // tout l'interet de l'ecran.
+    void stats().then((s) => {
+      if (!alive) return;
+      setBefore(s.brain);
+      setDays(s.days);
+      void countPass().then((next) => { if (alive) setAfter(next); });
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const lost = before !== null && after !== null ? before - after : 0;
+
+  return (
+    <View style={st.center}>
+      <Corti level={cortiLevel(days)} size={150} />
+
+      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
+        C’est ouvert. {PASS_MINUTES} minutes.
+      </Text>
+
+      {/* La place du chiffre est reservee : il arrive du disque, et sans
+          reserve le bouton sauterait a son arrivee. */}
+      <View style={st.costSlot}>
+        {after !== null && (
+          <Text variant="lead" color={c.ember} style={st.mid}>
+            {lost > 0
+              ? `Corti descend à ${after} %. Il avait ${before} %.`
+              : `Corti est à ${after} %.`}
+          </Text>
+        )}
+      </View>
+
+      <View style={st.action}>
+        <Button label="J’y vais" onPress={() => { haptics.tap(); onDone(); }} />
+      </View>
+    </View>
+  );
+}
+
 const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
   bar: {
@@ -308,5 +370,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   inputWrong: { borderColor: withAlpha(c.danger, 0.7) },
   // Hauteur fixe : le message d'erreur ne doit pas pousser le bouton.
   slot: { height: 28, justifyContent: 'center' },
+  costSlot: { height: 58, justifyContent: 'center', paddingHorizontal: space.lg },
   action: { alignSelf: 'stretch', marginTop: space.lg },
 });

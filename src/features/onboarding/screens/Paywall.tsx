@@ -51,10 +51,23 @@ const ROWS = [
   'Ton temps mesuré, jour après jour',
 ];
 
-// La croix n'apparait qu'apres sept secondes : le temps de lire ce qu'on
+// La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
 // est un piege, et l'App Store le refuse.
-const EXIT_AFTER = 7000;
+const EXIT_AFTER = 10000;
+
+/*
+ * Au-dela, on n'attend plus le magasin.
+ *
+ * getOfferings() n'a pas de delai maximum : sur un reseau lent, ou quand
+ * RevenueCat n'a pas fini de se configurer, il peut ne jamais repondre. Le
+ * bouton restait alors sur « Un instant… » pour toujours, a la derniere etape
+ * du parcours — personne ne pouvait plus ni payer ni entrer dans l'app.
+ *
+ * Etre bloque est PIRE que vendre mal : passe ce delai, l'ecran fonctionne
+ * avec ce qu'il a, et s'il n'a rien le bouton mene a l'app.
+ */
+const STORE_TIMEOUT = 6000;
 
 /*
  * Les deux liens qu'Apple exige sur un ecran d'abonnement (3.1.2).
@@ -118,10 +131,13 @@ export function Paywall(
   useEffect(() => {
     if (!PURCHASES_ENABLED) return;
     let alive = true;
+    // Le compte a rebours court en PARALLELE de la requete, et non apres :
+    // c'est lui qui garantit que l'attente finit, quoi que fasse le magasin.
+    const bell = setTimeout(() => { if (alive) setLoading(false); }, STORE_TIMEOUT);
     void currentOffering()
       .then((o) => { if (alive && o) setPacks(o.availablePackages); })
       .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
+    return () => { alive = false; clearTimeout(bell); };
   }, []);
 
   // On vise le forfait par son identifiant, jamais par sa position :
@@ -137,13 +153,17 @@ export function Paywall(
   const daysLost = Math.round((minutes * 365) / 60 / 24);
 
   const go = async () => {
-    // Sans achat configure DU TOUT, le bouton continue vers l'app : c'est le
-    // mode beta, et il ne doit jamais enfermer personne.
-    if (!PURCHASES_ENABLED) { onDone(); return; }
-    // Le magasin repond encore : on attend plutot que de refermer l'ecran.
-    // C'est la distinction qui manquait — « pas de boutique » et « boutique
-    // pas encore prete » menaient au meme endroit.
-    if (loading || !chosen) return;
+    // Le magasin repond encore : on attend plutot que de refermer l'ecran
+    // sans rien vendre. C'est borne par STORE_TIMEOUT.
+    if (loading) return;
+    /*
+      Rien a vendre : le bouton mene a l'app.
+      Soit aucune boutique n'est configuree (mode beta), soit elle n'a rendu
+      aucun forfait. Dans les deux cas on ne PEUT pas encaisser, et un bouton
+      desactive a la derniere etape du parcours enfermerait la personne
+      dehors.
+    */
+    if (!PURCHASES_ENABLED || !chosen) { onDone(); return; }
     setBusy(true);
     const r = await buy(chosen);
     setBusy(false);
@@ -188,9 +208,16 @@ export function Paywall(
   return (
     <Screen
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
-      cta={busy || loading ? 'Un instant…' : 'Reprendre contrôle de mon temps'}
+      cta={
+        busy || loading
+          ? 'Un instant…'
+          // Sans forfait a vendre, le libelle ne promet pas un achat.
+          : chosen || !PURCHASES_ENABLED
+            ? 'Reprendre contrôle de mon temps'
+            : 'Continuer'
+      }
       onPress={() => { void go(); }}
-      disabled={busy || loading || (PURCHASES_ENABLED && !chosen)}
+      disabled={busy || loading}
       hue="warm"
     >
       <View style={st.head}>

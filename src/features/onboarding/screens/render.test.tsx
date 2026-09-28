@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Proof, RateAsk, Reveal } from './extra';
+import { Attribution, Meet, Ninety, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
@@ -39,8 +39,13 @@ jest.mock('react-native-device-activity', () => ({}));
 const noop = () => {};
 
 describe('les ecrans du parcours se montent', () => {
-  it('le chiffre retourne', () => {
-    render(<Reveal onNext={noop} />);
+  it('la rencontre avec Corti', () => {
+    render(<Meet onNext={noop} />);
+  });
+
+  it('les quatre-vingt-dix jours', () => {
+    const r = render(<Ninety onNext={noop} />);
+    expect(r.toJSON()).toBeTruthy();
   });
 
   it('la demonstration', () => {

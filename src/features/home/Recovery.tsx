@@ -2,17 +2,17 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
 import { captureRef } from 'react-native-view-shot';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
-import { Brain, CircleCheck, ShieldAlert, Trophy, X } from 'lucide-react-native';
+import { CircleCheck, ShieldAlert, Trophy, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { Button } from '@/components/Button';
+import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import {
@@ -39,19 +39,44 @@ export function useProtect() {
 }
 
 /**
- * Le seul chiffre qui justifie l'abonnement a la fin du mois.
+ * Corti au centre, et les chiffres autour d'elle.
  *
- * Il tient dans une carte avec l'indice de recuperation : le chiffre dit ce
- * qu'on a recupere, l'anneau dit ou on en est. Separes, l'un se lit comme une
- * statistique et l'autre comme une decoration.
+ * L'onglet ouvrait sur un anneau et trois nombres. C'est juste, et ca ne
+ * donne envie de revenir a personne : on ne revient pas voir un tableau de
+ * bord, on revient voir si quelqu'un va bien. Corti porte l'etat — elle
+ * s'eteint quand on scrolle, elle se rallume jour apres jour — et les
+ * chiffres deviennent la LEGENDE de ce qu'on lit deja sur sa figure.
+ *
+ * Son niveau se lit sur les jours proteges et non sur l'indice : un niveau
+ * doit changer par paliers rares et memorables — le septieme jour, le
+ * trentieme — la ou l'indice bouge tous les jours.
  */
 export function RecoveryCard({ s }: { s: Stats }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const level = cortiLevel(s.days);
+  const tone = s.brain < 35 ? c.danger : s.brain < 70 ? c.ember : c.accent;
 
   return (
     <Glass radius={26} intensity={55} warmEdge="none" style={st.card}>
-      <Ring value={s.brain} />
+      <Corti level={level} size={148} />
+
+      <Text variant="lead" color={c.accent} style={st.mid}>
+        {cortiLine(level, s.days)}
+      </Text>
+
+      {/* La jauge sous Corti plutot qu'un anneau autour : un anneau autour
+          d'un visage fait une cible, et l'oeil lit la cible avant le visage. */}
+      <View style={st.gaugeRow}>
+        <View style={st.gauge}>
+          <View
+            style={[st.gaugeFill, { width: `${s.brain}%`, backgroundColor: tone }]}
+          />
+        </View>
+        <Text variant="button" color={tone}>{s.brain} %</Text>
+      </View>
+
+      <Text variant="label" tone="tertiary">INDICE DE RÉCUPÉRATION</Text>
 
       <View style={st.figures}>
         <Figure label="Reels évités" value={String(s.blocked)} />
@@ -59,53 +84,6 @@ export function RecoveryCard({ s }: { s: Stats }) {
         <Figure label="Jours protégés" value={`${s.days} j`} />
       </View>
     </Glass>
-  );
-}
-
-/**
- * L'anneau de recuperation.
- *
- * Dessine, jamais anime en couleur : animer une propriete de couleur fait
- * tomber cette app. La teinte est choisie au rendu, par palier, et l'anneau
- * ne bouge pas.
- */
-function Ring({ value }: { value: number }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  const size = 104;
-  const w = 9;
-  const r = (size - w) / 2;
-  const circ = 2 * Math.PI * r;
-
-  // Trois paliers, trois teintes. Le vocabulaire reste factuel : c'est un
-  // indice tire de deux nombres qu'on observe, pas un diagnostic.
-  const tone = value < 35 ? c.danger : value < 70 ? c.ember : c.accent;
-  const word = value < 35 ? 'Sous tension' : value < 70 ? 'En récupération' : 'Rétabli';
-
-  return (
-    <View style={st.ringWrap}>
-      <Svg width={size} height={size}>
-        <Circle
-          cx={size / 2} cy={size / 2} r={r}
-          stroke={withAlpha(c.mist, 0.1)} strokeWidth={w} fill="none"
-        />
-        <Circle
-          cx={size / 2} cy={size / 2} r={r}
-          stroke={tone} strokeWidth={w} fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${circ}`}
-          strokeDashoffset={circ * (1 - value / 100)}
-          // On part du haut : un anneau qui demarre a trois heures se lit
-          // comme un camembert, pas comme une jauge.
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-      <View style={st.ringIn}>
-        <Brain size={17} strokeWidth={2} color={tone} />
-        <Text variant="title">{value}</Text>
-      </View>
-      <Text variant="label" color={tone} style={{ marginTop: 2 }}>{word}</Text>
-    </View>
   );
 }
 
@@ -258,17 +236,24 @@ export function Milestone({
 
 const sheet = (c: Palette) => StyleSheet.create({
   card: {
-    flexDirection: 'row', alignItems: 'center', gap: space.lg,
-    paddingHorizontal: space.lg, paddingVertical: space.lg,
+    alignItems: 'center', gap: space.sm,
+    paddingHorizontal: space.lg, paddingVertical: space.xl,
     marginTop: space.lg,
   },
-  ringWrap: { alignItems: 'center' },
-  ringIn: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 104,
-    alignItems: 'center', justifyContent: 'center', gap: 1,
+  gaugeRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    alignSelf: 'stretch', marginTop: space.md,
   },
-  figures: { flex: 1, gap: space.md },
-  figure: { gap: 1 },
+  gauge: {
+    flex: 1, height: 8, borderRadius: 4, overflow: 'hidden',
+    backgroundColor: withAlpha(c.mist, 0.1),
+  },
+  gaugeFill: { height: 8, borderRadius: 4 },
+  figures: {
+    flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between',
+    marginTop: space.lg,
+  },
+  figure: { gap: 1, alignItems: 'center' },
   note: { marginTop: space.sm, lineHeight: 16 },
   line: {
     flexDirection: 'row', alignItems: 'center', gap: space.sm,
