@@ -10,13 +10,12 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { S1, S3, S5, S6, S6Years, S7 } from './screens';
+import { S1, S5, S6, S6Years, S7 } from './screens';
 import {
-  Constat, Distractions, Manifesto, Name, NotificationsAsk, PromiseScreen,
+  Constat, Distractions, Name, NotificationsAsk, PromiseScreen,
 } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
-import { HomeShortcuts } from './screens/HomeShortcuts';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
@@ -99,6 +98,18 @@ export function OnboardingFlow() {
    * quelque chose ; il arrive juste apres le manifeste, la ou l'on vient de
    * dire ce qu'on croit.
    *
+   * Trois autres ecrans sont partis, sur la meme regle : un ecran doit
+   * DEMANDER quelque chose, en DONNER une, ou porter un coup. Celui qui se
+   * contente d'informer fait attendre.
+   *
+   * La question sur la frequence faisait la troisieme d'affilee, apres le
+   * curseur de sante et le constat — et sa reponse ne servait qu'a une
+   * statistique. Le manifeste disait en six lignes tapees ce que l'ecran de
+   * demonstration MONTRE trois ecrans plus loin ; entre les deux, la
+   * demonstration gagne. Et les raccourcis d'ecran d'accueil promettaient une
+   * fonctionnalite qu'on trouve dans l'app, a un moment ou l'on n'a encore
+   * rien installe.
+   *
    * L'ecran des reglages fins a quitte le parcours lui aussi. Il faisait
    * defiler des interrupteurs que PERSONNE ne touchait : une demonstration de
    * ce que l'app sait faire, au milieu d'un parcours ou chaque ecran devrait
@@ -115,7 +126,6 @@ export function OnboardingFlow() {
     <Name key="name" onNext={next} />,
     <Meet key="meet" onNext={next} />,
     <Health key="health" onNext={next} />,
-    <S3 key="s3" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <S5 key="s5" onNext={next} />,
     <S6 key="s6" onNext={next} />,
@@ -123,12 +133,10 @@ export function OnboardingFlow() {
     <Activities key="act" onNext={next} />,
     <S7 key="s7" onNext={next} />,
     <Ninety key="90" onNext={next} />,
-    <Manifesto key="man" onNext={next} />,
     <Proof key="proof" onNext={next} />,
     <Distractions key="dis" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
-    <HomeShortcuts key="short" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,

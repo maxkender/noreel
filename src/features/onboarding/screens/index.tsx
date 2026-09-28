@@ -6,13 +6,12 @@ import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
-import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { Receptors } from '../scenes/Receptors';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { useOnboardingStore, type PainFrequency } from '@/store/onboarding';
+import { useOnboardingStore } from '@/store/onboarding';
 import { formatHours } from '@/lib/format';
 import { track } from '@/services';
 import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
@@ -61,37 +60,6 @@ export function S1({ onNext }: P) {
   );
 }
 
-/* ---------- 3 ---------- */
-export function S3({ onNext }: P) {
-  const { d } = useT();
-  const setPain = useOnboardingStore((x) => x.setPainFrequency);
-  const [a, setA] = useState<PainFrequency | null>(null);
-
-  const opts: [PainFrequency, string, string][] = [
-    ['daily', '🌙', d.s3.daily],
-    ['weekly', '🔁', d.s3.weekly],
-    ['lostCount', '🫠', d.s3.lostCount],
-  ];
-
-  return (
-    <Screen cta={d.s3.cta} onPress={onNext} disabled={!a} hue="warm">
-      <Typewriter text={d.s3.title} variant="displayM" />
-      {true && (
-        <Animated.View entering={FadeIn.duration(500)} style={{ marginTop: space.xxl, gap: space.md }}>
-          {opts.map(([k, icon, label]) => (
-            <SelectCard
-              key={k}
-              label={label}
-              lead={<Text variant="title">{icon}</Text>}
-              selected={a === k}
-              onPress={() => { setA(k); setPain(k); track('pain_answered', { answer: k }); }}
-            />
-          ))}
-        </Animated.View>
-      )}
-    </Screen>
-  );
-}
 
 /* ---------- 5 ---------- */
 export function S5({ onNext }: P) {
