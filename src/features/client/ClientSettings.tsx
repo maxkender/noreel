@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Check, Hourglass, LogOut, Lock, UserRoundCog } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
@@ -47,15 +47,46 @@ export function ClientSettings({
   useAppsStore((s) => s.settings);
   // « tint » est deja pris plus haut par la teinte du FLOU de la feuille :
   // celle-ci est la couleur choisie pour l'app.
+  /*
+    La feuille SORT, elle ne disparait pas : une fenetre modale se demonte a
+    l'instant ou on la ferme, donc son animation de sortie n'a jamais le temps
+    de jouer. On la garde montee deux dixiemes de seconde de plus.
+  */
+  const [closing, setClosing] = useState(false);
+  const close = useCallback(() => {
+    setClosing(true);
+    setTimeout(() => { setClosing(false); onClose(); }, 220);
+  }, [onClose]);
+
   const colour = useAppsStore((s) => s.tints[id]);
   const setColour = useAppsStore((s) => s.setTint);
 
   const name = APPS.find((a) => a.id === id)?.name ?? id;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={st.scrim} onPress={onClose}>
-        <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
+    <Modal
+      visible={visible || closing}
+      transparent
+      animationType="none"
+      onRequestClose={close}
+    >
+      {/* La page se floute derriere la feuille : sans ca, le verre se detache
+          d'une image nette et ressemble a un calque colle dessus. */}
+      <Animated.View
+        entering={FadeIn.duration(220)}
+        exiting={FadeOut.duration(200)}
+        style={StyleSheet.absoluteFill}
+      >
+        <BlurView intensity={24} tint={tint} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+
+      <Pressable style={st.scrim} onPress={close}>
+        {!closing && (
+        <Animated.View
+          entering={SlideInDown.duration(280)}
+          exiting={SlideOutDown.duration(220)}
+          style={st.sheet}
+        >
           <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
@@ -103,7 +134,7 @@ export function ClientSettings({
             */}
             <Pressable
               style={st.action}
-              onPress={() => { haptics.press(); onClose(); onPass(); }}
+              onPress={() => { haptics.press(); close(); onPass(); }}
             >
               <Hourglass size={15} strokeWidth={2} color={c.ember} />
               <Text variant="body" style={{ flex: 1 }}>
@@ -166,13 +197,14 @@ export function ClientSettings({
             </Text>
           </ScrollView>
         </Animated.View>
+        )}
       </Pressable>
     </Modal>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  scrim: { flex: 1, backgroundColor: '#000000B8', justifyContent: 'flex-end' },
+  scrim: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
     paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xxl,

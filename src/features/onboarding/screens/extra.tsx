@@ -201,7 +201,7 @@ export function Proof({ onNext }: P) {
 
       <View style={st.stage}>
         <PhoneFrame width={196}>
-          <MockFeed filtered={filtered} />
+          <MockFeed filtered={filtered} drift />
         </PhoneFrame>
       </View>
     </Screen>
@@ -276,7 +276,6 @@ export function Attribution({ onNext }: P) {
 export function RateAsk({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
-  const name = useOnboardingStore((x) => x.firstName);
 
   const ask = async () => {
     haptics.press();
@@ -306,9 +305,7 @@ export function RateAsk({ onNext }: P) {
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        {name
-          ? `${name}, soutiens la communauté UnSwipe.`
-          : 'Soutiens la communauté UnSwipe.'}
+        Soutiens la communauté UnSwipe.
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
         On essaie de rendre leur temps aux gens.

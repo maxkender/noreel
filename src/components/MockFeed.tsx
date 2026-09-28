@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withDelay, withTiming, Easing,
+  useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming, Easing,
 } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -43,13 +43,41 @@ const STEP = 130;   // decalage entre deux reels : ils tombent en cascade
  * maquette de telephone et en plein ecran pour une video : une seule source
  * de verite pour la forme, un facteur pour la taille.
  */
-export function MockFeed({ filtered, u = 1 }: { filtered: boolean; u?: number }) {
+export function MockFeed({
+  filtered, u = 1, drift = false,
+}: {
+  filtered: boolean;
+  u?: number;
+  /**
+   * Fait descendre le fil tout seul.
+   *
+   * Un fil arrete est une capture d'ecran : on croit voir une image, pas une
+   * app. Quelques dizaines de points de deplacement lent suffisent a ce que
+   * l'oeil lise « ca defile », et c'est ce qui rend la demonstration
+   * credible.
+   */
+  drift?: boolean;
+}) {
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
+  const slide = useSharedValue(0);
   let rank = 0;
 
+  useEffect(() => {
+    if (!drift) { slide.value = 0; return; }
+    slide.value = withRepeat(
+      withTiming(1, { duration: 9000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [drift, slide]);
+
+  const move = useAnimatedStyle(() => ({
+    transform: [{ translateY: -slide.value * 150 * u }],
+  }));
+
   return (
-    <View style={st.root}>
+    <Animated.View style={[st.root, drift && move]}>
       <View style={st.bar}>
         <Text variant="label" tone="secondary" style={{ fontSize: 7 * u }}>UnSwipe</Text>
       </View>
@@ -59,7 +87,7 @@ export function MockFeed({ filtered, u = 1 }: { filtered: boolean; u?: number })
       {POSTS.map((p, i) => (
         <Row key={i} post={p} filtered={filtered} rank={p.reel ? rank++ : 0} u={u} />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 

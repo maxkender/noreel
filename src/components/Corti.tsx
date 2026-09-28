@@ -1,9 +1,12 @@
-import { useEffect, useMemo } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming,
+  Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring,
+  withTiming,
 } from 'react-native-reanimated';
+import { springs } from '@/theme/motion';
+import { haptics } from '@/lib/haptics';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -62,12 +65,14 @@ export function cortiLine(level: CortiLevel, days: number): string {
  * cesse d'etre attachante. La taille est donc une seule valeur.
  */
 export function Corti({
-  level, size = 132, animated = true, style,
+  level, size = 132, animated = true, onPress, style,
 }: {
   level: CortiLevel;
   size?: number;
   /** Faux pour une capture ou une vignette : l'image doit etre immobile. */
   animated?: boolean;
+  /** La rend touchable. Sans ca, elle rebondit quand meme quand on la touche. */
+  onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
   const c = useColors();
@@ -75,6 +80,10 @@ export function Corti({
   const reduced = useReducedMotion();
   const breath = useSharedValue(0);
   const halo = useSharedValue(0);
+  const blink = useSharedValue(0);
+  const sway = useSharedValue(0);
+  const hop = useSharedValue(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const alive = animated && !reduced;
 
@@ -101,23 +110,77 @@ export function Corti({
       ),
       -1
     );
-  }, [alive, breath, halo]);
+    // Un balancement tres lent, sur un troisieme cycle : trois durees qui ne
+    // se divisent pas donnent un mouvement qui ne se repete jamais a l'oeil.
+    sway.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 3100, easing: Easing.inOut(Easing.sin) }),
+        withTiming(-1, { duration: 3100, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+  }, [alive, breath, halo, sway]);
+
+  /*
+    Le clignement.
+
+    Les yeux sont dessines DANS l'image : on ne peut pas les fermer. Poser des
+    paupieres par-dessus demanderait de connaitre leur position et la couleur
+    du corps a cet endroit — un degrade — et une paupiere mal calee fait un
+    defaut, pas un clignement. On ecrase donc brievement toute la tete, comme
+    le font les dessins animes : a cette taille, l'oeil lit un clignement.
+
+    L'intervalle est tire au hasard entre trois et sept secondes. Regulier, il
+    devient un tic de machine ; irregulier, il devient quelqu'un.
+  */
+  useEffect(() => {
+    if (!alive) return;
+    const tick = () => {
+      blink.value = withSequence(
+        withTiming(1, { duration: 80, easing: Easing.in(Easing.quad) }),
+        withTiming(0, { duration: 110, easing: Easing.out(Easing.quad) })
+      );
+      timer.current = setTimeout(tick, 3000 + Math.random() * 4000);
+    };
+    timer.current = setTimeout(tick, 1200 + Math.random() * 2000);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [alive, blink]);
+
+  /** Un petit saut : elle repond quand on la touche. */
+  const poke = useCallback(() => {
+    haptics.tap();
+    hop.value = withSequence(
+      withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) }),
+      withSpring(0, springs.snappy)
+    );
+    onPress?.();
+  }, [hop, onPress]);
 
   // Eteint, Corti ne respire presque plus : l'amplitude porte l'etat autant
   // que le dessin.
   const depth = level === 0 ? 0.008 : 0.012 + level * 0.006;
 
   const body = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + breath.value * depth }],
+    transform: [
+      // Le saut passe avant le reste : il doit dominer quand il arrive.
+      { translateY: -hop.value * size * 0.07 },
+      { rotate: `${sway.value * 1.2}deg` },
+      { scale: (1 + breath.value * depth) * (1 + hop.value * 0.04) },
+      // L'ecrasement du clignement, sur la seule hauteur.
+      { scaleY: 1 - blink.value * 0.07 },
+    ],
   }));
   const glow = useAnimatedStyle(() => ({
     opacity: level === 0 ? 0 : (0.18 + level * 0.1) * (0.55 + halo.value * 0.45),
     transform: [{ scale: 1 + halo.value * 0.06 }],
   }));
 
+  const Root: React.ElementType = animated ? Pressable : View;
+
   return (
-    <View
+    <Root
       style={[{ width: size, height: size }, st.root, style]}
+      onPress={animated ? poke : undefined}
       accessibilityRole="image"
       accessibilityLabel={
         level === 0 ? 'Corti, éteint' : `Corti, niveau ${level} sur 3`
@@ -136,7 +199,7 @@ export function Corti({
           transition={260}
         />
       </Animated.View>
-    </View>
+    </Root>
   );
 }
 

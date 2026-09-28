@@ -68,9 +68,33 @@ const COMMON = `
    * nettoyage n'arrete plus le reste.
    */
   let __t = null;
+
+  /*
+    On ne nettoie PAS pendant qu'un doigt fait defiler.
+
+    Le fil d'Instagram est virtualise : il ajoute et retire des noeuds sans
+    arret pendant qu'on descend, donc l'observateur declenchait une passe
+    toutes les 300 ms — en plein geste. Chaque passe parcourt la page et
+    change des styles, exactement quand le navigateur a besoin de tout son
+    temps pour composer l'image suivante. C'est ca qui faisait sauter le
+    defilement et clignoter les photos.
+
+    On attend donc 250 ms de doigt immobile. Rien n'est perdu : ce qu'on
+    aurait masque pendant le geste est masque juste apres, et la seule
+    difference visible est que le defilement redevient lisse.
+  */
+  let __scrolled = 0;
+  addEventListener(
+    'scroll',
+    () => { __scrolled = Date.now(); },
+    { passive: true, capture: true }
+  );
+
   const __schedule = (fn) => {
     if (__t) return;
-    __t = setTimeout(() => {
+    __t = setTimeout(function run() {
+      // Toujours en train de defiler : on repousse au lieu de travailler.
+      if (Date.now() - __scrolled < 250) { __t = setTimeout(run, 150); return; }
       __t = null;
       try { fn(); } catch (e) { /* une passe ratee n'est pas grave */ }
     }, 300);
@@ -641,32 +665,66 @@ export const INSTAGRAM_BLOCKER = `
     }, true);
   }
 
-  /**
-   * « Abonnements » s'obtient par l'ADRESSE.
-   *
-   * On cherchait un bouton portant ce mot : il n'existe pas tant que le
-   * menu deroulant est ferme, et une fois ouvert ce n'est qu'un <span> sans
-   * role ni lien — aucun des selecteurs ne pouvait l'atteindre. Mais
-   * choisir l'option pose ?variant=following sur l'adresse, et cette
-   * adresse chargee directement donne le meme fil. Une adresse survit aux
-   * refontes, un nom de classe non : c'est la lecon de TikTok, appliquee.
-   */
   /*
-    Une seule fois, au chargement — jamais pendant la navigation.
-    La methode location.replace provoque un rechargement COMPLET. Appliquee
-    a chaque passe, elle partait des qu'Instagram revenait a « / » par sa
-    navigation interne : toucher le coeur, la loupe ou l'accueil relancait
-    la page entiere, et on ne voyait plus qu'un chargement sans fin. Le
-    point d'entree porte deja ?variant=following ; il suffit de ne pas
-    defaire ce qu'Instagram fait ensuite.
-  */
-  let __feedDone = false;
-  const __following = () => {
-    if (__feedDone) return;
-    __feedDone = true;
-    if (location.pathname !== '/') return;
-    if (location.search.indexOf('variant=following') >= 0) return;
-    __go('/?variant=following');
+   * Changer de compte SANS quitter la page.
+   *
+   * On menait vers /accounts/login/ : c'est la page d'ajout d'un compte, et
+   * Instagram y termine souvent la session en cours — on croyait basculer, on
+   * se retrouvait deconnecte. Or Instagram sait deja tenir plusieurs comptes ;
+   * son selecteur est dans la page, il suffit de l'ouvrir.
+   *
+   * On le cherche par son LIBELLE, jamais par une classe, et on remonte le
+   * chemin que ferait un doigt : le selecteur s'il est deja la, sinon le menu,
+   * sinon l'onglet profil. Chaque etape rend la main et la suivante retente —
+   * l'interface met un instant a s'ouvrir.
+   *
+   * C'est du texte, donc c'est fragile : si Instagram renomme son option, le
+   * commutateur ne trouve plus rien et le dit, au lieu de deconnecter.
+   */
+  const SWITCH = /changer de compte|switch accounts?|changer de profil/i;
+  const MENU = /plus d.options|more options|param.tres|settings|menu/i;
+  const PROFILE = /profil|profile/i;
+
+  const __clickBy = (re) => {
+    const sel = 'button, [role="button"], a, div[tabindex], span[role="link"]';
+    for (const n of document.querySelectorAll(sel)) {
+      const label = n.getAttribute('aria-label') || '';
+      const text = (n.textContent || '').trim();
+      if (re.test(label) || (text && text.length < 40 && re.test(text))) {
+        n.click();
+        return true;
+      }
+    }
+    return false;
+  };
+
+  window.__nrSwitch = () => {
+    // 1. Le selecteur est deja ouvert, ou son entree est visible.
+    if (__clickBy(SWITCH)) { __post({ t: 'switch', ok: true }); return; }
+
+    // 2. Sinon on ouvre le menu, et on retente.
+    if (__clickBy(MENU)) {
+      setTimeout(() => {
+        if (__clickBy(SWITCH)) __post({ t: 'switch', ok: true });
+        else __post({ t: 'switch', ok: false });
+      }, 700);
+      return;
+    }
+
+    // 3. Sinon on passe par le profil, ou vit l'entree sur mobile.
+    if (__clickBy(PROFILE)) {
+      setTimeout(() => {
+        if (__clickBy(SWITCH) || __clickBy(MENU)) {
+          setTimeout(() => {
+            if (__clickBy(SWITCH)) __post({ t: 'switch', ok: true });
+            else __post({ t: 'switch', ok: false });
+          }, 700);
+        } else __post({ t: 'switch', ok: false });
+      }, 900);
+      return;
+    }
+
+    __post({ t: 'switch', ok: false });
   };
 
   __watch(() => {
@@ -675,7 +733,6 @@ export const INSTAGRAM_BLOCKER = `
     __gray();
     __cookies();
     __native();
-    __following();
 
     /*
       Ni sur les stories, ni sur le fil.
@@ -994,7 +1051,16 @@ type Chrome = { dark: string; light: string };
 
 export const CLIENTS = {
   instagram: {
-    url: 'https://www.instagram.com/?variant=following',
+    /*
+      Le fil d'Instagram, tel qu'il l'ouvre.
+
+      On forcait ?variant=following — le fil des seuls abonnements — en
+      arrivant, par coherence avec l'app. Mais ce fil-la se recharge mal : il
+      restait en chargement, et le retour en arriere depuis un post y ramenait
+      en haut. Le reglage existe toujours dans Instagram, a un geste d'ici,
+      pour qui le veut ; l'imposer coutait plus cher que ce qu'il rapportait.
+    */
+    url: 'https://www.instagram.com/',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
     blocked: (p: string) => /^\/reels?(\/|$)/.test(p),

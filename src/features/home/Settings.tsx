@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette, type ThemeName } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -48,6 +48,21 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
+  /*
+    La feuille SORT, elle ne disparait pas.
+
+    Elle entrait en glissant et s'evanouissait d'un coup : une fenetre modale
+    se demonte a l'instant ou on la ferme, donc l'animation de sortie n'avait
+    jamais le temps de jouer. On garde la fenetre montee deux dixiemes de
+    seconde de plus, le temps que la feuille redescende — c'est la seule
+    facon d'avoir une sortie dans une modale.
+  */
+  const [closing, setClosing] = useState(false);
+  const close = useCallback(() => {
+    setClosing(true);
+    setTimeout(() => { setClosing(false); onClose(); }, 220);
+  }, [onClose]);
+
   const s = useSettings();
   const instaTint = useAppsStore((x) => x.tints.instagram);
   const setTint = useAppsStore((x) => x.setTint);
@@ -59,16 +74,36 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={st.scrim} onPress={onClose}>
-        <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
+    <Modal
+      visible={visible || closing}
+      transparent
+      animationType="none"
+      onRequestClose={close}
+    >
+      {/* Le fond de l'app se floute derriere la feuille : sans ca, la feuille
+          de verre se detache d'une image nette et ressemble a un calque. */}
+      <Animated.View
+        entering={FadeIn.duration(220)}
+        exiting={FadeOut.duration(200)}
+        style={StyleSheet.absoluteFill}
+      >
+        <BlurView intensity={26} tint={tint} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+
+      <Pressable style={st.scrim} onPress={close}>
+        {!closing && (
+        <Animated.View
+          entering={SlideInDown.duration(280)}
+          exiting={SlideOutDown.duration(220)}
+          style={st.sheet}
+        >
           <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
           <View style={st.head}>
             <View style={{ width: 44 }} />
             <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>Paramètres</Text>
-            <Pressable onPress={onClose} style={st.done} hitSlop={10}>
+            <Pressable onPress={close} style={st.done} hitSlop={10}>
               <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
@@ -302,6 +337,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             </Text>
           </ScrollView>
         </Animated.View>
+        )}
       </Pressable>
 
       <Feedback visible={feedback} onClose={() => setFeedback(false)} />
@@ -334,7 +370,7 @@ function Line({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  scrim: { flex: 1, backgroundColor: '#000000C0', justifyContent: 'flex-end' },
+  scrim: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
     paddingHorizontal: space.lg, paddingBottom: space.xxl,

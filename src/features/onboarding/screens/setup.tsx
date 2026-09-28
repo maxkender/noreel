@@ -61,7 +61,6 @@ const CONSTAT: Step[] = [
 export function Constat({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const name = useOnboardingStore((x) => x.firstName);
   const [i, setI] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
 
@@ -92,7 +91,7 @@ export function Constat({ onNext }: P) {
     >
       <Animated.View key={i} entering={FadeIn.duration(520)}>
         <Typewriter
-          text={i === 0 && name ? `${name}, ${step.q[0].toLowerCase()}${step.q.slice(1)}` : step.q}
+          text={step.q}
           variant="displayM"
           speed={44}
           style={st.center}

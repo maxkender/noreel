@@ -102,7 +102,6 @@ export function Paywall(
 ) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const name = useOnboardingStore((x) => x.firstName);
   const minutes = useOnboardingStore((x) => x.minutesPerDay);
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(exitDelay === 0);
@@ -232,9 +231,15 @@ export function Paywall(
         )}
       </View>
 
+      {/*
+        Sans prenom ici : l'ecran juste avant en porte un, et deux ecrans de
+        suite qui vous appellent par votre nom cessent d'etre attentionnes
+        pour devenir insistants. On le garde a deux moments dans tout le
+        parcours — la rencontre, ou l'on vient de le donner, et la promesse
+        chiffree, ou il engage.
+      */}
       <Text variant="displayM" style={st.center}>
-        {name ? `${name}, reprends ` : 'Reprends '}
-        <Text variant="displayM" color={c.accent}>le contrôle</Text>
+        Reprends <Text variant="displayM" color={c.accent}>le contrôle</Text>
         {' de ton temps.'}
       </Text>
       <Text variant="lead" tone="secondary" style={[st.center, st.sub]}>

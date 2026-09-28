@@ -129,7 +129,7 @@ export default function Demo() {
         <StatusBar style="light" hidden />
 
         <View style={StyleSheet.absoluteFill}>
-          <MockFeed key={run} filtered={phase === 'filtered'} u={2.6} />
+          <MockFeed key={run} filtered={phase === 'filtered'} u={2.6} drift />
         </View>
 
         {/* Le trait de balayage, au-dessus du fil. */}

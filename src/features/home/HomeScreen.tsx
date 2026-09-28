@@ -36,6 +36,7 @@ import { HardMode, HardModeIntro } from './HardMode';
 import {
   Milestone, ProtectionStatus, ReclaimedNote, RecoveryCard, useProtect,
 } from './Recovery';
+import { Corti, cortiLevel, cortiLine } from '@/components/Corti';
 import { pullAndRestart } from '@/services/refresh';
 
 type Tab = 'home' | 'block' | 'account';
@@ -90,7 +91,13 @@ export function HomeScreen() {
       </SafeAreaView>
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
-        {tab === 'home' && <HomeTab onScroll={onScroll} minutes={today.perApp} />}
+        {tab === 'home' && (
+          <HomeTab
+            onScroll={onScroll}
+            minutes={today.perApp}
+            onCorti={() => setTab('block')}
+          />
+        )}
         {tab === 'block' && (
           <BlockTab
             onScroll={onScroll}
@@ -138,9 +145,18 @@ type Scroll = ReturnType<typeof useAnimatedScrollHandler>;
  * une page qu'on ouvre afin d'appuyer sur une icone. Tout ce qui n'etait pas
  * l'icone est parti dans Blocage, et l'icone a pris la place.
  */
-function HomeTab({ onScroll, minutes }: { onScroll: Scroll; minutes: Record<string, number> }) {
+function HomeTab({
+  onScroll, minutes, onCorti,
+}: {
+  onScroll: Scroll;
+  minutes: Record<string, number>;
+  /** Touchee, Corti emmene voir ou elle en est. */
+  onCorti: () => void;
+}) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const { s: prot } = useProtect();
+  const level = cortiLevel(prot?.days ?? 0);
 
   return (
     <Animated.ScrollView
@@ -149,6 +165,22 @@ function HomeTab({ onScroll, minutes }: { onScroll: Scroll; minutes: Record<stri
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
+      {/*
+        Corti accueille, avant les applis.
+        C'est le premier ecran qu'on voit en ouvrant UnSwipe, et il n'y avait
+        que quatre icones a toucher — aucune raison de s'y attarder, donc
+        aucune raison d'ouvrir l'app autrement que pour aller scroller. Une
+        tete qui va bien ou mal, elle, donne une raison de regarder.
+      */}
+      <Pressable onPress={onCorti} style={st.greet} accessibilityRole="button">
+        <Corti level={level} size={104} onPress={onCorti} />
+        {prot && (
+          <Text variant="body" color={c.accent} style={{ textAlign: 'center' }}>
+            {cortiLine(level, prot.days)}
+          </Text>
+        )}
+      </Pressable>
+
       <AppSlider minutes={minutes} />
     </Animated.ScrollView>
   );
@@ -433,6 +465,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   idea: { padding: space.lg, marginTop: space.lg },
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
+  greet: { alignItems: 'center', gap: space.sm, paddingBottom: space.lg },
   stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(c.mist, 0.14) },
   cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

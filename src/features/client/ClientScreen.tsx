@@ -169,6 +169,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // Les jours proteges, pour savoir a quel niveau dessiner Corti sur le mur.
   // Lus une fois a l'ouverture : ils ne changent pas en cours de seance.
   const [days, setDays] = useState(0);
+  // Vrai le temps que le selecteur de comptes s'ouvre, pour dire quoi faire
+  // s'il ne s'ouvre pas : le chemin est fait de libelles, donc il peut
+  // changer sous nos pieds.
+  const [switching, setSwitching] = useState(false);
+  const [switchFailed, setSwitchFailed] = useState(false);
   useEffect(() => {
     let alive = true;
     void stats().then((x) => { if (alive) setDays(x.days); });
@@ -293,10 +298,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
         ses sessions : sa page de connexion liste les comptes enregistres et
         bascule sans deconnecter le premier.
       */
+      /*
+        On ouvre le selecteur DANS la page, on ne navigue pas.
+        Mener vers la page de connexion terminait souvent la session en
+        cours : on croyait basculer, on se retrouvait deconnecte. Instagram
+        tient deja ses comptes ; son selecteur est dans la page.
+      */
       case 'account':
-        web.current?.injectJavaScript(
-          `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
-        );
+        if (id === 'instagram') {
+          setSwitching(true);
+          web.current?.injectJavaScript('window.__nrSwitch && window.__nrSwitch(); true;');
+        } else {
+          web.current?.injectJavaScript(
+            `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
+          );
+        }
         break;
       case 'settings': setPanel(true); break;
       case 'exit': exit(); break;
@@ -389,6 +405,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
             if (m && m.t === 'rules' && typeof m.n === 'number' && m.on > 0) {
               void reportRules(id, m.n);
             }
+            if (m && m.t === 'switch') {
+              setSwitching(false);
+              setSwitchFailed(!m.ok);
+              if (!m.ok) setTimeout(() => setSwitchFailed(false), 4000);
+            }
           } catch {
             /* message qui ne vient pas de nous */
           }
@@ -446,6 +467,18 @@ export function ClientScreen({ id }: { id: ClientId }) {
             {days > 0
               ? `Corti tient depuis ${days} jour${days > 1 ? 's' : ''}.`
               : 'C’est exactement pour ça que tu es là.'}
+          </Text>
+        </View>
+      )}
+
+      {/* Le selecteur de comptes met un instant a s'ouvrir, et il peut ne pas
+          s'ouvrir du tout : dans les deux cas on le dit. */}
+      {(switching || switchFailed) && (
+        <View style={styles.valve} pointerEvents="none">
+          <Text variant="label" color={switchFailed ? c.danger : c.accent}>
+            {switchFailed
+              ? 'Comptes introuvables. Profil, puis « Changer de compte ».'
+              : 'Ouverture des comptes…'}
           </Text>
         </View>
       )}
