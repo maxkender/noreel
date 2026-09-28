@@ -61,10 +61,15 @@ it('garde la frise quel que soit le forfait', () => {
   expect(steps()).toHaveLength(1);
 });
 
-it('montre un pourcentage, pas une phrase sur ses recepteurs', () => {
-  // Le chiffre est celui que l'app affiche ensuite tous les jours : la
-  // promesse et la jauge doivent dire la meme chose.
+it('montre la destination, pas le point de depart', () => {
+  /*
+    Corti arrivait grille et se reparait sous les yeux : sur la page ou l'on
+    sort sa carte, la premiere image etait celle d'un cerveau mort. On vend ce
+    qu'on obtient. Le chiffre est celui que l'app affiche ensuite tous les
+    jours — la promesse et la jauge doivent dire la meme chose.
+  */
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getByText('18 %')).toBeTruthy();
-  expect(screen.getByText(dict.pay.pctNow)).toBeTruthy();
+  expect(screen.getByText('90 %')).toBeTruthy();   // brainIndex(30 jours)
+  expect(screen.getByText(dict.pay.pctThen)).toBeTruthy();
+  expect(screen.queryByText('18 %')).toBeNull();
 });

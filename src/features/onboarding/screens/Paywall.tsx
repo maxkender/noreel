@@ -17,7 +17,7 @@ import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED, buy, currentOffering, redeemCode } from '@/services/purchases';
 import { brainIndex } from '@/services/protect';
 import { scheduleTrialReminder } from '@/services/trial';
-import { CortiRecovery } from '@/components/CortiRecovery';
+import { CortiRig } from '@/components/CortiRig';
 import { GlassApps } from '@/components/GlassApps';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
@@ -116,6 +116,7 @@ export function Paywall(
   const [busy, setBusy] = useState(false);
   // Le magasin n'a rien rendu : constate au premier appui, dit au second.
   const [storeDown, setStoreDown] = useState(false);
+  const [fail, setFail] = useState<string | null>(null);
   /*
     Le magasin n'a pas encore repondu.
 
@@ -136,7 +137,13 @@ export function Paywall(
     // c'est lui qui garantit que l'attente finit, quoi que fasse le magasin.
     const bell = setTimeout(() => { if (alive) setLoading(false); }, STORE_TIMEOUT);
     void currentOffering()
-      .then((o) => { if (alive && o) setPacks(o.availablePackages); })
+      .then((r) => {
+        if (!alive) return;
+        if (r.offering) setPacks(r.offering.availablePackages);
+        // La RAISON est gardee : c'est elle qu'on affiche si le bouton ne
+        // peut rien vendre, au lieu d'un « ca ne marche pas » sans suite.
+        setFail(r.fail);
+      })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; clearTimeout(bell); };
   }, []);
@@ -260,6 +267,12 @@ export function Paywall(
             <Text variant="label" color={c.ember} style={st.center}>
               {d.pay.storeDown}
             </Text>
+            {/* Le message brut du magasin. Illisible pour qui n'y peut rien,
+                mais c'est la seule chose qui distingue un contrat non signe
+                d'un produit introuvable — et sans lui, on devine. */}
+            {fail && (
+              <Text variant="label" tone="tertiary" style={st.center}>{fail}</Text>
+            )}
           </Animated.View>
         ) : undefined
       }
@@ -401,38 +414,24 @@ export function Paywall(
 }
 
 /**
- * Corti qui se repare, sous les yeux.
+ * Corti, en forme, et rien d'autre.
  *
- * C'est l'argument de vente en une image : il arrive grille, il repart
- * rayonnant. Le paywall enumerait des fonctionnalites — quatre lignes avec une
- * coche — et une liste ne fait rien ressentir. Une tete qui va mal et qui va
- * mieux, si, et c'est la meme promesse.
+ * Il arrivait grille et se reparait sous les yeux — la sequence complete du
+ * studio, six secondes, du gris au bleu. C'etait juste comme demonstration et
+ * mauvais comme argument : sur la page ou l'on sort sa carte, la premiere
+ * image etait celle d'un cerveau mort. On vend ce qu'on obtient, pas ce dont
+ * on souffre ; le constat a deja eu lieu quinze ecrans plus tot, et le
+ * repeter ici ne fait que retarder la seule chose qu'on vient chercher.
  *
- * C'est la sequence du studio qui joue, pas une reconstitution.
- *
- * Je la refaisais a la main : deux etats de la mascotte vectorielle et une
- * table d'images cles pour aller de l'un a l'autre. Ca tenait debout, mais le
- * moteur d'animation n'anime ici que des transformations — pas les couleurs du
- * corps, pas les plis, pas la lueur. Or tout le virage est LA, dans le gris qui
- * devient bleu. Le fichier du studio le fait image par image.
- *
- * Elle joue UNE fois et se fige sur Corti rayonnant. En boucle, elle
- * raconterait « tu vas mieux, puis tu retombes, puis tu vas mieux » — sur la
- * page ou l'on decide de payer, c'est exactement la phrase a ne pas dire.
+ * Il reste donc rayonnant, et le chiffre montre la destination — pas le
+ * point de depart. C'est l'indice de recuperation que l'app affiche ensuite
+ * tous les jours : la promesse et la jauge doivent dire la meme chose, sinon
+ * l'une des deux ment.
  */
 function Healing() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
-  const [healed, setHealed] = useState(false);
-
-  // La phrase change quand la COULEUR change, pas a la fin : le studio fait
-  // virer le corps au bleu entre la seconde et demie et les deux secondes et
-  // demie, et le mot doit arriver avec elle, pas quatre secondes plus tard.
-  useEffect(() => {
-    const t = setTimeout(() => { setHealed(true); haptics.success(); }, 2600);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <View style={st.heal}>
@@ -445,37 +444,17 @@ function Healing() {
       <View style={st.orbit}>
         <GlassApps height={236} />
         <View style={st.orbitMid} pointerEvents="none">
-          <CortiRecovery size={236} loop={false} />
+          <CortiRig level={3} size={188} expression="ravi" />
         </View>
       </View>
 
-      {/*
-        Un CHIFFRE, pas une phrase.
-
-        « Il a vu trop de Reels, ses recepteurs sont grilles » decrit un
-        dessin : on le lit, on acquiesce, on n'en retient rien. Le meme
-        moment chiffre se retient — et ce n'est pas un chiffre invente pour
-        la vente, c'est l'indice de recuperation que l'app affiche ensuite
-        tous les jours sur l'onglet blocage. Dix-huit au premier jour, cent
-        apres trente jours sans reels : la promesse et la jauge disent la
-        meme chose, sinon l'une des deux ment.
-
-        Hauteur fixe : les deux etats n'ont pas la meme longueur de legende,
-        et sans reserve tout ce qui suit remonterait a la bascule.
-      */}
       <View style={st.healSlot}>
-        <Animated.View key={healed ? 'on' : 'off'} entering={FadeIn.duration(520)}>
-          <Text
-            variant="displayM"
-            color={healed ? c.accent : c.ember}
-            style={st.center}
-          >
-            {healed ? `${brainIndex(30, 0)} %` : `${brainIndex(0, 0)} %`}
-          </Text>
-          <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.xs }]}>
-            {healed ? d.pay.pctThen : d.pay.pctNow}
-          </Text>
-        </Animated.View>
+        <Text variant="displayM" color={c.accent} style={st.center}>
+          {`${brainIndex(30, 0)} %`}
+        </Text>
+        <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.xs }]}>
+          {d.pay.pctThen}
+        </Text>
       </View>
     </View>
   );

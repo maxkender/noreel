@@ -25,33 +25,69 @@ export const ENTITLEMENT = 'unswap_pro';
 
 export const PURCHASES_ENABLED = !!KEY;
 
-let started = false;
+/*
+ * Le demarrage, en UN seul exemplaire.
+ *
+ * Il tenait dans un booleen : parti une fois, jamais rejoue, y compris quand
+ * la configuration avait echoue — l'app restait alors sans magasin jusqu'au
+ * prochain lancement, sans que rien ne le dise. En gardant la PROMESSE, tout
+ * le monde attend la meme configuration, et un echec la remet a zero pour
+ * qu'une seconde tentative soit possible.
+ */
+let ready: Promise<void> | null = null;
 
-export async function initPurchases(): Promise<void> {
-  if (started || !KEY) return;
-  started = true;
-  try {
-    if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
-    // Pas d'identifiant utilisateur : RevenueCat en genere un anonyme et le
-    // rattache au compte Apple. L'app n'a pas de comptes, donc rien a lier.
-    await Purchases.configure({ apiKey: KEY });
-  } catch {
-    started = false;
+export function initPurchases(): Promise<void> {
+  if (!KEY) return Promise.resolve();
+  if (!ready) {
+    ready = (async () => {
+      if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
+      // Pas d'identifiant utilisateur : RevenueCat en genere un anonyme et le
+      // rattache au compte Apple. L'app n'a pas de comptes, donc rien a lier.
+      Purchases.configure({ apiKey: KEY });
+    })();
+    ready.catch(() => { ready = null; });
   }
+  return ready;
 }
 
 export function isPro(info: CustomerInfo | null): boolean {
   return !!info?.entitlements.active[ENTITLEMENT];
 }
 
+/**
+ * Pourquoi il n'y a rien a vendre.
+ *
+ * Chaque cause demande une action DIFFERENTE, et aucune ne se devine depuis
+ * l'ecran : pas de cle, c'est la construction ; le magasin qui refuse, c'est
+ * Apple ; une offre vide, c'est le tableau de bord. Rendre null pour les trois
+ * revenait a dire « ca ne marche pas » a quelqu'un qui demandait pourquoi —
+ * moi compris, qui ai cherche du cote d'Apple ce qui pouvait venir d'ici.
+ */
+export type OfferingFail =
+  | 'no-key' | 'no-current' | 'empty' | string;
+
+export type OfferingResult = {
+  offering: PurchasesOffering | null;
+  /** Nul quand tout va bien. Sinon, de quoi savoir ou regarder. */
+  fail: OfferingFail | null;
+};
+
 /** L'offre courante, telle que configuree dans le tableau de bord. */
-export async function currentOffering(): Promise<PurchasesOffering | null> {
-  if (!KEY) return null;
+export async function currentOffering(): Promise<OfferingResult> {
+  if (!KEY) return { offering: null, fail: 'no-key' };
   try {
+    // On ATTEND la configuration. Sans ca, la premiere requete d'un demarrage
+    // rapide part avant elle et leve.
+    await initPurchases();
     const offerings = await Purchases.getOfferings();
-    return offerings.current ?? null;
-  } catch {
-    return null;
+    const cur = offerings.current;
+    if (!cur) return { offering: null, fail: 'no-current' };
+    if (!cur.availablePackages.length) return { offering: null, fail: 'empty' };
+    return { offering: cur, fail: null };
+  } catch (e) {
+    // Le message du SDK dit souvent exactement ce qui manque — un contrat non
+    // signe, un produit introuvable, un appareil sans compte de test.
+    return { offering: null, fail: String((e as Error)?.message ?? e).slice(0, 180) };
   }
 }
 

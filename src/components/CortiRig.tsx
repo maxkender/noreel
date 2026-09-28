@@ -96,7 +96,7 @@ const FLAT = require('@/assets/rig/corti-0-ecrase.png');
 
 export type CortiExpression =
   | 'auto' | 'neutre' | 'content' | 'rire' | 'surpris'
-  | 'clin' | 'somnolent' | 'triste' | 'determine';
+  | 'clin' | 'somnolent' | 'triste' | 'determine' | 'ravi';
 export type CortiPose = 'idle' | 'wave' | 'up' | 'sit' | 'sleep' | 'float';
 export type CortiReactionKind =
   | 'tap' | 'no' | 'wave' | 'celebrate' | 'hop' | 'rise' | 'collapse';
@@ -127,6 +127,13 @@ const FACE: Record<CortiExpression, { eyes: keyof typeof EYES; mouth: keyof type
   somnolent: { eyes: 'sleepy', mouth: 'flat' },
   triste: { eyes: 'sad', mouth: 'frown' },
   determine: { eyes: 'determined', mouth: 'smirk' },
+  /*
+    Grands yeux OUVERTS et bouche ouverte.
+    « Content » ferme les yeux en arcs de bonheur, ce qui est mignon mais
+    fuyant : sur l'ecran ou il se presente, il faut qu'il REGARDE. C'est
+    la seule combinaison qui sourit franchement sans detourner les yeux.
+  */
+  ravi: { eyes: 'open', mouth: 'open' },
 };
 
 /** Le repos par niveau : en veilleuse il est tasse, debout il est droit. */

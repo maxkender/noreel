@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming,
+  Easing, FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue,
+  withDelay, withTiming,
 } from 'react-native-reanimated';
 import { Star } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
@@ -46,13 +48,16 @@ export function Meet({ onNext }: P) {
     <Screen cta={d.corti.meetCta} onPress={onNext} center hue="accent">
       <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
         {/*
-          Elle se presente en VEILLEUSE, pas en pleine forme.
-          Corti est le cerveau de la personne : la montrer rayonnante avant
-          d'avoir dit un mot du probleme, puis eteinte deux ecrans plus loin,
-          rendait son etat illisible. Elle part fatiguee, elle s'eteint pendant
-          le constat, elle se retablit ensuite — un seul arc, dans l'ordre.
+          Il ACCUEILLE : grands yeux ouverts, sourire franc.
+
+          Il se presentait en veilleuse — paupieres tombantes, bouche plate —
+          pour tenir l'arc « il va mal, puis mieux ». Sauf que c'est l'ecran ou
+          on le rencontre, et on ne s'attache pas a quelqu'un qui a l'air de
+          s'ennuyer de nous voir. L'arc n'y perd rien : il va bien quand on le
+          rencontre, il s'eteint pendant le constat, il se retablit apres. La
+          chute est meme plus nette, puisqu'on l'a connu en forme.
         */}
-        <CortiRig level={1} size={220} arrive />
+        <CortiRig level={2} size={220} expression="ravi" arrive />
       </Animated.View>
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
@@ -447,12 +452,18 @@ const sheet = () => StyleSheet.create({
   saying: { position: 'absolute', left: 0, right: 0, top: 0 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
   gaugeStage: { height: 190, alignItems: 'center', justifyContent: 'center' },
-  steps: {
-    flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center',
-    gap: space.md, height: 56,
+  slideHit: { alignSelf: 'stretch', height: 56, justifyContent: 'center' },
+  rail: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  railOn: { position: 'absolute', left: 0, top: 0, bottom: 0 },
+  notches: {
+    position: 'absolute', left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'space-between',
   },
-  stepHit: { paddingHorizontal: space.sm, paddingVertical: space.sm, justifyContent: 'flex-end' },
-  stepBar: { width: 26, borderRadius: 7, backgroundColor: '#FFFFFF1F' },
+  notch: { width: 3, height: 3, borderRadius: 2 },
+  knob: {
+    position: 'absolute', left: -13, width: 26, height: 26, borderRadius: 13,
+    shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 0 },
+  },
   stepLabels: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignSelf: 'stretch', paddingHorizontal: space.lg, marginTop: space.xs,
@@ -478,11 +489,56 @@ const sheet = () => StyleSheet.create({
  * Le curseur n'est pas un composant tiers : quatre paliers suffisent, et ce
  * sont exactement les quatre etats que Corti sait prendre.
  */
+/** Les quatre paliers, et ou ils tombent sur la piste. */
+const STOPS: CortiLevel[] = [0, 1, 2, 3];
+
 export function Health({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const [level, setLevel] = useState<CortiLevel>(1);
+
+  /*
+    Un vrai curseur, et Corti qui suit LE DOIGT.
+
+    C'etaient quatre barres a toucher. Ca marche, et ca ne raconte rien : on
+    appuie sur la troisieme, Corti change, on n'a rien senti passer. Sous le
+    doigt, en continu, ce n'est plus un formulaire — on le fait s'affaisser et
+    se redresser soi-meme, et c'est ce geste-la qu'on se rappelle quand
+    l'ecran suivant dit ce que les reels lui font.
+
+    Le palier ne remonte au rendu QUE s'il a change : sinon chaque pixel
+    parcouru redessinerait ses dix calques, et le curseur accrocherait.
+  */
+  const track = useSharedValue(0);
+  const x = useSharedValue(0);
+  const at = useSharedValue<number>(1);
+
+  const place = (n: CortiLevel) => {
+    if (n === level) return;
+    haptics.tick();
+    setLevel(n);
+  };
+
+  const slide = (px: number) => {
+    'worklet';
+    const w = Math.max(1, track.value);
+    x.value = Math.min(Math.max(px, 0), w);
+    const n = Math.round((x.value / w) * 3);
+    if (n !== at.value) {
+      at.value = n;
+      runOnJS(place)(n as CortiLevel);
+    }
+  };
+
+  const pan = Gesture.Pan()
+    .onBegin((e) => { slide(e.x); })
+    .onChange((e) => { slide(e.x); })
+    .shouldCancelWhenOutside(false);
+  const tap = Gesture.Tap().onEnd((e) => { slide(e.x); });
+
+  const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const fill = useAnimatedStyle(() => ({ width: x.value }));
 
   return (
     <Screen cta={d.corti.healthCta} onPress={onNext} center hue="warm">
@@ -497,25 +553,38 @@ export function Health({ onNext }: P) {
         <CortiRig level={level} size={168} />
       </View>
 
-      <View style={st.steps}>
-        {([0, 1, 2, 3] as CortiLevel[]).map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => { haptics.tick(); setLevel(n); }}
-            style={st.stepHit}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: level === n }}
-          >
-            <View
-              style={[
-                st.stepBar,
-                { height: 14 + n * 12 },
-                level >= n && { backgroundColor: c.accent },
-              ]}
-            />
-          </Pressable>
-        ))}
-      </View>
+      <GestureDetector gesture={Gesture.Race(pan, tap)}>
+        {/* La zone tactile deborde largement la piste : une piste de six
+            points de haut est increvable au pouce. */}
+        <View
+          style={st.slideHit}
+          onLayout={(e) => {
+            track.value = e.nativeEvent.layout.width;
+            // La position de depart suit le palier initial, sinon le curseur
+            // est a gauche pendant que Corti est en veilleuse.
+            x.value = (e.nativeEvent.layout.width / 3) * level;
+          }}
+          accessibilityRole="adjustable"
+          accessibilityValue={{ min: 0, max: 3, now: level }}
+        >
+          <View style={[st.rail, { backgroundColor: withAlpha(c.mist, 0.14) }]}>
+            <Animated.View style={[st.railOn, fill, { backgroundColor: c.accent }]} />
+          </View>
+          {/* Les quatre reperes : on voit qu'il y a des crans, et ou ils sont. */}
+          <View style={st.notches} pointerEvents="none">
+            {STOPS.map((n) => (
+              <View
+                key={n}
+                style={[st.notch, { backgroundColor: withAlpha(c.mist, level >= n ? 0 : 0.3) }]}
+              />
+            ))}
+          </View>
+          <Animated.View
+            style={[st.knob, knob, { backgroundColor: c.accent, shadowColor: c.accent }]}
+            pointerEvents="none"
+          />
+        </View>
+      </GestureDetector>
 
       <View style={st.stepLabels}>
         <Text variant="label" tone="tertiary">{d.corti.healthLow}</Text>
