@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming, Easing,
 } from 'react-native-reanimated';
 import {
-  Bookmark, ChevronLeft, Clapperboard, Heart, House, MessageCircle,
+  BadgeCheck, Bookmark, ChevronLeft, Clapperboard, Heart, House, MessageCircle,
   MoreHorizontal, Plus, Search, Send, User,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
@@ -18,14 +18,15 @@ import { Text } from '@/components/type/Text';
  *
  * On ne peut pas filmer le vrai Instagram pour une demonstration : ce sont les
  * publications de gens reels, leurs visages, et la marque d'un tiers. Ce fil-ci
- * en reprend la GRAMMAIRE — la barre du haut, la bande de stories cerclees, le
- * bandeau d'auteur, le media, la rangee d'actions, la barre d'onglets — assez
- * pour qu'on reconnaisse l'app au premier coup d'oeil, et pas assez pour la
- * copier.
+ * en reprend la GRAMMAIRE, assez pour qu'on reconnaisse l'app au premier coup
+ * d'oeil, et pas assez pour la copier.
  *
- * Les photos sont des degrades. Une photo generique tiree d'une banque d'images
- * se remarque plus qu'un aplat : on cherche a reconnaitre le lieu au lieu de
- * regarder ce qui disparait.
+ * Les proportions sont relevees sur une capture reelle, et c'est ce qui manquait
+ * a la premiere version : un titre de fil ECRIT GRAND, des anneaux de stories en
+ * degrade et non en aplat, et surtout une photo A FOND PERDU. Une image posee
+ * dans une carte arrondie avec des marges se lit comme un squelette de page ; la
+ * meme image bord a bord se lit comme Instagram. C'est toute la difference entre
+ * une maquette et l'app.
  */
 
 type Post = {
@@ -33,6 +34,7 @@ type Post = {
   idx: number;
   who: string;
   where?: string;
+  verified?: boolean;
   /** Un reel : c'est lui qui tombe quand le filtre passe. */
   reel: boolean;
   /** Les deux teintes de la photo. */
@@ -41,51 +43,19 @@ type Post = {
 };
 
 const POSTS: Post[] = [
-  {
-    idx: 0,
-    who: 'lea.mrn', where: 'Biarritz', reel: false,
-    art: ['#F0A868', '#D9544D'], likes: '1 284',
-  },
-  {
-    idx: 1,
-    who: 'son original', reel: true,
-    art: ['#7A5CE0', '#C2415C'], likes: '42,1 k',
-  },
-  {
-    idx: 2,
-    who: 'thomas_b', where: 'Lyon', reel: false,
-    art: ['#4F8DF5', '#2E4E8F'], likes: '312',
-  },
-  {
-    idx: 3,
-    who: 'son original', reel: true,
-    art: ['#E0568B', '#8A2E63'], likes: '18,7 k',
-  },
-  {
-    idx: 4,
-    who: 'camille.d', where: 'Paris 11e', reel: false,
-    art: ['#3FBF8F', '#1E6E63'], likes: '867',
-  },
-  {
-    idx: 5,
-    who: 'son original', reel: true,
-    art: ['#F2B441', '#C2611E'], likes: '93,4 k',
-  },
-  {
-    idx: 6,
-    who: 'basket_hec', where: 'Jouy-en-Josas', reel: false,
-    art: ['#6E7BF2', '#3A3F8F'], likes: '2 041',
-  },
+  { idx: 0, who: 'lea.mrn', where: 'Biarritz', reel: false, art: ['#F0A868', '#D9544D'], likes: '1 284' },
+  { idx: 1, who: 'son original', reel: true, art: ['#7A5CE0', '#C2415C'], likes: '42,1 k' },
+  { idx: 2, who: 'thomas_b', where: 'Lyon', verified: true, reel: false, art: ['#4F8DF5', '#2E4E8F'], likes: '312' },
+  { idx: 3, who: 'son original', reel: true, art: ['#E0568B', '#8A2E63'], likes: '18,7 k' },
+  { idx: 4, who: 'camille.d', where: 'Paris 11e', reel: false, art: ['#3FBF8F', '#1E6E63'], likes: '867' },
+  { idx: 5, who: 'son original', reel: true, art: ['#F2B441', '#C2611E'], likes: '93,4 k' },
+  { idx: 6, who: 'basket_hec', where: 'Jouy-en-Josas', reel: false, art: ['#6E7BF2', '#3A3F8F'], likes: '2 041' },
 ];
 
 /*
- * Les visages, fournis par le studio.
- *
- * Ce sont eux qui font la difference entre « une maquette » et « mon
- * Instagram ». Des aplats de couleur a la place des avatars se lisent comme un
- * squelette de page ; des visages ronds dans des anneaux colores se lisent
- * comme un fil. Les photos des publications restent des degrades : c'est la
- * FORME verticale du reel qui doit se remarquer, pas son contenu.
+ * Les visages, fournis par le studio. Ce sont eux qui font la difference entre
+ * « une maquette » et « mon Instagram » : des aplats de couleur a la place des
+ * avatars se lisent comme un squelette de page.
  */
 const FACES = [
   require('@/assets/faces/face-1.webp'),
@@ -98,11 +68,26 @@ const FACES = [
   require('@/assets/faces/face-8.webp'),
 ];
 
-/** Les anneaux de la bande de stories, dans l'ordre. */
-const RINGS = ['#F2B441', '#E0568B', '#9B5DE5', '#5B9DFF', '#3FBF8F'];
+/**
+ * L'anneau des stories : jaune, rose, violet.
+ *
+ * C'est la signature visuelle d'Instagram, et un aplat de couleur a sa place ne
+ * trompe personne — c'etait le premier defaut de la version precedente.
+ */
+const RING: [string, string, string] = ['#F9CE34', '#EE2A7B', '#6228D7'];
+
 const NAMES = ['ariesspears', 'matteorbrt', 'corriere', 'valentin.t', 'jules'];
 
 export const REELS = POSTS.filter((p) => p.reel).length;
+
+/**
+ * La largeur du fil dans le repere de ce fichier, en points a u = 1.
+ *
+ * C'est la largeur utile de la maquette de telephone (196 points de cadre,
+ * moins ses bords). Toutes les hauteurs de media s'y rapportent, pour que les
+ * proportions tiennent quelle que soit l'echelle.
+ */
+const WIDTH = 188;
 
 const FALL = 420;   // duree de l'effondrement d'un reel
 const STEP = 130;   // decalage entre deux reels : ils tombent en cascade
@@ -133,12 +118,15 @@ export function MockFeed({
   useEffect(() => {
     if (!drift) { slide.value = 0; return; }
     slide.value = withRepeat(
-      withTiming(1, { duration: 11000, easing: Easing.linear }), -1, false
+      withTiming(1, { duration: 13000, easing: Easing.linear }), -1, false
     );
   }, [drift, slide]);
 
   const move = useAnimatedStyle(() => ({
-    transform: [{ translateY: -slide.value * 210 * u }],
+    // Assez pour traverser deux publications : les cartes font maintenant
+    // pres de deux cents points, un deplacement de 260 ne montrait qu'une
+    // photo et demie sur les treize secondes du cycle.
+    transform: [{ translateY: -slide.value * 430 * u }],
   }));
 
   return (
@@ -157,38 +145,50 @@ export function MockFeed({
   );
 }
 
-/** La barre du haut : un titre de fil, et deux actions a droite. */
+/** La barre du haut : un titre ECRIT GRAND, et deux actions a droite. */
 function TopBar({ u }: { u: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   return (
     <View style={st.top}>
-      <ChevronLeft size={13 * u} strokeWidth={2.4} color={c.mist} />
-      <Text variant="button" style={{ fontSize: 11 * u, flex: 1 }}>Suivi(e)</Text>
-      <Plus size={12 * u} strokeWidth={2.4} color={c.mist} />
-      <Heart size={12 * u} strokeWidth={2.2} color={c.mist} />
+      <ChevronLeft size={15 * u} strokeWidth={2.6} color={c.mist} />
+      <Text style={[st.feedTitle, { fontSize: 15 * u }]}>Suivi(e)</Text>
+      <View style={{ flex: 1 }} />
+      <Plus size={14 * u} strokeWidth={2.6} color={c.mist} />
+      <View>
+        <Heart size={14 * u} strokeWidth={2.2} color={c.mist} />
+        <View style={st.dot} />
+      </View>
     </View>
   );
 }
 
-/** La bande de stories : des anneaux colores, et un prenom dessous. */
+/** La bande de stories : anneau en degrade, photo dedans, prenom dessous. */
 function Tray({ u }: { u: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   return (
     <View style={st.tray}>
-      {RINGS.map((ring, i) => (
-        <View key={ring} style={st.storyCol}>
-          <View style={[st.ring, { borderColor: ring }]}>
-            <Image source={FACES[i]} style={st.ringIn} contentFit="cover" />
-          </View>
-          <Text
-            variant="label"
-            tone="tertiary"
-            numberOfLines={1}
-            style={{ fontSize: 4.6 * u, maxWidth: 30 * u }}
+      {NAMES.map((name, i) => (
+        <View key={name} style={st.storyCol}>
+          <LinearGradient
+            colors={RING}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={st.ring}
           >
-            {NAMES[i]}
+            {/* Le lisere sombre entre l'anneau et la photo : sans lui, le
+                degrade touche le visage et l'anneau disparait. */}
+            <View style={st.ringGap}>
+              <Image source={FACES[i]} style={st.ringPhoto} contentFit="cover" />
+            </View>
+          </LinearGradient>
+          <Text
+            tone="secondary"
+            numberOfLines={1}
+            style={{ fontSize: 5.4 * u, maxWidth: 32 * u }}
+          >
+            {name}
           </Text>
         </View>
       ))}
@@ -199,9 +199,9 @@ function Tray({ u }: { u: number }) {
 /**
  * La barre d'onglets.
  *
- * L'onglet Reels DISPARAIT quand le filtre passe, et les autres se
- * repartissent. C'est le detail qui fait comprendre l'app sans un mot : on ne
- * masque pas des publications, on retire une porte.
+ * L'onglet Reels DISPARAIT quand le filtre passe, largeur comprise pour que les
+ * autres se rapprochent. C'est le detail qui fait comprendre l'app sans un mot :
+ * on ne masque pas des publications, on retire une porte.
  */
 function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
   const c = useColors();
@@ -217,19 +217,22 @@ function TabBar({ u, filtered }: { u: number; filtered: boolean }) {
 
   const gone = useAnimatedStyle(() => ({
     opacity: fade.value,
-    width: 14 * u * fade.value,
+    width: 16 * u * fade.value,
     transform: [{ scale: 0.6 + fade.value * 0.4 }],
   }));
 
   return (
     <View style={st.tabs}>
-      <House size={13 * u} strokeWidth={2.2} color={c.mist} />
-      <Search size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+      <House size={14 * u} strokeWidth={2.4} color={c.mist} fill={c.mist} />
+      <Search size={14 * u} strokeWidth={2.2} color={c.mist} />
       <Animated.View style={[st.tabGone, gone]}>
-        <Clapperboard size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+        <Clapperboard size={14 * u} strokeWidth={2.2} color={c.mist} />
       </Animated.View>
-      <Send size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
-      <User size={13 * u} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
+      <View>
+        <Send size={14 * u} strokeWidth={2.2} color={c.mist} />
+        <View style={st.badge} />
+      </View>
+      <User size={14 * u} strokeWidth={2.2} color={c.mist} />
     </View>
   );
 }
@@ -240,9 +243,21 @@ function Row({
   const c = useColors();
   const st = useMemo(() => sheet(c, u), [c, u]);
   const open = useSharedValue(1);
-  // La hauteur totale d'une carte : en-tete, media, actions, legende.
-  const media = post.reel ? 104 : 74;
-  const tall = (media + 46) * u;
+  /*
+    La hauteur du media est donnee PAR RAPPORT A LA LARGEUR du fil.
+
+    Le repere de ce fichier est cale sur un cadre de 188 points de large — la
+    largeur utile de la maquette de telephone. Une hauteur choisie sans tenir
+    compte de cette largeur donnait une photo deux fois plus large que haute,
+    ce qui ne ressemble a aucun format d'Instagram.
+
+    Une photo en paysage, un reel nettement plus haut que large : le format
+    4:5 serait plus juste pour la photo, mais il ne laisse voir qu'une
+    publication a la fois — et on ne verrait plus les reels tomber, qui est
+    tout l'objet de la demonstration.
+  */
+  const media = post.reel ? WIDTH * 0.95 : WIDTH * 0.62;
+  const tall = (media + 52) * u;
 
   useEffect(() => {
     if (!post.reel) return;
@@ -255,7 +270,7 @@ function Row({
   const anim = useAnimatedStyle(() => ({
     height: tall * open.value,
     opacity: open.value,
-    transform: [{ scale: 0.92 + open.value * 0.08 }],
+    transform: [{ scale: 0.94 + open.value * 0.06 }],
   }));
 
   const body = (
@@ -267,36 +282,36 @@ function Row({
           contentFit="cover"
         />
         <View style={{ flex: 1 }}>
-          <Text variant="label" style={{ fontSize: 5.4 * u, letterSpacing: 0 }}>
-            {post.who}
-          </Text>
+          <View style={st.nameRow}>
+            <Text style={[st.who, { fontSize: 6.4 * u }]}>{post.who}</Text>
+            {post.verified && (
+              <BadgeCheck size={6.8 * u} strokeWidth={0} fill="#3B9BF7" color="#3B9BF7" />
+            )}
+          </View>
           {post.where && (
-            <Text variant="label" tone="tertiary" style={{ fontSize: 4.4 * u, letterSpacing: 0 }}>
-              {post.where}
-            </Text>
+            <Text tone="secondary" style={{ fontSize: 5.4 * u }}>{post.where}</Text>
           )}
         </View>
-        <MoreHorizontal size={9 * u} strokeWidth={2.4} color={withAlpha(c.mist, 0.6)} />
+        <MoreHorizontal size={10 * u} strokeWidth={2.4} color={c.mist} />
       </View>
 
+      {/* A FOND PERDU : c'est ce qui fait qu'on lit Instagram et non une carte. */}
       <LinearGradient
         colors={post.art}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[st.media, { height: media * u }]}
+        style={{ height: media * u }}
       />
 
       <View style={st.actions}>
-        <Heart size={10 * u} strokeWidth={2.2} color={c.mist} />
-        <MessageCircle size={10 * u} strokeWidth={2.2} color={c.mist} />
-        <Send size={10 * u} strokeWidth={2.2} color={c.mist} />
+        <Heart size={11 * u} strokeWidth={2} color={c.mist} />
+        <MessageCircle size={11 * u} strokeWidth={2} color={c.mist} />
+        <Send size={11 * u} strokeWidth={2} color={c.mist} />
         <View style={{ flex: 1 }} />
-        <Bookmark size={10 * u} strokeWidth={2.2} color={c.mist} />
+        <Bookmark size={11 * u} strokeWidth={2} color={c.mist} />
       </View>
 
-      <Text variant="label" tone="secondary" style={{ fontSize: 4.6 * u, letterSpacing: 0 }}>
-        {post.likes} J’aime
-      </Text>
+      <Text style={[st.likes, { fontSize: 5.6 * u }]}>{post.likes} J’aime</Text>
     </>
   );
 
@@ -305,29 +320,50 @@ function Row({
 }
 
 const sheet = (c: Palette, u: number) => StyleSheet.create({
-  root: { flex: 1, paddingTop: 26 * u },
+  root: { flex: 1, paddingTop: 22 * u },
   top: {
-    flexDirection: 'row', alignItems: 'center', gap: 7 * u,
-    paddingHorizontal: 8 * u, paddingBottom: 6 * u,
+    flexDirection: 'row', alignItems: 'center', gap: 5 * u,
+    paddingHorizontal: 8 * u, paddingBottom: 8 * u,
   },
-  tray: { flexDirection: 'row', gap: 6 * u, paddingHorizontal: 8 * u, paddingBottom: 8 * u },
-  storyCol: { alignItems: 'center', gap: 2 * u },
+  // Le titre du fil est GROS et gras : c'est lui qui donne l'echelle de l'app.
+  feedTitle: { color: c.mist, fontFamily: 'SansBold', letterSpacing: -0.3 },
+  dot: {
+    position: 'absolute', top: -1, right: -1,
+    width: 4 * u, height: 4 * u, borderRadius: 2 * u, backgroundColor: '#FF3B30',
+  },
+  tray: { flexDirection: 'row', gap: 5 * u, paddingHorizontal: 7 * u, paddingBottom: 9 * u },
+  storyCol: { alignItems: 'center', gap: 3 * u },
   ring: {
-    width: 26 * u, height: 26 * u, borderRadius: 13 * u,
-    borderWidth: 1.6, alignItems: 'center', justifyContent: 'center',
+    width: 34 * u, height: 34 * u, borderRadius: 17 * u,
+    alignItems: 'center', justifyContent: 'center',
   },
-  ringIn: { width: 21 * u, height: 21 * u, borderRadius: 11 * u, overflow: 'hidden' },
-  post: { paddingHorizontal: 8 * u, paddingBottom: 6 * u, overflow: 'hidden' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 5 * u, paddingVertical: 5 * u },
-  avatar: { width: 17 * u, height: 17 * u, borderRadius: 9 * u, overflow: 'hidden' },
-  media: { borderRadius: 5 * u },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 * u, paddingVertical: 5 * u },
+  ringGap: {
+    width: 30 * u, height: 30 * u, borderRadius: 15 * u, overflow: 'hidden',
+    borderWidth: 1.5, borderColor: c.night,
+  },
+  ringPhoto: { width: '100%', height: '100%' },
+  // Aucune marge laterale : la photo touche les bords.
+  post: { overflow: 'hidden' },
+  head: {
+    flexDirection: 'row', alignItems: 'center', gap: 5 * u,
+    paddingHorizontal: 8 * u, paddingVertical: 5 * u,
+  },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 2.5 * u },
+  who: { color: c.mist, fontFamily: 'SansSemi' },
+  avatar: { width: 20 * u, height: 20 * u, borderRadius: 10 * u, overflow: 'hidden' },
+  actions: {
+    flexDirection: 'row', alignItems: 'center', gap: 9 * u,
+    paddingHorizontal: 8 * u, paddingVertical: 5 * u,
+  },
+  likes: { color: c.mist, fontFamily: 'SansSemi', paddingHorizontal: 8 * u },
   tabs: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    paddingVertical: 7 * u, paddingHorizontal: 10 * u,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.12),
+    paddingVertical: 8 * u, paddingHorizontal: 8 * u,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.14),
   },
-  // La largeur est animee avec l'opacite : sans ca, l'onglet disparait mais
-  // laisse son trou, et les autres ne se rapprochent jamais.
+  badge: {
+    position: 'absolute', top: -2 * u, right: -3 * u,
+    width: 5 * u, height: 5 * u, borderRadius: 2.5 * u, backgroundColor: '#FF3B30',
+  },
   tabGone: { alignItems: 'center', overflow: 'hidden' },
 });

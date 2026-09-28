@@ -33,6 +33,16 @@ const CASCADE = 1500;   // les reels tombent (3 x 130 ms de decalage + 420)
 const SHOW = 1900;      // le fil filtre, pose : c'est l'image qu'on retient
 const FADE = 260;       // le voile qui cache la remise a zero
 
+/*
+ * L'echelle du fil en plein ecran.
+ *
+ * Le fil est dessine pour 188 points de large — la largeur utile de la
+ * maquette de telephone. Un telephone fait environ 390 points, d'ou ce
+ * rapport. Il etait a 2,6 : tout y paraissait un quart trop grand, et la
+ * demonstration ne ressemblait plus a l'app qu'elle montre.
+ */
+const SCALE = 390 / 188;
+
 /** Ce que le fil montre, dans l'ordre. */
 type Phase = 'raw' | 'filtered';
 
@@ -129,7 +139,7 @@ export default function Demo() {
         <StatusBar style="light" hidden />
 
         <View style={StyleSheet.absoluteFill}>
-          <MockFeed key={run} filtered={phase === 'filtered'} u={2.6} drift />
+          <MockFeed key={run} filtered={phase === 'filtered'} u={SCALE} drift />
         </View>
 
         {/* Le trait de balayage, au-dessus du fil. */}
