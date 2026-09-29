@@ -109,8 +109,11 @@ export const en: Dict = {
     holding: 'Hold on… he’s getting up',
   },
   story: {
-    notBlockerTitle: 'UnSwipe is not just another app blocker.',
-    notBlockerBody: 'Because we know blockers don’t work: they also cut what you wanted to keep, so you turn them off. With UnSwipe you stay connected. You don’t miss out on anything.',
+    whyTitle: 'Why UnSwipe works',
+    whyBlockers: 'App blockers → you end up turning them off',
+    whyTimers: 'Timers → ignored',
+    whyUs: 'UnSwipe → your apps, without the endless scroll',
+    whyNote: 'You stay connected. You don’t miss out on anything.',
     dmTitle: 'The Reels your friends send you? You can watch them.',
     dmBody: 'This one plays to the end.',
     dmDone: 'And there is no next one.',

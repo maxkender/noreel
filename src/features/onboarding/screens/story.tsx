@@ -1,64 +1,82 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { ShieldCheck, ShieldOff } from 'lucide-react-native';
-import { space } from '@/theme/spacing';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { Check, X } from 'lucide-react-native';
+import { withAlpha } from '@/theme/colors';
+import { radii, space } from '@/theme/spacing';
 import { useColors } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter } from '@/components/type/Typewriter';
-import { GlassApps } from '@/components/GlassApps';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { MockDM } from '@/components/MockDM';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { Emblem } from '../scenes/Emblem';
 
 type P = { onNext: () => void };
 
 /**
- * « Pas un bloqueur de plus. »
+ * « Pourquoi UnSwipe marche. »
  *
  * Tout le monde a deja essaye un bloqueur, et tout le monde l'a desactive :
  * il coupe aussi ce qu'on ne voulait pas perdre — les messages, les amis —
- * et on le retire pour les retrouver. Il faut le dire avant la
- * demonstration, sinon on la regarde en se demandant ce qu'on va perdre.
+ * et on le retire pour les retrouver. Les minuteurs, on les ignore. Il faut
+ * le dire avant la demonstration, sinon on la regarde en se demandant ce
+ * qu'on va perdre.
  *
- * L'image le dit avant le texte : un bouclier barre, qui s'efface, et les
- * quatre applis qui restent la, allumees, sous un bouclier qui les garde.
+ * Trois pastilles, une par idee, qui se posent l'une apres l'autre : deux
+ * barrees pour ce qui echoue, une cochee pour ce qu'on fait a la place.
+ * L'oeil lit la couleur avant le mot — c'est ce qui rend la page lisible
+ * en une seconde, et c'est pour ca qu'elle n'a pas d'illustration.
  */
+const GOOD = '#2E9E5B';
+// Une pastille toutes les 600 a 800 ms, apres le titre : le rythme d'une
+// liste qu'on enonce, pas d'un tableau qu'on affiche.
+const DELAYS = [900, 1500, 2300] as const;
+
 export function NotBlocker({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
   const c = useColors();
   const { d } = useT();
-  const [kept, setKept] = useState(false);
+  const rows = [
+    { key: 'blockers', text: d.story.whyBlockers, ok: false },
+    { key: 'timers', text: d.story.whyTimers, ok: false },
+    { key: 'us', text: d.story.whyUs, ok: true },
+  ];
 
+  // Un tic par pastille, au moment ou elle se pose.
   useEffect(() => {
-    const t = setTimeout(() => { setKept(true); haptics.tick(); }, 1900);
-    return () => clearTimeout(t);
+    const ids = DELAYS.map((ms) => setTimeout(() => haptics.tick(), ms + 200));
+    return () => ids.forEach(clearTimeout);
   }, []);
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
-      <View style={st.stage}>
-        {kept ? (
-          <Animated.View entering={FadeIn.duration(600)} style={st.apps}>
-            <GlassApps height={176} />
-            <View style={st.mid} pointerEvents="none">
-              <Emblem icon={ShieldCheck} tone={c.accent} size={72} />
-            </View>
-          </Animated.View>
-        ) : (
-          <Animated.View entering={FadeInDown.duration(500)} exiting={FadeOut.duration(400)} style={st.mid}>
-            <Emblem icon={ShieldOff} tone={c.danger} size={88} />
-          </Animated.View>
-        )}
+      <Typewriter text={d.story.whyTitle} variant="displayM" speed={36} style={st.center} />
+
+      <View style={st.pills}>
+        {rows.map((r, i) => {
+          const tone = r.ok ? GOOD : c.danger;
+          return (
+            <Animated.View
+              key={r.key}
+              entering={FadeInDown.delay(DELAYS[i]).duration(520)}
+              style={[st.pill, { backgroundColor: withAlpha(tone, r.ok ? 0.2 : 0.14) }]}
+            >
+              <View style={[st.badge, { backgroundColor: withAlpha(tone, 0.28) }]}>
+                {r.ok
+                  ? <Check size={16} strokeWidth={3} color={tone} />
+                  : <X size={16} strokeWidth={3} color={tone} />}
+              </View>
+              <Text variant="body" style={{ flex: 1 }}>{r.text}</Text>
+            </Animated.View>
+          );
+        })}
       </View>
 
-      <Typewriter text={d.story.notBlockerTitle} variant="displayM" speed={36} style={st.center} />
-      <Animated.View entering={FadeIn.delay(1400).duration(520)}>
-        <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.lg }]}>
-          {d.story.notBlockerBody}
+      <Animated.View entering={FadeIn.delay(3000).duration(520)}>
+        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.xl }]}>
+          {d.story.whyNote}
         </Text>
       </Animated.View>
     </Screen>
@@ -107,12 +125,12 @@ export function DmReel({ onNext }: P) {
 
 const sheet = () => StyleSheet.create({
   center: { textAlign: 'center' },
-  stage: { height: 190, alignSelf: 'stretch', justifyContent: 'center', marginBottom: space.xl },
-  apps: { alignSelf: 'stretch', justifyContent: 'center' },
-  mid: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
+  pills: { alignSelf: 'stretch', gap: space.md, marginTop: space.xl },
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    paddingVertical: 14, paddingHorizontal: 18, borderRadius: radii.pill,
   },
+  badge: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   phone: { alignItems: 'center', marginTop: space.lg },
   slot: { height: 64, justifyContent: 'center', marginTop: space.lg },
 });

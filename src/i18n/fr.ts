@@ -114,8 +114,11 @@ export const fr = {
     holding: 'Tiens bon… il se relève',
   },
   story: {
-    notBlockerTitle: 'UnSwipe n’est pas un bloqueur de plus.',
-    notBlockerBody: 'Parce qu’on sait que les bloqueurs ne marchent pas : ils coupent aussi ce que tu voulais garder, et tu les enlèves. Avec UnSwipe, tu restes connecté. Tu ne rates rien.',
+    whyTitle: 'Pourquoi UnSwipe marche',
+    whyBlockers: 'Bloqueurs d’apps → on finit par les désactiver',
+    whyTimers: 'Minuteurs → ignorés',
+    whyUs: 'UnSwipe → tes apps, sans le scroll infini',
+    whyNote: 'Tu restes connecté. Tu ne rates rien.',
     dmTitle: 'Les Reels que tes amis t’envoient ? Tu les regardes.',
     dmBody: 'Celui-là se joue jusqu’au bout.',
     dmDone: 'Et le suivant n’existe pas.',
