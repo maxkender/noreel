@@ -13,8 +13,11 @@ import type { StyleProp, ViewStyle } from 'react-native';
 const Native = requireOptionalNativeModule<{ isSupported(): boolean }>('ScreenTimeReportHost');
 
 export type ScreenTimeReportProps = {
-  /** « compare » : l'estimation face au vrai chiffre. « overview » : l'analyse. */
-  context: 'compare' | 'overview';
+  /**
+   * « compare » : l'estimation face au vrai chiffre. « overview » : l'analyse.
+   * « share » : la part de la journee. « years » : les annees qu'il reste.
+   */
+  context: 'compare' | 'overview' | 'share' | 'years';
   /** La fenetre, en jours. Sept par defaut. */
   days?: number;
   style?: StyleProp<ViewStyle>;

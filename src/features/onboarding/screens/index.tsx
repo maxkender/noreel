@@ -11,6 +11,8 @@ import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
+import { ScreenTimeReportView } from '@/native/screenTimeReport';
+import { useNativeReport } from '../report';
 import { LIFE_YEARS, WAKING_HOURS, wakingShare, yearsOnScreen } from '../calculations';
 
 
@@ -64,6 +66,10 @@ export function S6({ onNext }: P) {
   const minutes = useOnboardingStore(effectiveMinutes);
   const screen = Math.round(wakingShare(minutes) * 100);
   const [lit, setLit] = useState(0);
+  // Avec l'extension, c'est le VRAI chiffre qui remplit la grille — et il
+  // ne traverse jamais vers l'app : Apple dessine la grille lui-meme.
+  const native = useNativeReport(useOnboardingStore((x) => x.minutesPerDay));
+  const [nativeDone, setNativeDone] = useState(false);
 
   /*
     L'ecran ne peut pas occuper plus que ce que le travail laisse.
@@ -87,9 +93,17 @@ export function S6({ onNext }: P) {
     return () => clearTimeout(id);
   }, [d.s6.title]);
 
+  // Apple ne dit pas quand sa grille a fini de s'allumer : on compte le
+  // temps qu'elle prend au plus, et un peu de marge pour que la vue arrive.
+  useEffect(() => {
+    if (native !== 'yes' || !go) return;
+    const id = setTimeout(() => setNativeDone(true), 88 * (100 - WORK) + 900);
+    return () => clearTimeout(id);
+  }, [native, go]);
+
   // 88 ms par case : assez lent qu'on voie la part grandir et que ca pese.
   useEffect(() => {
-    if (!go) return;
+    if (!go || native === 'yes') return;
     let i = 0;
     const id = setInterval(() => {
       i += 1;
@@ -98,9 +112,22 @@ export function S6({ onNext }: P) {
       if (i >= shown) clearInterval(id);
     }, 88);
     return () => clearInterval(id);
-  }, [shown, go]);
+  }, [shown, go, native]);
 
+  if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
 
+  if (native === 'yes' && ScreenTimeReportView) {
+    return (
+      <Screen cta={d.s6.cta2} onPress={onNext} center disabled={!nativeDone} hue="ember" hueLevel={nativeDone ? 1 : 0.35}>
+        <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
+        {/* La place est reservee avant que la vue arrive : elle attend la fin
+            du titre, comme la grille, et rien ne doit sauter a son arrivee. */}
+        <View style={s.reportSlot}>
+          {go && <ScreenTimeReportView context="share" days={7} style={{ height: 430 }} />}
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen
@@ -210,10 +237,12 @@ export function S6Years({ onNext }: P) {
   const age = useOnboardingStore((x) => x.age);
   const left = Math.max(1, LIFE_YEARS - age);
   const years = Math.round(yearsOnScreen(minutes, left));
+  const native = useNativeReport(useOnboardingStore((x) => x.minutesPerDay));
 
   const [y, setY] = useState(0);
 
   useEffect(() => {
+    if (native === 'yes') return;
     // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
     // plus vite qu'un grand.
     const steps = 34;
@@ -225,7 +254,19 @@ export function S6Years({ onNext }: P) {
       if (i >= steps) clearInterval(id);
     }, 1600 / steps);
     return () => clearInterval(id);
-  }, [years]);
+  }, [years, native]);
+
+  if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
+
+  // Le vrai chiffre, sur les annees qu'il reste : dessine par Apple, avec
+  // l'age qu'on lui a passe.
+  if (native === 'yes' && ScreenTimeReportView) {
+    return (
+      <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
+        <ScreenTimeReportView context="years" days={7} style={{ height: 180 }} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
@@ -256,6 +297,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   videoInner: { flex: 1, borderRadius: 20, backgroundColor: c.surfaceHi },
   hundredWrap: { alignItems: 'center', marginVertical: space.xl },
+  reportSlot: { height: 430, marginTop: space.xl },
   hundred: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 5,
     width: 250,

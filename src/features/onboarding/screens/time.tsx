@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
@@ -21,78 +21,8 @@ import { compareGuess } from '../calculations';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
 import { PICKABLE } from './setup';
-import { authorizationStatus } from '@/services/shield.real';
-import {
-  ScreenTimeReportView, prepareReport, reportAvailable, type ReportStrings,
-} from '@/native/screenTimeReport';
-
-/** Les textes que l'extension dessinera, dans la langue de l'app. */
-function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
-  const t = d.time;
-  return {
-    lessTitle: t.lessTitle, lessSub: t.lessSub, moreTitle: t.moreTitle, moreSub: t.moreSub,
-    sameTitle: t.sameTitle, sameSub: t.sameSub, deltaLess: t.deltaLess, deltaMore: t.deltaMore,
-    deltaSame: t.deltaSame, guessLabel: t.guessLabel, realLabel: t.realLabel,
-    analysisTitle: t.analysisTitle, analysisSub: t.analysisSub, perYear: t.perYear,
-    pickupsTitle: t.pickupsTitle, pickupsBody: t.pickupsBody, topApps: t.topApps,
-    noDataTitle: t.noDataTitle, noDataBody: t.noDataBody,
-    unitH: t.unitH, unitMin: t.unitMin,
-  };
-}
-
-/**
- * Le rapport d'Apple peut-il s'afficher ICI, maintenant ?
- *
- * Il faut l'extension dans le binaire ET l'autorisation Temps d'ecran. La
- * seconde ne se sait qu'en demandant : d'ou trois etats, et non deux — tant
- * qu'on ne sait pas, on n'affiche ni la vue native ni la saisie, sinon l'une
- * des deux apparait pour disparaitre aussitot.
- *
- * « yes » n'est dit qu'une fois l'estimation et les textes ECRITS dans le
- * groupe partage. L'extension les lit au moment ou iOS lui demande son
- * dessin, c'est-a-dire des que la vue existe : ecrire apres l'avoir montee,
- * c'etait courir contre elle, et perdre revenait a comparer le vrai chiffre
- * a zero.
- */
-function useNativeReport(guess: number): 'yes' | 'no' | 'unknown' {
-  const c = useColors();
-  const { d } = useT();
-  const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
-  // Lu au moment d'ecrire, pas au moment de s'abonner : ni les textes ni les
-  // couleurs ne changent pendant le parcours, et les mettre en dependance
-  // ferait redemander l'autorisation a chaque rendu.
-  const payload = useRef({ d, c });
-  payload.current = { d, c };
-
-  useEffect(() => {
-    if (!reportAvailable()) return;
-    let alive = true;
-    void authorizationStatus().then((a) => {
-      if (!alive) return;
-      if (a !== 'approved') { setState('no'); return; }
-      const { d: dict, c: pal } = payload.current;
-      prepareReport(guess, reportStrings(dict), {
-        accent: pal.accent, danger: pal.danger, good: '#2E9E5B', ink: pal.mist, inkSoft: withAlpha(pal.mist, 0.6),
-      });
-      setState('yes');
-    });
-    return () => { alive = false; };
-  }, [guess]);
-  return state;
-}
-
-/**
- * La place qu'on reserve au dessin d'Apple.
- *
- * L'extension ne dit pas sa taille — elle ne dit rien — et la vue hote rogne
- * ce qui deborde. On lui donne donc ce que l'ecran a, entre un plancher
- * sous lequel les barres perdraient leurs pieds et un plafond au-dela duquel
- * le bouton partirait sous le bord.
- */
-function useReportHeight(min: number, max: number): number {
-  const { height } = useWindowDimensions();
-  return Math.min(max, Math.max(min, height - 300));
-}
+import { ScreenTimeReportView } from '@/native/screenTimeReport';
+import { useNativeReport, useReportHeight } from '../report';
 
 type P = { onNext: () => void };
 

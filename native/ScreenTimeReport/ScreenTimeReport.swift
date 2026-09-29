@@ -27,6 +27,8 @@ struct ScreenTimeReport: DeviceActivityReportExtension {
   var body: some DeviceActivityReportScene {
     CompareScene { CompareView(m: $0) }
     OverviewScene { OverviewView(m: $0) }
+    ShareScene { ShareView(m: $0) }
+    YearsScene { YearsView(m: $0) }
   }
 }
 
@@ -281,6 +283,197 @@ struct Bar: View {
       Text(label).font(.system(size: 12)).foregroundColor(soft)
     }
     .frame(maxWidth: .infinity)
+  }
+}
+
+// MARK: - La part de la journee, et les annees
+
+/*
+ * Les deux ecrans qui suivent la comparaison raisonnent sur le VRAI chiffre.
+ * Comme l'app ne le lira jamais, ils se dessinent ici aussi — sinon on
+ * montrait « 5 h » sur un ecran et « 2 h » sur le suivant, l'estimation
+ * ayant repris la main sans le dire. Les constantes et les formules sont
+ * celles de calculations.ts, recopiees : seize heures eveillees, une vie de
+ * quatre-vingts ans, huit heures de travail.
+ */
+private let LIFE_YEARS = 80
+private let WAKING_HOURS = 16
+/// Huit heures de travail sur seize eveillees : la moitie de la grille.
+private let WORK = 50
+private let WORK_GREEN = Color(hex: "#2E9E5B")
+
+/// Part de la journee EVEILLEE, en pour cent, plafonnee a cent.
+func wakingShare(_ minutes: Int) -> Int {
+  Int((min(1, Double(minutes) / 60 / Double(WAKING_HOURS)) * 100).rounded())
+}
+
+struct ShareModel {
+  var minutes: Int
+  var hasData: Bool
+  var theme: Theme
+}
+
+struct ShareScene: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("share")
+  let content: (ShareModel) -> ShareView
+
+  func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> ShareModel {
+    let (days, _) = await collect(data)
+    return ShareModel(
+      minutes: average(days).minutes,
+      hasData: days.contains { $0.minutes > 0 }, theme: Theme.load()
+    )
+  }
+}
+
+/// Une entree de legende : une pastille, un mot.
+struct Key: View {
+  let colour: Color
+  let label: String
+  let soft: Color
+
+  var body: some View {
+    HStack(spacing: 6) {
+      RoundedRectangle(cornerRadius: 3).fill(colour).frame(width: 9, height: 9)
+      Text(label).font(.system(size: 12)).foregroundColor(soft)
+    }
+  }
+}
+
+/*
+ * La grille de cent cases, comme cote JavaScript : le travail pose en bas et
+ * qui ne bouge pas, l'ecran qui vient s'allumer par-dessus case par case,
+ * et ce qui reste qu'on voit retrecir. Le titre, lui, reste a l'app : il ne
+ * contient aucun chiffre.
+ */
+struct ShareView: View {
+  let m: ShareModel
+  @State private var lit = 0
+
+  var body: some View {
+    if m.hasData { grid } else { NoData(th: m.theme) }
+  }
+
+  @ViewBuilder var grid: some View {
+    let th = m.theme
+    let screen = wakingShare(m.minutes)
+    // L'ecran ne peut pas occuper plus que ce que le travail laisse ; quand
+    // ca deborde, on le dit — l'ecran mange les heures de travail.
+    let room = 100 - WORK
+    let shown = min(screen, room)
+    let over = screen > room
+    let done = lit >= shown
+    let columns = Array(repeating: GridItem(.fixed(20.5), spacing: 5), count: 10)
+
+    VStack(spacing: 0) {
+      LazyVGrid(columns: columns, spacing: 5) {
+        ForEach(0..<100, id: \.self) { i in
+          RoundedRectangle(cornerRadius: 4)
+            .fill(i >= 100 - WORK ? WORK_GREEN : i < lit ? th.danger : th.ink.opacity(0.07))
+            .frame(width: 20.5, height: 20.5)
+            .animation(.easeOut(duration: 0.42), value: lit)
+        }
+      }
+      .frame(width: 250)
+      .padding(.vertical, 24)
+
+      HStack(spacing: 18) {
+        Key(colour: th.danger, label: th.t("screenKey", ["n": String(lit)]), soft: th.inkSoft)
+        Key(colour: WORK_GREEN, label: th.t("workKey", ["n": String(WORK)]), soft: th.inkSoft)
+        Key(colour: th.ink.opacity(0.14), label: th.t("freeKey"), soft: th.inkSoft)
+      }
+      .padding(.bottom, 18)
+
+      // La part PARTIE, pas le temps qui reste : c'est ce qui pese.
+      Text(done ? "\(screen)\u{202F}%" : "…")
+        .font(.system(size: 56, weight: .bold))
+        .foregroundColor(th.danger)
+        .minimumScaleFactor(0.6)
+        .lineLimit(1)
+      Text(!done ? "…" : over ? th.t("overflow") : th.t("gone"))
+        .font(.system(size: 17))
+        .foregroundColor(th.inkSoft)
+        .multilineTextAlignment(.center)
+        .padding(.top, 8)
+    }
+    .padding(.horizontal, 8)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .task {
+      // 88 ms par case, comme cote JavaScript : assez lent qu'on voie la
+      // part grandir et que ca pese.
+      guard shown > 0 else { return }
+      for i in 1...shown {
+        try? await Task.sleep(nanoseconds: 88_000_000)
+        lit = i
+      }
+    }
+  }
+}
+
+struct YearsModel {
+  var years: Int
+  var left: Int
+  var hasData: Bool
+  var theme: Theme
+}
+
+struct YearsScene: DeviceActivityReportScene {
+  let context: DeviceActivityReport.Context = .init("years")
+  let content: (YearsModel) -> YearsView
+
+  func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> YearsModel {
+    let (days, _) = await collect(data)
+    let stored = defaults?.integer(forKey: "unswipe.report.age") ?? 0
+    let age = stored > 0 ? stored : 24
+    // Sur les annees qu'il RESTE, pas sur quatre-vingts pour tout le monde.
+    let left = max(1, LIFE_YEARS - age)
+    let minutes = average(days).minutes
+    let years = Int((Double(minutes) / 60 / Double(WAKING_HOURS) * Double(left)).rounded())
+    return YearsModel(
+      years: years, left: left,
+      hasData: days.contains { $0.minutes > 0 }, theme: Theme.load()
+    )
+  }
+}
+
+/// Le nombre d'annees monte au lieu de s'afficher : c'est le trajet qui
+/// fait mal, pas la valeur finale.
+struct YearsView: View {
+  let m: YearsModel
+  @State private var y = 0
+
+  var body: some View {
+    if m.hasData { counted } else { NoData(th: m.theme) }
+  }
+
+  @ViewBuilder var counted: some View {
+    let th = m.theme
+
+    VStack(spacing: 6) {
+      Text(th.t("lifeOf", ["n": String(m.left)]))
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundColor(th.inkSoft)
+      Text(th.t("years", ["y": String(y)]))
+        .font(.system(size: 56, weight: .bold))
+        .foregroundColor(th.danger)
+        .minimumScaleFactor(0.6)
+        .lineLimit(1)
+      Text(th.t("bodyShort"))
+        .font(.system(size: 17))
+        .foregroundColor(th.inkSoft)
+        .multilineTextAlignment(.center)
+    }
+    .padding(.horizontal, 8)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .task {
+      // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
+      // plus vite qu'un grand.
+      let steps = 34
+      for i in 1...steps {
+        try? await Task.sleep(nanoseconds: 1_600_000_000 / UInt64(steps))
+        y = Int((Double(m.years) * Double(i) / Double(steps)).rounded())
+      }
+    }
   }
 }
 

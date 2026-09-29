@@ -42,7 +42,9 @@ export type ReportColors = {
  * demande sa configuration, et une estimation posee apres coup ne serait
  * vue qu'au prochain affichage.
  */
-export function prepareReport(guessMinutes: number, strings: ReportStrings, colors: ReportColors): void {
+export function prepareReport(
+  guessMinutes: number, strings: ReportStrings, colors: ReportColors, numbers: { age?: number } = {},
+): void {
   if (!REPORT_ENABLED) return;
   try {
     // Le stockage partage passe par la bibliotheque de blocage, qui ecrit
@@ -50,6 +52,8 @@ export function prepareReport(guessMinutes: number, strings: ReportStrings, colo
     DA.userDefaultsSet('unswipe.report.guess', Math.round(guessMinutes));
     DA.userDefaultsSet('unswipe.report.strings', strings);
     DA.userDefaultsSet('unswipe.report.colors', colors);
+    // L'age sert aux annees qu'il reste : la scene « years » le lit.
+    if (numbers.age) DA.userDefaultsSet('unswipe.report.age', Math.round(numbers.age));
   } catch {
     // Sans groupe partage, la vue dessinera avec ses valeurs de secours :
     // un rapport lisible vaut mieux qu'un ecran qui leve.
