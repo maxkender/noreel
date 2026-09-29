@@ -54,6 +54,10 @@ export function useNativeReport(guess: number): 'yes' | 'no' | 'unknown' {
   const c = useColors();
   const { d } = useT();
   const age = useOnboardingStore((x) => x.age);
+  // Le chiffre a ete SAISI : on le tient, et on ne demande plus rien a
+  // l'extension — c'est le secours de l'ecran precedent qui l'a pose, parce
+  // que le dessin d'Apple n'arrivait pas.
+  const entered = useOnboardingStore((x) => x.realMinutes) !== undefined;
   const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
 
   // Le dictionnaire et la palette sont des objets stables — une langue, un
@@ -71,7 +75,7 @@ export function useNativeReport(guess: number): 'yes' | 'no' | 'unknown' {
     });
     return () => { alive = false; };
   }, [guess, d, c, age]);
-  return state;
+  return entered ? 'no' : state;
 }
 
 /**

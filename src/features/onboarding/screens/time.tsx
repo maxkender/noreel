@@ -107,7 +107,6 @@ const SCAN_STEP = 800;
  */
 export function Scan({ onNext }: P) {
   const c = useColors();
-  const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const [show, setShow] = useState(false);
   const lines = [d.time.scan1, d.time.scan2, d.time.scan3];
@@ -132,12 +131,6 @@ export function Scan({ onNext }: P) {
   return (
     <Screen center still hue="accent">
       {show && lines.map((l, i) => <ScanLine key={l} label={l} delay={SCAN_STEP * i} accent={c.accent} />)}
-      {/* Une vue d'un point, invisible : elle lance le processus de
-          l'extension maintenant, pour que le vrai dessin, sur l'ecran
-          suivant, n'ait plus qu'a s'afficher. */}
-      {show && ScreenTimeReportView && (
-        <ScreenTimeReportView context="compare" days={7} style={st.warm} />
-      )}
     </Screen>
   );
 }
@@ -243,6 +236,28 @@ const BAR_H = 150;
  *  presque toujours dessine avant, et on ne l'attend pas plus longtemps. */
 const SKELETON_MS = 1400;
 
+/** Apres ce delai, on propose de saisir le chiffre soi-meme. */
+const RESCUE_MS = 4000;
+
+/**
+ * Le secours : si le dessin n'est pas la, la personne peut le dire.
+ *
+ * L'app ne saura jamais si l'extension a dessine — c'est la regle d'Apple —
+ * et il existe des iPhone ou son processus ne se lance pas du tout (iOS
+ * 26.4, rapporte sur les forums d'Apple avec le projet modele lui-meme).
+ * Un ecran vide sans issue est le pire des cas ; une ligne qui propose de
+ * recopier le chiffre depuis Reglages en est la sortie.
+ */
+function useRescue(active: boolean): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    const id = setTimeout(() => setOn(true), RESCUE_MS);
+    return () => clearTimeout(id);
+  }, [active]);
+  return active && on;
+}
+
 /** Vrai pendant la premiere seconde et demie d'un ecran natif. */
 function useSkeleton(active: boolean): boolean {
   const [on, setOn] = useState(true);
@@ -275,6 +290,9 @@ export function Compare({ onNext }: P) {
   const native = useNativeReport(guess);
   const reportH = useReportHeight(360, 500);
   const skeleton = useSkeleton(native === 'yes');
+  const rescue = useRescue(native === 'yes');
+  // Le dessin n'est pas venu : on passe a la saisie, ici meme.
+  const [manual, setManual] = useState(false);
   // Le chiffre a-t-il ete recopie ? Sinon, et sans extension, on le demande
   // d'abord — ici meme, pas sur un ecran de plus.
   const [entered, setEntered] = useState(storedReal !== undefined);
@@ -288,9 +306,20 @@ export function Compare({ onNext }: P) {
     depend de rien, et un ecran qui commence par un dessin qu'on attend se
     lit comme une panne.
   */
-  if (native === 'yes' && ScreenTimeReportView) {
+  if (native === 'yes' && !manual && ScreenTimeReportView) {
     return (
-      <Screen cta={d.ob.keepGoing} onPress={onNext} center still hue="accent">
+      <Screen
+        cta={d.ob.keepGoing}
+        onPress={onNext}
+        center
+        still
+        hue="accent"
+        note={rescue ? (
+          <Pressable onPress={() => { haptics.tap(); setManual(true); }} hitSlop={8} accessibilityRole="button">
+            <Text variant="label" color={c.accent} style={st.center}>{d.time.noShow}</Text>
+          </Pressable>
+        ) : undefined}
+      >
         <Typewriter text={d.time.cmpTitle} variant="displayM" style={st.center} />
         <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.cmpSub}</Text>
         <View style={[st.report, { height: reportH }]}>
@@ -376,12 +405,28 @@ export function Analysis({ onNext }: P) {
   const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
   const native = useNativeReport(guess);
   const skeleton = useSkeleton(native === 'yes');
+  const rescue = useRescue(native === 'yes');
+  const [manual, setManual] = useState(false);
+  const storedReal = useOnboardingStore((x) => x.realMinutes);
+  const [entered, setEntered] = useState(storedReal !== undefined);
 
   if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
 
-  if (native === 'yes' && ScreenTimeReportView) {
+  // Le secours : d'abord le chiffre, s'il n'a pas encore ete saisi.
+  if (manual && !entered) return <RealTime onNext={() => setEntered(true)} />;
+
+  if (native === 'yes' && !manual && ScreenTimeReportView) {
     return (
-      <Screen cta={d.ob.keepGoing} onPress={onNext} hue="ember">
+      <Screen
+        cta={d.ob.keepGoing}
+        onPress={onNext}
+        hue="ember"
+        note={rescue ? (
+          <Pressable onPress={() => { haptics.tap(); setManual(true); }} hitSlop={8} accessibilityRole="button">
+            <Text variant="label" color={c.accent} style={st.center}>{d.time.noShow}</Text>
+          </Pressable>
+        ) : undefined}
+      >
         <Text variant="displayM" style={st.center}>{d.time.analysisTitle}</Text>
         <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.analysisSub}</Text>
         <View style={[st.report, { height: 540 }]}>
@@ -470,6 +515,5 @@ const sheet = () => StyleSheet.create({
     backgroundColor: withAlpha('#FAFAFA', 0.05),
   },
   report: { alignSelf: 'stretch', marginTop: space.lg },
-  warm: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });

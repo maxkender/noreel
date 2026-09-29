@@ -595,6 +595,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
           // le bouton recharger de la barre fait le meme travail sans risque.
           pullToRefreshEnabled={Platform.OS !== 'ios'}
           allowsInlineMediaPlayback
+          // Le frein natif d'iOS, explicitement : le meme que dans Safari.
+          decelerationRate="normal"
           mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
           setSupportMultipleWindows={false}
           // Sans cette liste, iOS remet les schemas inconnus au systeme,
@@ -781,14 +783,8 @@ const sheet = (c: Palette) => StyleSheet.create({
     l'ilot dynamique. 44 points, c'est la hauteur qu'iOS donne a ses propres
     barres, et elle ne depend pas du site affiche.
   */
-  /*
-    Trente-huit points, pas cinquante-huit.
-    Le bandeau ne porte qu'un chrono et un « i » : a cinquante-huit points il
-    prenait la hauteur d'une barre de titre pour une ligne de douze, et
-    repoussait d'autant le fil de la personne. Assez pour le pouce, pas plus.
-  */
   barRow: {
-    height: 38, flexDirection: 'row', alignItems: 'center',
+    height: 44, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble

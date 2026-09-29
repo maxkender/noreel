@@ -97,6 +97,7 @@ export const en: Dict = {
     realLabel: 'Your real time',
     cmpTitle: 'Your guess, next to reality.',
     cmpSub: 'Measured by iOS · your last 7 days on average',
+    noShow: 'Nothing showing? Enter your time yourself',
     verdictLess: 'Less than you thought.',
     verdictMore: 'More than you thought.',
     verdictSame: 'You know yourself well.',

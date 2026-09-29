@@ -1017,12 +1017,27 @@ export const INSTAGRAM_BLOCKER = `
     }
     if (/^\\/reels?(\\/|$)/.test(location.pathname)) __go('/');
     /*
-      Chercher un compte passe par /explore.
-      Ce chemin etait bloque en dur, verrouille : impossible de chercher qui
-      que ce soit, et rien ne disait pourquoi. Le reglage existe toujours —
-      il est simplement debrayable, et eteint par defaut.
+      Chercher un compte passe par /explore : c'est LA page de recherche.
+
+      Le reglage « explore » renvoyait toute adresse /explore vers le fil —
+      donc aussi la recherche, qui vit au meme endroit, et personne ne
+      pouvait plus chercher un compte. On ne redirige plus : on cache la
+      grille de suggestions (les tuiles de publications et de reels) sur la
+      page d'explore elle-meme, et on laisse le champ de recherche et ses
+      resultats — comptes, hashtags, lieux — tranquilles.
     */
-    if (__on('explore') && location.pathname.startsWith('/explore')) __go('/');
+    const onGrid = /^[/]explore[/]?$/.test(location.pathname);
+    let ex = document.getElementById('nr-explore-css');
+    if (__on('explore') && onGrid) {
+      if (!ex) {
+        ex = document.createElement('style');
+        ex.id = 'nr-explore-css';
+        ex.textContent = 'main a[href^="/p/"],main a[href^="/reel/"]{display:none!important}';
+        (document.head || document.documentElement).appendChild(ex);
+      }
+    } else if (ex) {
+      ex.remove();
+    }
   });
 })();
 true;

@@ -102,6 +102,7 @@ export const fr = {
     realLabel: 'Ton vrai temps',
     cmpTitle: 'Ton estimation, face à la réalité.',
     cmpSub: 'Mesuré par iOS · moyenne de tes 7 derniers jours',
+    noShow: 'Rien ne s’affiche ? Saisis ton temps toi-même',
     verdictLess: 'Moins que tu ne pensais.',
     verdictMore: 'Plus que tu ne pensais.',
     verdictSame: 'Tu te connais bien.',
