@@ -50,15 +50,32 @@ export function lifeStats(minutesPerDay: number, age: number): LifeStats {
   };
 }
 
+/*
+ * Ce qu'une annee de telephone aurait pu contenir.
+ *
+ * Des choses qu'on se represente, pas des heures : une langue (avec son
+ * drapeau), un instrument, un sommet, un brevet de pilote. Le cout est un
+ * ordre de grandeur, et il est ecrit sur l'ecran pour qu'on puisse refaire le
+ * calcul. Les langues sont a part : on en montre UNE, tiree selon le chiffre,
+ * pour ne pas toujours parler chinois.
+ */
 export const ACTIVITIES = [
-  { id: 'books', costHours: 6 },
-  // Le chinois plutot qu'« une langue » : un objectif qu'on se represente
-  // vaut mieux qu'une categorie. 1 000 h, c'est l'ordre de grandeur pour
-  // tenir une conversation.
-  { id: 'chinese', costHours: 1000 },
-  { id: 'instrument', costHours: 200 },
-  { id: 'marathon', costHours: 100 },
-  { id: 'code', costHours: 450 },
+  { id: 'spanish', kind: 'language', costHours: 600 },
+  { id: 'japanese', kind: 'language', costHours: 1000 },
+  { id: 'italian', kind: 'language', costHours: 500 },
+  { id: 'chinese', kind: 'language', costHours: 1000 },
+  { id: 'guitar', kind: 'other', costHours: 200 },
+  { id: 'piano', kind: 'other', costHours: 300 },
+  { id: 'marathon', kind: 'other', costHours: 100 },
+  { id: 'surf', kind: 'other', costHours: 60 },
+  { id: 'summit', kind: 'other', costHours: 150 },
+  { id: 'cook', kind: 'other', costHours: 200 },
+  { id: 'code', kind: 'other', costHours: 450 },
+  { id: 'books', kind: 'other', costHours: 6 },
+  { id: 'draw', kind: 'other', costHours: 300 },
+  { id: 'pilot', kind: 'other', costHours: 45 },
+  { id: 'blackbelt', kind: 'other', costHours: 1500 },
+  { id: 'bike', kind: 'other', costHours: 120 },
 ] as const;
 
 export type ActivityId = (typeof ACTIVITIES)[number]['id'];
@@ -99,4 +116,32 @@ export function compareGuess(guess: number, real: number): { pct: number; verdic
  */
 export function yearsOnScreen(minutesPerDay: number, yearsLeft: number): number {
   return ((minutesPerDay / 60) / WAKING_HOURS) * Math.max(0, yearsLeft);
+}
+
+/** L'age ou l'on cesse de travailler, pour compter les annees de travail. */
+export const RETIRE_AGE = 65;
+
+export type LifeYears = {
+  remaining: number; sleep: number; work: number; eat: number; free: number; phone: number; left: number;
+};
+
+/**
+ * Les annees qu'il reste, et a qui elles vont.
+ *
+ * Huit heures de sommeil, huit heures de travail cinq jours sur sept
+ * jusqu'a la retraite, une heure et demie a table — puis ce qui reste est le
+ * temps libre, et le telephone mord dedans a raison du temps d'ecran
+ * quotidien. Tout est en annees entieres, arrondies : ce sont des cases qu'on
+ * regarde, pas des decimales.
+ */
+export function lifeYears(age: number, minutesPerDay: number): LifeYears {
+  const remaining = Math.max(1, LIFE_YEARS - age);
+  const sleep = Math.round((remaining * 8) / 24);
+  const work = Math.round((Math.max(0, RETIRE_AGE - age) * ((8 * 5) / 7)) / 24);
+  let eat = Math.max(1, Math.round((remaining * 1.5) / 24));
+  // Sur une fin de vie tres courte, les cases ne suffisent pas a tout loger.
+  if (sleep + work + eat > remaining) eat = Math.max(0, remaining - sleep - work);
+  const free = Math.max(0, remaining - sleep - work - eat);
+  const phone = Math.min(free, Math.round((remaining * (minutesPerDay / 60)) / 24));
+  return { remaining, sleep, work, eat, free, phone, left: free - phone };
 }

@@ -17,9 +17,11 @@ type P = { onNext: () => void };
 
 const A = Animated.createAnimatedComponent(BlurView);
 
-const SHARPEN = 700;   // le temps que la ligne se fasse nette
-const HOLD = 2200;     // le temps qu'on la lise
-const SOFTEN = 450;    // le temps qu'elle se redissolve
+const SHARPEN = 450;   // le temps que la ligne se fasse nette
+const HOLD = 1300;     // le temps qu'on la lise — pas plus
+const SOFTEN = 300;    // le temps qu'elle se redissolve
+
+const LANGS = ['spanish', 'japanese', 'italian', 'chinese'] as const;
 
 /**
  * Ce que l'annee ecoulee aurait pu contenir.
@@ -42,16 +44,22 @@ export function Activities({ onNext }: P) {
   const hours = (minutes * 365) / 60;
 
   /*
-    Trois lignes, pas cinq. Le chinois est garde quoi qu'il arrive — c'est
-    l'exemple qu'on retient — et on lui adjoint les deux plus gros chiffres.
+    Trois lignes : une langue au milieu, deux autres choses autour.
+    La langue est tiree selon le chiffre — pas toujours le chinois — et les
+    deux autres aussi, parmi celles qu'on aurait pu faire au moins une fois.
+    Le tirage est deterministe : la meme personne revoit les memes lignes.
   */
   const rows = useMemo(() => {
-    const all = ACTIVITIES.map((a) => ({ id: a.id, n: activityCount(hours, a.costHours) }));
-    const chinese = all.find((a) => a.id === 'chinese')!;
-    return [
-      chinese,
-      ...all.filter((a) => a.id !== 'chinese').sort((x, y) => y.n - x.n).slice(0, 2),
-    ];
+    const all = ACTIVITIES.map((a) => ({ id: a.id, kind: a.kind, n: activityCount(hours, a.costHours) }));
+    const seed = Math.floor(hours);
+    const lang = all.find((a) => a.id === LANGS[seed % LANGS.length])!;
+    const others = all.filter((a) => a.kind !== 'language');
+    const pool = others.filter((a) => a.n >= 1);
+    const src = pool.length >= 2 ? pool : [...others].sort((x, y) => y.n - x.n);
+    const i1 = seed % src.length;
+    let i2 = (seed * 7 + 3) % src.length;
+    if (i2 === i1) i2 = (i2 + 1) % src.length;
+    return [src[i1], lang, src[i2]];
   }, [hours]);
 
   const [i, setI] = useState(0);

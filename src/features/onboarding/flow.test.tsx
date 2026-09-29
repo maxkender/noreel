@@ -57,10 +57,12 @@ it('demande le temps dans le bon ordre', () => {
   const at = (k: string) => { const i = keys.indexOf(k); expect(i).toBeGreaterThanOrEqual(0); return i; };
   expect(at('guess')).toBeLessThan(at('perm'));
   expect(at('perm')).toBeLessThan(at('cmp'));
-  expect(at('cmp')).toBeLessThan(at('ana'));
-  expect(at('ana')).toBeLessThan(at('age'));
-  // Et l'engagement vient apres les annees perdues, avant la demo.
-  expect(at('s6y')).toBeLessThan(at('ready'));
+  // L'age vient apres la comparaison, et les annees qu'il reste juste apres.
+  expect(at('cmp')).toBeLessThan(at('age'));
+  expect(at('age')).toBeLessThan(at('life'));
+  expect(at('life')).toBeLessThan(at('act'));
+  // Et l'engagement vient apres les annees, avant la demo.
+  expect(at('life')).toBeLessThan(at('ready'));
   expect(at('ready')).toBeLessThan(at('proof'));
   expect(keys[keys.length - 1]).toBe('pw');
 });

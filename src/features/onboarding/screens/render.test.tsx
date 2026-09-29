@@ -18,9 +18,10 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
-import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
+import { AgeAsk, Compare, Guess, RealTime } from './time';
+import { LifeYears } from './index';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
-import { PromiseScreen } from './setup';
+import { PromiseScreen, Welcome } from './setup';
 import { Ready } from './ready';
 import { DmReel, NotBlocker } from './story';
 import { useOnboardingStore } from '@/store/onboarding';
@@ -53,6 +54,11 @@ describe('les ecrans du parcours se montent', () => {
     const r = render(<Prep onNext={noop} />);
     expect(r.toJSON()).toBeTruthy();
     r.unmount();
+  });
+
+  it('la bienvenue', () => {
+    const r = render(<Welcome onNext={noop} />);
+    expect(r.toJSON()).toBeTruthy();
   });
 
   it('« tu n’es pas accro »', () => {
@@ -98,7 +104,7 @@ describe('le temps d’ecran, en quatre ecrans', () => {
   it('l’estimation a la jauge', () => { render(<Guess onNext={noop} />); });
   it('le vrai chiffre', () => { render(<RealTime onNext={noop} />); });
   it('l’age', () => { render(<AgeAsk onNext={noop} />); });
-  it('l’analyse', () => { render(<Analysis onNext={noop} />); });
+  it('les annees qu’il reste', () => { const r = render(<LifeYears onNext={noop} />); r.unmount(); });
 
   it('la comparaison, dans ses trois verdicts', () => {
     for (const real of [60, 150, 300]) {

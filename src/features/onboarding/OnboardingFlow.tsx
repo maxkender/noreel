@@ -10,14 +10,14 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { S1, S6, S6Years } from './screens';
-import { Constat, Name, NotificationsAsk, PromiseScreen } from './screens/setup';
+import { LifeYears, S1 } from './screens';
+import { Constat, Name, NotificationsAsk, PromiseScreen, Welcome } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
-import { AgeAsk, Analysis, Compare, Guess } from './screens/time';
+import { AgeAsk, Compare, Guess } from './screens/time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './screens/science';
 import { Ready } from './screens/ready';
 import { DmReel, NotBlocker } from './screens/story';
@@ -140,6 +140,7 @@ export function OnboardingFlow() {
   */
   const screens = [
     <S1 key="s1" onNext={next} />,
+    <Welcome key="welcome" onNext={next} />,
     <Name key="name" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <Meet key="meet" onNext={next} />,
@@ -147,16 +148,14 @@ export function OnboardingFlow() {
     <Guess key="guess" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <Compare key="cmp" onNext={next} />,
-    <Analysis key="ana" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
-    <S6 key="s6" onNext={next} />,
+    <LifeYears key="life" onNext={next} />,
     <Activities key="act" onNext={next} />,
     <Exploited key="hook" onNext={next} />,
     <Dopamine key="dopa" onNext={next} />,
     <ReceptorsPage key="rec" onNext={next} />,
     <NothingLands key="flat" onNext={next} />,
     <LovePage key="love" onNext={next} />,
-    <S6Years key="s6y" onNext={next} />,
     <Ready key="ready" onNext={next} />,
     <NotBlocker key="nb" onNext={next} />,
     <Proof key="proof" onNext={next} />,
@@ -250,7 +249,7 @@ export function OnboardingFlow() {
  * resultat qu'on decouvre plutot qu'une page qu'on tourne. Le contraste avec
  * les autres est ce qui fait sentir que quelque chose vient d'etre dit.
  */
-const REVEAL = new Set(['cmp', 'ana', 's6', 's6y', 'proof', 'dm']);
+const REVEAL = new Set(['cmp', 'life', 'proof', 'dm']);
 
 function reveal() {
   'worklet';

@@ -1,17 +1,17 @@
 import { useMemo, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
-import { space } from '@/theme/spacing';
+import { gutter, space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
-import { LIFE_YEARS, WAKING_HOURS, wakingShare, yearsOnScreen } from '../calculations';
+import { lifeYears } from '../calculations';
 
 
 /*
@@ -26,15 +26,6 @@ import { LIFE_YEARS, WAKING_HOURS, wakingShare, yearsOnScreen } from '../calcula
  * demander ferait un ecran de plus pour affiner un chiffre qui sert a montrer
  * un ordre de grandeur.
  */
-const WORK = Math.round((8 / WAKING_HOURS) * 100);
-
-/*
- * Le vert du travail ne vient pas de la palette : elle n'en a pas, et il n'y
- * a aucune raison d'en ajouter un pour un seul ecran. Il tient sur les deux
- * fonds, c'est tout ce qu'on lui demande.
- */
-const WORK_GREEN = '#2E9E5B';
-
 const MARK = require('@/assets/brand/mark.png');
 
 type P = { onNext: () => void };
@@ -54,247 +45,151 @@ export function S1({ onNext }: P) {
 }
 
 
-/* ---------- 6 ---------- */
-export function S6({ onNext }: P) {
+/* ---------- Les annees qu'il reste ---------- */
+
+const COLS = 8;
+const WORK_GREEN = '#2E9E5B';
+type Kind = 'sleep' | 'work' | 'eat' | 'free' | 'phone';
+
+/**
+ * Tes annees, une case chacune — et a qui elles vont.
+ *
+ * Toutes apparaissent d'abord : c'est ce qu'il reste. Puis le sommeil les
+ * prend, le travail, les repas, l'une apres l'autre, avec sa ligne. Ce qui
+ * reste est le temps libre — et le telephone vient mordre dedans par la
+ * fin, en rouge, case par case. La derniere ligne dit ce qui reste de
+ * vraiment libre. On ne lit pas un camembert : on regarde ses annees partir.
+ */
+export function LifeYears({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  // Le vrai temps quand il a ete saisi, l'estimation sinon : un seul endroit
-  // en decide, pour que deux ecrans ne montrent jamais deux chiffres.
+  const { width } = useWindowDimensions();
+  const age = useOnboardingStore((x) => x.age);
   const minutes = useOnboardingStore(effectiveMinutes);
-  const screen = Math.round(wakingShare(minutes) * 100);
-  const [lit, setLit] = useState(0);
+  const L = useMemo(() => lifeYears(age, minutes), [age, minutes]);
+  const title = t(d.life.title, { age, n: L.remaining });
 
-  /*
-    L'ecran ne peut pas occuper plus que ce que le travail laisse.
+  // La nature de chaque case, decidee une fois : sommeil, travail, repas,
+  // puis le libre — et le telephone mord dans le libre PAR LA FIN.
+  const kinds = useMemo(() => {
+    const k: Kind[] = [];
+    (['sleep', 'work', 'eat'] as const).forEach((kind) => { for (let i = 0; i < L[kind]; i += 1) k.push(kind); });
+    while (k.length < L.remaining) k.push('free');
+    for (let i = 0; i < L.phone; i += 1) k[L.remaining - 1 - i] = 'phone';
+    return k;
+  }, [L]);
 
-    A onze heures d'ecran par jour, la part calculee depasse la place libre :
-    la legende aurait annonce 73 % pendant que la grille n'en montrait que 50,
-    puisque les cases du travail sont posees les premieres. On plafonne donc
-    ce qu'on montre, et quand ca deborde on le DIT — parce que ca veut dire
-    quelque chose : l'ecran a commence a manger les heures de travail.
-  */
-  const room = 100 - WORK;
-  const shown = Math.min(screen, room);
-  const over = screen > room;
-  const done = lit >= shown;
+  const [shown, setShown] = useState(0);
+  const [painted, setPainted] = useState(0);
+  const [phoned, setPhoned] = useState(0);
+  const [stage, setStage] = useState(0);
 
-  // La grille attend que le titre soit ecrit : les deux en meme temps, on
-  // ne lisait ni l'un ni l'autre.
-  const [go, setGo] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setGo(true), typeDuration(d.s6.title, 32, 0) + 300);
-    return () => clearTimeout(id);
-  }, [d.s6.title]);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tickers: ReturnType<typeof setInterval>[] = [];
+    const later = (ms: number, fn: () => void) => { timers.push(setTimeout(fn, ms)); };
+    const run = (from: number, to: number, ms: number, set: (n: number) => void, every: number) => {
+      let i = from;
+      const id = setInterval(() => {
+        i += 1;
+        set(i);
+        if ((i - from) % every === 0) haptics.tick();
+        if (i >= to) clearInterval(id);
+      }, ms);
+      tickers.push(id);
+    };
+    let at = typeDuration(title, 32, 0) + 300;
+    // 1. Les cases, une a une.
+    later(at, () => { setStage(1); run(0, L.remaining, 14, setShown, 8); });
+    at += L.remaining * 14 + 500;
+    // 2-4. Le sommeil, le travail, les repas.
+    let upto = 0;
+    ([[2, L.sleep], [3, L.work], [4, L.eat]] as const).forEach(([st, n]) => {
+      const from = upto;
+      upto += n;
+      later(at, () => { setStage(st); haptics.tick(); if (n > 0) run(from, from + n, 26, setPainted, 5); });
+      at += n * 26 + 650;
+    });
+    // 5. Ce qui reste : le temps libre.
+    later(at, () => { setStage(5); haptics.tick(); });
+    at += 900;
+    // 6. Le telephone, par la fin.
+    later(at, () => { setStage(6); if (L.phone > 0) run(0, L.phone, 55, setPhoned, 3); });
+    at += L.phone * 55 + 500;
+    // 7. Ce qu'il reste de vraiment libre.
+    later(at, () => { setStage(7); haptics.success(); });
+    return () => { timers.forEach(clearTimeout); tickers.forEach(clearInterval); };
+  }, [L, title]);
 
-  // 88 ms par case : assez lent qu'on voie la part grandir et que ca pese.
-  useEffect(() => {
-    if (!go) return;
-    let i = 0;
-    const id = setInterval(() => {
-      i += 1;
-      setLit(i);
-      if (i % 10 === 0) haptics.tick();
-      if (i >= shown) clearInterval(id);
-    }, 88);
-    return () => clearInterval(id);
-  }, [shown, go]);
+  const gap = 6;
+  const cell = Math.floor((width - gutter * 2 - (COLS - 1) * gap) / COLS);
+  const colour = (i: number): string => {
+    if (i >= shown) return 'transparent';
+    const k = kinds[i];
+    if (k === 'phone' && i >= L.remaining - phoned) return c.danger;
+    if (k === 'sleep' && i < painted) return withAlpha(c.accent, 0.6);
+    if (k === 'work' && i < painted) return WORK_GREEN;
+    if (k === 'eat' && i < painted) return c.ember;
+    return withAlpha(c.mist, stage >= 5 ? 0.24 : 0.12);
+  };
+
+  const lines: [number, string, string][] = [
+    [2, withAlpha(c.accent, 0.6), t(d.life.sleep, { n: L.sleep })],
+    [3, WORK_GREEN, t(d.life.work, { n: L.work })],
+    [4, c.ember, t(d.life.eat, { n: L.eat })],
+    [5, withAlpha(c.mist, 0.35), t(d.life.free, { n: L.free })],
+    [6, c.danger, t(d.life.phone, { n: L.phone })],
+  ];
 
   return (
     <Screen
-      cta={d.s6.cta2}
+      cta={d.ob.keepGoing}
       onPress={onNext}
       center
-      disabled={!done}
+      disabled={stage < 7}
       hue="ember"
-      hueLevel={Math.min(1, lit / Math.max(1, shown))}
+      hueLevel={Math.min(1, stage / 7)}
     >
-      <Typewriter text={d.s6.title} variant="displayM" style={s.center} />
+      <Typewriter text={title} variant="displayM" style={s.center} />
 
-      <View style={s.hundredWrap}>
-        <View style={s.hundred}>
-          {Array.from({ length: 100 }, (_, i) => (
-            <Cell
-              key={i}
-              // Le travail occupe le bas de la grille et ne bouge jamais :
-              // c'est le decor, pas le propos. L'ecran vient se poser DESSUS,
-              // case par case, et ce qui reste se voit retrecir en direct.
-              kind={i >= 100 - WORK ? 'work' : i < lit ? 'screen' : 'free'}
-            />
-          ))}
-        </View>
+      <View style={[s.years, { gap }]}>
+        {kinds.map((_, i) => (
+          <View key={i} style={{ width: cell, height: cell, borderRadius: 5, backgroundColor: colour(i) }} />
+        ))}
       </View>
 
-      <View style={s.legend}>
-        <Key colour={c.danger} label={t(d.misc.screenKey, { n: lit })} />
-        <Key colour={WORK_GREEN} label={t(d.misc.workKey, { n: WORK })} />
-        <Key colour={withAlpha(c.mist, 0.14)} label={d.misc.freeKey} />
+      {/* Les lignes ont une place FIXE : cinq au plus, et rien ne saute. */}
+      <View style={s.lines}>
+        {lines.map(([at, dot, label]) => (stage >= at ? (
+          <Animated.View key={label} entering={FadeInDown.duration(380)} style={s.lineRow}>
+            <View style={[s.lineDot, { backgroundColor: dot }]} />
+            <Text variant="body" color={at === 6 ? c.danger : undefined} tone={at === 6 ? undefined : 'secondary'}>{label}</Text>
+          </Animated.View>
+        ) : null))}
       </View>
 
-      {/*
-        La part PARTIE, pas le temps qui reste.
-
-        L'ecran concluait sur les heures encore libres — un chiffre qu'on lit
-        comme une bonne nouvelle, alors que la grille vient de montrer le
-        contraire. Ce qui pese, c'est ce que l'ecran a pris : « 31 % de ta
-        journee, partis » se recoit comme la grille se regarde.
-      */}
-      <Text
-        variant="hero"
-        color={c.danger}
-        style={[s.center, s.pct]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {done ? `${screen}${'\u202f'}%` : '…'}
-      </Text>
-      <Text variant="lead" tone="secondary" style={s.center}>
-        {!done ? '…' : over ? d.misc.overflow : d.s6.gone}
-      </Text>
-
-    </Screen>
-  );
-}
-
-/** Une entree de legende : une pastille, un mot. */
-function Key({ colour, label }: { colour: string; label: string }) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-  return (
-    <View style={s.key}>
-      <View style={[s.keyDot, { backgroundColor: colour }]} />
-      <Text variant="label" tone="tertiary">{label}</Text>
-    </View>
-  );
-}
-
-/**
- * Une case de la grille : une heure et demie de journee eveillee, a peu pres.
- *
- * Le travail est pose d'emblee, l'ecran s'allume en fondu par-dessus. C'est
- * ce fondu qui fait le poids de l'ecran : une grille deja remplie se lit
- * comme un camembert, une grille qui se remplit sous les yeux se subit.
- */
-function Cell({ kind }: { kind: 'work' | 'screen' | 'free' }) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-
-  if (kind === 'work') {
-    return <View style={[s.square, { backgroundColor: WORK_GREEN }]} />;
-  }
-  if (kind === 'screen') {
-    return (
-      <Animated.View
-        entering={FadeIn.duration(420)}
-        style={[s.square, { backgroundColor: c.danger }]}
-      />
-    );
-  }
-  return <View style={[s.square, s.squareOff]} />;
-}
-
-/**
- * Le verdict a son propre ecran : pose sous la grille, le nombre d'annees
- * se lisait comme une legende. Seul, il se prend en pleine figure.
- *
- * Les deux chiffres montent au lieu de s'afficher : on les regarde grimper,
- * et c'est ce trajet qui fait mal, pas la valeur finale.
- */
-export function S6Years({ onNext }: P) {
-  const c = useColors();
-  const s = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
-  const minutes = useOnboardingStore(effectiveMinutes);
-  const age = useOnboardingStore((x) => x.age);
-  const left = Math.max(1, LIFE_YEARS - age);
-  const years = Math.round(yearsOnScreen(minutes, left));
-
-  const [y, setY] = useState(0);
-
-  useEffect(() => {
-    // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
-    // plus vite qu'un grand.
-    const steps = 34;
-    let i = 0;
-    const id = setInterval(() => {
-      i += 1;
-      setY(Math.round((years * i) / steps));
-      if (i % 8 === 0) haptics.tick();
-      if (i >= steps) clearInterval(id);
-    }, 1600 / steps);
-    return () => clearInterval(id);
-  }, [years]);
-
-  return (
-    <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
-      <Animated.View entering={FadeIn.duration(700)} style={s.years}>
-        <Text variant="label" tone="tertiary">{t(d.s6.lifeOf, { n: left })}</Text>
-        <Text
-          variant="hero"
-          color={c.danger}
-          style={s.center}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {t(d.s6.years, { y })}
-        </Text>
-        <Text variant="lead" tone="secondary" style={s.center}>
-          {d.s6.bodyShort}
-        </Text>
-        {/* La base du calcul, dite : un chiffre qui fait mal doit pouvoir
-            etre verifie, sinon on le rejette avec la douleur. */}
-        <Text variant="label" tone="tertiary" style={[s.center, { marginTop: space.md }]}>
-          {d.s6.basis}
-        </Text>
-      </Animated.View>
+      <View style={s.leftSlot}>
+        {stage >= 7 && (
+          <Animated.View entering={FadeIn.duration(600)}>
+            <Text variant="displayM" color={c.danger} style={s.center}>
+              {L.left > 1 ? t(d.life.left, { n: L.left }) : d.life.leftNone}
+            </Text>
+          </Animated.View>
+        )}
+      </View>
     </Screen>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  videoSlot: {
-    marginTop: space.xxl, height: 300, borderRadius: 26, padding: 8,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
-    backgroundColor: c.surface,
-  },
-  videoInner: { flex: 1, borderRadius: 20, backgroundColor: c.surfaceHi },
-  hundredWrap: { alignItems: 'center', marginVertical: space.xl },
-  hundred: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 5,
-    width: 250,
-  },
-  square: { width: 20.5, height: 20.5, borderRadius: 4 },
-  pct: { marginTop: 0, marginBottom: space.sm },
-  legend: { flexDirection: 'row', justifyContent: 'center', gap: space.lg, marginBottom: space.lg },
-  key: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  keyDot: { width: 9, height: 9, borderRadius: 3 },
-  years: { alignItems: 'center', gap: space.xs },
-  squareOff: { backgroundColor: withAlpha(c.mist, 0.07) },
-  chain: { flexDirection: 'row', gap: space.md },
-  chainCol: { alignItems: 'center', width: 12 },
-  chainDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent, marginTop: 6 },
-  chainLine: { flex: 1, width: 1, backgroundColor: withAlpha(c.accent, 0.3) },
+  mark: { width: 64, height: 64, alignSelf: 'center', marginBottom: space.xl },
   center: { textAlign: 'center' },
-  brainFace: { alignItems: 'center', marginBottom: space.lg },
-  mark: { alignSelf: 'center', width: 96, height: 96, marginBottom: space.xl },
-  value: { marginVertical: space.lg, alignSelf: 'stretch', textAlign: 'center' },
-  sliderWrap: { alignItems: 'center', marginBottom: space.lg },
-  ageWrap: { marginTop: space.xxl, alignItems: 'center' },
-  keepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  compare: { flexDirection: 'row', gap: space.md, marginTop: space.xxl },
-  col: { flex: 1, gap: space.sm },
-  colBarCold: { height: 18, borderRadius: 4, backgroundColor: withAlpha(c.mist, 0.08) },
-  colBarWarm: { height: 18, borderRadius: 4, backgroundColor: withAlpha(c.accent, 0.35) },
-  activity: {
-    flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line,
-  },
-  apps: { flexDirection: 'row', gap: space.xl, justifyContent: 'center', marginTop: space.xxl },
-  app: { alignItems: 'center', gap: space.sm },
-  appIcon: {
-    width: 62, height: 62, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: c.surfaceHi,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
-  },
-  appRing: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: c.mist },
+  years: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', marginTop: space.xl },
+  lines: { alignSelf: 'stretch', minHeight: 5 * 30, marginTop: space.lg, gap: 6 },
+  lineRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  lineDot: { width: 12, height: 12, borderRadius: 3 },
+  leftSlot: { minHeight: 80, marginTop: space.md, justifyContent: 'center' },
+  // Le halo n'existe que pour ce theme sombre : c.mist sur c.night.
+  legacy: { color: withAlpha(c.mist, 0.5) },
 });

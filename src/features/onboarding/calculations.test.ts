@@ -1,4 +1,4 @@
-import { ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats, screenYears, wakingShare, compareGuess } from './calculations';
+import { ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats, lifeYears, screenYears, wakingShare, compareGuess } from './calculations';
 
 describe('lifeStats — les six cas de référence du §9', () => {
   const cases = [
@@ -39,7 +39,7 @@ describe('activités, pour 1 095 h/an', () => {
   const cost = (id: string) => ACTIVITIES.find((a) => a.id === id)!.costHours;
 
   it.each([
-    ['books', 182], ['chinese', 1], ['instrument', 5],
+    ['books', 182], ['chinese', 1], ['guitar', 5],
     ['marathon', 10], ['code', 2],
   ])('%s → %i', (id, expected) => {
     expect(Math.floor(activityCount(H, cost(id as string)))).toBe(expected);
@@ -94,5 +94,23 @@ describe('l’estimation face au vrai chiffre', () => {
 
   it('survit a une estimation nulle', () => {
     expect(compareGuess(0, 60).verdict).toBe('more');
+  });
+});
+
+describe('les annees qu\'il reste', () => {
+  it('partage les annees, et le telephone mord dans le temps libre', () => {
+    const l = lifeYears(24, 150);
+    expect(l.remaining).toBe(56);
+    expect(l.sleep + l.work + l.eat + l.free).toBe(56);
+    expect(l.sleep).toBe(19);
+    expect(l.phone).toBe(6);
+    expect(l.left).toBe(l.free - l.phone);
+  });
+
+  it('tient debout aux ages extremes', () => {
+    const old = lifeYears(79, 600);
+    expect(old.remaining).toBe(1);
+    expect(old.sleep + old.work + old.eat + old.free).toBe(1);
+    expect(old.phone).toBeLessThanOrEqual(old.free);
   });
 });

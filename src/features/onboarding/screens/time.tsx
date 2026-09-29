@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated as RNAnimated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
-import { Cake, Minus, Plus } from 'lucide-react-native';
+import { Cake } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
@@ -90,8 +90,6 @@ export function Guess({ onNext }: P) {
 
 /* ---------- Le vrai chiffre ---------- */
 
-const PICK_MIN = 0, PICK_MAX = 300, PICK_STEP = 5;
-
 /**
  * Le vrai temps, recopie depuis Reglages.
  *
@@ -108,22 +106,15 @@ export function RealTime({ onNext }: P) {
   const { d } = useT();
   const guess = useOnboardingStore((x) => x.minutesPerDay);
   const storedReal = useOnboardingStore((x) => x.realMinutes);
-  const storedPick = useOnboardingStore((x) => x.pickups);
   const setReal = useOnboardingStore((x) => x.setReal);
   // On part de l'estimation : la jauge ne peut pas partir de zero sans
   // laisser croire que le vrai chiffre est zero.
   const [minutes, setMinutes] = useState(storedReal ?? guess);
-  const [pickups, setPickups] = useState(storedPick ?? 40);
-
-  const bump = (delta: number) => {
-    setPickups((n) => Math.min(PICK_MAX, Math.max(PICK_MIN, n + delta)));
-    haptics.tick();
-  };
 
   return (
     <Screen
       cta={d.time.realCta}
-      onPress={() => { setReal(minutes, pickups); track('screen_time_set', { minutes, real: true }); onNext(); }}
+      onPress={() => { setReal(minutes); track('screen_time_set', { minutes, real: true }); onNext(); }}
       hue="warm"
     >
       <Text variant="displayM">{d.time.realTitle}</Text>
@@ -144,18 +135,6 @@ export function RealTime({ onNext }: P) {
         <VerticalGauge minutes={minutes} onChange={setMinutes} />
       </View>
 
-      <View style={st.stepper}>
-        <Pressable onPress={() => bump(-PICK_STEP)} hitSlop={10} style={st.stepBtn} accessibilityRole="button">
-          <Minus size={18} strokeWidth={2.4} color={c.mist} />
-        </Pressable>
-        <View style={{ alignItems: 'center', minWidth: 120 }}>
-          <Text variant="title">{pickups}</Text>
-          <Text variant="label" tone="tertiary">{d.time.pickups}</Text>
-        </View>
-        <Pressable onPress={() => bump(PICK_STEP)} hitSlop={10} style={st.stepBtn} accessibilityRole="button">
-          <Plus size={18} strokeWidth={2.4} color={c.mist} />
-        </Pressable>
-      </View>
     </Screen>
   );
 }
@@ -354,45 +333,6 @@ function Column({
   );
 }
 
-/* ---------- L'analyse ---------- */
-
-/**
- * Ce que le chiffre contient : la moyenne, ce qu'elle fait a l'annee, les
- * prises en main. Pas de graphe sur sept jours — on n'a qu'UNE valeur, celle
- * qu'on a recopiee, et dessiner sept barres a partir d'une moyenne serait
- * inventer six chiffres.
- */
-export function Analysis({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(), []);
-  const { d, t } = useT();
-  const guess = useOnboardingStore((x) => x.minutesPerDay);
-  const real = useOnboardingStore((x) => x.realMinutes) ?? guess;
-  const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
-
-  return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="ember">
-      <Text variant="displayM" style={st.center}>{d.time.analysisTitle}</Text>
-      <Text variant="hero" color={c.danger} style={[st.center, { marginTop: space.md }]} numberOfLines={1} adjustsFontSizeToFit>
-        {formatHours(real)}
-      </Text>
-      <Text variant="body" tone="secondary" style={st.center}>{d.time.analysisSub}</Text>
-      <Text variant="label" color={c.ember} style={[st.center, { marginTop: space.xs }]}>
-        {t(d.time.perYear, { h: formatHours(real * 365) })}
-      </Text>
-
-      {pickups > 0 && (
-        <View style={[st.card, { borderColor: withAlpha(c.mist, 0.12) }]}>
-          <Text variant="label" tone="tertiary">{d.time.pickupsTitle.toUpperCase()}</Text>
-          <Text variant="title" style={{ marginTop: 2 }}>
-            {t(d.time.pickupsBody, { n: pickups, y: (pickups * 365).toLocaleString() })}
-          </Text>
-        </View>
-      )}
-    </Screen>
-  );
-}
-
 /* ---------- L'age ---------- */
 
 export function AgeAsk({ onNext }: P) {
@@ -430,14 +370,6 @@ const sheet = () => StyleSheet.create({
   path: { marginTop: space.lg, gap: space.sm },
   pathRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  stepper: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: space.lg, marginTop: space.md,
-  },
-  stepBtn: {
-    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha('#FAFAFA', 0.1),
-  },
   stage: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.md, marginTop: space.xl },
   col: { alignItems: 'center', gap: space.sm, width: 92 },
   colValue: { height: 28, justifyContent: 'flex-end' },
@@ -450,9 +382,5 @@ const sheet = () => StyleSheet.create({
   deltaSlot: { width: 112, height: COL_H + 28 + space.sm, alignItems: 'center', justifyContent: 'center' },
   deltaPill: { alignItems: 'center', gap: 2, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1 },
   verdictSlot: { minHeight: 120, marginTop: space.xl },
-  card: {
-    marginTop: space.lg, padding: space.md, borderRadius: 18, borderWidth: 1,
-    backgroundColor: withAlpha('#FAFAFA', 0.05),
-  },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });
