@@ -1,4 +1,4 @@
-import { useContext, useMemo, type ReactNode } from 'react';
+import { useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,7 +19,7 @@ import { Corti, type CortiLevel } from './Corti';
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
   tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti, note,
-  still = false, emblem, stars = true,
+  still = false, emblem, stars = true, readyAfter = 0,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -78,6 +78,15 @@ export function Screen({
   still?: boolean;
   /** La poussiere lumineuse du fond. Coupee la ou elle gene la lecture. */
   stars?: boolean;
+  /**
+   * Le temps, en millisecondes, pendant lequel on ne peut PAS avancer.
+   *
+   * Un ecran qui s'anime se laissait sauter d'un tap au premier dixieme de
+   * seconde — et le parcours se courait au lieu de se regarder. Tant que ce
+   * delai court, le bouton est eteint et l'ecran ne repond pas au toucher ;
+   * l'invite « touche pour continuer » n'arrive qu'a ce moment-la.
+   */
+  readyAfter?: number;
   /** Une icone en tete du contenu : ce que l'ecran demande, avant qu'on lise. */
   emblem?: ReactNode;
 }) {
@@ -87,8 +96,17 @@ export function Screen({
 
   const Root: React.ElementType = tapToContinue ? Pressable : View;
 
+  const [locked, setLocked] = useState(readyAfter > 0);
+  useEffect(() => {
+    if (readyAfter <= 0) return;
+    const id = setTimeout(() => setLocked(false), readyAfter);
+    return () => clearTimeout(id);
+  }, [readyAfter]);
+  const tap = tapToContinue && onPress ? () => { if (!locked) onPress(); } : undefined;
+  const hintAt = Math.max(hintDelay, readyAfter);
+
   return (
-    <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
+    <Root style={styles.root} onPress={tap}>
       {backdrop}
       <Glow hue={hue} level={hueLevel} />
       {stars && <Stars count={14} />}
@@ -130,14 +148,14 @@ export function Screen({
         ) : tapToContinue ? (
           // L'invite n'apparait qu'apres le texte : le silence fait le suspense.
           <Animated.View
-            entering={FadeIn.delay(hintDelay).duration(900)}
+            entering={FadeIn.delay(hintAt).duration(900)}
             style={styles.hint}
           >
             <Text variant="label" tone="tertiary">{cta}</Text>
           </Animated.View>
         ) : (
           <View style={styles.footer}>
-            <Button label={cta} onPress={onPress ?? (() => {})} disabled={disabled} />
+            <Button label={cta} onPress={onPress ?? (() => {})} disabled={disabled || locked} />
             {secondary && onSecondary && (
               <Button label={secondary} onPress={onSecondary} variant="ghost" />
             )}

@@ -1,9 +1,9 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowRight, X } from 'lucide-react-native';
-import { CortiRig } from '@/components/CortiRig';
+import { ArrowRight, Check, Minus, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -20,6 +20,8 @@ import {
 import { scheduleTrialReminder } from '@/services/trial';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
+
+const LOCKUP = require('@/assets/brand/lockup.png');
 
 type Plan = 'annual' | 'weekly';
 
@@ -252,8 +254,13 @@ export function Paywall(
     <Screen
       /*
         Un fond a lui, et pas de poussiere lumineuse.
-        Le degrade violet-bleu dit qu'on a change de piece ; les points qui
-        flottaient en fond passaient derriere les forfaits.
+
+        Tous les ecrans partagent le meme noir — c'est ce qui fait qu'on est
+        dans la meme app. Mais on n'arrive pas sur le paywall pour lire une
+        etape de plus, et un ecran de vente identique au precedent ne donne
+        envie de rien. Le degrade violet-bleu dit qu'on a change de piece.
+        Les points qui flottent en fond, eux, passaient DERRIERE les cartes de
+        forfait et on ne savait plus ce qu'on regardait.
       */
       backdrop={
         <LinearGradient
@@ -265,6 +272,7 @@ export function Paywall(
         />
       }
       stars={false}
+      // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
       cta={
         busy || loading
           ? d.pay.wait
@@ -275,34 +283,20 @@ export function Paywall(
       note={
         !storeDown ? (
           /*
-            Sous le bouton, en tout petit : « annule quand tu veux » et les
-            quatre liens. Le prix, lui, est juste AU-DESSUS du bouton, la ou
-            l'oeil est quand la main se pose.
+            Le prix, sous le bouton, en toutes lettres — et c'est le SEUL
+            endroit ou l'essai est annonce. Il l'etait aussi dans une frise,
+            dans une carte et dans les conditions : quatre fois la meme phrase
+            sur un ecran, et le prix se noyait dedans.
           */
-          <View style={st.foot}>
-            <Text style={[st.tiny, { color: withAlpha(c.mist, 0.55) }]}>{d.pay.cancelAny}</Text>
-            <View style={st.legal}>
-              <Pressable onPress={() => { haptics.tap(); void Linking.openURL(TERMS); }} hitSlop={8}>
-                <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>{d.pay.terms}</Text>
-              </Pressable>
-              <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>·</Text>
-              <Pressable onPress={() => { haptics.tap(); void Linking.openURL(PRIVACY); }} hitSlop={8}>
-                <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>{d.pay.privacy}</Text>
-              </Pressable>
-              <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>·</Text>
-              <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
-                <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>{PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}</Text>
-              </Pressable>
-              {PURCHASES_ENABLED && Platform.OS === 'ios' && (
-                <>
-                  <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>·</Text>
-                  <Pressable onPress={() => { void promo(); }} hitSlop={8}>
-                    <Text style={[st.tiny, { color: withAlpha(c.mist, 0.42) }]}>{d.pay.promo}</Text>
-                  </Pressable>
-                </>
-              )}
-            </View>
-          </View>
+          <Text variant="label" tone="tertiary" style={st.center}>
+            {plan === 'annual'
+              ? t(d.pay.priceLine, {
+                n: TRIAL_DAYS,
+                m: money(euros(annual, ANNUAL_EUR) / 12),
+                y: price(annual, FALLBACK.annual),
+              })
+              : t(d.pay.priceWeek, { p: price(weekly, FALLBACK.weekly) })}
+          </Text>
         ) : (
           <Animated.View entering={FadeIn.duration(320)}>
             <Text variant="label" color={c.ember} style={st.center}>
@@ -321,8 +315,9 @@ export function Paywall(
       disabled={busy || loading}
       hue="warm"
     >
-      {/* La croix seule, en haut a droite, apres sept secondes. */}
       <View style={st.head}>
+        <Image source={LOCKUP} style={st.lockup} contentFit="contain" />
+        <View style={{ flex: 1 }} />
         {canExit && (
           <Animated.View entering={FadeIn.duration(420)}>
             <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close} accessibilityRole="button" accessibilityLabel={d.misc.close} testID="paywall-close">
@@ -332,12 +327,9 @@ export function Paywall(
         )}
       </View>
 
-      {/* Corti en haut, petit, comme la mascotte de reference : un visage,
-          pas une scene. */}
-      <Animated.View entering={FadeIn.duration(500)} style={st.mascot}>
-        <CortiRig level={3} size={112} expression="ravi" />
-      </Animated.View>
-
+      <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
+        {d.pay.ready}
+      </Text>
       <Text variant="displayM" style={st.center}>
         {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
         <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>
@@ -350,33 +342,54 @@ export function Paywall(
       {/* Son chiffre, et la cible : la moitie, sur SON temps a lui. */}
       {minutes > 0 && <Goal minutes={minutes} />}
 
-      {/* Deux lignes, le prix a la semaine des deux cotes : on compare d'un
-          coup d'oeil, et l'annuel se choisit tout seul. */}
+      {/* Le choix, en premier et en grand : c'est la seule chose a decider ici. */}
       <View style={st.plans}>
-        <PlanRow
+        <PlanCard
           label={d.pay.annual}
-          price={t(d.pay.perWeek, { p: money(euros(annual, ANNUAL_EUR) / 52) })}
+          price={price(annual, FALLBACK.annual)}
+          per={t(d.pay.annualNote, { p: money(euros(annual, ANNUAL_EUR) / 52) })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
-        <PlanRow
+        <PlanCard
           label={d.pay.weekly}
-          price={t(d.pay.perWeek, { p: price(weekly, FALLBACK.weekly) })}
+          price={price(weekly, FALLBACK.weekly)}
+          per={d.pay.weeklyNote}
           on={plan === 'weekly'}
           onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
       </View>
 
-      {/* Ce qui sera preleve, en une ligne, juste au-dessus du bouton — et
-          c'est le SEUL endroit ou l'essai est ecrit. */}
-      <Text style={[st.billed, { color: withAlpha(c.mist, 0.6) }]}>
-        {plan === 'annual'
-          ? t(d.pay.priceLine, { n: TRIAL_DAYS, y: price(annual, FALLBACK.annual) })
-          : t(d.pay.priceWeek, { p: price(weekly, FALLBACK.weekly) })}
-      </Text>
+      <Table />
+
+      <Text variant="label" tone="tertiary" style={st.terms}>{d.pay.renew}</Text>
 
       <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
+
+      {/* Le pied de page : une seule ligne fine, ses quatre liens separes
+          par des points. Il vivait sur trois rangees de tailles differentes. */}
+      <View style={st.legal}>
+        <Pressable onPress={() => { haptics.tap(); void Linking.openURL(TERMS); }} hitSlop={8}>
+          <Text variant="label" tone="tertiary">{d.pay.terms}</Text>
+        </Pressable>
+        <Text variant="label" tone="tertiary">·</Text>
+        <Pressable onPress={() => { haptics.tap(); void Linking.openURL(PRIVACY); }} hitSlop={8}>
+          <Text variant="label" tone="tertiary">{d.pay.privacy}</Text>
+        </Pressable>
+        <Text variant="label" tone="tertiary">·</Text>
+        <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
+          <Text variant="label" tone="tertiary">{PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}</Text>
+        </Pressable>
+        {PURCHASES_ENABLED && Platform.OS === 'ios' && (
+          <>
+            <Text variant="label" tone="tertiary">·</Text>
+            <Pressable onPress={() => { void promo(); }} hitSlop={8}>
+              <Text variant="label" tone="tertiary">{d.pay.promo}</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
     </Screen>
   );
 }
@@ -385,8 +398,9 @@ export function Paywall(
  * Aujourd'hui, et l'objectif : deux barres, la seconde moitie moins haute.
  *
  * Son temps d'aujourd'hui, et la moitie, en heures. La cible est la moitie
- * de SON chiffre, arrondie au quart d'heure, jamais une moyenne. Pas de
- * phrase dessous : les deux chiffres se lisent seuls.
+ * de SON chiffre, arrondie au quart d'heure, jamais une moyenne — un
+ * objectif qu'on reconnait comme le sien se tient. Pas de phrase dessous :
+ * les deux chiffres se lisent seuls.
  */
 function Goal({ minutes }: { minutes: number }) {
   const c = useColors();
@@ -395,9 +409,15 @@ function Goal({ minutes }: { minutes: number }) {
   const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
   return (
     <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.goal}>
+      <LinearGradient
+        colors={[withAlpha(c.mist, 0.08), withAlpha(c.mist, 0.03)]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={st.goalRow}>
         <GoalBar label={d.pay.today} value={formatHours(minutes)} h={1} tone={c.danger} />
-        <ArrowRight size={18} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 30 }} />
+        <ArrowRight size={20} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 34 }} />
         <GoalBar label={d.pay.goal} value={formatHours(target)} h={target / Math.max(minutes, 1)} tone={c.accent} />
       </View>
     </Animated.View>
@@ -411,21 +431,64 @@ function GoalBar({
   const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.goalCol}>
-      <Text variant="button" color={tone}>{value}</Text>
+      <Text variant="title" color={tone}>{value}</Text>
       <View style={st.goalTrack}>
-        <View style={[st.goalFill, { height: Math.max(8, 64 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
+        <View style={[st.goalFill, { height: Math.max(10, 88 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
       </View>
       <Text variant="label" tone="tertiary" style={st.center}>{label}</Text>
     </View>
   );
 }
 
-/** Un forfait, sur une ligne : le nom a gauche, le prix a la semaine a droite. */
-function PlanRow({
-  label, price, badge, on, onPress,
+/*
+ * Ce que chaque colonne contient, tel que l'app le fait vraiment.
+ *
+ * Instagram est gratuit, quinze minutes par jour ; le reste est Pro. Les
+ * lignes que les deux ont — Corti, la publication — sont la aussi : un
+ * tableau qui ne montre que des manques se lit comme un reproche.
+ */
+const FEATURES: ['f1' | 'f2' | 'f3' | 'f4' | 'f5' | 'f6' | 'f7' | 'f8', 'yes' | 'no' | 'cap'][] = [
+  ['f1', 'yes'], ['f2', 'no'], ['f3', 'cap'], ['f4', 'no'], ['f5', 'no'], ['f6', 'no'], ['f7', 'yes'], ['f8', 'yes'],
+];
+
+/** Le tableau : ce qu'on obtient, gratuit contre Pro, ligne par ligne. */
+function Table() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
+  return (
+    <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
+      <View style={st.tableHead}>
+        <Text variant="button" style={{ flex: 1 }}>{d.pay.tableTitle}</Text>
+        <Text variant="label" tone="tertiary" style={st.colFree}>{d.pay.colFree}</Text>
+        <View style={st.colPro}>
+          <Text variant="label" color={c.night}>{d.pay.colPro}</Text>
+        </View>
+      </View>
+      {FEATURES.map(([key, free], i) => (
+        <View key={key} style={[st.tableRow, i === FEATURES.length - 1 && { borderBottomWidth: 0 }]}>
+          <Text variant="label" tone="secondary" style={{ flex: 1, lineHeight: 16 }}>{d.pay[key]}</Text>
+          <View style={st.colFree}>
+            {free === 'yes' && <Check size={15} strokeWidth={2.6} color={withAlpha(c.mist, 0.55)} />}
+            {free === 'no' && <Minus size={15} strokeWidth={2.4} color={withAlpha(c.mist, 0.28)} />}
+            {free === 'cap' && <Text variant="label" tone="tertiary">{d.pay.freeCap}</Text>}
+          </View>
+          <View style={[st.colPro, st.colProCell]}>
+            <Check size={16} strokeWidth={3} color={c.accent} />
+          </View>
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+/** Un forfait : le prix en grand, le choix a la couleur. */
+function PlanCard({
+  label, price, per, badge, on, onPress,
 }: {
   label: string;
   price: string;
+  per: string;
   badge?: string;
   on: boolean;
   onPress: () => void;
@@ -435,53 +498,102 @@ function PlanRow({
   return (
     <Pressable
       onPress={onPress}
-      style={[st.plan, on ? st.planOn : st.planOff]}
+      style={[st.plan, on && st.planOn]}
       accessibilityRole="radio"
       accessibilityState={{ selected: on }}
     >
-      <View style={st.planLeft}>
-        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.55)}>{label}</Text>
+      {on && (
+        <LinearGradient
+          colors={[withAlpha(c.accent, 0.28), withAlpha(c.accentWarm, 0.08)]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <View style={st.planTop}>
+        <Text variant="label" tone={on ? undefined : 'secondary'}>{label}</Text>
         {badge && (
-          <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.16) }]}>
-            <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>{badge}</Text>
+          <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.18) }]}>
+            <Text variant="label" color={on ? c.night : c.mist}>{badge}</Text>
           </View>
         )}
       </View>
-      <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.55)}>{price}</Text>
+      <Text variant="displayM" color={on ? c.mist : withAlpha(c.mist, 0.7)}>{price}</Text>
+      <Text variant="label" tone="tertiary">{per}</Text>
+      <View style={[st.tick, on && st.tickOn]}>
+        {on && <Check size={13} strokeWidth={3} color={c.night} />}
+      </View>
     </Pressable>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', minHeight: 34, marginBottom: space.xs },
+  head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.xl },
+  lockup: { width: 100, height: 38 },
   close: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
-  mascot: { alignItems: 'center', marginBottom: space.md },
   center: { textAlign: 'center' },
   sub: { marginTop: space.sm },
-  goal: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.lg },
+  goal: {
+    alignSelf: 'stretch', alignItems: 'center', marginTop: space.xl,
+    paddingVertical: space.lg, paddingHorizontal: space.lg, borderRadius: 22, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
+  },
   goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xl },
-  goalCol: { alignItems: 'center', gap: 6, width: 104 },
-  goalTrack: { height: 64, justifyContent: 'flex-end', alignSelf: 'stretch' },
+  goalCol: { alignItems: 'center', gap: 8, width: 116 },
+  goalTrack: { height: 88, justifyContent: 'flex-end', alignSelf: 'stretch' },
   goalFill: { borderRadius: 8, borderTopWidth: 3 },
-  plans: { marginTop: space.xl, gap: space.sm },
+  /* Deux cartes cote a cote, le prix en grand : le choix se voit de loin. */
+  plans: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
   plan: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md,
-    paddingHorizontal: space.lg, height: 58, borderRadius: 29, borderWidth: 1.5,
+    flex: 1, gap: 4, paddingHorizontal: space.md, paddingVertical: space.md, paddingBottom: space.lg,
+    borderRadius: 20, overflow: 'hidden',
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04),
   },
-  /* Le choisi est clair et lumineux ; l'autre s'efface : un seul regard suffit. */
   planOn: {
-    borderColor: withAlpha(c.mist, 0.9), backgroundColor: withAlpha(c.mist, 0.14),
-    shadowColor: c.mist, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
+    borderColor: withAlpha(c.accent, 0.9), borderWidth: 1.5,
+    shadowColor: c.accent, shadowOpacity: 0.45, shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
   },
-  planOff: { borderColor: withAlpha(c.mist, 0.18), backgroundColor: withAlpha(c.mist, 0.04) },
-  planLeft: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
-  badge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7, backgroundColor: c.accent },
-  billed: { textAlign: 'center', marginTop: space.md, fontSize: 12, lineHeight: 16, fontFamily: 'SansMedium' },
-  foot: { alignItems: 'center', gap: 4 },
-  tiny: { fontSize: 11, lineHeight: 14, fontFamily: 'SansMedium', textAlign: 'center' },
-  legal: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  planTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  tick: {
+    position: 'absolute', right: space.md, bottom: space.md,
+    width: 22, height: 22, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.26),
+  },
+  tickOn: { backgroundColor: c.accent, borderColor: c.accent },
+  badge: {
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7,
+    backgroundColor: c.accent,
+  },
+  table: {
+    marginTop: space.lg, borderRadius: 20, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
+    backgroundColor: withAlpha(c.mist, 0.04),
+  },
+  tableHead: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    paddingLeft: space.md, paddingVertical: space.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.14),
+  },
+  tableRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    paddingLeft: space.md, paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.08),
+  },
+  colFree: { width: 64, alignItems: 'center', justifyContent: 'center' },
+  colPro: {
+    width: 56, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 6, backgroundColor: c.accent,
+  },
+  colProCell: { backgroundColor: withAlpha(c.accent, 0.14) },
+  terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
+  legal: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center',
+    gap: space.sm, marginTop: space.md, paddingVertical: space.sm,
+  },
 });

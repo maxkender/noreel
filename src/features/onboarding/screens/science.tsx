@@ -7,7 +7,7 @@ import { radii, space } from '@/theme/spacing';
 import { useColors } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { CortiRig, type CortiExpression } from '@/components/CortiRig';
 import type { CortiLevel } from '@/components/Corti';
 import { useT } from '@/i18n';
@@ -55,8 +55,12 @@ function SciencePage({
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const c = useColors();
+  // On ne peut pas avancer avant d'avoir VU : le titre qui s'ecrit, la
+  // phrase qui arrive apres lui, l'image qui se pose. Le tap ne compte
+  // qu'ensuite, et l'invite n'apparait qu'a ce moment-la.
+  const ready = typeDuration(title, 42, 0) + (body ? 1500 : 800) + (children ? 1400 : 600);
   return (
-    <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={2400} center hue="ember" hueLevel={harm}>
+    <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={ready} readyAfter={ready} center hue="ember" hueLevel={harm}>
       <Animated.View entering={FadeInDown.duration(520)} style={st.face}>
         <CortiRig level={level} size={116} expression={expression ?? 'auto'} />
         {/* L'embleme se pose sur son epaule : un signe a cote de lui, pas un

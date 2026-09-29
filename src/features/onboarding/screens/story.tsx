@@ -51,7 +51,7 @@ export function NotBlocker({ onNext }: P) {
   }, []);
 
   return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
+    <Screen cta={d.ob.keepGoing} onPress={onNext} readyAfter={DELAYS[2] + 900} center hue="accent">
       <Typewriter text={d.story.whyTitle} variant="displayM" speed={36} style={st.center} />
 
       <View style={st.pills}>
@@ -91,7 +91,7 @@ export function DmReel({ onNext }: P) {
   const { d } = useT();
 
   return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
+    <Screen cta={d.ob.keepGoing} onPress={onNext} readyAfter={4300} center hue="accent">
       <Typewriter text={d.story.dmTitle} variant="displayM" speed={36} style={st.center} />
 
       <View style={st.phone}>

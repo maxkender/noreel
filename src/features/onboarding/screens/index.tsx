@@ -39,7 +39,7 @@ export function S1({ onNext }: P) {
   const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} hue="accent">
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} readyAfter={4400} hue="accent">
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
@@ -299,7 +299,7 @@ export function S6Years({ onNext }: P) {
   }, [L.phone]);
 
   return (
-    <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
+    <Screen cta={d.misc.reclaim} onPress={onNext} readyAfter={2200} center hue="ember">
       <Animated.View entering={FadeIn.duration(700)} style={s.yearsBlock}>
         <Text variant="label" tone="tertiary">{t(d.s6.lifeOf, { n: L.remaining })}</Text>
         <Text variant="hero" color={c.danger} style={s.center} numberOfLines={1} adjustsFontSizeToFit>

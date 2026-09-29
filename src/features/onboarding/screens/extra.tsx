@@ -46,7 +46,7 @@ export function Meet({ onNext }: P) {
   const name = useOnboardingStore((x) => x.firstName);
 
   return (
-    <Screen cta={d.corti.meetCta} onPress={onNext} center hue="accent">
+    <Screen cta={d.corti.meetCta} onPress={onNext} readyAfter={2400} center hue="accent">
       <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
         {/*
           Il ACCUEILLE : grands yeux ouverts, sourire franc.
@@ -270,7 +270,7 @@ export function Proof({ onNext }: P) {
 
 
   return (
-    <Screen cta={d.pay.ctaPlain} onPress={onNext} hue="accent" center>
+    <Screen cta={d.pay.ctaPlain} onPress={onNext} readyAfter={RAW_MS + HELD_MS + 1400} hue="accent" center>
       <Text variant="displayM" style={st.mid}>{d.proof.title}</Text>
 
       <View style={st.proofStage}>

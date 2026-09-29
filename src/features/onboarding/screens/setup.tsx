@@ -9,7 +9,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { SelectCard } from '@/components/SelectCard';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
@@ -162,7 +162,7 @@ export function Welcome({ onNext }: P) {
   const [hello] = useState(() => cortiReact('wave'));
 
   return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
+    <Screen cta={d.ob.keepGoing} onPress={onNext} readyAfter={typeDuration(d.ob.welcome1, 30, 0) + 500} center hue="accent">
       <Animated.View entering={FadeIn.duration(600)} style={{ alignItems: 'center', marginBottom: space.lg }}>
         <CortiRig level={3} size={150} expression="ravi" reaction={hello} arrive />
       </Animated.View>

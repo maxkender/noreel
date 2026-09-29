@@ -52,18 +52,19 @@ it('change le prix sous le bouton quand on change de forfait', () => {
     a la semaine — et jamais montrer les deux.
   */
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getByText(/jours d’essai|days free/i)).toBeTruthy();
+  expect(screen.getByText(/essai|trial/i)).toBeTruthy();
   fireEvent.press(screen.getByText(dict.pay.weekly));
-  expect(screen.queryByText(/jours d’essai|days free/i)).toBeNull();
-  expect(screen.getByText(/sans essai|no trial/i)).toBeTruthy();
+  expect(screen.queryByText(/essai gratuit|free trial/i)).toBeNull();
   expect(screen.getAllByText(/par semaine|per week|\/ ?week/i).length).toBeGreaterThanOrEqual(1);
 });
 
-it('ecrit le prix a la semaine sur les deux forfaits', () => {
-  // Le meme unite des deux cotes : c'est la comparaison qui rend l'annuel evident.
+it('dit ce que chaque colonne contient', () => {
+  // Instagram est gratuit, le reste est Pro : le tableau le dit ligne par ligne.
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getAllByText(/\/ ?semaine|\/ ?week/i).length).toBe(2);
-  expect(screen.getByText(dict.pay.cancelAny)).toBeTruthy();
+  expect(screen.getByText(dict.pay.tableTitle)).toBeTruthy();
+  expect(screen.getByText(dict.pay.f1)).toBeTruthy();
+  expect(screen.getByText(dict.pay.f4)).toBeTruthy();
+  expect(screen.getByText(dict.pay.freeCap)).toBeTruthy();
 });
 
 it('montre la destination, pas le point de depart', () => {
