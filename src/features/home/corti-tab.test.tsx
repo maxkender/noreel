@@ -33,12 +33,12 @@ it('montre les dix badges, verrouilles au depart, et dit comment les avoir', asy
   expect(screen.getByText(new RegExp(dict.cortiTab.bDay7H))).toBeTruthy();
 });
 
-it('un geste rapporte de l’XP sous les yeux, puis le premier badge', async () => {
+it('un geste rapporte des points de dopamine sous les yeux, puis le premier badge', async () => {
   render(<CortiTab onScroll={noop} />);
   await screen.findByText(dict.stats.reelsAvoided);
   fireEvent.press(screen.getAllByRole('checkbox')[0]);
   // L'XP d'abord, sans fenetre : le gain s'envole au-dessus de la barre.
-  expect(await screen.findByText(`+${XP.care} XP`)).toBeTruthy();
+  expect(await screen.findByText(`+${XP.care}`)).toBeTruthy();
   // Puis le badge « premier geste », debloque par ce geste — lui a sa fenetre.
   expect(await screen.findByText(dict.cortiTab.unlocked)).toBeTruthy();
   expect(screen.getByText(dict.cortiTab.bCare1H)).toBeTruthy();

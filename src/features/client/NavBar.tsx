@@ -35,8 +35,8 @@ export type NavAction = 'back' | 'reload' | 'forward' | 'account' | 'link' | 'se
  * marquer « deplace » au premier pixel empechait tout appui.
  */
 export function NavBar({
-  onAction,
-}: { onAction: (a: NavAction) => void }) {
+  onAction, accounts = 2,
+}: { onAction: (a: NavAction) => void; accounts?: number }) {
   const c = useColors();
   const styles = useMemo(() => sheet(c), [c]);
   const { d } = useT();
@@ -111,7 +111,11 @@ export function NavBar({
               partout ailleurs ici — un selecteur reconnu a sa forme ne
               survivrait pas au prochain remaniement, une adresse si.
             */}
-            <Key icon={UsersRound} label={d.client.switchAccount} onPress={() => act('account')} />
+            {/* Pas de « changer de compte » quand il n'y a qu'un compte : on
+                ajoute le second depuis les reglages, et la touche apparait. */}
+            {accounts >= 2 && (
+              <Key icon={UsersRound} label={d.client.switchAccount} onPress={() => act('account')} />
+            )}
             {/* Un lien copie ailleurs s'ouvre ICI, et non dans l'app d'origine. */}
             <Key icon={Link} label={d.client.linkTitle} onPress={() => act('link')} />
             <Key icon={Gear} label={d.client.settings} onPress={() => act('settings')} colour={c.accent} />

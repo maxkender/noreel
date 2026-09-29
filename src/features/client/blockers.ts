@@ -815,39 +815,6 @@ export const INSTAGRAM_BLOCKER = `
   }
 
   /*
-   * Changer de compte SANS quitter la page.
-   *
-   * On menait vers /accounts/login/ : c'est la page d'ajout d'un compte, et
-   * Instagram y termine souvent la session en cours — on croyait basculer, on
-   * se retrouvait deconnecte. Or Instagram sait deja tenir plusieurs comptes ;
-   * son selecteur est dans la page, il suffit de l'ouvrir.
-   *
-   * On le cherche par son LIBELLE, jamais par une classe, et on remonte le
-   * chemin que ferait un doigt : le selecteur s'il est deja la, sinon le menu,
-   * sinon l'onglet profil. Chaque etape rend la main et la suivante retente —
-   * l'interface met un instant a s'ouvrir.
-   *
-   * C'est du texte, donc c'est fragile : si Instagram renomme son option, le
-   * commutateur ne trouve plus rien et le dit, au lieu de deconnecter.
-   */
-  const SWITCH = /changer de compte|switch accounts?|changer de profil/i;
-  const MENU = /plus d.options|more options|param.tres|settings|menu/i;
-  const PROFILE = /profil|profile/i;
-
-  const __clickBy = (re) => {
-    const sel = 'button, [role="button"], a, div[tabindex], span[role="link"]';
-    for (const n of document.querySelectorAll(sel)) {
-      const label = n.getAttribute('aria-label') || '';
-      const text = (n.textContent || '').trim();
-      if (re.test(label) || (text && text.length < 40 && re.test(text))) {
-        n.click();
-        return true;
-      }
-    }
-    return false;
-  };
-
-  /*
    * Ce qui fait encore un reel, une publicite, une suggestion.
    *
    * Relus a chaque passe sur les elements deja caches : le fil recycle ses
@@ -859,31 +826,42 @@ export const INSTAGRAM_BLOCKER = `
   __still.suggested = (el) => SUGGEST.test((el.textContent || '').slice(0, 300));
 
   /*
-    Qui est connecte, d'apres la page elle-meme.
+    Qui est connecte, d'apres la page elle-meme — et sa photo.
 
     Instagram ne nous dit rien, mais il ECRIT le pseudo : l'onglet profil de
-    la barre du bas pointe sur /pseudo/. C'est la seule source fiable hors
-    d'une page de profil, et elle ne coute qu'une lecture d'attribut.
-
-    Sans ca, la feuille « changer de compte » affichait « compte connecte »,
-    ce qui ne dit pas de QUEL compte on parle — precisement la question qu'on
-    se pose quand on en a deux.
+    sa barre pointe sur /pseudo/ et porte la photo de profil, avec un alt
+    « Photo de profil de pseudo ». La barre est en position fixe (en bas sur
+    mobile, a gauche sur grand ecran) ; c'est ce qui la distingue des avatars
+    du fil, qui pointent aussi vers des profils. Verifie sur le site le
+    29 septembre 2026 : pas de <nav> sur mobile, un conteneur fixe, oui.
   */
+  const __fixed = (el) => {
+    let e = el;
+    while (e && e !== document.body) {
+      if (getComputedStyle(e).position === 'fixed') return true;
+      e = e.parentElement;
+    }
+    return false;
+  };
   window.__nrWho = () => {
     try {
-      const links = document.querySelectorAll('nav a[href^="/"], [role="navigation"] a[href^="/"]');
-      for (const a of links) {
+      const skip = ['explore', 'reels', 'direct', 'accounts', 'popular', 'stories', 'p', 'reel'];
+      let best = null;
+      for (const a of document.querySelectorAll('a[href^="/"]')) {
         const h = a.getAttribute('href') || '';
         // Classe de caracteres plutot que barre echappee : dans un gabarit
         // de chaine, \/ devient / a l'injection et la regex ne compile plus.
         const m = h.match(/^[/]([A-Za-z0-9._]{1,30})[/]$/);
-        // Les onglets fixes portent les memes adresses : on les ecarte.
-        if (m && !['explore', 'reels', 'direct', 'accounts'].includes(m[1])) {
-          __post({ t: 'who', u: m[1] });
-          return;
-        }
+        if (!m || skip.includes(m[1])) continue;
+        const img = a.querySelector('img');
+        const alt = img ? (img.getAttribute('alt') || '') : '';
+        const own = alt.indexOf(m[1]) >= 0;
+        const fixed = __fixed(a);
+        const score = (fixed ? 4 : 0) + (own ? 2 : 0) + (a.closest('nav') ? 1 : 0);
+        if (score > 0 && (!best || score > best.score)) best = { score, u: m[1], pic: own && img ? img.currentSrc || img.src || '' : '' };
       }
-      __post({ t: 'who', u: '' });
+      if (best) __post({ t: 'who', u: best.u, pic: best.pic });
+      else __post({ t: 'who', u: '' });
     } catch (e) {
       __post({ t: 'who', u: '' });
     }
@@ -908,67 +886,6 @@ export const INSTAGRAM_BLOCKER = `
       if (/[/]create([/]|$)/.test(href) || CREATE.test(own.trim()) || CREATE.test(sub.trim())) __post({ t: 'post' });
     } catch (err) { /* rien */ }
   }, true);
-
-  /*
-    Ajouter un compte : la porte du selecteur d'Instagram, puis son entree
-    « se connecter a un compte existant ». Instagram garde alors les deux
-    sessions, et on bascule de l'une a l'autre depuis le meme selecteur.
-  */
-  const ADD = /se connecter . un compte existant|log ?in(to)? an existing account|log in to another account|ajouter un compte|add account|ajouter un profil/i;
-  window.__nrAdd = () => {
-    const tryAdd = () => {
-      if (__clickBy(ADD)) { __post({ t: 'add', ok: true }); return true; }
-      return false;
-    };
-    if (tryAdd()) return;
-    if (__clickBy(SWITCH)) { setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800); return; }
-    if (__clickBy(MENU)) {
-      setTimeout(() => {
-        if (tryAdd()) return;
-        if (__clickBy(SWITCH)) setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800);
-        else __post({ t: 'add', ok: false });
-      }, 700);
-      return;
-    }
-    if (__clickBy(PROFILE)) {
-      setTimeout(() => {
-        if (__clickBy(SWITCH) || __clickBy(MENU)) {
-          setTimeout(() => { if (!tryAdd()) { if (__clickBy(SWITCH)) setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800); else __post({ t: 'add', ok: false }); } }, 700);
-        } else __post({ t: 'add', ok: false });
-      }, 900);
-      return;
-    }
-    __post({ t: 'add', ok: false });
-  };
-
-  window.__nrSwitch = () => {
-    // 1. Le selecteur est deja ouvert, ou son entree est visible.
-    if (__clickBy(SWITCH)) { __post({ t: 'switch', ok: true }); return; }
-
-    // 2. Sinon on ouvre le menu, et on retente.
-    if (__clickBy(MENU)) {
-      setTimeout(() => {
-        if (__clickBy(SWITCH)) __post({ t: 'switch', ok: true });
-        else __post({ t: 'switch', ok: false });
-      }, 700);
-      return;
-    }
-
-    // 3. Sinon on passe par le profil, ou vit l'entree sur mobile.
-    if (__clickBy(PROFILE)) {
-      setTimeout(() => {
-        if (__clickBy(SWITCH) || __clickBy(MENU)) {
-          setTimeout(() => {
-            if (__clickBy(SWITCH)) __post({ t: 'switch', ok: true });
-            else __post({ t: 'switch', ok: false });
-          }, 700);
-        } else __post({ t: 'switch', ok: false });
-      }, 900);
-      return;
-    }
-
-    __post({ t: 'switch', ok: false });
-  };
 
   __watch(() => {
     __restore();

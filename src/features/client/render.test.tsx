@@ -104,6 +104,11 @@ describe('le panneau de reglages du client', () => {
           onGo={() => {}}
           onPass={() => {}}
           onPost={() => {}}
+          accounts={[]}
+          current={null}
+          onPick={() => {}}
+          onAdd={() => {}}
+          onRemove={() => {}}
         />
       );
       expect(r.toJSON()).toBeTruthy();

@@ -338,7 +338,7 @@ export function Paywall(
         <View style={{ flex: 1 }} />
         {canExit && (
           <Animated.View entering={FadeIn.duration(420)}>
-            <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close}>
+            <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={16} style={st.close} accessibilityRole="button" accessibilityLabel={d.misc.close} testID="paywall-close">
               <X size={19} strokeWidth={2.2} color={withAlpha(c.mist, 0.55)} />
             </Pressable>
           </Animated.View>

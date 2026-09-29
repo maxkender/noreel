@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
@@ -26,14 +26,15 @@ import { BadgeArt } from './BadgeArt';
 import type { Scroll } from './parts';
 
 /*
- * L'onglet de Corti : un niveau en XP, des badges, un geste.
+ * L'onglet de Corti : ses points de dopamine, des badges, un geste.
  *
  * Son etat suivait les jours, un compte qui ne bouge qu'a minuit : on
  * cochait un geste et rien ne changeait sous les yeux. Maintenant chaque
- * geste rapporte de l'XP, la barre monte tout de suite, « +15 XP » s'envole
- * — et ce qui l'abime (un laissez-passer, une journee sans filtre) la fait
- * descendre. Les niveaux sont des paliers d'XP. Une fenetre ne s'ouvre que
- * pour ce qui le merite : un badge, un niveau.
+ * geste rapporte des points de dopamine — c'est la SANTE de Corti, pas un
+ * score de jeu — la barre monte tout de suite, le chiffre grimpe, le gain
+ * s'affiche et Corti fete ca. Ce qui l'abime (un laissez-passer, une journee
+ * sans filtre) la fait descendre. Ses etats sont des paliers de points. Une
+ * fenetre ne s'ouvre que pour ce qui le merite : un badge, un palier.
  */
 
 /** Le mot et la ligne d'un badge, lus dans le dictionnaire par son identifiant. */
@@ -62,7 +63,11 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [peek, setPeek] = useState<Badge | null>(null);
   /** Le « +15 XP » qui s'envole, et une cle pour le rejouer. */
   const [gain, setGain] = useState<{ n: number; id: number } | null>(null);
+  const gains = useRef(0);
   const [dayDone, setDayDone] = useState(false);
+  /** Le chiffre AFFICHE monte vers le vrai : on regarde les points arriver. */
+  const [shown, setShown] = useState(0);
+  const first = useRef(true);
   const today = careOfTheDay();
   // La barre d'XP vit sur le fil natif : elle monte a chaque geste.
   const [bar] = useState(() => new RNAnimated.Value(0));
@@ -84,8 +89,11 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
     setDone(list);
     const x = await stats();
     setS(x);
-    // L'XP d'abord, sous les yeux : la barre monte, le gain s'envole.
-    setGain({ n: XP.care, id: Date.now() });
+    // Les points d'abord, sous les yeux : la barre monte, le chiffre grimpe,
+    // le gain s'envole, et Corti fete ca.
+    gains.current += 1;
+    setGain({ n: XP.care, id: gains.current });
+    setHooray(cortiReact('celebrate'));
     if (list.length >= CARE_PER_DAY) setDayDone(true);
     // Puis ce qui se fete dans une fenetre : un niveau, un badge.
     if (x.level > before) setPops((p) => [...p, { kind: 'level', level: x.level }]);
@@ -116,12 +124,28 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const missing = next ? next - xp : 0;
 
   useEffect(() => {
-    RNAnimated.timing(bar, { toValue: progress, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    RNAnimated.timing(bar, { toValue: progress, duration: 1300, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [progress, bar]);
+  // Le chiffre grimpe vers le vrai, en une seconde ; la premiere fois, il se pose.
+  useEffect(() => {
+    const from = first.current ? xp : shown;
+    first.current = false;
+    const steps = 20;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      const k = 1 - Math.pow(1 - i / steps, 3);
+      setShown(Math.round(from + (xp - from) * k));
+      if (i >= steps) clearInterval(id);
+    }, 1000 / steps);
+    return () => clearInterval(id);
+  // Le chiffre affiche ne doit repartir que quand le VRAI change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xp]);
   // Le gain s'efface tout seul, et la journee complete aussi.
   useEffect(() => {
     if (!gain) return;
-    const id = setTimeout(() => setGain(null), 1400);
+    const id = setTimeout(() => setGain(null), 2600);
     return () => clearTimeout(id);
   }, [gain]);
   useEffect(() => {
@@ -164,27 +188,35 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         <Text variant="lead" color={c.accent} style={st.line}>{cortiLine(level, s.days)}</Text>
       )}
 
-      {/* Le niveau, en XP : la barre monte a chaque geste, sous les yeux. */}
+      {/* Les points de dopamine : la barre monte a chaque geste, sous les yeux. */}
       <Glass radius={24} intensity={50} warmEdge="none" style={st.card}>
         <View style={st.between}>
-          <Text variant="label" tone="tertiary">{t(d.cortiTab.level, { n: level + 1 })}</Text>
-          <Text variant="label" color={tone}>
-            {next ? t(d.cortiTab.xp, { n: xp, m: next }) : t(d.cortiTab.xpMax, { n: xp })}
+          <Text variant="label" tone="tertiary">{d.cortiTab.level}</Text>
+          <Text variant="label" color={tone} style={{ textTransform: 'capitalize' }}>{names[level]}</Text>
+        </View>
+        <View style={st.pointsRow}>
+          <Text variant="displayM" color={tone}>{String(shown)}</Text>
+          <Text variant="label" tone="tertiary" style={{ marginBottom: 6 }}>
+            {next ? t(d.cortiTab.xp, { n: '', m: next }).replace(/^\s*\/\s*/, '/ ') + ` ${d.cortiTab.points}` : d.cortiTab.points}
           </Text>
         </View>
-        <Text variant="displayM" color={tone} style={{ textTransform: 'capitalize' }}>{names[level]}</Text>
         <View style={st.track}>
           <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
-          {gain && (
-            <Animated.View key={gain.id} entering={FadeInUp.duration(320)} exiting={FadeOut.duration(300)} style={st.gain} pointerEvents="none">
-              <Text variant="button" color={tone}>{t(d.cortiTab.gain, { n: gain.n })}</Text>
-            </Animated.View>
-          )}
         </View>
         <Text variant="body" tone="secondary" style={{ marginTop: space.md }}>
           {next ? t(d.cortiTab.nextIn, { n: missing, level: names[level + 1] }) : d.cortiTab.maxed}
         </Text>
-        <Text variant="label" tone="tertiary" style={{ marginTop: space.xs }}>{d.cortiTab.rules}</Text>
+
+        {/* Le gain : une carte qui glisse sous la barre, le temps de la lire. */}
+        {gain && (
+          <Animated.View key={gain.id} entering={FadeInUp.duration(380)} exiting={FadeOut.duration(320)} style={[st.gainCard, { backgroundColor: withAlpha(tone, 0.14), borderColor: withAlpha(tone, 0.4) }]}>
+            <Text variant="displayM" color={tone}>{t(d.cortiTab.gain, { n: gain.n })}</Text>
+            <View style={{ flex: 1 }}>
+              <Text variant="button">{d.cortiTab.gainedTitle}</Text>
+              <Text variant="label" tone="secondary">{t(d.cortiTab.gainedBody, { n: gain.n })}</Text>
+            </View>
+          </Animated.View>
+        )}
       </Glass>
 
       {/* Les trois nombres qu'on a OBSERVES. */}
@@ -347,7 +379,11 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: withAlpha(c.mist, 0.1),
   },
   fill: { height: 8, borderRadius: 4, width: '100%', transformOrigin: 'left' },
-  gain: { position: 'absolute', right: 0, top: -30 },
+  pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 2 },
+  gainCard: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    marginTop: space.md, padding: space.md, borderRadius: 16, borderWidth: 1,
+  },
   figures: {
     flexDirection: 'row', gap: space.md, marginTop: space.md,
     paddingVertical: space.lg, borderRadius: 20,

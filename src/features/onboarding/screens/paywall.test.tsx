@@ -78,3 +78,14 @@ it('montre la destination, pas le point de depart', () => {
   expect(screen.getByText(formatHours(75))).toBeTruthy();
   expect(screen.queryByText('90 %')).toBeNull();
 });
+
+it('la croix arrive apres le delai, jamais avant', () => {
+  jest.useFakeTimers();
+  render(<Paywall onDone={() => {}} exitDelay={7000} />);
+  expect(screen.queryByTestId('paywall-close')).toBeNull();
+  act(() => { jest.advanceTimersByTime(6900); });
+  expect(screen.queryByTestId('paywall-close')).toBeNull();
+  act(() => { jest.advanceTimersByTime(200); });
+  expect(screen.getByTestId('paywall-close')).toBeTruthy();
+  jest.useRealTimers();
+});

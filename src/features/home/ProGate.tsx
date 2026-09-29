@@ -19,12 +19,9 @@ export function ProGate({ visible, onClose }: { visible: boolean; onClose: () =>
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        {/*
-          La croix est immediate ici, et non apres sept secondes : on arrive
-          en touchant un cadenas, donc en sachant deja ce qu'on va lire. Le
-          delai n'a de sens qu'a la premiere rencontre, a la fin du parcours.
-        */}
-        <Paywall onDone={onClose} exitDelay={0} />
+        {/* La croix arrive apres sept secondes, ici comme a la fin du
+            parcours : le temps de lire le titre et le prix. */}
+        <Paywall onDone={onClose} />
       </SafeAreaProvider>
     </Modal>
   );

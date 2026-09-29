@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { Check, Hourglass, LogOut, Lock, UserRoundCog } from 'lucide-react-native';
+import { Check, Hourglass, LogOut, Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -19,6 +19,8 @@ import { TINTS } from '@/theme/tints';
 import { PASS_MINUTES } from './ReelsPass';
 import type { ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
+import { AccountList } from './SwitchSheet';
+import type { Session } from '@/store/sessions';
 
 
 /**
@@ -29,7 +31,7 @@ import { ACCOUNT } from './accounts';
  * cacher. Il n'y a donc plus rien a recharger.
  */
 export function ClientSettings({
-  id, visible, onClose, onGo, onPass, onPost,
+  id, visible, onClose, onGo, onPass, onPost, accounts, current, onPick, onAdd, onRemove,
 }: {
   id: ClientId;
   visible: boolean;
@@ -40,6 +42,12 @@ export function ClientSettings({
   onPass: () => void;
   /** Ouvre les reglages du mode publication. */
   onPost: () => void;
+  /** Les comptes gardes par l'app, et celui en cours. */
+  accounts: Session[];
+  current: string | null;
+  onPick: (user: string) => void;
+  onAdd: () => void;
+  onRemove: (user: string) => void;
 }) {
   const c = useColors();
   const tint = useBlurTint();
@@ -191,27 +199,22 @@ export function ClientSettings({
                 : 'Change le bandeau du haut. Les couleurs du site ne bougent que sur Instagram.'}
             </Text>
 
-            <Text variant="label" tone="tertiary" style={st.section}>COMPTE</Text>
+            <Text variant="label" tone="tertiary" style={st.section}>{d.client.accounts}</Text>
+
+            {/* Les comptes tenus par l'app : on en ajoute un ici, et la touche
+                « changer de compte » apparait dans la barre des qu'il y en a deux. */}
+            <AccountList accounts={accounts} current={current} onPick={onPick} onAdd={onAdd} onRemove={onRemove} />
 
             <Pressable
               style={st.action}
-              onPress={() => { haptics.press(); onGo(ACCOUNT[id].add); }}
-            >
-              <UserRoundCog size={15} strokeWidth={2} color={c.accent} />
-              <Text variant="body" style={{ flex: 1 }}>{d.client.switchAccount}</Text>
-            </Pressable>
-
-            <Pressable
-              style={st.action}
-              onPress={() => { haptics.press(); onGo(ACCOUNT[id].out); }}
+              onPress={() => { haptics.press(); if (current) onRemove(current); onGo(ACCOUNT[id].out); }}
             >
               <LogOut size={15} strokeWidth={2} color={withAlpha(c.mist, 0.45)} />
               <Text variant="body" tone="secondary" style={{ flex: 1 }}>{d.client.signOut}</Text>
             </Pressable>
 
             <Text variant="label" tone="tertiary" style={st.note}>
-              {ACCOUNT[id].note
-                ?? `Connecte-toi à un deuxième compte : ${name} les garde tous les deux et tu passes de l’un à l’autre depuis ton profil.`}
+              {ACCOUNT[id].note ?? d.client.accountsNote}
             </Text>
           </ScrollView>
         </Animated.View>

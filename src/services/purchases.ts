@@ -128,6 +128,26 @@ export async function appUserId(): Promise<string | null> {
   }
 }
 
+/**
+ * Rattrape un abonnement que l'appareil detient mais que ce profil ignore.
+ *
+ * Vu au tableau de bord : le meme telephone arrivait avec un NOUVEL
+ * identifiant anonyme presque a chaque installation, et l'abonnement
+ * sandbox, bien actif, restait sur l'ancien. L'app se croyait donc sans
+ * abonnement jusqu'a ce qu'on touche « restaurer ». Ici on demande a Apple
+ * ce que l'appareil detient, une fois au demarrage, et RevenueCat rattache.
+ */
+export async function syncOwned(): Promise<boolean> {
+  if (!KEY) return false;
+  try {
+    await initPurchases();
+    const r = await Purchases.syncPurchasesForResult();
+    return isPro(r.customerInfo);
+  } catch {
+    return false;
+  }
+}
+
 export async function customerInfo(): Promise<CustomerInfo | null> {
   if (!KEY) return null;
   try {

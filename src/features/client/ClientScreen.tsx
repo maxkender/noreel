@@ -17,6 +17,8 @@ import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
 import { SwitchSheet } from './SwitchSheet';
+import { useSessions } from '@/store/sessions';
+import { forget, looksLoggedIn, restore, snapshot } from '@/services/sessions';
 import { LinkSheet } from './LinkSheet';
 import { PostAsk, PostModeSheet } from './PostSheet';
 import { startPostMode, usePostModeReconcile } from '@/services/postmode';
@@ -277,6 +279,43 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [switchOpen, setSwitchOpen] = useState(false);
   /** Le pseudo connecte, lu sur la page. Nul tant qu'on ne l'a pas. */
   const [who, setWho] = useState<string | null>(null);
+  /*
+    Les comptes, tenus par NOUS.
+    Des qu'on sait qui est connecte, on garde sa session (ses cookies) sous
+    son pseudo, avec sa photo. Changer de compte remet ces cookies et
+    recharge ; ajouter un compte retire les cookies du site et mene a sa
+    page de connexion, sans toucher a la session gardee. Plus rien ne
+    depend du selecteur d'Instagram.
+  */
+  const accounts = useSessions((x) => x.sessions[id] ?? []);
+  const current = useSessions((x) => x.current[id] ?? null);
+  const upsert = useSessions((x) => x.upsert);
+  const setCurrent = useSessions((x) => x.setCurrent);
+  const removeAccount = useSessions((x) => x.remove);
+  const keep = useCallback(async (user: string, pic: string) => {
+    const cookies = await snapshot(id);
+    if (!looksLoggedIn(id, cookies)) return;
+    upsert(id, { user, avatar: pic || undefined, cookies, savedAt: Date.now() });
+  }, [id, upsert]);
+  const pick = useCallback(async (user: string) => {
+    const acc = accounts.find((a) => a.user === user);
+    if (!acc) return;
+    setSwitchOpen(false);
+    setSwitching(true);
+    const ok = await restore(id, acc.cookies);
+    setCurrent(id, user);
+    setSwitching(false);
+    if (!ok) { setSwitchFailed(true); setTimeout(() => setSwitchFailed(false), 4000); }
+    web.current?.injectJavaScript(`location.assign(${JSON.stringify(client.url)}); true;`);
+  }, [accounts, id, setCurrent]);
+  const addAccount = useCallback(async () => {
+    setSwitchOpen(false);
+    setPanel(false);
+    await forget(id);
+    setCurrent(id, null);
+    setWho(null);
+    web.current?.injectJavaScript(`location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`);
+  }, [id, setCurrent]);
   useEffect(() => {
     let alive = true;
     void stats().then((x) => { if (alive) setDays(x.days); });
@@ -418,7 +457,6 @@ export function ClientScreen({ id }: { id: ClientId }) {
           */
           setSwitchOpen(true);
           setSwitchFailed(false);
-          web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;');
         } else {
           web.current?.injectJavaScript(
             `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
@@ -492,25 +530,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
       <SwitchSheet
         visible={switchOpen}
         onClose={() => setSwitchOpen(false)}
-        user={who}
+        accounts={accounts}
+        current={current ?? who}
         failed={switchFailed}
-        onSwitch={() => {
-          setSwitching(true);
-          web.current?.injectJavaScript('window.__nrSwitch && window.__nrSwitch(); true;');
-          setSwitchOpen(false);
-        }}
-        onAdd={() => {
-          // Par la porte d'Instagram d'abord : son selecteur garde les deux
-          // sessions. La page de connexion n'est que le repli.
-          if (id === 'instagram') {
-            web.current?.injectJavaScript('window.__nrAdd && window.__nrAdd(); true;');
-          } else {
-            web.current?.injectJavaScript(
-              `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
-            );
-          }
-          setSwitchOpen(false);
-        }}
+        onPick={(u) => { void pick(u); }}
+        onAdd={() => { void addAccount(); }}
+        onRemove={(u) => removeAccount(id, u)}
       />
 
       <LinkSheet
@@ -620,7 +645,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
                 void reportRules(id, m.n);
               }
               if (m && m.t === 'who') {
-                setWho(typeof m.u === 'string' && m.u ? m.u : null);
+                const u = typeof m.u === 'string' && m.u ? m.u : null;
+                setWho(u);
+                if (u) void keep(u, typeof m.pic === 'string' ? m.pic : '');
               }
               if (m && m.t === 'switch') {
                 setSwitching(false);
@@ -629,19 +656,17 @@ export function ClientScreen({ id }: { id: ClientId }) {
               }
               // Le « + » : on propose la vraie app pour publier.
               if (m && m.t === 'post') setPostAsk(true);
-              // L'ajout d'un compte n'a pas trouve sa porte : la page de connexion, alors.
-              if (m && m.t === 'add' && !m.ok) {
-                web.current?.injectJavaScript(
-                  `location.assign(${JSON.stringify(`${ACCOUNT[id].add}?source=switch_account`)}); true;`
-                );
-              }
             } catch {
               /* message qui ne vient pas de nous */
             }
           }}
           onShouldStartLoadWithRequest={guard}
           onLoadProgress={(e) => setLoad(e.nativeEvent.progress)}
-        onLoadEnd={() => setReady(true)}
+        onLoadEnd={() => {
+            setReady(true);
+            // Qui est connecte, a chaque page : la barre du bas met un instant a se dessiner.
+            if (id === 'instagram') setTimeout(() => web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;'), 1500);
+          }}
           onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
           // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
           onContentProcessDidTerminate={() => web.current?.reload()}
@@ -668,7 +693,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
           voler les touches. */}
-      <NavBar onAction={onNav} />
+      <NavBar onAction={onNav} accounts={id === 'instagram' ? accounts.length : 2} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
@@ -784,6 +809,11 @@ export function ClientScreen({ id }: { id: ClientId }) {
         onPass={() => setPass(true)}
         onPost={() => setPostSettings(true)}
         onClose={() => setPanel(false)}
+        accounts={accounts}
+        current={current ?? who}
+        onPick={(u) => { void pick(u); }}
+        onAdd={() => { void addAccount(); }}
+        onRemove={(u) => removeAccount(id, u)}
         onGo={(url) => {
           setPanel(false);
           web.current?.injectJavaScript(

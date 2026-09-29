@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-  PURCHASES_ENABLED, customerInfo, initPurchases, isPro, onCustomerInfo, restore,
+  PURCHASES_ENABLED, customerInfo, initPurchases, isPro, onCustomerInfo, restore, syncOwned,
 } from '@/services/purchases';
 
 type ProState = {
@@ -27,7 +27,11 @@ export const useProStore = create<ProState>()((set) => ({
   start: async () => {
     if (!PURCHASES_ENABLED) { set({ checked: true }); return; }
     await initPurchases();
-    set({ pro: isPro(await customerInfo()), checked: true });
+    let pro = isPro(await customerInfo());
+    // Pas d'abonnement sur ce profil ? On demande a Apple ce que le telephone
+    // detient avant de conclure : un profil neuf ne sait rien de l'ancien.
+    if (!pro) pro = await syncOwned();
+    set({ pro, checked: true });
     // Un achat fait ailleurs (autre appareil, renouvellement) arrive ici.
     onCustomerInfo((pro) => set({ pro }));
   },

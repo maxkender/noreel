@@ -10,3 +10,18 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+/*
+ * Le magasin de cookies est natif lui aussi : sous Jest il n'existe pas, et
+ * le service des comptes tombe a l'import. Un faux vide, en memoire.
+ */
+jest.mock('@react-native-cookies/cookies', () => ({
+  __esModule: true,
+  default: {
+    get: () => Promise.resolve({}),
+    getAll: () => Promise.resolve({}),
+    set: () => Promise.resolve(true),
+    clearAll: () => Promise.resolve(true),
+    clearByName: () => Promise.resolve(true),
+  },
+}));
