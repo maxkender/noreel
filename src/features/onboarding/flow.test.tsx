@@ -54,8 +54,10 @@ it('demande le temps dans le bon ordre', () => {
   const keys = [...src.matchAll(/key="([a-z0-9]+)"/g)].map((m) => m[1]);
   const at = (k: string) => { const i = keys.indexOf(k); expect(i).toBeGreaterThanOrEqual(0); return i; };
   expect(at('guess')).toBeLessThan(at('perm'));
-  // L'age vient apres la permission, et les annees qu'il reste juste apres.
-  expect(at('perm')).toBeLessThan(at('age'));
+  // Le vrai chiffre, dessine par Apple, vient APRES la permission qui le
+  // rend possible — et l'age juste apres lui.
+  expect(at('perm')).toBeLessThan(at('real'));
+  expect(at('real')).toBeLessThan(at('age'));
   expect(at('age')).toBeLessThan(at('life'));
   // Le chiffre des cases, seul et en grand, juste apres elles.
   expect(at('life')).toBeLessThan(at('s6y'));
