@@ -9,7 +9,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { SelectCard } from '@/components/SelectCard';
-import { Typewriter, typeDuration } from '@/components/type/Typewriter';
+import { Typewriter } from '@/components/type/Typewriter';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
@@ -160,24 +160,15 @@ export function Welcome({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [hello] = useState(() => cortiReact('wave'));
-  const typed = typeDuration(d.ob.welcome1, 30, 0);
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
       <Animated.View entering={FadeIn.duration(600)} style={{ alignItems: 'center', marginBottom: space.lg }}>
         <CortiRig level={3} size={150} expression="ravi" reaction={hello} arrive />
       </Animated.View>
+      {/* Une phrase, et rien dessous : la ligne « on a cree cette app… » et
+          l'annonce des questions redisaient ce que la suite montre. */}
       <Typewriter text={d.ob.welcome1} variant="displayM" speed={30} style={st.center} />
-      <Animated.View entering={FadeInUp.delay(typed + 300).duration(600)}>
-        <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.lg }]}>
-          {d.ob.welcome2}
-        </Text>
-      </Animated.View>
-      <Animated.View entering={FadeIn.delay(typed + 1500).duration(600)}>
-        <Text variant="label" color={c.accent} style={[st.center, { marginTop: space.xl }]}>
-          {d.ob.welcome3}
-        </Text>
-      </Animated.View>
     </Screen>
   );
 }
