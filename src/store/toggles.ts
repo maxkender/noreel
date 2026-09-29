@@ -21,7 +21,7 @@ export type AppToggle = {
 export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
     { key: 'reels', label: 'Bloquer les Reels', locked: true },
-    { key: 'explore', label: 'Bloquer Explorer et la recherche' },
+    { key: 'explore', label: 'Masquer la grille Explorer (la recherche reste)' },
     { key: 'ads', label: 'Masquer les publicités', on: true },
     { key: 'suggested', label: 'Masquer les posts suggérés', on: true },
     { key: 'storyAds', label: 'Masquer les pubs dans les stories', on: true },

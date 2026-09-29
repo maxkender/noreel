@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Check, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { radii, space } from '@/theme/spacing';
@@ -88,9 +88,7 @@ export function NotBlocker({ onNext }: P) {
  */
 export function DmReel({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
-  const c = useColors();
   const { d } = useT();
-  const [played, setPlayed] = useState(false);
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
@@ -98,22 +96,10 @@ export function DmReel({ onNext }: P) {
 
       <View style={st.phone}>
         <PhoneFrame width={172}>
-          <MockDM playing onDone={() => { setPlayed(true); haptics.success(); }} />
+          <MockDM playing onDone={() => haptics.success()} />
         </PhoneFrame>
       </View>
 
-      {/* Reserve de hauteur : la phrase arrive quand le reel est fini, et sans
-          reserve le telephone remonterait a son arrivee. */}
-      <View style={st.slot}>
-        {played && (
-          <Animated.View entering={FadeIn.duration(520)}>
-            <Text variant="lead" color={c.accent} style={st.center}>{d.story.dmDone}</Text>
-          </Animated.View>
-        )}
-        {!played && (
-          <Text variant="body" tone="tertiary" style={st.center}>{d.story.dmBody}</Text>
-        )}
-      </View>
     </Screen>
   );
 }
@@ -127,5 +113,4 @@ const sheet = () => StyleSheet.create({
   },
   badge: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   phone: { alignItems: 'center', marginTop: space.lg },
-  slot: { height: 64, justifyContent: 'center', marginTop: space.lg },
 });

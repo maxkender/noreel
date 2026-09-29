@@ -27,31 +27,22 @@ const tick = (ms: number) => act(() => { jest.advanceTimersByTime(ms); });
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
 
-it('deroule les trois temps dans l’ordre', () => {
+it('deroule les temps dans l’ordre, sans un mot de plus', () => {
   render(<Proof onNext={() => {}} />);
 
-  // 1. Un fil ordinaire, le temps d'une image. Filtre tout de suite, il n'y
-  // aurait rien a comparer.
-  expect(screen.getByText(dict.proof.raw)).toBeTruthy();
-  expect(screen.queryByText(dict.proof.fall)).toBeNull();
+  // Le titre, et rien d'autre a lire : la phrase qui suivait chaque temps est
+  // partie, l'image suffit.
+  expect(screen.getByText(dict.proof.title)).toBeTruthy();
 
   /*
-    2. Dans la premiere seconde : les Reels tombent ET la barre du bas sort
-    du cadre, grossie, AVEC son onglet Reels encore la. C'est l'ordre qui
-    prouve quelque chose : une barre deja amputee ne dit rien, on ne sait pas
-    ce qu'il y avait avant. Il faut voir la porte, puis la voir partir.
+    Dans la premiere seconde : les Reels tombent ET la barre du bas sort du
+    cadre, grossie, AVEC son onglet Reels encore la. C'est l'ordre qui prouve
+    quelque chose : une barre deja amputee ne dit rien.
   */
   tick(400);
-  expect(screen.getByText(dict.proof.fall)).toBeTruthy();
   expect(screen.getByTestId('proof-loupe')).toBeTruthy();
-
-  /*
-    3. L'onglet s'en va, et la phrase ne le dit qu'a ce moment-la. Annoncee
-    plus tot, elle decrivait un bouton qu'on avait encore sous les yeux. Une
-    seconde entre les deux : le temps de compter cinq boutons.
-  */
   tick(1000);
-  expect(screen.getByText(dict.proof.tab)).toBeTruthy();
+  expect(screen.getByText(dict.proof.title)).toBeTruthy();
 });
 
 it('ne laisse rien tourner apres coup', () => {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import Animated, {
-  Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming,
+  Easing, FadeIn, FadeInDown, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { Apple, Check, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -268,9 +268,6 @@ export function Proof({ onNext }: P) {
     transform: [{ translateY: (1 - pop.value) * 30 }, { scale: 0.7 + pop.value * 0.3 }],
   }));
 
-  // Elle suit l'ONGLET, pas le temps : pendant les huit dixiemes de seconde
-  // ou la barre est grossie mais complete, elle annoncait deja son depart.
-  const line = beat === 'raw' ? d.proof.raw : tab ? d.proof.fall : d.proof.tab;
 
   return (
     <Screen cta={d.pay.ctaPlain} onPress={onNext} hue="accent" center>
@@ -312,18 +309,6 @@ export function Proof({ onNext }: P) {
         </Animated.View>
       </View>
 
-      {/* Une reserve de hauteur FIXE : la phrase change a chaque temps, et
-          sans elle le telephone remonterait a chaque fois qu'elle raccourcit. */}
-      <View style={st.sayings}>
-        <Animated.View
-          key={beat}
-          style={st.saying}
-          entering={FadeIn.duration(420)}
-          exiting={FadeOut.duration(200)}
-        >
-          <Text variant="lead" tone="secondary" style={st.mid}>{line}</Text>
-        </Animated.View>
-      </View>
     </Screen>
   );
 }
@@ -494,8 +479,6 @@ const sheet = () => StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.7, shadowRadius: 26,
     shadowOffset: { width: 0, height: 12 },
   },
-  sayings: { height: 56, marginTop: space.lg },
-  saying: { position: 'absolute', left: 0, right: 0, top: 0 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
   gaugeStage: { height: 200, alignItems: 'center', justifyContent: 'center' },
   wordSlot: { height: 24, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },

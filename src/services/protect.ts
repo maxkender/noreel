@@ -95,8 +95,8 @@ export const XP = { day: 20, care: 15, pass: -20, raw: -30 } as const;
 export const XP_LEVELS = [0, 40, 160, 400] as const;
 export type Level = 0 | 1 | 2 | 3;
 
-export function xpOf(days: number, rawDays: number, passes: number, cares: number): number {
-  return Math.max(0, days * XP.day + cares * XP.care + passes * XP.pass + rawDays * XP.raw);
+export function xpOf(days: number, rawDays: number, passes: number, carePts: number): number {
+  return Math.max(0, days * XP.day + carePts + passes * XP.pass + rawDays * XP.raw);
 }
 
 export function levelFromXp(xp: number): Level {
@@ -298,16 +298,47 @@ export function brainIndex(
  */
 export const CARE_PER_DAY = 3;
 
-/** Les gestes qu'on peut declarer. Ils valent UN point chacun, pas plus. */
+/** Les gestes fournis. */
 export const CARE_IDS = [
   'morning', 'bored', 'sleep', 'focus', 'read', 'delay', 'sun', 'move', 'cold',
 ] as const;
 export type CareId = (typeof CARE_IDS)[number];
 
-/** Le total des gestes comptes, plafond du jour applique. */
+/**
+ * Ce que chaque geste rapporte, en points de dopamine.
+ *
+ * Pas la meme chose pour tous : une matinee sans telephone ou une vraie
+ * nuit pesent plus que dix minutes d'attente. Un objectif cree par la
+ * personne porte ses points DANS son entree du registre — « c:id:15 » —
+ * pour que le calcul n'ait pas besoin de retrouver la liste, meme si
+ * l'objectif a ete supprime depuis.
+ */
+export const CARE_POINTS: Record<CareId, number> = {
+  morning: 20, bored: 10, sleep: 20, focus: 15, read: 15, delay: 10, sun: 10, move: 15, cold: 10,
+};
+
+/** L'entree du registre pour un objectif cree par la personne. */
+export function customEntry(id: string, points: number): string {
+  return `c:${id}:${Math.max(5, Math.min(30, Math.round(points)))}`;
+}
+
+/** Les points d'une entree du registre, fournie ou creee. */
+export function pointsOf(entry: string): number {
+  const m = entry.match(/^c:[^:]+:(\d+)$/);
+  if (m) return Number(m[1]);
+  return CARE_POINTS[entry as CareId] ?? XP.care;
+}
+
+/** Le total des gestes comptes, plafond du jour applique : ce que les badges lisent. */
 export function careScore(care: Record<string, string[]>): number {
   return Object.values(care)
     .reduce((n, list) => n + Math.min(CARE_PER_DAY, list.length), 0);
+}
+
+/** Les points de dopamine des gestes, trois par jour au plus — les premiers declares. */
+export function carePoints(care: Record<string, string[]>): number {
+  return Object.values(care)
+    .reduce((n, list) => n + list.slice(0, CARE_PER_DAY).reduce((m, e) => m + pointsOf(e), 0), 0);
 }
 
 export async function stats(): Promise<Stats> {
@@ -325,8 +356,8 @@ export async function stats(): Promise<Stats> {
     brain: brainIndex(days, rawDays, l.passes, careScore(l.care ?? {})),
     careToday: (l.care ?? {})[dayKey()] ?? [],
     careTotal: careScore(l.care ?? {}),
-    xp: xpOf(days, rawDays, l.passes, careScore(l.care ?? {})),
-    level: levelFromXp(xpOf(days, rawDays, l.passes, careScore(l.care ?? {}))),
+    xp: xpOf(days, rawDays, l.passes, carePoints(l.care ?? {})),
+    level: levelFromXp(xpOf(days, rawDays, l.passes, carePoints(l.care ?? {}))),
     passes: l.passes,
     checkedAt,
     fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,
@@ -364,7 +395,7 @@ export async function claimMilestone(): Promise<typeof MILESTONES[number] | null
  * fois, sinon la liste devient un bouton a marteler. Rend la liste du jour
  * une fois posee, pour que l'ecran se mette a jour sans relire le registre.
  */
-export async function logCare(id: CareId): Promise<string[]> {
+export async function logCare(id: string): Promise<string[]> {
   const l = await load();
   const k = dayKey();
   const care = l.care ?? {};

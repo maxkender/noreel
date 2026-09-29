@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing } from 'react-native';
 import { Image } from 'expo-image';
 import Reanimated, { withTiming } from 'react-native-reanimated';
-import { withAlpha } from '@/theme/colors';
-import { useColors, type Palette } from '@/theme/useColors';
 
 /*
  * Les badges du studio : dix medaillons de verre bleu, et leur version
@@ -38,9 +36,9 @@ function pop() {
  * Un medaillon.
  *
  * Gagne, il FLOTTE — trois points de haut en bas, lentement, chacun a son
- * rythme — et une lueur respire derriere lui. Verrouille, il est gris et
- * immobile : c'est ce qui donne envie de l'allumer. En grand, il grandit a
- * son arrivee et continue de respirer.
+ * rythme. Rien derriere lui : la lueur qui respirait sous chaque medaillon
+ * faisait des taches qui flottaient, et on regardait les taches. Verrouille,
+ * il est gris et immobile : c'est ce qui donne envie de l'allumer.
  */
 export function BadgeArt({
   id, on, size = 56, big = false, index = 0,
@@ -53,8 +51,6 @@ export function BadgeArt({
   /** Decale le flottement d'un medaillon a l'autre. */
   index?: number;
 }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
   const [phase] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -79,12 +75,6 @@ export function BadgeArt({
         },
       ]}
     >
-      {on && (
-        <Animated.View
-          style={[st.glow, { width: size * 1.1, height: size * 1.1, borderRadius: size, opacity: phase.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.42] }) }]}
-          pointerEvents="none"
-        />
-      )}
       <Image source={on ? art.on : art.off} style={{ width: size, height: size }} contentFit="contain" />
     </Animated.View>
   );
@@ -92,6 +82,3 @@ export function BadgeArt({
   return <Reanimated.View entering={pop}>{body}</Reanimated.View>;
 }
 
-const sheet = (c: Palette) => StyleSheet.create({
-  glow: { position: 'absolute', backgroundColor: withAlpha(c.accent, 1) },
-});

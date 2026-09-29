@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
-import { Check } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
+import { Check, Plus, Trash2 } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -16,25 +16,32 @@ import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
 import { cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { cortiLine } from '@/components/Corti';
-import { CARE_PER_DAY, XP, XP_LEVELS, logCare, stats, type CareId, type Stats } from '@/services/protect';
+import {
+  CARE_PER_DAY, CARE_POINTS, XP_LEVELS, customEntry, logCare, pointsOf, stats, type CareId, type Stats,
+} from '@/services/protect';
 import { CARE, careOfTheDay } from '@/services/care';
 import { BADGES, badgeGap, claimBadges, unlockedBadges, type Badge } from '@/services/badges';
 import { claimCheer } from '@/services/cheer';
+import { useGoals, type Goal } from '@/store/goals';
 import { useT } from '@/i18n';
 import { Celebrate } from './Celebrate';
 import { BadgeArt } from './BadgeArt';
+import { GoalSheet } from './GoalSheet';
 import type { Scroll } from './parts';
 
 /*
- * L'onglet de Corti : ses points de dopamine, des badges, un geste.
+ * L'onglet de Corti : ses points de dopamine, ses objectifs, ses badges.
  *
- * Son etat suivait les jours, un compte qui ne bouge qu'a minuit : on
- * cochait un geste et rien ne changeait sous les yeux. Maintenant chaque
- * geste rapporte des points de dopamine — c'est la SANTE de Corti, pas un
- * score de jeu — la barre monte tout de suite, le chiffre grimpe, le gain
- * s'affiche et Corti fete ca. Ce qui l'abime (un laissez-passer, une journee
- * sans filtre) la fait descendre. Ses etats sont des paliers de points. Une
- * fenetre ne s'ouvre que pour ce qui le merite : un badge, un palier.
+ * Les points de dopamine sont la SANTE de Corti, pas un score de jeu : ils
+ * montent avec chaque objectif coche et chaque journee sans Reels, ils
+ * descendent avec un laissez-passer ou une journee sans filtre, et ce sont
+ * eux qui decident de son etat — eteint, en veilleuse, allume, rayonnant.
+ * La jauge le montre comme un chemin a quatre etapes, et un objectif coche
+ * se voit tout de suite : la page remonte sur la jauge, la barre avance, le
+ * chiffre grimpe, « +15 points de dopamine » se pose, et Corti saute.
+ *
+ * Les objectifs ne portent que leur nom et leurs points. Les siens, la
+ * personne les cree elle-meme.
  */
 
 /** Le mot et la ligne d'un badge, lus dans le dictionnaire par son identifiant. */
@@ -48,28 +55,35 @@ type Pop =
   | { kind: 'badge'; id: string }
   | { kind: 'level'; level: number };
 
+/** Un objectif a cocher : fourni (icone du studio) ou cree (emoji). */
+type Item = { key: string; entry: string; title: string; points: number; care?: CareId; goal?: Goal };
+
 export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
+  const list = useRef<Animated.ScrollView>(null);
   const [s, setS] = useState<Stats | null>(null);
-  /** Les gestes deja declares aujourd'hui. */
+  /** Les entrees deja declarees aujourd'hui. */
   const [done, setDone] = useState<string[]>([]);
   const [help, setHelp] = useState(false);
   const [all, setAll] = useState(false);
+  const [create, setCreate] = useState(false);
   /** Les fetes en attente : une a la fois, dans l'ordre. */
   const [pops, setPops] = useState<Pop[]>([]);
   /** Le badge qu'on regarde de pres, gagne ou pas. */
   const [peek, setPeek] = useState<Badge | null>(null);
-  /** Le « +15 XP » qui s'envole, et une cle pour le rejouer. */
-  const [gain, setGain] = useState<{ n: number; id: number } | null>(null);
+  /** Le gain qui se pose sous la jauge, et une cle pour le rejouer. */
+  const [gain, setGain] = useState<{ n: number; id: number; day: boolean } | null>(null);
   const gains = useRef(0);
-  const [dayDone, setDayDone] = useState(false);
   /** Le chiffre AFFICHE monte vers le vrai : on regarde les points arriver. */
   const [shown, setShown] = useState(0);
   const first = useRef(true);
-  const today = careOfTheDay();
-  // La barre d'XP vit sur le fil natif : elle monte a chaque geste.
+  const goals = useGoals((g) => g.goals);
+  const addGoal = useGoals((g) => g.add);
+  const removeGoal = useGoals((g) => g.remove);
+  const todayId = careOfTheDay();
+  // La jauge vit sur le fil natif : elle avance a chaque objectif.
   const [bar] = useState(() => new RNAnimated.Value(0));
 
   const load = useCallback(async () => {
@@ -81,21 +95,41 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   }, []);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-  const tick = async (id: CareId) => {
-    if (done.includes(id)) return;
+  /*
+    Les objectifs, fournis puis crees. Chacun sait ce qu'il ecrit dans le
+    registre : son identifiant pour un geste fourni, « c:id:points » pour un
+    objectif cree — ses points voyagent avec lui.
+  */
+  const items: Item[] = useMemo(() => [
+    ...CARE.map((x) => ({
+      key: x.id, entry: x.id, care: x.id, title: d.cortiTab[`${x.id}T` as const], points: CARE_POINTS[x.id],
+    })),
+    ...goals.map((g) => ({
+      key: g.id, entry: customEntry(g.id, g.points), goal: g, title: g.title, points: g.points,
+    })),
+  ], [goals, d]);
+  const featured = items.find((x) => x.key === todayId) ?? items[0];
+  const rest = items.filter((x) => x.key !== featured?.key);
+  const todayCount = Math.min(done.length, CARE_PER_DAY);
+
+  const [cheer, setCheer] = useState(false);
+  const [hooray, setHooray] = useState<CortiReaction | undefined>();
+
+  const tick = async (item: Item) => {
+    if (done.includes(item.entry)) return;
     haptics.success();
     const before = s?.level ?? 0;
-    const list = await logCare(id);
-    setDone(list);
+    const listNow = await logCare(item.entry);
+    setDone(listNow);
     const x = await stats();
     setS(x);
-    // Les points d'abord, sous les yeux : la barre monte, le chiffre grimpe,
-    // le gain s'envole, et Corti fete ca.
+    // Les points d'abord, sous les yeux : la page remonte sur la jauge, la
+    // barre avance, le chiffre grimpe, le gain se pose, Corti saute.
+    list.current?.scrollTo({ y: 0, animated: true });
     gains.current += 1;
-    setGain({ n: XP.care, id: gains.current });
+    setGain({ n: pointsOf(item.entry), id: gains.current, day: listNow.length >= CARE_PER_DAY });
     setHooray(cortiReact('celebrate'));
-    if (list.length >= CARE_PER_DAY) setDayDone(true);
-    // Puis ce qui se fete dans une fenetre : un niveau, un badge.
+    // Puis ce qui se fete dans une fenetre : un palier, un badge.
     if (x.level > before) setPops((p) => [...p, { kind: 'level', level: x.level }]);
     const fresh = await claimBadges(x);
     if (fresh.length) setPops((p) => [...p, ...fresh.map((b) => ({ kind: 'badge', id: b } as Pop))]);
@@ -106,8 +140,6 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
     complete : Corti passe d'affaisse a rayonnant, une fois, puis la scene
     reprend — sur un saut de joie, pas sur un arret net.
   */
-  const [cheer, setCheer] = useState(false);
-  const [hooray, setHooray] = useState<CortiReaction | undefined>();
   useEffect(() => {
     let alive = true;
     void claimCheer(s?.level ?? 0).then((ok) => { if (alive && ok) setCheer(true); });
@@ -120,39 +152,36 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const tone = level === 0 ? c.danger : level === 1 ? c.ember : c.accent;
   const next: number | null = XP_LEVELS[level + 1] ?? null;
   const from = XP_LEVELS[level];
-  const progress = next ? Math.min(1, (xp - from) / (next - from)) : 1;
+  const within = next ? Math.min(1, (xp - from) / (next - from)) : 1;
+  // Le chemin a trois segments : la position, c'est l'etape plus la part du segment en cours.
+  const progress = next ? (level + within) / 3 : 1;
   const missing = next ? next - xp : 0;
 
   useEffect(() => {
-    RNAnimated.timing(bar, { toValue: progress, duration: 1300, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    RNAnimated.timing(bar, { toValue: progress, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [progress, bar]);
   // Le chiffre grimpe vers le vrai, en une seconde ; la premiere fois, il se pose.
   useEffect(() => {
-    const from = first.current ? xp : shown;
+    const start = first.current ? xp : shown;
     first.current = false;
-    const steps = 20;
+    const steps = 22;
     let i = 0;
     const id = setInterval(() => {
       i += 1;
       const k = 1 - Math.pow(1 - i / steps, 3);
-      setShown(Math.round(from + (xp - from) * k));
+      setShown(Math.round(start + (xp - start) * k));
       if (i >= steps) clearInterval(id);
-    }, 1000 / steps);
+    }, 1100 / steps);
     return () => clearInterval(id);
   // Le chiffre affiche ne doit repartir que quand le VRAI change.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xp]);
-  // Le gain s'efface tout seul, et la journee complete aussi.
+  // Le gain s'efface tout seul.
   useEffect(() => {
     if (!gain) return;
-    const id = setTimeout(() => setGain(null), 2600);
+    const id = setTimeout(() => setGain(null), 3200);
     return () => clearTimeout(id);
   }, [gain]);
-  useEffect(() => {
-    if (!dayDone) return;
-    const id = setTimeout(() => setDayDone(false), 2600);
-    return () => clearTimeout(id);
-  }, [dayDone]);
 
   const have = s ? unlockedBadges(s) : [];
   const pop = pops[0];
@@ -161,12 +190,12 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const topics: HelpTopic[] = [
     { t: d.cortiTab.statesTitle, h: d.cortiTab.levelsH, b: [d.cortiTab.s0, d.cortiTab.s1, d.cortiTab.s2, d.cortiTab.s3, '', d.cortiTab.statesB].join('\n') },
     { t: d.cortiTab.badgesTitle, h: d.cortiTab.badgesH, b: d.cortiTab.badgesB },
-    { t: d.cortiTab.careTitle, h: d.cortiTab.todayPick, b: d.cortiTab.careBody },
     { t: d.cortiTab.honestTitle, h: d.cortiTab.honestH, b: d.cortiTab.honestB },
   ];
 
   return (
     <Animated.ScrollView
+      ref={list}
       contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
@@ -188,32 +217,53 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         <Text variant="lead" color={c.accent} style={st.line}>{cortiLine(level, s.days)}</Text>
       )}
 
-      {/* Les points de dopamine : la barre monte a chaque geste, sous les yeux. */}
+      {/* La jauge : quatre etapes sur un chemin, et le chiffre en grand. */}
       <Glass radius={24} intensity={50} warmEdge="none" style={st.card}>
         <View style={st.between}>
-          <Text variant="label" tone="tertiary">{d.cortiTab.level}</Text>
-          <Text variant="label" color={tone} style={{ textTransform: 'capitalize' }}>{names[level]}</Text>
+          <Text variant="label" tone="tertiary">{d.cortiTab.gaugeTitle}</Text>
+          <View style={[st.state, { backgroundColor: withAlpha(tone, 0.16) }]}>
+            <Text variant="label" color={tone} style={{ textTransform: 'capitalize' }}>{names[level]}</Text>
+          </View>
         </View>
+
         <View style={st.pointsRow}>
-          <Text variant="displayM" color={tone}>{String(shown)}</Text>
-          <Text variant="label" tone="tertiary" style={{ marginBottom: 6 }}>
-            {next ? t(d.cortiTab.xp, { n: '', m: next }).replace(/^\s*\/\s*/, '/ ') + ` ${d.cortiTab.points}` : d.cortiTab.points}
+          <Text variant="hero" color={tone}>{String(shown)}</Text>
+          <Text variant="body" tone="secondary" style={{ marginBottom: 10 }}>
+            {next ? t(d.cortiTab.toNext, { n: missing, level: names[level + 1] }) : d.cortiTab.maxState}
           </Text>
         </View>
-        <View style={st.track}>
-          <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
-        </View>
-        <Text variant="body" tone="secondary" style={{ marginTop: space.md }}>
-          {next ? t(d.cortiTab.nextIn, { n: missing, level: names[level + 1] }) : d.cortiTab.maxed}
-        </Text>
 
-        {/* Le gain : une carte qui glisse sous la barre, le temps de la lire. */}
+        <View style={st.path}>
+          <View style={st.track}>
+            <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
+          </View>
+          <View style={st.nodes}>
+            {names.map((name, i) => {
+              const on = i <= level;
+              return (
+                <View key={name} style={st.node}>
+                  <View style={[st.dot, on && { backgroundColor: tone, borderColor: tone }, i === level && st.dotNow]} />
+                  <Text variant="label" tone={on ? 'secondary' : 'tertiary'} style={st.nodeName} numberOfLines={1}>{name}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Le gain : il se pose sous la jauge, le temps de le lire. */}
         {gain && (
-          <Animated.View key={gain.id} entering={FadeInUp.duration(380)} exiting={FadeOut.duration(320)} style={[st.gainCard, { backgroundColor: withAlpha(tone, 0.14), borderColor: withAlpha(tone, 0.4) }]}>
-            <Text variant="displayM" color={tone}>{t(d.cortiTab.gain, { n: gain.n })}</Text>
+          <Animated.View
+            key={gain.id}
+            entering={FadeInDown.duration(380)}
+            exiting={FadeOut.duration(320)}
+            style={[st.gainCard, { backgroundColor: withAlpha(tone, 0.14), borderColor: withAlpha(tone, 0.45) }]}
+          >
+            <Animated.View entering={ZoomIn.springify().damping(10).stiffness(220)}>
+              <Text variant="displayM" color={tone}>{t(d.cortiTab.pts, { n: gain.n })}</Text>
+            </Animated.View>
             <View style={{ flex: 1 }}>
-              <Text variant="button">{d.cortiTab.gainedTitle}</Text>
-              <Text variant="label" tone="secondary">{t(d.cortiTab.gainedBody, { n: gain.n })}</Text>
+              <Text variant="button">{t(d.cortiTab.gainTitle, { n: gain.n })}</Text>
+              <Text variant="label" tone="secondary">{gain.day ? d.cortiTab.gainDay : d.cortiTab.gainBody}</Text>
             </View>
           </Animated.View>
         )}
@@ -227,6 +277,38 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
           <Count v={`${s.days} j`} label={d.stats.daysKept} c={c.accent} />
         </View>
       )}
+
+      {/* Les objectifs : UN mis en avant, les autres derriere une ligne, et
+          les siens qu'on cree. Chacun ne dit que son nom et ses points. */}
+      <View style={st.between}>
+        <Text variant="button" style={st.h}>{d.cortiTab.goalsTitle}</Text>
+        <Text variant="label" color={todayCount >= CARE_PER_DAY ? c.accent : undefined} tone={todayCount >= CARE_PER_DAY ? undefined : 'tertiary'} style={st.h}>
+          {todayCount >= CARE_PER_DAY ? d.cortiTab.dayDone : `${todayCount} / ${CARE_PER_DAY}`}
+        </Text>
+      </View>
+      {featured && (
+        <GoalRow item={featured} done={done.includes(featured.entry)} featured onPress={() => { void tick(featured); }} />
+      )}
+      <Pressable onPress={() => { haptics.tap(); setAll((x) => !x); }} hitSlop={8} accessibilityRole="button" style={st.more}>
+        <Text variant="label" color={c.accent}>{all ? d.cortiTab.goalsLess : t(d.cortiTab.goalsAll, { n: items.length })}</Text>
+      </Pressable>
+      {all && (
+        <View style={st.goals}>
+          {rest.map((x) => (
+            <GoalRow
+              key={x.key}
+              item={x}
+              done={done.includes(x.entry)}
+              onPress={() => { void tick(x); }}
+              onRemove={x.goal ? () => { haptics.tap(); removeGoal(x.goal!.id); } : undefined}
+            />
+          ))}
+        </View>
+      )}
+      <Pressable onPress={() => { haptics.tap(); setCreate(true); }} style={st.create} accessibilityRole="button">
+        <View style={st.createIcon}><Plus size={16} strokeWidth={2.6} color={c.accent} /></View>
+        <Text variant="button" color={c.accent}>{d.cortiTab.goalNew}</Text>
+      </Pressable>
 
       {/* Les badges : dix jalons, gagnes une fois pour toutes. Un tap dit
           ce qu'il faut pour l'avoir. */}
@@ -255,37 +337,19 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         })}
       </View>
 
-      {/* UN geste, mis en avant. Les huit autres attendent derriere une ligne. */}
-      <View style={st.between}>
-        <Text variant="button" style={st.h}>{d.cortiTab.todayTitle}</Text>
-        <Text variant="label" color={dayDone ? c.accent : undefined} tone={dayDone ? undefined : 'tertiary'} style={st.h}>
-          {dayDone ? d.cortiTab.dayDone : `${Math.min(done.length, CARE_PER_DAY)} / ${CARE_PER_DAY}`}
-        </Text>
-      </View>
-      <CareCard id={today} done={done.includes(today)} featured onPress={() => { void tick(today); }} />
-      <Pressable onPress={() => { haptics.tap(); setAll((x) => !x); }} hitSlop={8} accessibilityRole="button" style={st.more}>
-        <Text variant="label" color={c.accent}>{all ? d.cortiTab.less : d.cortiTab.more}</Text>
-      </Pressable>
-      {all && (
-        <View style={st.cares}>
-          {CARE.filter((x) => x.id !== today).map((x) => (
-            <CareCard key={x.id} id={x.id} done={done.includes(x.id)} onPress={() => { void tick(x.id); }} />
-          ))}
-        </View>
-      )}
-
       <Pressable onPress={() => { haptics.tap(); setHelp(true); }} hitSlop={8} accessibilityRole="button" style={st.how}>
         <Text variant="label" tone="tertiary">{d.cortiTab.how}</Text>
       </Pressable>
 
       <HelpSheet visible={help} onClose={() => setHelp(false)} topics={topics} />
+      <GoalSheet visible={create} onClose={() => setCreate(false)} onAdd={(title, emoji, points) => { addGoal(title, emoji, points); }} />
 
-      {/* Les fetes, une a la fois : un badge, un niveau. */}
+      {/* Les fetes, une a la fois : un badge, un palier. */}
       <Celebrate
         visible={!!pop}
         kicker={pop?.kind === 'badge' ? d.cortiTab.unlocked : d.cortiTab.gotIt}
-        title={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[0]] : pop?.kind === 'level' ? t(d.cortiTab.levelUp, { n: pop.level + 1 }) : ''}
-        body={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[1]] : pop?.kind === 'level' ? t(d.cortiTab.levelUpBody, { name: names[pop.level] }) : ''}
+        title={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[0]] : pop?.kind === 'level' ? t(d.cortiTab.levelUp, { name: names[pop.level] }) : ''}
+        body={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[1]] : pop?.kind === 'level' ? d.cortiTab.levelUpBody : ''}
         cta={d.cortiTab.ok}
         onClose={() => setPops((p) => p.slice(1))}
         icon={pop?.kind === 'badge' ? <BadgeArt id={pop.id} on size={150} big /> : undefined}
@@ -308,10 +372,10 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
 }
 
 /*
- * Une icone illustree par geste, dans le style de Corti : le meme verre bleu
- * glace et la meme lueur que la mascotte, dessinees par le studio.
+ * Une icone illustree par geste fourni, dans le style de Corti : le meme
+ * verre bleu glace et la meme lueur que la mascotte, dessinees par le studio.
  */
-const CARE_ICON = {
+const CARE_ICON: Record<CareId, number> = {
   morning: require('@/assets/care/morning.png'),
   bored: require('@/assets/care/bored.png'),
   sleep: require('@/assets/care/sleep.png'),
@@ -321,40 +385,52 @@ const CARE_ICON = {
   sun: require('@/assets/care/sun.png'),
   move: require('@/assets/care/move.png'),
   cold: require('@/assets/care/cold.png'),
-} as const;
+};
 
-/** Un geste : son icone, son titre, sa raison, et une coche. */
-function CareCard({
-  id, done, featured = false, onPress,
-}: { id: CareId; done: boolean; featured?: boolean; onPress: () => void }) {
+/** Un objectif : son icone ou son emoji, son nom, ses points, une coche. */
+function GoalRow({
+  item, done, featured = false, onPress, onRemove,
+}: { item: Item; done: boolean; featured?: boolean; onPress: () => void; onRemove?: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  const title = d.cortiTab[`${id}T` as const];
-  const why = d.cortiTab[`${id}W` as const];
+  const { d, t } = useT();
   return (
     <Pressable
       onPress={onPress}
       disabled={done}
-      style={[st.care, featured && st.careFeatured, done && { borderColor: c.accent, backgroundColor: withAlpha(c.accent, 0.1) }]}
+      style={[st.goal, featured && st.goalFeatured, done && { borderColor: c.accent, backgroundColor: withAlpha(c.accent, 0.1) }]}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: done }}
     >
-      <Image
-        source={CARE_ICON[id]}
-        style={[st.careIcon, featured && st.careIconBig, !done && !featured && st.careIconDim]}
-        contentFit="contain"
-      />
+      {item.care ? (
+        <Image
+          source={CARE_ICON[item.care]}
+          style={[st.goalIcon, featured && st.goalIconBig, !done && !featured && st.goalIconDim]}
+          contentFit="contain"
+        />
+      ) : (
+        <View style={[st.emoji, featured && st.emojiBig]}>
+          <Text variant={featured ? 'title' : 'body'}>{item.goal?.emoji ?? '🎯'}</Text>
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         {featured && (
           <Text variant="label" color={c.ember} style={{ marginBottom: 2 }}>{d.cortiTab.todayPick}</Text>
         )}
-        <Text variant={featured ? 'button' : 'body'}>{title}</Text>
-        <Text variant="label" tone="tertiary" style={{ marginTop: 2 }}>{why}</Text>
+        <Text variant={featured ? 'button' : 'body'}>{item.title}</Text>
       </View>
-      <View style={[st.tick, done && { backgroundColor: c.accent, borderColor: c.accent }]}>
-        {done && <Check size={12} strokeWidth={3} color={c.night} />}
+      <View style={[st.pts, done && { backgroundColor: withAlpha(c.accent, 0.18) }]}>
+        <Text variant="label" color={c.accent}>{t(d.cortiTab.pts, { n: item.points })}</Text>
       </View>
+      {onRemove && !done ? (
+        <Pressable onPress={onRemove} hitSlop={10} accessibilityLabel={d.cortiTab.goalDelete}>
+          <Trash2 size={15} strokeWidth={2} color={withAlpha(c.mist, 0.4)} />
+        </Pressable>
+      ) : (
+        <View style={[st.tick, done && { backgroundColor: c.accent, borderColor: c.accent }]}>
+          {done && <Check size={12} strokeWidth={3} color={c.night} />}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -374,12 +450,22 @@ const sheet = (c: Palette) => StyleSheet.create({
   line: { textAlign: 'center', marginTop: space.sm },
   card: { padding: space.lg, marginTop: space.md },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  state: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, marginTop: space.xs },
+  path: { marginTop: space.sm },
   track: {
-    height: 8, borderRadius: 4, overflow: 'hidden', marginTop: space.sm,
-    backgroundColor: withAlpha(c.mist, 0.1),
+    height: 8, borderRadius: 4, overflow: 'hidden',
+    backgroundColor: withAlpha(c.mist, 0.1), marginHorizontal: 6,
   },
   fill: { height: 8, borderRadius: 4, width: '100%', transformOrigin: 'left' },
-  pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 2 },
+  nodes: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -10 },
+  node: { alignItems: 'center', width: 64 },
+  dot: {
+    width: 12, height: 12, borderRadius: 6, borderWidth: 2,
+    borderColor: withAlpha(c.mist, 0.3), backgroundColor: c.night,
+  },
+  dotNow: { width: 16, height: 16, borderRadius: 8, marginTop: -2 },
+  nodeName: { marginTop: 6, fontSize: 10, textTransform: 'capitalize' },
   gainCard: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     marginTop: space.md, padding: space.md, borderRadius: 16, borderWidth: 1,
@@ -395,22 +481,37 @@ const sheet = (c: Palette) => StyleSheet.create({
   badgeName: { textAlign: 'center', fontSize: 10 },
   more: { marginTop: space.md, marginBottom: space.sm, alignSelf: 'flex-start' },
   how: { marginTop: space.xl, alignSelf: 'center' },
-  cares: { gap: space.sm },
-  care: {
+  goals: { gap: space.sm },
+  goal: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     padding: space.md, borderRadius: 16, borderWidth: 1,
     borderColor: withAlpha(c.mist, 0.12),
   },
-  careFeatured: {
+  goalFeatured: {
     marginTop: space.sm, padding: space.lg, borderRadius: 20,
     borderColor: withAlpha(c.ember, 0.4), backgroundColor: withAlpha(c.ember, 0.07),
   },
-  careIcon: { width: 44, height: 44 },
-  careIconBig: { width: 64, height: 64 },
-  careIconDim: { opacity: 0.72 },
+  goalIcon: { width: 44, height: 44 },
+  goalIconBig: { width: 64, height: 64 },
+  goalIconDim: { opacity: 0.72 },
+  emoji: {
+    width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.mist, 0.08),
+  },
+  emojiBig: { width: 64, height: 64, borderRadius: 20 },
+  pts: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, backgroundColor: withAlpha(c.accent, 0.1) },
   tick: {
     width: 20, height: 20, borderRadius: 10, borderWidth: 1.5,
     borderColor: withAlpha(c.mist, 0.3),
     alignItems: 'center', justifyContent: 'center',
+  },
+  create: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.md,
+    padding: space.md, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed',
+    borderColor: withAlpha(c.accent, 0.4),
+  },
+  createIcon: {
+    width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.accent, 0.14),
   },
 });

@@ -19,7 +19,7 @@ import { Corti, type CortiLevel } from './Corti';
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
   tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti, note,
-  still = false, emblem,
+  still = false, emblem, stars = true,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -76,6 +76,8 @@ export function Screen({
    * doigt sauf ce qu'on regle.
    */
   still?: boolean;
+  /** La poussiere lumineuse du fond. Coupee la ou elle gene la lecture. */
+  stars?: boolean;
   /** Une icone en tete du contenu : ce que l'ecran demande, avant qu'on lise. */
   emblem?: ReactNode;
 }) {
@@ -89,7 +91,7 @@ export function Screen({
     <Root style={styles.root} onPress={tapToContinue ? onPress : undefined}>
       {backdrop}
       <Glow hue={hue} level={hueLevel} />
-      <Stars count={14} />
+      {stars && <Stars count={14} />}
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {corti !== undefined && (
           <View style={styles.mascot} pointerEvents="none">

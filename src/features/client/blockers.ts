@@ -239,6 +239,13 @@ const COMMON = `
     '--ig-colors-button-primary-link-text--pressed',
     '--ig-outgoing-message-bubble',
     '--ig-temporary-highlight',
+    // Les icones et la pastille rouge : sans elles, la teinte ne se voyait
+    // que sur un bouton « suivre » de temps en temps, et passait pour
+    // cassee. Verifie sur le site le 29 septembre 2026 : ce sont bien des
+    // triplets RGB, et les poser en ligne sur <html> prend le dessus.
+    '--ig-primary-icon',
+    '--ig-badge',
+    '--ig-link',
   ];
   const __tint = () => {
     const t = window.__nrTint;
@@ -1038,6 +1045,21 @@ export const INSTAGRAM_BLOCKER = `
       }
     } else if (ex) {
       ex.remove();
+    }
+    /*
+      L'onglet recherche mene ici, et la page doit REPONDRE : le champ prend
+      le clavier tout seul, une fois par arrivee. Sans ca — et surtout avec
+      la grille masquee — on arrivait sur une page vide avec un champ discret
+      tout en haut, et l'onglet passait pour casse.
+    */
+    if (onGrid && window.__nrFocused !== location.href) {
+      window.__nrFocused = location.href;
+      setTimeout(() => {
+        try {
+          const field = document.querySelector('main input[type="text"], input[aria-label*="echerch" i], input[placeholder*="echerch" i]');
+          if (field && document.activeElement !== field) field.focus();
+        } catch (e) { /* pas de champ */ }
+      }, 500);
     }
   });
 })();

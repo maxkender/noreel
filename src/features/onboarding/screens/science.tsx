@@ -142,7 +142,6 @@ export function ScienceIntro({ onNext }: P) {
       harm={0.05}
       big={false}
       title={d.brain.sciTitle}
-      body={d.brain.sciBody}
       onNext={onNext}
     />
   );

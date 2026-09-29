@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
@@ -50,6 +50,7 @@ export function ClientSettings({
   onRemove: (user: string) => void;
 }) {
   const c = useColors();
+  const { height: winH } = useWindowDimensions();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
@@ -92,12 +93,19 @@ export function ClientSettings({
         <BlurView intensity={24} tint={tint} style={StyleSheet.absoluteFill} />
       </Animated.View>
 
-      <Pressable style={st.scrim} onPress={close}>
+      {/*
+        Le voile est DERRIERE la feuille, pas autour.
+        Il l'enveloppait : chaque appui dans la feuille remontait jusqu'a lui
+        et la fermait, et le defilement de la liste se battait avec son
+        geste. En frere cadet, il ne recoit que ce qui tombe a cote.
+      */}
+      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: '#00000088' }]} onPress={close} accessibilityRole="button" />
+      <View style={st.scrim} pointerEvents="box-none">
         {!closing && (
         <Animated.View
           entering={SlideInDown.duration(280)}
           exiting={SlideOutDown.duration(220)}
-          style={st.sheet}
+          style={[st.sheet, { maxHeight: winH * 0.86 }]}
         >
           <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
@@ -110,7 +118,7 @@ export function ClientSettings({
             </Pressable>
           </View>
 
-          <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flexGrow: 0 }} showsVerticalScrollIndicator={false} bounces>
             {APP_TOGGLES[id].map((t) => (
               <View key={t.key} style={st.line}>
                 {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
@@ -219,13 +227,13 @@ export function ClientSettings({
           </ScrollView>
         </Animated.View>
         )}
-      </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  scrim: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
+  scrim: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
     paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xxl,

@@ -3,9 +3,7 @@ import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import {
-  ArrowRight, BarChart3, Bell, Check, CreditCard, Lock, ShieldCheck, SlidersHorizontal, Sparkles, Unlock, X,
-} from 'lucide-react-native';
+import { ArrowRight, Check, Minus, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -70,8 +68,6 @@ const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
  * compte les croix avant de lire les titres. Une liste ne dit que ce qu'on
  * recoit.
  */
-const ROWS = ['r1', 'r2', 'r3', 'r4'] as const;
-const ICONS = [Sparkles, SlidersHorizontal, ShieldCheck, BarChart3] as const;
 
 // La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
@@ -182,9 +178,6 @@ export function Paywall(
   const chosen = plan === 'annual' ? annual : weekly;
   const price = (p?: PurchasesPackage, f?: string) => p?.product.priceString ?? f ?? '';
 
-  // Son temps a lui, en jours pleins par an. C'est le seul chiffre de cet
-  // ecran qu'il a donne lui-meme, et c'est pour ca qu'il porte.
-  const daysLost = Math.round((minutes * 365) / 60 / 24);
 
   const go = async () => {
     // Le magasin repond encore : on attend plutot que de refermer l'ecran
@@ -260,13 +253,14 @@ export function Paywall(
   return (
     <Screen
       /*
-        Un fond a lui.
+        Un fond a lui, et pas de poussiere lumineuse.
 
         Tous les ecrans partagent le meme noir — c'est ce qui fait qu'on est
         dans la meme app. Mais on n'arrive pas sur le paywall pour lire une
         etape de plus, et un ecran de vente identique au precedent ne donne
         envie de rien. Le degrade violet-bleu dit qu'on a change de piece.
-        Il ne suit pas le theme : c'est une scene, comme l'intro et le final.
+        Les points qui flottent en fond, eux, passaient DERRIERE les cartes de
+        forfait et on ne savait plus ce qu'on regardait.
       */
       backdrop={
         <LinearGradient
@@ -277,12 +271,11 @@ export function Paywall(
           style={StyleSheet.absoluteFill}
         />
       }
+      stars={false}
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
       cta={
         busy || loading
           ? d.pay.wait
-          // Une fois qu'on sait qu'il n'y a rien a vendre, le libelle ne
-          // promet plus un achat : il dit ou il mene.
           : storeDown
             ? d.pay.storeSkip
             : d.pay.cta
@@ -290,14 +283,10 @@ export function Paywall(
       note={
         !storeDown ? (
           /*
-            Le prix, sous le bouton, en toutes lettres.
-
-            Il vivait dans les deux cartes de forfait, au-dessus : au moment
-            d'appuyer, il etait hors du regard. Un bouton qu'on presse sans
-            avoir le montant sous les yeux se presse moins, et se regrette
-            plus. La mensualite est CALCULEE a partir du prix annuel affiche,
-            jamais ecrite a la main : deux chiffres qui ne se repondent pas
-            sur un ecran de paiement, c'est la confiance qui part.
+            Le prix, sous le bouton, en toutes lettres — et c'est le SEUL
+            endroit ou l'essai est annonce. Il l'etait aussi dans une frise,
+            dans une carte et dans les conditions : quatre fois la meme phrase
+            sur un ecran, et le prix se noyait dedans.
           */
           <Text variant="label" tone="tertiary" style={st.center}>
             {plan === 'annual'
@@ -313,16 +302,9 @@ export function Paywall(
             <Text variant="label" color={c.ember} style={st.center}>
               {d.pay.storeDown}
             </Text>
-            {/* Le message brut du magasin. Illisible pour qui n'y peut rien,
-                mais c'est la seule chose qui distingue un contrat non signe
-                d'un produit introuvable — et sans lui, on devine. */}
             {fail && (
               <Text variant="label" tone="tertiary" style={st.center}>{fail}</Text>
             )}
-            {/* L'identifiant de cet appareil chez RevenueCat : la ligne a
-                chercher au tableau de bord pour s'accorder l'acces a la main,
-                et donc pouvoir essayer toute l'app avant qu'Apple ouvre les
-                abonnements. Il n'apparait que dans ce cas d'echec. */}
             {who && (
               <Text variant="label" tone="tertiary" style={st.center}>{who}</Text>
             )}
@@ -345,19 +327,6 @@ export function Paywall(
         )}
       </View>
 
-      {/*
-        Sans prenom ici : l'ecran juste avant en porte un, et deux ecrans de
-        suite qui vous appellent par votre nom cessent d'etre attentionnes
-        pour devenir insistants. On le garde a deux moments dans tout le
-        parcours — la rencontre, ou l'on vient de le donner, et la promesse
-        chiffree, ou il engage.
-      */}
-      {/* Le fragment colore est pose au milieu de la phrase par un marqueur :
-          decoupee en trois morceaux, la phrase ne se traduirait pas dans le
-          meme ordre. */}
-      {/* Le paywall est la FIN du parcours, pas une page de plus : ce qu'on
-          a repondu — ses apps, son chiffre, son objectif — est devenu un
-          programme, et c'est lui qu'on ouvre. */}
       <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
         {d.pay.ready}
       </Text>
@@ -370,21 +339,15 @@ export function Paywall(
         {d.pay.sub}
       </Text>
 
-      {/* Son chiffre, et la cible : la moitie, sur SON temps a lui — pas sur
-          une moyenne. C'est le seul chiffre de cet ecran qu'il a donne, et
-          c'est pour ca qu'il porte. */}
-      {minutes > 0 && <Goal minutes={minutes} days={daysLost} />}
+      {/* Son chiffre, et la cible : la moitie, sur SON temps a lui. */}
+      {minutes > 0 && <Goal minutes={minutes} />}
 
-      <Trial plan={plan} />
-
+      {/* Le choix, en premier et en grand : c'est la seule chose a decider ici. */}
       <View style={st.plans}>
         <PlanCard
           label={d.pay.annual}
           price={price(annual, FALLBACK.annual)}
-          // Par SEMAINE, comme l'hebdomadaire juste en dessous : deux prix dans
-          // la meme unite se comparent d'un coup d'oeil, et c'est la
-          // comparaison qui rend l'annuel evident.
-          note={t(d.pay.annualNote, { n: TRIAL_DAYS, p: money(euros(annual, ANNUAL_EUR) / 52) })}
+          per={t(d.pay.annualNote, { p: money(euros(annual, ANNUAL_EUR) / 52) })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
@@ -392,46 +355,20 @@ export function Paywall(
         <PlanCard
           label={d.pay.weekly}
           price={price(weekly, FALLBACK.weekly)}
-          note={d.pay.weeklyNote}
+          per={d.pay.weeklyNote}
           on={plan === 'weekly'}
           onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
       </View>
 
-      {/*
-        Quatre lignes courtes, une icone chacune : ce qu'on obtient, et rien
-        sur ce qu'on n'a pas. Elles se lisent d'un regard sous les forfaits,
-        sans faire un tableau.
-      */}
-      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
-        {ROWS.map((key, i) => {
-          const Icon = ICONS[i];
-          return (
-            <Animated.View key={key} entering={FadeIn.delay(260 + i * 90).duration(420)} style={st.row}>
-              <View style={st.rowIcon}>
-                <Icon size={15} strokeWidth={2.2} color={c.accent} />
-              </View>
-              <Text variant="label" tone="secondary" style={st.rowText}>{d.pay[key]}</Text>
-            </Animated.View>
-          );
-        })}
-      </Animated.View>
+      <Table />
 
-      <Text variant="label" tone="tertiary" style={st.terms}>
-        {plan === 'annual'
-          ? t(d.pay.termsTrial, { n: TRIAL_DAYS, p: price(annual, FALLBACK.annual) })
-          : t(d.pay.termsWeek, { p: price(weekly, FALLBACK.weekly) })}
-        {' '}
-        {d.pay.cancelAny}
-      </Text>
+      <Text variant="label" tone="tertiary" style={st.terms}>{d.pay.renew}</Text>
 
-      {/* Ce qui rassure vraiment n'est pas une promesse mais un fait
-          verifiable : c'est Apple qui encaisse, et c'est Apple qui annule. */}
-      <View style={st.trust}>
-        <Lock size={12} strokeWidth={2.4} color={withAlpha(c.mist, c.textTertiary)} />
-        <Text variant="label" tone="tertiary">{d.pay.trust}</Text>
-      </View>
+      <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
 
+      {/* Le pied de page : une seule ligne fine, ses quatre liens separes
+          par des points. Il vivait sur trois rangees de tailles differentes. */}
       <View style={st.legal}>
         <Pressable onPress={() => { haptics.tap(); void Linking.openURL(TERMS); }} hitSlop={8}>
           <Text variant="label" tone="tertiary">{d.pay.terms}</Text>
@@ -440,22 +377,9 @@ export function Paywall(
         <Pressable onPress={() => { haptics.tap(); void Linking.openURL(PRIVACY); }} hitSlop={8}>
           <Text variant="label" tone="tertiary">{d.pay.privacy}</Text>
         </Pressable>
-      </View>
-
-      {/*
-        Refermer l'offre de rattrapage sort du paywall, ne revient pas dessus.
-        On y arrive apres avoir ferme la feuille d'Apple, c'est-a-dire apres
-        avoir dit non une premiere fois ; renvoyer sur l'ecran de vente qu'on
-        vient de quitter, c'est demander une troisieme fois. On a pose la
-        question, la reponse est non : on ouvre l'app.
-      */}
-      <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
-
-      <View style={st.tail}>
+        <Text variant="label" tone="tertiary">·</Text>
         <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
-          <Text variant="label" tone="tertiary">
-            {PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}
-          </Text>
+          <Text variant="label" tone="tertiary">{PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}</Text>
         </Pressable>
         {PURCHASES_ENABLED && Platform.OS === 'ios' && (
           <>
@@ -473,16 +397,15 @@ export function Paywall(
 /**
  * Aujourd'hui, et l'objectif : deux barres, la seconde moitie moins haute.
  *
- * L'ecran affichait un indice de recuperation a trente jours — juste, mais
- * abstrait : « 90 % » ne dit pas ce qu'on va vivre. Deux barres le disent :
- * son temps d'aujourd'hui, et la moitie, en heures. La cible est la moitie
+ * Son temps d'aujourd'hui, et la moitie, en heures. La cible est la moitie
  * de SON chiffre, arrondie au quart d'heure, jamais une moyenne — un
- * objectif qu'on reconnait comme le sien se tient.
+ * objectif qu'on reconnait comme le sien se tient. Pas de phrase dessous :
+ * les deux chiffres se lisent seuls.
  */
-function Goal({ minutes, days }: { minutes: number; days: number }) {
+function Goal({ minutes }: { minutes: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
+  const { d } = useT();
   const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
   return (
     <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.goal}>
@@ -497,9 +420,6 @@ function Goal({ minutes, days }: { minutes: number; days: number }) {
         <ArrowRight size={20} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 34 }} />
         <GoalBar label={d.pay.goal} value={formatHours(target)} h={target / Math.max(minutes, 1)} tone={c.accent} />
       </View>
-      <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.md }]}>
-        {t(d.pay.goalNote, { d: days })}
-      </Text>
     </Animated.View>
   );
 }
@@ -515,98 +435,60 @@ function GoalBar({
       <View style={st.goalTrack}>
         <View style={[st.goalFill, { height: Math.max(10, 88 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
       </View>
-      <Text variant="label" tone="tertiary">{label}</Text>
+      <Text variant="label" tone="tertiary" style={st.center}>{label}</Text>
     </View>
   );
 }
 
-/**
- * La frise de l'essai : ce qui sera preleve, et quand.
+/*
+ * Ce que chaque colonne contient, tel que l'app le fait vraiment.
  *
- * Elle est AVANT les prix, parce que « quand est-ce qu'on me prend de
- * l'argent » est la question qui bloque la main au-dessus du bouton. La dire
- * avant le prix desarme la question ; la dire apres, en petit, la laisse
- * entiere.
- *
- * Elle sert aussi de banniere : son titre porte le « essai gratuit sur
- * l'annuel », plutot qu'un bandeau de plus qui redirait la meme chose deux
- * centimetres au-dessus.
+ * Instagram est gratuit, quinze minutes par jour ; le reste est Pro. Les
+ * lignes que les deux ont — Corti, la publication — sont la aussi : un
+ * tableau qui ne montre que des manques se lit comme un reproche.
  */
-function Trial({ plan }: { plan: Plan }) {
+const FEATURES: ['f1' | 'f2' | 'f3' | 'f4' | 'f5' | 'f6' | 'f7' | 'f8', 'yes' | 'no' | 'cap'][] = [
+  ['f1', 'yes'], ['f2', 'no'], ['f3', 'cap'], ['f4', 'no'], ['f5', 'no'], ['f6', 'no'], ['f7', 'yes'], ['f8', 'yes'],
+];
+
+/** Le tableau : ce qu'on obtient, gratuit contre Pro, ligne par ligne. */
+function Table() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
-
-  /*
-    L'hebdomadaire garde la MEME frise.
-
-    Il avait droit a un pave a lui, plus court : changer de forfait faisait
-    donc sauter tout le bas de la page, et on perdait l'endroit ou l'on
-    regardait au moment precis ou l'on compare deux prix. Trois etapes des
-    deux cotes, meme hauteur, rien ne bouge — seul le contenu change.
-
-    Il n'a pas d'essai, et la frise le dit en toutes lettres : le taire
-    laisserait croire le contraire, et le prelevement se decouvrirait le jour
-    meme.
-  */
-  const weekly = plan === 'weekly';
-  const steps: [typeof Bell, string, string, boolean][] = weekly
-    ? [
-      [Unlock, d.pay.weekToday, d.pay.weekTodayBody, true],
-      [CreditCard, d.pay.weekEvery, d.pay.weekEveryBody, true],
-      [Bell, d.pay.weekStop, d.pay.weekStopBody, false],
-    ]
-    : [
-      [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
-      [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
-      [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
-    ];
-
+  const { d } = useT();
   return (
-    <View style={st.trial}>
-      <LinearGradient
-        colors={[withAlpha(c.accent, 0.14), withAlpha(c.accentWarm, 0.04)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <Text variant="label" color={weekly ? c.ember : c.accent}>
-        {weekly ? d.pay.weekBanner : t(d.pay.trialBanner, { n: TRIAL_DAYS })}
-      </Text>
-
-      <View style={st.steps}>
-        {steps.map(([Icon, when, what, lit], i) => (
-          <View key={when} style={st.step}>
-            {/* Le fil relie les pastilles : sans lui, trois lignes empilees ne
-                se lisent pas comme un calendrier. */}
-            <View style={st.rail}>
-              <View style={[st.bullet, lit && st.bulletOn]}>
-                <Icon
-                  size={12}
-                  strokeWidth={2.4}
-                  color={lit ? c.accent : withAlpha(c.mist, c.textTertiary)}
-                />
-              </View>
-              {i < steps.length - 1 && <View style={st.wire} />}
-            </View>
-            <View style={st.stepText}>
-              <Text variant="button">{when}</Text>
-              <Text variant="body" tone="secondary">{what}</Text>
-            </View>
-          </View>
-        ))}
+    <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
+      <View style={st.tableHead}>
+        <Text variant="button" style={{ flex: 1 }}>{d.pay.tableTitle}</Text>
+        <Text variant="label" tone="tertiary" style={st.colFree}>{d.pay.colFree}</Text>
+        <View style={st.colPro}>
+          <Text variant="label" color={c.night}>{d.pay.colPro}</Text>
+        </View>
       </View>
-    </View>
+      {FEATURES.map(([key, free], i) => (
+        <View key={key} style={[st.tableRow, i === FEATURES.length - 1 && { borderBottomWidth: 0 }]}>
+          <Text variant="label" tone="secondary" style={{ flex: 1, lineHeight: 16 }}>{d.pay[key]}</Text>
+          <View style={st.colFree}>
+            {free === 'yes' && <Check size={15} strokeWidth={2.6} color={withAlpha(c.mist, 0.55)} />}
+            {free === 'no' && <Minus size={15} strokeWidth={2.4} color={withAlpha(c.mist, 0.28)} />}
+            {free === 'cap' && <Text variant="label" tone="tertiary">{d.pay.freeCap}</Text>}
+          </View>
+          <View style={[st.colPro, st.colProCell]}>
+            <Check size={16} strokeWidth={3} color={c.accent} />
+          </View>
+        </View>
+      ))}
+    </Animated.View>
   );
 }
 
-/** Un forfait. Le choix se voit au liseré et à la pastille, pas à la taille. */
+/** Un forfait : le prix en grand, le choix a la couleur. */
 function PlanCard({
-  label, price, note, badge, on, onPress,
+  label, price, per, badge, on, onPress,
 }: {
   label: string;
   price: string;
-  note: string;
+  per: string;
   badge?: string;
   on: boolean;
   onPress: () => void;
@@ -622,36 +504,25 @@ function PlanCard({
     >
       {on && (
         <LinearGradient
-          colors={[withAlpha(c.accent, 0.16), withAlpha(c.accentWarm, 0.06)]}
+          colors={[withAlpha(c.accent, 0.28), withAlpha(c.accentWarm, 0.08)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
       )}
-
+      <View style={st.planTop}>
+        <Text variant="label" tone={on ? undefined : 'secondary'}>{label}</Text>
+        {badge && (
+          <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.18) }]}>
+            <Text variant="label" color={on ? c.night : c.mist}>{badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text variant="displayM" color={on ? c.mist : withAlpha(c.mist, 0.7)}>{price}</Text>
+      <Text variant="label" tone="tertiary">{per}</Text>
       <View style={[st.tick, on && st.tickOn]}>
         {on && <Check size={13} strokeWidth={3} color={c.night} />}
       </View>
-
-      <View style={{ flex: 1, gap: 2 }}>
-        <View style={st.planTop}>
-          <Text variant="body">{label}</Text>
-          {/*
-            La remise est posee DANS la ligne, a cote du nom.
-            Elle etait placee en absolu a 74 points du bord droit — une mesure
-            calee sur la largeur de « 44,99 € » qui aurait chevauche le prix
-            des la premiere devise plus longue, et il y en a 174 autres.
-          */}
-          {badge && (
-            <View style={st.badge}>
-              <Text variant="label" color={c.night}>{badge}</Text>
-            </View>
-          )}
-        </View>
-        <Text variant="label" tone="tertiary">{note}</Text>
-      </View>
-
-      <Text variant="title">{price}</Text>
     </Pressable>
   );
 }
@@ -666,69 +537,30 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   center: { textAlign: 'center' },
   sub: { marginTop: space.sm },
-  /*
-    Le chiffre au centre de la page, dans une carte : c'est lui qui a
-    remplace Corti et ses quatre tuiles de verre. Il prenait la moitie de
-    l'ecran pour dire « on est content » — le chiffre dit ou l'on va.
-  */
   goal: {
     alignSelf: 'stretch', alignItems: 'center', marginTop: space.xl,
     paddingVertical: space.lg, paddingHorizontal: space.lg, borderRadius: 22, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
   },
   goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xl },
-  goalCol: { alignItems: 'center', gap: 8, width: 104 },
+  goalCol: { alignItems: 'center', gap: 8, width: 116 },
   goalTrack: { height: 88, justifyContent: 'flex-end', alignSelf: 'stretch' },
   goalFill: { borderRadius: 8, borderTopWidth: 3 },
-  trial: {
-    /*
-      Hauteur FIXE.
-      Les deux forfaits n'ont pas le meme contenu — une frise de trois temps
-      pour l'annuel, deux lignes pour l'hebdomadaire — et le bloc changeait
-      donc de taille en changeant de choix. Tout ce qui suit sautait, y compris
-      les deux cartes de forfait, au moment precis ou le doigt les vise.
-    */
-    minHeight: 196, justifyContent: 'center',
-    marginTop: space.xl, borderRadius: 22, overflow: 'hidden',
-    paddingHorizontal: space.lg, paddingVertical: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
-  },
-  trialFlat: { borderColor: withAlpha(c.ember, 0.4) },
-  trialInner: { alignSelf: 'stretch' },
-  steps: { marginTop: space.md },
-  step: { flexDirection: 'row', gap: space.md },
-  rail: { alignItems: 'center', width: 22 },
-  bullet: {
-    width: 22, height: 22, borderRadius: 11,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.2),
-  },
-  bulletOn: { borderColor: withAlpha(c.accent, 0.65), backgroundColor: withAlpha(c.accent, 0.12) },
-  wire: { flex: 1, width: 1.5, backgroundColor: withAlpha(c.accent, 0.28) },
-  stepText: { flex: 1, paddingBottom: space.md, gap: 1 },
-  list: { marginTop: space.lg, gap: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 4 },
-  rowIcon: {
-    width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: withAlpha(c.accent, 0.12),
-  },
-  rowText: { flex: 1, lineHeight: 16 },
-  plans: { marginTop: space.lg, gap: space.sm },
+  /* Deux cartes cote a cote, le prix en grand : le choix se voit de loin. */
+  plans: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
   plan: {
-    flexDirection: 'row', alignItems: 'center', gap: space.md,
-    paddingHorizontal: space.lg, paddingVertical: 16,
+    flex: 1, gap: 4, paddingHorizontal: space.md, paddingVertical: space.md, paddingBottom: space.lg,
     borderRadius: 20, overflow: 'hidden',
-    borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04),
   },
-  /* Le forfait choisi se SOULEVE : un simple lisere se remarque a peine sur
-     un fond deja colore, et c'est le seul endroit de l'ecran ou l'on choisit. */
   planOn: {
-    borderColor: withAlpha(c.accent, 0.85), borderWidth: 1.5,
-    shadowColor: c.accent, shadowOpacity: 0.5, shadowRadius: 16,
+    borderColor: withAlpha(c.accent, 0.9), borderWidth: 1.5,
+    shadowColor: c.accent, shadowOpacity: 0.45, shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
   },
-  planTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  planTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   tick: {
+    position: 'absolute', right: space.md, bottom: space.md,
     width: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.26),
@@ -738,17 +570,30 @@ const sheet = (c: Palette) => StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7,
     backgroundColor: c.accent,
   },
+  table: {
+    marginTop: space.lg, borderRadius: 20, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
+    backgroundColor: withAlpha(c.mist, 0.04),
+  },
+  tableHead: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    paddingLeft: space.md, paddingVertical: space.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.14),
+  },
+  tableRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    paddingLeft: space.md, paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.08),
+  },
+  colFree: { width: 64, alignItems: 'center', justifyContent: 'center' },
+  colPro: {
+    width: 56, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 6, backgroundColor: c.accent,
+  },
+  colProCell: { backgroundColor: withAlpha(c.accent, 0.14) },
   terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
-  trust: {
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: 6, marginTop: space.md,
-  },
   legal: {
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: space.sm, marginTop: space.md,
-  },
-  tail: {
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center',
     gap: space.sm, marginTop: space.md, paddingVertical: space.sm,
   },
 });

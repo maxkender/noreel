@@ -45,21 +45,26 @@ it('ne referme pas l’ecran en silence quand il n’y a rien a vendre', async (
   expect(onDone).toHaveBeenCalledTimes(1);
 });
 
-it('garde la frise quel que soit le forfait', () => {
+it('change le prix sous le bouton quand on change de forfait', () => {
   /*
-    Changer de forfait faisait sauter tout le bas de la page : l'hebdomadaire
-    avait un pave a lui, plus court. On perd l'endroit ou l'on regardait au
-    moment precis ou l'on compare deux prix.
+    Le prix vit sous le bouton, en toutes lettres : c'est le seul endroit ou
+    l'essai est annonce. Choisir l'hebdomadaire doit le remplacer par le prix
+    a la semaine — et jamais montrer les deux.
   */
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  const steps = () => [dict.pay.trialTodayBody, dict.pay.weekTodayBody]
-    .filter((x) => screen.queryByText(x));
-
-  expect(screen.getByText(dict.pay.trialTodayBody)).toBeTruthy();
+  expect(screen.getByText(/essai|trial/i)).toBeTruthy();
   fireEvent.press(screen.getByText(dict.pay.weekly));
-  expect(screen.getByText(dict.pay.weekTodayBody)).toBeTruthy();
-  // Une frise des deux cotes, jamais zero, jamais deux.
-  expect(steps()).toHaveLength(1);
+  expect(screen.queryByText(/essai gratuit|free trial/i)).toBeNull();
+  expect(screen.getAllByText(/par semaine|per week|\/ ?week/i).length).toBeGreaterThanOrEqual(1);
+});
+
+it('dit ce que chaque colonne contient', () => {
+  // Instagram est gratuit, le reste est Pro : le tableau le dit ligne par ligne.
+  render(<Paywall onDone={() => {}} exitDelay={0} />);
+  expect(screen.getByText(dict.pay.tableTitle)).toBeTruthy();
+  expect(screen.getByText(dict.pay.f1)).toBeTruthy();
+  expect(screen.getByText(dict.pay.f4)).toBeTruthy();
+  expect(screen.getByText(dict.pay.freeCap)).toBeTruthy();
 });
 
 it('montre la destination, pas le point de depart', () => {

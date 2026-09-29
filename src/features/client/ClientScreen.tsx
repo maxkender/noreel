@@ -305,8 +305,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
     const ok = await restore(id, acc.cookies);
     setCurrent(id, user);
     setSwitching(false);
-    if (!ok) { setSwitchFailed(true); setTimeout(() => setSwitchFailed(false), 4000); }
-    web.current?.injectJavaScript(`location.assign(${JSON.stringify(client.url)}); true;`);
+    if (!ok) { setSwitchFailed(true); setTimeout(() => setSwitchFailed(false), 5000); }
+    // La page part avec les nouveaux cookies : on recharge l'accueil, on ne
+    // reste pas sur une page qui appartenait a l'autre compte.
+    web.current?.injectJavaScript(`location.replace(${JSON.stringify(client.url)}); true;`);
   }, [accounts, id, setCurrent]);
   const addAccount = useCallback(async () => {
     setSwitchOpen(false);
@@ -672,6 +674,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
           onContentProcessDidTerminate={() => web.current?.reload()}
           onRenderProcessGone={() => web.current?.reload()}
           sharedCookiesEnabled
+          // Le champ de recherche prend le clavier tout seul en arrivant sur
+          // l'onglet recherche : iOS l'interdit sans cette permission.
+          keyboardDisplayRequiresUserAction={false}
           thirdPartyCookiesEnabled
           domStorageEnabled
           javaScriptEnabled
@@ -885,12 +890,14 @@ const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
   bar: { backgroundColor: c.night },
   /*
-    Cinquante-deux points : la hauteur de l'en-tete de la vraie app
-    Instagram (« Pour vous », le coeur), relevee sur une capture. Le bandeau
-    prend sa place, et la page commence la ou elle commence la-bas.
+    Cinquante-six points, FIXES.
+    La hauteur de l'en-tete de la vraie app Instagram (« Pour vous », le
+    coeur) fait cinquante-deux ; on en ajoute quatre parce que « Pour vous »
+    arrivait encore un peu haut. Et la hauteur ne depend de rien : chrono ou
+    « sans filtre », la page commence toujours au meme endroit.
   */
   barRow: {
-    height: 52, flexDirection: 'row', alignItems: 'center',
+    height: 56, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
