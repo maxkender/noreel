@@ -310,7 +310,6 @@ function CareCard({
   const { d } = useT();
   const title = d.cortiTab[`${id}T` as const];
   const why = d.cortiTab[`${id}W` as const];
-  const tone = done ? c.accent : featured ? c.ember : withAlpha(c.mist, 0.7);
   return (
     <Pressable
       onPress={onPress}
