@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
-import { Brain, ChevronRight, Home as HomeIcon, Shield, Smartphone, User } from 'lucide-react-native';
+import { Brain, ChevronRight, Home as HomeIcon, Lock, Shield, Smartphone, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -107,7 +107,7 @@ export function HomeScreen() {
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
         {tab === 'home' && (
-          <HomeTab onScroll={onScroll} minutes={today.perApp} />
+          <HomeTab onScroll={onScroll} minutes={today.perApp} onBlock={() => setTab('block')} />
         )}
         {tab === 'corti' && <CortiTab onScroll={onScroll} />}
         {tab === 'block' && (
@@ -158,16 +158,22 @@ export function HomeScreen() {
  * l'icone est parti dans Blocage, et l'icone a pris la place.
  */
 function HomeTab({
-  onScroll, minutes,
+  onScroll, minutes, onBlock,
 }: {
   onScroll: Scroll;
   minutes: Record<string, number>;
+  /** Mene a l'onglet Blocage : c'est la que le vrai Instagram se ferme. */
+  onBlock: () => void;
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const router = useRouter();
   const homeDone = useSettings((x) => x.homeShortcutsDone);
+  const blocking = useSettings((x) => x.blocking);
+  const selection = useSettings((x) => x.selection);
+  // Tant que l'app d'origine n'est pas fermee, on le rappelle ici.
+  const realOpen = !(blocking && selection);
 
   return (
     <Animated.ScrollView
@@ -191,6 +197,24 @@ function HomeTab({
           <Smartphone size={15} strokeWidth={2.2} color={c.accent} />
           <Text variant="label" color={c.accent} style={{ flex: 1 }}>{d.misc.addHome}</Text>
           <ChevronRight size={15} strokeWidth={2.2} color={c.accent} />
+        </Pressable>
+      )}
+
+      {/* « Bloquer le vrai Instagram ? » : filtrer ici ne sert a rien si
+          l'app d'origine reste a un tap. Le badge mene a l'onglet Blocage et
+          s'en va une fois le blocage arme sur une selection. */}
+      {realOpen && (
+        <Pressable
+          onPress={() => { haptics.tap(); onBlock(); }}
+          style={[st.addHome, { borderColor: withAlpha(c.ember, 0.5), backgroundColor: withAlpha(c.ember, 0.12) }]}
+          accessibilityRole="button"
+        >
+          <Lock size={15} strokeWidth={2.2} color={c.ember} />
+          <View style={{ flex: 1 }}>
+            <Text variant="label" color={c.ember}>{d.misc.blockReal}</Text>
+            <Text variant="label" tone="tertiary">{d.misc.blockRealB}</Text>
+          </View>
+          <ChevronRight size={15} strokeWidth={2.2} color={c.ember} />
         </Pressable>
       )}
 

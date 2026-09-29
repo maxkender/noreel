@@ -38,8 +38,10 @@ export function S1({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
   const { d } = useT();
+  // L'invite arrive des que la seconde ligne a fini de s'ecrire.
+  const typed = typeDuration(d.s1.title1, 46, 0) + 900 + typeDuration(d.s1.title2, 46, 0) + 150;
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={4400} readyAfter={4400} hue="accent">
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={typed} readyAfter={typed} hue="accent">
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />

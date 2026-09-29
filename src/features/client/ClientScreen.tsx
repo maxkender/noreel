@@ -366,6 +366,20 @@ export function ClientScreen({ id }: { id: ClientId }) {
       `window.__nrApply && window.__nrApply(${JSON.stringify(active)}); true;`
     );
   }, [active]);
+  /*
+    « Messages uniquement » qu'on eteint doit RENDRE l'accueil.
+    Le reglage renvoyait tout vers la boite de reception ; une fois eteint,
+    la page restait sur la boite et rien ne ramenait au fil — on croyait
+    l'app cassee. Des qu'il passe a faux, on repart de l'accueil.
+  */
+  const dmsOnly = !!active.dmsOnly;
+  const wasDmsOnly = useRef(dmsOnly);
+  useEffect(() => {
+    if (wasDmsOnly.current && !dmsOnly) {
+      web.current?.injectJavaScript(`location.assign(${JSON.stringify(client.url)}); true;`);
+    }
+    wasDmsOnly.current = dmsOnly;
+  }, [dmsOnly, client.url]);
 
   // La teinte voyage par le meme canal : on la change dans le panneau, sans
   // quitter la page ni la recharger.

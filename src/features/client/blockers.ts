@@ -808,6 +808,24 @@ export const INSTAGRAM_BLOCKER = `
   let __trayEl = null;
   const __tray = () => {
     if (__trayEl && document.body.contains(__trayEl)) return __trayEl;
+    /*
+      D'abord par les stories elles-memes : chaque cercle est un bouton
+      « Story par … ». On remonte depuis le premier jusqu'a l'ancetre qui en
+      contient au moins trois et reste bas — c'est le carrousel, quelle que
+      soit sa balise. Le <ul> aux canvas, releve sur la version de bureau,
+      reste en secours.
+    */
+    const rings = Array.from(document.querySelectorAll('[role="button"][aria-label]'))
+      .filter((b) => STORY.test(b.getAttribute('aria-label') || ''));
+    if (rings.length >= 3) {
+      let el = rings[0].parentElement;
+      for (let i = 0; i < 12 && el && el !== document.body; i += 1) {
+        const inside = rings.filter((r) => el.contains(r)).length;
+        if (inside >= 3 && el.offsetHeight > 0 && el.offsetHeight < 260) { __trayEl = el; return el; }
+        if (el.offsetHeight >= 260) break;
+        el = el.parentElement;
+      }
+    }
     for (const u of document.querySelectorAll('ul')) {
       if (u.querySelectorAll('canvas').length < 3) continue;
       if (u.offsetHeight > 0 && u.offsetHeight < 220) { __trayEl = u; return u; }
@@ -992,38 +1010,9 @@ export const INSTAGRAM_BLOCKER = `
         exactement ca — et « Suggestions pour vous » apparait dans le fil bien
         plus souvent qu'un reel. Le fil noir venait de la.
       */
-      if (__on('ads')) __byLabel(AD, 'ads');
-      if (__on('suggested')) __byLabel(SUGGEST, 'suggested');
-    }
-
-    /*
-      Une story sponsorisee ne se cache pas : elle OCCUPE l'ecran entier.
-      La masquer laisserait un trou noir dont on ne sort qu'en devinant ou
-      appuyer. On fait donc ce que ferait le doigt — un appui dans la zone
-      « suivante », a droite du lecteur. Un saut par seconde au plus : la
-      story suivante met un instant a s'annoncer, et sans ce frein on
-      traverserait tout le carrousel d'une traite.
-    */
-    if (__on('storyAds') && location.pathname.startsWith('/stories/')) {
-      const view = document.querySelector('section, [role="dialog"]') || document.body;
-      const txt = (view.textContent || '').slice(0, 300);
-      if (AD.test(txt) || /sponsoris|sponsored/i.test(txt)) {
-        const now = Date.now();
-        if (now - __lastSkip > 1000) {
-          __lastSkip = now;
-          const r = view.getBoundingClientRect();
-          const x = r.left + r.width * 0.9;
-          const y = r.top + r.height * 0.5;
-          const el = document.elementFromPoint(x, y);
-          if (el) {
-            for (const type of ['pointerdown', 'mousedown', 'mouseup', 'click']) {
-              el.dispatchEvent(new MouseEvent(type, {
-                bubbles: true, cancelable: true, clientX: x, clientY: y,
-              }));
-            }
-          }
-        }
-      }
+      // Les publicites et les suggestions restent : les regles qui les
+      // cachaient lisaient chaque carte d'une liste recyclee, et c'est de la
+      // que venait le fil noir. On y reviendra, autrement.
     }
 
     // Les publications enregistrees sont une reserve a rescroller : c'est le
@@ -1044,42 +1033,11 @@ export const INSTAGRAM_BLOCKER = `
     // Le FIL des reels renvoie au fil ; un reel seul, avec son identifiant, se regarde.
     if (/^[/]reels([/]|$)|^[/]reel[/]?$/.test(location.pathname)) __go('/');
     /*
-      Chercher un compte passe par /explore : c'est LA page de recherche.
-
-      Le reglage « explore » renvoyait toute adresse /explore vers le fil —
-      donc aussi la recherche, qui vit au meme endroit, et personne ne
-      pouvait plus chercher un compte. On ne redirige plus : on cache la
-      grille de suggestions (les tuiles de publications et de reels) sur la
-      page d'explore elle-meme, et on laisse le champ de recherche et ses
-      resultats — comptes, hashtags, lieux — tranquilles.
+      /explore est LA page de recherche : on n'y touche pas. Masquer sa
+      grille laissait une page vide sous un champ discret, et la recherche
+      passait pour cassee. Les reels qu'on y ouvre sont refuses comme
+      partout ailleurs.
     */
-    const onGrid = /^[/]explore[/]?$/.test(location.pathname);
-    let ex = document.getElementById('nr-explore-css');
-    if (__on('explore') && onGrid) {
-      if (!ex) {
-        ex = document.createElement('style');
-        ex.id = 'nr-explore-css';
-        ex.textContent = 'main a[href^="/p/"],main a[href^="/reel/"]{display:none!important}';
-        (document.head || document.documentElement).appendChild(ex);
-      }
-    } else if (ex) {
-      ex.remove();
-    }
-    /*
-      L'onglet recherche mene ici, et la page doit REPONDRE : le champ prend
-      le clavier tout seul, une fois par arrivee. Sans ca — et surtout avec
-      la grille masquee — on arrivait sur une page vide avec un champ discret
-      tout en haut, et l'onglet passait pour casse.
-    */
-    if (onGrid && window.__nrFocused !== location.href) {
-      window.__nrFocused = location.href;
-      setTimeout(() => {
-        try {
-          const field = document.querySelector('main input[type="text"], input[aria-label*="echerch" i], input[placeholder*="echerch" i]');
-          if (field && document.activeElement !== field) field.focus();
-        } catch (e) { /* pas de champ */ }
-      }, 500);
-    }
   });
 })();
 true;
@@ -1201,10 +1159,7 @@ export const YOUTUBE_BLOCKER = `
       if (skip) skip.click();
     }
 
-    if (__on('home') && (location.pathname === '/' || location.pathname === '/feed/trending')) {
-      __go('/feed/subscriptions');
-    }
-    if (location.pathname.startsWith('/shorts')) __go('/feed/subscriptions');
+    if (location.pathname.startsWith('/shorts')) __go('/');
   });
 })();
 true;
@@ -1353,7 +1308,13 @@ export const CLIENTS = {
     login: 'https://www.tiktok.com/login',
     host: 'tiktok.com',
     script: TIKTOK_BLOCKER,
-    blocked: (p: string) => p === '/' || p.startsWith('/foryou'),
+    /*
+      La racine n'est PAS refusee : c'est la que TikTok renvoie apres la
+      connexion (et apres le code a deux facteurs). Refusee, la navigation
+      etait annulee et la personne restait plantee sur le formulaire, sans
+      jamais entrer. Le script, lui, renvoie la racine vers /following.
+    */
+    blocked: (p: string) => p.startsWith('/foryou'),
     chrome: { dark: '#000000', light: '#FFFFFF' } as Chrome,
   },
   twitter: {
@@ -1365,7 +1326,14 @@ export const CLIENTS = {
     chrome: { dark: '#000000', light: '#FFFFFF' } as Chrome,
   },
   youtube: {
-    url: 'https://m.youtube.com/feed/subscriptions',
+    /*
+      L'accueil, pas les abonnements.
+      Google refuse sa page de connexion dans une vue web integree : ici,
+      YouTube est toujours DECONNECTE, et /feed/subscriptions deconnecte est
+      une page vide — verifie sur le site mobile le 29 septembre 2026. On
+      arrive donc sur l'accueil, ou l'on peut chercher et regarder.
+    */
+    url: 'https://m.youtube.com/',
     host: 'youtube.com',
     script: YOUTUBE_BLOCKER,
     blocked: (p: string) => p.startsWith('/shorts'),

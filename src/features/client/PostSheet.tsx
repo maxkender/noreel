@@ -44,7 +44,7 @@ export function PostAsk({
           <Text variant="body" tone="secondary" style={st.center}>
             {t(d.client.postBody, { n: minutes })}
           </Text>
-          <Button label={d.client.postOpen} onPress={() => { haptics.press(); onOpen(); }} />
+          <Button label={t(d.client.postOpen, { n: minutes })} onPress={() => { haptics.press(); onOpen(); }} />
           <Button label={d.client.postStay} onPress={onClose} variant="ghost" />
           <Pressable onPress={() => { haptics.tap(); onSettings(); }} hitSlop={8} accessibilityRole="button">
             <Text variant="label" tone="tertiary" style={st.center}>{d.client.postSettings}</Text>

@@ -58,7 +58,9 @@ function SciencePage({
   // On ne peut pas avancer avant d'avoir VU : le titre qui s'ecrit, la
   // phrase qui arrive apres lui, l'image qui se pose. Le tap ne compte
   // qu'ensuite, et l'invite n'apparait qu'a ce moment-la.
-  const ready = typeDuration(title, 42, 0) + (body ? 1500 : 800) + (children ? 1400 : 600);
+  // Des que le titre a fini de s'ecrire — pas plus tard : attendre l'image
+  // en plus faisait trop long.
+  const ready = typeDuration(title, 42, 0) + 150;
   return (
     <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={ready} readyAfter={ready} center hue="ember" hueLevel={harm}>
       <Animated.View entering={FadeInDown.duration(520)} style={st.face}>
