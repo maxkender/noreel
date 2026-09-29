@@ -806,6 +806,10 @@ export const fr = {
   },
 
   misc: {
+    addHome: 'Ajouter les apps à l’écran d’accueil',
+    homeDone: 'C’est fait',
+    saveIcon: 'Icône',
+    iconHint: 'Enregistre l’icône dans Photos, puis choisis-la dans Raccourcis.',
     realApps: 'Apps d’origine',
     atLeast: 'au moins {h}',
     realWhy: 'iOS ne donne pas le détail, seulement des paliers.',

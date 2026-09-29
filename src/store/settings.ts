@@ -51,6 +51,8 @@ type State = {
   /** Le mode publication : minutes accordees, et pauses par jour (zero : sans limite). */
   postMinutes: number;
   postLimit: number;
+  /** Les apps ont ete posees sur l'ecran d'accueil : le badge de l'accueil disparait. */
+  homeShortcutsDone: boolean;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -75,6 +77,7 @@ export const useSettings = create<State>()(
       reelsUntil: 0,
       postMinutes: 5,
       postLimit: 3,
+      homeShortcutsDone: false,
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.

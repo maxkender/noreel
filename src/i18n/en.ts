@@ -786,6 +786,10 @@ export const en: Dict = {
   },
 
   misc: {
+    addHome: 'Add the apps to your Home Screen',
+    homeDone: 'Done',
+    saveIcon: 'Icon',
+    iconHint: 'Save the icon to Photos, then pick it in Shortcuts.',
     realApps: 'Original apps',
     atLeast: 'at least {h}',
     realWhy: 'iOS gives thresholds, not exact totals.',

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
-import { Brain, Home as HomeIcon, Shield, User } from 'lucide-react-native';
+import { Brain, ChevronRight, Home as HomeIcon, Shield, Smartphone, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -36,8 +36,6 @@ import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
 import { ProtectionStatus, useProtect } from './Recovery';
-import { cortiLine } from '@/components/Corti';
-import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { CortiTab } from './CortiTab';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
@@ -109,11 +107,7 @@ export function HomeScreen() {
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
         {tab === 'home' && (
-          <HomeTab
-            onScroll={onScroll}
-            minutes={today.perApp}
-            onCorti={() => setTab('block')}
-          />
+          <HomeTab onScroll={onScroll} minutes={today.perApp} />
         )}
         {tab === 'corti' && <CortiTab onScroll={onScroll} />}
         {tab === 'block' && (
@@ -164,20 +158,16 @@ export function HomeScreen() {
  * l'icone est parti dans Blocage, et l'icone a pris la place.
  */
 function HomeTab({
-  onScroll, minutes, onCorti,
+  onScroll, minutes,
 }: {
   onScroll: Scroll;
   minutes: Record<string, number>;
-  /** Touchee, Corti emmene voir ou elle en est. */
-  onCorti: () => void;
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { s: prot } = useProtect();
-  const level = prot?.level ?? 0;
-  // Cree UNE fois : la demande porte un numero, et c'est lui qui declenche.
-  // Refabriquee a chaque rendu, elle ferait saluer Corti sans arret.
-  const [hello] = useState(() => cortiReact('wave'));
+  const { d } = useT();
+  const router = useRouter();
+  const homeDone = useSettings((x) => x.homeShortcutsDone);
 
   return (
     <Animated.ScrollView
@@ -187,22 +177,22 @@ function HomeTab({
       scrollEventThrottle={16}
     >
       {/*
-        Corti accueille, avant les applis.
-        C'est le premier ecran qu'on voit en ouvrant UnSwipe, et il n'y avait
-        que quatre icones a toucher — aucune raison de s'y attarder, donc
-        aucune raison d'ouvrir l'app autrement que pour aller scroller. Une
-        tete qui va bien ou mal, elle, donne une raison de regarder.
+        Un badge en haut, a la place de Corti : « ajouter les apps a l'ecran
+        d'accueil ». C'est le geste qui fait qu'on ouvre UnSwipe au lieu de
+        l'original, et il ne se fait qu'une fois — une fois fait, le badge
+        s'en va. Corti, lui, a son onglet.
       */}
-      {/* Il SALUE en arrivant. Reagir au toucher n'aurait servi a rien : la
-          pression ouvre l'onglet blocage, on serait deja parti. */}
-      <Pressable onPress={onCorti} style={st.greet} accessibilityRole="button">
-        <CortiRig level={level} size={104} reaction={hello} />
-        {prot && (
-          <Text variant="body" color={c.accent} style={{ textAlign: 'center' }}>
-            {cortiLine(level, prot.days)}
-          </Text>
-        )}
-      </Pressable>
+      {!homeDone && (
+        <Pressable
+          onPress={() => { haptics.tap(); router.push('/widgets'); }}
+          style={[st.addHome, { borderColor: withAlpha(c.accent, 0.45), backgroundColor: withAlpha(c.accent, 0.12) }]}
+          accessibilityRole="button"
+        >
+          <Smartphone size={15} strokeWidth={2.2} color={c.accent} />
+          <Text variant="label" color={c.accent} style={{ flex: 1 }}>{d.misc.addHome}</Text>
+          <ChevronRight size={15} strokeWidth={2.2} color={c.accent} />
+        </Pressable>
+      )}
 
       <AppSlider minutes={minutes} />
     </Animated.ScrollView>
@@ -484,7 +474,10 @@ const sheet = (c: Palette) => StyleSheet.create({
   idea: { padding: space.lg, marginTop: space.lg },
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
-  greet: { alignItems: 'center', gap: space.sm, paddingBottom: space.lg },
+  addHome: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm, alignSelf: 'center',
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, marginBottom: space.lg,
+  },
   stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(c.mist, 0.14) },
   cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

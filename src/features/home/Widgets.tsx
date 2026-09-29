@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Asset } from 'expo-asset';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Copy, Check } from 'lucide-react-native';
+import { ChevronLeft, Copy, Check, ImageDown } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -16,6 +17,8 @@ import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { APPS, LOGOS } from './AppSlider';
 import { dict } from '@/i18n';
+import { useSettings } from '@/store/settings';
+import { Button } from '@/components/Button';
 
 
 /**
@@ -29,6 +32,22 @@ export function Widgets() {
   const st = useMemo(() => sheet(c), [c]);
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
+  const setSetting = useSettings((x) => x.set);
+  const done = () => { haptics.success(); setSetting('homeShortcutsDone', true); router.back(); };
+
+  /*
+    L'icone, a enregistrer dans Photos : Raccourcis la prend ensuite comme
+    image du raccourci. iOS n'a pas d'autre chemin qu'une feuille de partage
+    pour donner une image a quelqu'un — donc c'est elle.
+  */
+  const saveIcon = async (id: keyof typeof LOGOS) => {
+    haptics.tap();
+    try {
+      const [asset] = await Asset.loadAsync(LOGOS[id]);
+      const uri = asset.localUri ?? asset.uri;
+      await Share.share(Platform.OS === 'ios' ? { url: uri } : { message: uri });
+    } catch { /* la feuille a ete refermee, ou l'image ne s'est pas chargee */ }
+  };
 
   const copy = async (id: string) => {
     const link = `unswipe://client/${id}`;
@@ -59,6 +78,7 @@ export function Widgets() {
             <Step n="2" text="Ouvre Raccourcis → + → Ouvrir l’URL → colle le lien." />
             <Step n="3" text="Partager → Sur l’écran d’accueil. Choisis le nom et l’icône." />
           </Glass>
+          <Text variant="label" tone="tertiary" style={{ marginTop: space.md }}>{dict.misc.iconHint}</Text>
 
           <Text variant="label" tone="tertiary" style={{ marginTop: space.xl }}>LIENS</Text>
           <View style={{ gap: space.sm, marginTop: space.sm }}>
@@ -69,6 +89,9 @@ export function Widgets() {
                   <Text variant="body">{a.name}</Text>
                   <Text variant="label" tone="tertiary">unswipe://client/{a.id}</Text>
                 </View>
+                <Pressable onPress={() => { void saveIcon(a.id); }} hitSlop={8} style={st.iconBtn} accessibilityRole="button" accessibilityLabel={dict.misc.saveIcon}>
+                  <ImageDown size={16} strokeWidth={2} color={c.accent} />
+                </Pressable>
                 {copied === a.id
                   ? <Check size={18} strokeWidth={2.2} color={c.accent} />
                   : <Copy size={17} strokeWidth={1.8} color={withAlpha(c.mist, 0.45)} />}
@@ -86,6 +109,11 @@ export function Widgets() {
               </Text>
             </Pressable>
           )}
+
+          {/* Une fois fait, on le dit : le badge de l'accueil s'en va. */}
+          <View style={{ marginTop: space.xl }}>
+            <Button label={dict.misc.homeDone} onPress={done} />
+          </View>
         </ScrollView>
       </SafeAreaView>
       <GlassSweep />
@@ -124,6 +152,10 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: c.line,
   },
   logo: { width: 40, height: 40 },
+  iconBtn: {
+    width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.accent, 0.12),
+  },
   open: {
     height: 52, borderRadius: 26, marginTop: space.xl,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
