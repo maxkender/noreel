@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -13,10 +13,6 @@ import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
-import { withAlpha } from '@/theme/colors';
-import { useColors } from '@/theme/useColors';
-import { ScreenTimeReportView } from '@/native/screenTimeReport';
-import { useNativeReport, useReportHeight } from '../report';
 
 type P = { onNext: () => void };
 
@@ -86,53 +82,6 @@ export function Guess({ onNext }: P) {
   );
 }
 
-/* ---------- Le vrai chiffre, dessine par Apple ---------- */
-
-/** Le temps qu'on laisse au dessin avant de tourner la page tout seul. */
-const SHOW_MS = 6000;
-/** Le bouton attend que le dessin ait eu le temps d'arriver. */
-const READY_MS = 1500;
-
-/**
- * Ton estimation, face au vrai chiffre — DESSINE par Apple.
- *
- * Le verdict, le nombre, l'ecart, les barres : tout ce qui depend du vrai
- * chiffre est trace par l'extension, avec un chiffre que nous ne verrons
- * jamais. Le titre est a l'app. Si l'extension n'est pas la ou que Temps
- * d'ecran est refuse, l'ecran est saute sans un mot. Et comme rien ne dit
- * a l'app si le dessin est venu — sur certains iOS il ne vient pas — la
- * page tourne d'elle-meme apres six secondes.
- */
-export function RealCheck({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(), []);
-  const { d } = useT();
-  const guess = useOnboardingStore((x) => x.minutesPerDay);
-  const native = useNativeReport(guess);
-  const reportH = useReportHeight(300, 440);
-  const [ready, setReady] = useState(false);
-
-  // Rien a montrer : on passe, tout de suite et sans ecran.
-  useEffect(() => { if (native === 'no') onNext(); }, [native, onNext]);
-  useEffect(() => {
-    if (native !== 'yes') return;
-    const a = setTimeout(() => setReady(true), READY_MS);
-    const b = setTimeout(onNext, SHOW_MS);
-    return () => { clearTimeout(a); clearTimeout(b); };
-  }, [native, onNext]);
-
-  if (native !== 'yes' || !ScreenTimeReportView) return <Screen center hue="accent"><View /></Screen>;
-
-  return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={!ready} center still hue="accent">
-      <Typewriter text={d.time.cmpTitle} variant="displayM" style={st.center} />
-      <View style={[st.report, { height: reportH, backgroundColor: withAlpha(c.mist, 0.05) }]}>
-        <ScreenTimeReportView context="compare" days={7} style={StyleSheet.absoluteFill} />
-      </View>
-    </Screen>
-  );
-}
-
 /* ---------- L'age ---------- */
 
 export function AgeAsk({ onNext }: P) {
@@ -163,6 +112,5 @@ const sheet = () => StyleSheet.create({
   center: { textAlign: 'center' },
   gaugeTight: { alignItems: 'center', marginVertical: space.lg },
   reassure: { height: 48, justifyContent: 'center' },
-  report: { alignSelf: 'stretch', marginTop: space.lg, borderRadius: 22, overflow: 'hidden' },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });

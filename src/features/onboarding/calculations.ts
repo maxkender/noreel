@@ -140,3 +140,22 @@ export function lifeYears(age: number, minutesPerDay: number): LifeYears {
   const phone = Math.min(free, Math.round((remaining * (minutesPerDay / 60)) / 24));
   return { remaining, sleep, work, eat, free, phone, left: free - phone };
 }
+
+/**
+ * La part du temps LIBRE que le telephone prend, en pourcentage.
+ *
+ * Calculee sur les heures, pas sur les cases arrondies : huit heures de
+ * sommeil, le travail jusqu'a la retraite, une heure et demie a table, et
+ * ce qui reste est le libre. Bornee a 95 : le temps libre doit rester plus
+ * grand que le temps d'ecran affiche, sinon la phrase ne veut plus rien
+ * dire — et a 95 elle dit deja « presque tout ».
+ */
+export function freeShare(age: number, minutesPerDay: number): number {
+  const remaining = Math.max(1, LIFE_YEARS - age);
+  const sleep = (remaining * 8) / 24;
+  const work = (Math.max(0, RETIRE_AGE - age) * ((8 * 5) / 7)) / 24;
+  const eat = (remaining * 1.5) / 24;
+  const free = Math.max(0.5, remaining - sleep - work - eat);
+  const phone = (remaining * (minutesPerDay / 60)) / 24;
+  return Math.min(95, Math.max(1, Math.round((100 * phone) / free)));
+}

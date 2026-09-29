@@ -14,7 +14,7 @@ import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
-import { lifeYears } from '../calculations';
+import { freeShare, lifeYears } from '../calculations';
 
 
 /*
@@ -55,28 +55,28 @@ const GAP = 7;
 /** Le retrait de la grille dans la page : de l'air autour des cases. */
 const INSET = 12;
 const WORK_GREEN = '#2E9E5B';
-type Kind = 'sleep' | 'work' | 'eat' | 'free' | 'phone';
+type Kind = 'sleep' | 'work' | 'eat' | 'free';
 
 /** Le tempo, en millisecondes. */
 const APPEAR = 16;   // une case de plus
-const PAINT = 28;    // une case peinte de plus (sommeil, travail, repas)
-const BITE = 80;     // une case mordue de plus (le telephone)
-const BEAT = 650;    // le silence entre deux etapes
+const TAKE = 30;     // une case prise de plus (sommeil, travail, repas)
+const BITE = 70;     // une case libre mordue de plus (le telephone)
+const BEAT = 700;    // le silence entre deux etapes
 
 /**
- * Tes annees, une case chacune — et a qui elles vont.
+ * Tes annees, une case chacune — et ce qu'il en reste vraiment.
  *
- * Toutes apparaissent d'abord : c'est ce qu'il reste. Puis le sommeil les
- * prend, le travail, les repas, l'une apres l'autre, avec sa ligne. Puis le
- * telephone vient MORDRE dedans, en rouge, case par case, avec son compte
- * qui monte — c'est le coup. Et seulement a la fin, ce qui reste s'allume :
- * les annees vraiment libres, en une phrase. Le temps libre n'est pas
- * annonce avant : on ne comprend ce qu'il vaut qu'une fois qu'on a vu ce
- * que le telephone en prend.
+ * Toutes apparaissent d'abord : c'est ce qu'il reste. Puis on enumere ce
+ * qui est deja pris, et a chaque ligne les cases concernees DISPARAISSENT
+ * de la grille — elles prennent leur couleur, se referment, et les autres
+ * se resserrent. Quand le sommeil, le travail et les repas sont partis, il
+ * ne reste que le temps libre, et on le dit. Alors le telephone vient
+ * mordre dedans, en rouge, case par case, et la phrase tombe : sur ce temps
+ * libre, tu en passes tant pour cent sur ton telephone. Pas d'annees ici :
+ * elles sont sur l'ecran d'apres.
  *
  * Tout vit sur le fil d'animation. Une seule horloge avance, et chaque case
- * sait a quel instant elle apparait et a quel instant elle change de
- * couleur : React ne rend rien pendant que la grille se peint.
+ * sait a quel instant elle apparait, se colore, se referme ou rougit.
  */
 export function LifeYears({ onNext }: P) {
   const c = useColors();
@@ -86,49 +86,57 @@ export function LifeYears({ onNext }: P) {
   const age = useOnboardingStore((x) => x.age);
   const minutes = useOnboardingStore(effectiveMinutes);
   const L = useMemo(() => lifeYears(age, minutes), [age, minutes]);
+  const pct = useMemo(() => freeShare(age, minutes), [age, minutes]);
   const title = t(d.life.title, { age, n: L.remaining });
 
   /*
     Le plan de chaque case, calcule une fois : sa nature, l'instant ou elle
-    apparait, l'instant ou elle prend sa couleur. Le sommeil, le travail et
-    les repas se peignent depuis le debut ; le telephone mord PAR LA FIN ; le
-    libre s'allume en dernier.
+    apparait, l'instant ou elle est prise (et se referme), ou mordue.
+    Le telephone mord le libre PAR LA FIN, a hauteur du pourcentage — et
+    jamais tout : le temps libre reste plus grand que ce qu'il y prend.
   */
   const plan = useMemo(() => {
     const kinds: Kind[] = [];
     (['sleep', 'work', 'eat'] as const).forEach((k) => { for (let i = 0; i < L[k]; i += 1) kinds.push(k); });
     while (kinds.length < L.remaining) kinds.push('free');
-    for (let i = 0; i < L.phone; i += 1) kinds[L.remaining - 1 - i] = 'phone';
+    const free = kinds.filter((k) => k === 'free').length;
+    const bites = Math.max(0, Math.min(free - 1, Math.round((free * pct) / 100)));
 
     const t0 = typeDuration(title, 32, 0) + 300;
     const tSleep = t0 + L.remaining * APPEAR + 500;
-    const tWork = tSleep + L.sleep * PAINT + BEAT;
-    const tEat = tWork + L.work * PAINT + BEAT;
-    const tPhone = tEat + L.eat * PAINT + BEAT + 300;
-    const tDone = tPhone + L.phone * BITE + 700;
+    const tWork = tSleep + L.sleep * TAKE + BEAT;
+    const tEat = tWork + L.work * TAKE + BEAT;
+    const tFree = tEat + L.eat * TAKE + BEAT;
+    const tPhone = tFree + 1100;
+    const tDone = tPhone + bites * BITE + 600;
 
-    let painted = 0;
-    const cells = kinds.map((kind, i) => {
+    let taken = 0;
+    let freeIndex = 0;
+    const cells = kinds.map((kind) => {
       let paintAt = Number.MAX_SAFE_INTEGER;
-      if (kind === 'sleep') { paintAt = tSleep + painted * PAINT; painted += 1; }
-      if (kind === 'work') { paintAt = tWork + (painted - L.sleep) * PAINT; painted += 1; }
-      if (kind === 'eat') { paintAt = tEat + (painted - L.sleep - L.work) * PAINT; painted += 1; }
-      if (kind === 'phone') paintAt = tPhone + (L.remaining - 1 - i) * BITE;
-      return { kind, appearAt: t0 + i * APPEAR, paintAt };
+      let goneAt = Number.MAX_SAFE_INTEGER;
+      let biteAt = Number.MAX_SAFE_INTEGER;
+      if (kind === 'sleep') { paintAt = tSleep + taken * TAKE; taken += 1; }
+      if (kind === 'work') { paintAt = tWork + (taken - L.sleep) * TAKE; taken += 1; }
+      if (kind === 'eat') { paintAt = tEat + (taken - L.sleep - L.work) * TAKE; taken += 1; }
+      if (kind !== 'free') goneAt = paintAt + 140;
+      if (kind === 'free') {
+        // Les dernieres cases libres sont mordues, de la fin vers le debut.
+        const fromEnd = free - 1 - freeIndex;
+        if (fromEnd < bites) biteAt = tPhone + fromEnd * BITE;
+        freeIndex += 1;
+      }
+      return { kind, paintAt, goneAt, biteAt };
     });
-    return { cells, t0, tSleep, tWork, tEat, tPhone, tDone };
-  }, [L, title]);
+    return { cells, t0, tSleep, tWork, tEat, tFree, tPhone, tDone, bites };
+  }, [L, pct, title]);
 
   const clock = useSharedValue(0);
   const [stage, setStage] = useState(0);
-  /** Les annees mordues, qui montent avec les cases rouges. */
-  const [bitten, setBitten] = useState(0);
 
   useEffect(() => {
     clock.value = 0;
     clock.value = withTiming(plan.tDone + 400, { duration: plan.tDone + 400, easing: Easing.linear });
-    // Les lignes et les tics restent cote React : quelques changements, pas
-    // soixante. Un tic toutes les quelques cases pendant qu'elles se posent.
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (ms: number, fn: () => void) => { timers.push(setTimeout(fn, ms)); };
     later(plan.t0, () => setStage(1));
@@ -136,27 +144,25 @@ export function LifeYears({ onNext }: P) {
     later(plan.tSleep, () => { setStage(2); haptics.tick(); });
     later(plan.tWork, () => { setStage(3); haptics.tick(); });
     later(plan.tEat, () => { setStage(4); haptics.tick(); });
-    later(plan.tPhone, () => { setStage(5); haptics.press(); });
-    // Le compte des annees mordues monte case par case, avec un a-coup.
-    for (let i = 1; i <= L.phone; i += 1) {
-      later(plan.tPhone + (i - 1) * BITE + 120, () => { setBitten(i); if (i % 2 === 0) haptics.tick(); });
-    }
-    later(plan.tDone, () => { setStage(6); haptics.success(); });
+    later(plan.tFree, () => { setStage(5); haptics.press(); });
+    later(plan.tPhone, () => setStage(6));
+    for (let i = 0; i < plan.bites; i += 2) later(plan.tPhone + i * BITE, () => haptics.tick());
+    later(plan.tDone, () => { setStage(7); haptics.success(); });
     return () => { timers.forEach(clearTimeout); cancelAnimation(clock); };
-  }, [plan, L.remaining, L.phone, clock]);
+  }, [plan, L.remaining, clock]);
 
-  const cell = Math.floor((width - gutter * 2 - INSET * 2 - (COLS - 1) * GAP) / COLS);
+  const cell = Math.floor((width - gutter * 2 - INSET * 2 - COLS * GAP) / COLS);
   const base = withAlpha(c.mist, 0.12);
-  const freeTone = withAlpha('#7CF5B0', 0.75);
+  const freeTone = withAlpha('#7CF5B0', 0.8);
   const tone: Record<Kind, string> = {
-    sleep: withAlpha(c.accent, 0.6), work: WORK_GREEN, eat: c.ember, free: freeTone, phone: c.danger,
+    sleep: withAlpha(c.accent, 0.7), work: WORK_GREEN, eat: c.ember, free: freeTone,
   };
 
   const lines: [number, string, string][] = [
     [2, tone.sleep, t(d.life.sleep, { n: L.sleep })],
     [3, tone.work, t(d.life.work, { n: L.work })],
     [4, tone.eat, t(d.life.eat, { n: L.eat })],
-    [5, tone.phone, t(d.life.phone, { n: stage >= 6 ? L.phone : bitten })],
+    [5, freeTone, d.life.freeLine],
   ];
 
   return (
@@ -164,53 +170,49 @@ export function LifeYears({ onNext }: P) {
       cta={d.ob.keepGoing}
       onPress={onNext}
       center
-      disabled={stage < 6}
-      hue={stage >= 6 ? 'accent' : 'ember'}
-      hueLevel={stage >= 5 ? 1 : Math.min(0.6, stage / 7)}
+      disabled={stage < 7}
+      hue={stage >= 6 ? 'ember' : 'accent'}
+      hueLevel={stage >= 6 ? 1 : Math.min(0.5, stage / 8)}
     >
       <Typewriter text={title} variant="displayM" style={s.center} />
 
-      <View style={[s.years, { gap: GAP, paddingHorizontal: INSET }]}>
+      <View style={[s.years, { paddingHorizontal: INSET }]}>
         {plan.cells.map((p, i) => (
           <Cell
             key={i}
             size={cell}
             clock={clock}
-            appearAt={p.appearAt}
+            appearAt={plan.t0 + i * APPEAR}
             paintAt={p.paintAt}
-            freeAt={p.kind === 'free' ? plan.tDone : Number.MAX_SAFE_INTEGER}
-            bite={p.kind === 'phone'}
+            goneAt={p.goneAt}
+            biteAt={p.biteAt}
+            freeAt={p.kind === 'free' ? plan.tFree : Number.MAX_SAFE_INTEGER}
             base={base}
             free={freeTone}
             colour={tone[p.kind]}
+            danger={c.danger}
           />
         ))}
       </View>
 
       {/* Les lignes ont une place FIXE : quatre au plus, et rien ne saute.
-          Le telephone est en rouge, et son compte monte sous les yeux. */}
+          Chacune tombe au moment ou ses cases se referment. */}
       <View style={s.lines}>
         {lines.map(([at, dot, label]) => (stage >= at ? (
           <Animated.View key={at} entering={FadeInDown.duration(380)} style={s.lineRow}>
             <View style={[s.lineDot, { backgroundColor: dot }]} />
-            <Text
-              variant={at === 5 ? 'title' : 'body'}
-              color={at === 5 ? c.danger : undefined}
-              tone={at === 5 ? undefined : 'secondary'}
-            >
-              {label}
-            </Text>
+            <Text variant={at === 5 ? 'title' : 'body'} tone={at === 5 ? undefined : 'secondary'}>{label}</Text>
           </Animated.View>
         ) : null))}
       </View>
 
-      {/* Le libre, et seulement a la fin : ce qu'il reste une fois que tout
-          le monde s'est servi. */}
+      {/* La phrase, a la fin, sur le libre — sans annees : elles sont sur
+          l'ecran d'apres. */}
       <View style={s.leftSlot}>
-        {stage >= 6 && (
+        {stage >= 7 && (
           <Animated.View entering={FadeIn.duration(700)}>
-            <Text variant="displayM" color={freeTone} style={s.center}>
-              {L.left > 1 ? t(d.life.left, { n: L.left }) : d.life.leftNone}
+            <Text variant="displayM" color={c.danger} style={s.center}>
+              {t(d.life.share, { p: pct })}
             </Text>
           </Animated.View>
         )}
@@ -222,40 +224,49 @@ export function LifeYears({ onNext }: P) {
 /**
  * Une case, qui lit l'horloge.
  *
- * Elle apparait en grandissant a son instant, prend sa couleur au sien, et
- * — si elle est libre — s'eclaircit quand on nomme le temps libre. Tout est
- * calcule sur le fil d'animation a partir d'une seule valeur partagee.
+ * Elle apparait en grandissant a son instant. Prise, elle prend sa couleur
+ * puis SE REFERME — largeur et marge a zero — et la grille se resserre
+ * autour d'elle. Libre, elle s'eclaircit quand on nomme le temps libre, et
+ * rougit si le telephone la mord. Tout est calcule sur le fil d'animation.
  */
 function Cell({
-  size, clock, appearAt, paintAt, freeAt, bite = false, base, free, colour,
+  size, clock, appearAt, paintAt, goneAt, biteAt, freeAt, base, free, colour, danger,
 }: {
   size: number;
   clock: SharedValue<number>;
   appearAt: number;
   paintAt: number;
+  goneAt: number;
+  biteAt: number;
   freeAt: number;
-  /** Une case que le telephone mord : elle saute plus fort en changeant. */
-  bite?: boolean;
   base: string;
   free: string;
   colour: string;
+  danger: string;
 }) {
   const style = useAnimatedStyle(() => {
     const t = clock.value;
     const born = interpolate(t, [appearAt, appearAt + 260], [0, 1], Extrapolation.CLAMP);
-    const lit = interpolate(t, [freeAt, freeAt + 400], [0, 1], Extrapolation.CLAMP);
-    const paint = interpolate(t, [paintAt, paintAt + 220], [0, 1], Extrapolation.CLAMP);
+    const paint = interpolate(t, [paintAt, paintAt + 200], [0, 1], Extrapolation.CLAMP);
+    const gone = interpolate(t, [goneAt, goneAt + 340], [0, 1], Extrapolation.CLAMP);
+    const lit = interpolate(t, [freeAt, freeAt + 500], [0, 1], Extrapolation.CLAMP);
+    const bite = interpolate(t, [biteAt, biteAt + 220], [0, 1], Extrapolation.CLAMP);
+    const k = 1 - gone;
     const resting = interpolateColor(lit, [0, 1], [base, free]);
-    // La case peinte gonfle a peine au moment ou elle change : c'est ce
-    // qui fait sentir que quelque chose vient d'etre pris.
-    const pop = paint > 0 && paint < 1 ? 1 + (bite ? 0.45 : 0.18) * Math.sin(paint * Math.PI) : 1;
+    const painted = interpolateColor(paint, [0, 1], [resting, colour]);
+    // La case mordue saute un peu en rougissant : on sent ce qui est pris.
+    const pop = bite > 0 && bite < 1 ? 1 + 0.4 * Math.sin(bite * Math.PI) : 1;
     return {
-      opacity: born,
-      backgroundColor: interpolateColor(paint, [0, 1], [resting, colour]),
+      opacity: born * (1 - gone),
+      width: size * k,
+      height: size,
+      marginRight: GAP * k,
+      marginBottom: GAP,
+      backgroundColor: interpolateColor(bite, [0, 1], [painted, danger]),
       transform: [{ scale: (0.55 + 0.45 * born) * pop }],
     };
   });
-  return <Animated.View style={[{ width: size, height: size, borderRadius: Math.max(4, size / 4) }, style]} />;
+  return <Animated.View style={[{ borderRadius: Math.max(4, size / 4) }, style]} />;
 }
 
 /**
@@ -304,7 +315,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   yearsBlock: { alignItems: 'center', gap: space.xs },
   mark: { width: 64, height: 64, alignSelf: 'center', marginBottom: space.xl },
   center: { textAlign: 'center' },
-  years: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'stretch', marginTop: space.xl },
+  years: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', alignSelf: 'stretch', marginTop: space.xl },
   lines: { alignSelf: 'stretch', minHeight: 4 * 32, marginTop: space.lg, gap: 6 },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   lineDot: { width: 12, height: 12, borderRadius: 3 },

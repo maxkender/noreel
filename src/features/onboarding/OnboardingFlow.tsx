@@ -17,7 +17,7 @@ import { Activities } from './screens/Activities';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
-import { AgeAsk, Guess, RealCheck } from './screens/time';
+import { AgeAsk, Guess } from './screens/time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './screens/science';
 import { Ready } from './screens/ready';
 import { DmReel, NotBlocker } from './screens/story';
@@ -127,10 +127,11 @@ export function OnboardingFlow() {
     L'ordre raconte quelque chose, et il a change.
 
     On demandait le temps d'ecran, puis on enchainait sur ce qu'il coute.
-    Le vrai chiffre, Apple ne le donne a aucune app : l'extension qui sait le
-    dessiner ne se lance meme pas sur tous les telephones, et l'ecran qui
-    demandait de le recopier depuis Reglages passait pour une panne. Il est
-    parti. Tout ce qui suit raisonne sur l'estimation, sans le dire deux fois.
+    Le vrai chiffre, Apple ne le donne a aucune app, et le cadre ou il
+    accepte de le dessiner reste vide sur certains iOS : la comparaison est
+    partie, et la permission Temps d'ecran — qui ne servait qu'a elle a cet
+    endroit — est allee rejoindre l'autre demande systeme, juste avant les
+    notifications. Tout le milieu raisonne sur l'estimation.
 
     Le milieu est devenu une page par idee : la dose, les recepteurs, le
     plaisir qui s'eteint, l'amour. Elles vivaient sur un ecran qu'on tapait
@@ -145,8 +146,6 @@ export function OnboardingFlow() {
     <Meet key="meet" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <Guess key="guess" onNext={next} />,
-    <Permissions key="perm" onDone={next} />,
-    <RealCheck key="real" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
     <LifeYears key="life" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
@@ -161,6 +160,7 @@ export function OnboardingFlow() {
     <NotBlocker key="nb" onNext={next} />,
     <Proof key="proof" onNext={next} />,
     <DmReel key="dm" onNext={next} />,
+    <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,

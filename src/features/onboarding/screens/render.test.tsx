@@ -18,7 +18,7 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
-import { AgeAsk, Guess, RealCheck } from './time';
+import { AgeAsk, Guess } from './time';
 import { LifeYears, S6Years } from './index';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './science';
 import { PromiseScreen, Welcome } from './setup';
@@ -99,11 +99,6 @@ describe('les ecrans du parcours se montent', () => {
 */
 describe('le temps d’ecran', () => {
   it('l’estimation a la jauge', () => { render(<Guess onNext={noop} />); });
-  it('le vrai chiffre chez Apple se saute sans extension', () => {
-    const onNext = jest.fn();
-    render(<RealCheck onNext={onNext} />);
-    expect(onNext).toHaveBeenCalled();
-  });
   it('l’age', () => { render(<AgeAsk onNext={noop} />); });
   it('les annees qu’il reste', () => { const r = render(<LifeYears onNext={noop} />); r.unmount(); });
   it('les annees sur le telephone', () => { const r = render(<S6Years onNext={noop} />); r.unmount(); });

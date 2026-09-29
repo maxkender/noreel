@@ -1,4 +1,4 @@
-import { ACTIVITIES, activityCount, friendEveningsPerWeek, lifeStats, lifeYears, screenYears, wakingShare, compareGuess } from './calculations';
+import { ACTIVITIES, activityCount, freeShare, friendEveningsPerWeek, lifeStats, lifeYears, screenYears, wakingShare, compareGuess } from './calculations';
 
 describe('lifeStats — les six cas de référence du §9', () => {
   const cases = [
@@ -112,5 +112,22 @@ describe('les annees qu\'il reste', () => {
     expect(old.remaining).toBe(1);
     expect(old.sleep + old.work + old.eat + old.free).toBe(1);
     expect(old.phone).toBeLessThanOrEqual(old.free);
+  });
+});
+
+describe('la part du temps libre', () => {
+  it('a 24 ans et 2 h 30 par jour, environ un quart du libre', () => {
+    // 56 ans devant : 18,7 a dormir, 9,8 a travailler, 3,5 a table, 24 de
+    // libre ; 5,8 sur le telephone — un quart.
+    expect(freeShare(24, 150)).toBe(24);
+  });
+
+  it('reste sous cent, meme quand l’ecran deborde du libre', () => {
+    expect(freeShare(24, 14 * 60)).toBe(95);
+    expect(freeShare(70, 10 * 60)).toBeLessThanOrEqual(95);
+  });
+
+  it('ne descend jamais a zero', () => {
+    expect(freeShare(24, 5)).toBeGreaterThanOrEqual(1);
   });
 });
