@@ -494,9 +494,28 @@ const COMMON = `
   };
 
   // Noir et blanc : un filtre sur la racine, applique et retire a la volee.
+  /*
+    Le noir et blanc par un VOILE, pas par un filtre sur la page.
+
+    Un filtre CSS pose sur <html> fait de lui le bloc conteneur de tout ce
+    qui est en position fixe : la barre du bas d'Instagram et son en-tete
+    cessaient d'etre fixes et partaient avec le defilement des qu'on
+    activait le reglage. Un calque gris fixe par-dessus, fondu en mode
+    « saturation », enleve la couleur de tout ce qu'il recouvre sans toucher
+    a la mise en page — et il ne prend aucun toucher.
+  */
   const __gray = () => {
-    const v = __on('grayscale') ? 'grayscale(1)' : '';
-    document.documentElement.style.setProperty('filter', v, 'important');
+    let veil = document.getElementById('nr-gray');
+    if (!__on('grayscale')) { if (veil) veil.remove(); return; }
+    if (veil) return;
+    veil = document.createElement('div');
+    veil.id = 'nr-gray';
+    veil.setAttribute('style', [
+      'position:fixed', 'top:0', 'left:0', 'right:0', 'bottom:0',
+      'background:#808080', 'mix-blend-mode:saturation',
+      'pointer-events:none', 'z-index:2147483647',
+    ].join(';'));
+    (document.body || document.documentElement).appendChild(veil);
   };
 
   /**
@@ -1275,8 +1294,11 @@ export const TWITTER_BLOCKER = `
       document.querySelectorAll('a[href="/explore"]')
         .forEach((el) => __hide(el, 'explore'));
     }
-    if (__on('dmsOnly') && !location.pathname.startsWith('/messages')) {
-      __go('/messages');
+    // Les messages vivent a /i/chat depuis 2026 : /messages y renvoie.
+    // Verifie sur le site le 29 septembre 2026. Renvoyer vers /messages
+    // depuis /i/chat aurait fait tourner la page en boucle.
+    if (__on('dmsOnly') && !/^[/](messages|i[/]chat)/.test(location.pathname)) {
+      __go('/i/chat');
     }
     if (__on('explore') && location.pathname.startsWith('/explore')) __go('/home');
   });
