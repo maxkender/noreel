@@ -103,6 +103,7 @@ describe('le panneau de reglages du client', () => {
           onClose={() => {}}
           onGo={() => {}}
           onPass={() => {}}
+          onPost={() => {}}
         />
       );
       expect(r.toJSON()).toBeTruthy();

@@ -29,7 +29,7 @@ import { ACCOUNT } from './accounts';
  * cacher. Il n'y a donc plus rien a recharger.
  */
 export function ClientSettings({
-  id, visible, onClose, onGo, onPass,
+  id, visible, onClose, onGo, onPass, onPost,
 }: {
   id: ClientId;
   visible: boolean;
@@ -38,6 +38,8 @@ export function ClientSettings({
   /** Ouvre l'epreuve du laissez-passer. Jouee par l'ecran, pas par la feuille :
    *  deux fenetres modales empilees se comportent mal sur iOS. */
   onPass: () => void;
+  /** Ouvre les reglages du mode publication. */
+  onPost: () => void;
 }) {
   const c = useColors();
   const tint = useBlurTint();
@@ -148,6 +150,20 @@ export function ClientSettings({
               Une attente, trois calculs et une suite à retenir. C’est long
               exprès.
             </Text>
+
+            {id === 'instagram' && (
+              <>
+                <Text variant="label" tone="tertiary" style={st.section}>PUBLICATION</Text>
+                <Pressable
+                  style={st.action}
+                  onPress={() => { haptics.press(); close(); onPost(); }}
+                >
+                  <Hourglass size={15} strokeWidth={2} color={c.accent} />
+                  <Text variant="body" style={{ flex: 1 }}>{d.client.postModeTitle}</Text>
+                </Pressable>
+                <Text variant="label" tone="tertiary" style={st.note}>{d.client.postModeNote}</Text>
+              </>
+            )}
 
             <Text variant="label" tone="tertiary" style={st.section}>COULEUR</Text>
 

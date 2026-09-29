@@ -41,6 +41,7 @@ import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { CortiTab } from './CortiTab';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
+import { usePostModeReconcile } from '@/services/postmode';
 
 type Tab = 'home' | 'corti' | 'block' | 'account';
 
@@ -241,6 +242,9 @@ function BlockTab({
   const selection = useSettings((x) => x.selection);
   const goal = useSettings((x) => x.goalMinutes);
   const setSetting = useSettings((x) => x.set);
+  const blockingOn = useSettings((x) => x.blocking);
+  // Revenu de la vraie app apres une publication : le blocage se remet.
+  usePostModeReconcile(selection, blockingOn);
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
   const [paywall, setPaywall] = useState(false);

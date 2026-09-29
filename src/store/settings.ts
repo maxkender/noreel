@@ -48,6 +48,9 @@ type State = {
    * minuterie a tenir ni etat a rattraper si l'app est fermee entre-temps.
    */
   reelsUntil: number;
+  /** Le mode publication : minutes accordees, et pauses par jour (zero : sans limite). */
+  postMinutes: number;
+  postLimit: number;
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -70,6 +73,8 @@ export const useSettings = create<State>()(
       // se lever tot. Le jour et les heures se changent dans les reglages.
       valve: { on: false, day: 6, from: 20, to: 21 },
       reelsUntil: 0,
+      postMinutes: 5,
+      postLimit: 3,
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.

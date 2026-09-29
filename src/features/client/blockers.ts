@@ -889,6 +889,58 @@ export const INSTAGRAM_BLOCKER = `
     }
   };
 
+  /*
+    Le « + » : Instagram bride la publication depuis sa version web.
+    On laisse son menu s'ouvrir et on previent l'app, qui propose d'ouvrir
+    la vraie app un instant. Jamais sur une page de connexion : « Creer un
+    compte » n'est pas une publication.
+  */
+  const CREATE = /new post|nouvelle publication|nouveau post|^cr.er$|^create$|cr.er une publication|create new post/i;
+  addEventListener('click', (e) => {
+    try {
+      if (__auth()) return;
+      const t = e.target && e.target.closest ? e.target.closest('a, button, [role="button"], svg, div[tabindex]') : null;
+      if (!t) return;
+      const href = t.getAttribute('href') || '';
+      const own = t.getAttribute('aria-label') || '';
+      const inner = t.querySelector ? t.querySelector('svg[aria-label], [aria-label]') : null;
+      const sub = inner ? inner.getAttribute('aria-label') || '' : '';
+      if (/[/]create([/]|$)/.test(href) || CREATE.test(own.trim()) || CREATE.test(sub.trim())) __post({ t: 'post' });
+    } catch (err) { /* rien */ }
+  }, true);
+
+  /*
+    Ajouter un compte : la porte du selecteur d'Instagram, puis son entree
+    « se connecter a un compte existant ». Instagram garde alors les deux
+    sessions, et on bascule de l'une a l'autre depuis le meme selecteur.
+  */
+  const ADD = /se connecter . un compte existant|log ?in(to)? an existing account|log in to another account|ajouter un compte|add account|ajouter un profil/i;
+  window.__nrAdd = () => {
+    const tryAdd = () => {
+      if (__clickBy(ADD)) { __post({ t: 'add', ok: true }); return true; }
+      return false;
+    };
+    if (tryAdd()) return;
+    if (__clickBy(SWITCH)) { setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800); return; }
+    if (__clickBy(MENU)) {
+      setTimeout(() => {
+        if (tryAdd()) return;
+        if (__clickBy(SWITCH)) setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800);
+        else __post({ t: 'add', ok: false });
+      }, 700);
+      return;
+    }
+    if (__clickBy(PROFILE)) {
+      setTimeout(() => {
+        if (__clickBy(SWITCH) || __clickBy(MENU)) {
+          setTimeout(() => { if (!tryAdd()) { if (__clickBy(SWITCH)) setTimeout(() => { if (!tryAdd()) __post({ t: 'add', ok: false }); }, 800); else __post({ t: 'add', ok: false }); } }, 700);
+        } else __post({ t: 'add', ok: false });
+      }, 900);
+      return;
+    }
+    __post({ t: 'add', ok: false });
+  };
+
   window.__nrSwitch = () => {
     // 1. Le selecteur est deja ouvert, ou son entree est visible.
     if (__clickBy(SWITCH)) { __post({ t: 'switch', ok: true }); return; }

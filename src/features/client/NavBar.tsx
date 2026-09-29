@@ -5,7 +5,7 @@ import Animated, {
   FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import {
-  ChevronLeft, ChevronRight, House, RotateCw, Settings as Gear, UsersRound, X,
+  ChevronLeft, ChevronRight, House, Link, RotateCw, Settings as Gear, UsersRound, X,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -25,7 +25,7 @@ const MARGIN = 14;
  * une barre qui appartient a UnSwipe, la maison est celle d'UnSwipe, et une
  * croix ferme ce qu'elle surmonte — la barre.
  */
-export type NavAction = 'back' | 'reload' | 'forward' | 'account' | 'settings' | 'exit';
+export type NavAction = 'back' | 'reload' | 'forward' | 'account' | 'link' | 'settings' | 'exit';
 
 /**
  * La barre de navigation, et la poignee qui l'ouvre.
@@ -112,6 +112,8 @@ export function NavBar({
               survivrait pas au prochain remaniement, une adresse si.
             */}
             <Key icon={UsersRound} label={d.client.switchAccount} onPress={() => act('account')} />
+            {/* Un lien copie ailleurs s'ouvre ICI, et non dans l'app d'origine. */}
+            <Key icon={Link} label={d.client.linkTitle} onPress={() => act('link')} />
             <Key icon={Gear} label={d.client.settings} onPress={() => act('settings')} colour={c.accent} />
           </View>
 

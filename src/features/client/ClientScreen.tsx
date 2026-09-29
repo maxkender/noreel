@@ -17,6 +17,9 @@ import { useT } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
 import { SwitchSheet } from './SwitchSheet';
+import { LinkSheet } from './LinkSheet';
+import { PostAsk, PostModeSheet } from './PostSheet';
+import { startPostMode, usePostModeReconcile } from '@/services/postmode';
 import { firstRunUrl } from './firstrun';
 import { ClientTutorial } from './ClientTutorial';
 import { markTutorialSeen, tutorialSeen } from './tutorial';
@@ -247,6 +250,24 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // s'il ne s'ouvre pas : le chemin est fait de libelles, donc il peut
   // changer sous nos pieds.
   const [switching, setSwitching] = useState(false);
+  // Le lien colle, et le mode publication.
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [postAsk, setPostAsk] = useState(false);
+  const [postSettings, setPostSettings] = useState(false);
+  const [postNote, setPostNote] = useState<string | null>(null);
+  const selection = useSettings((x) => x.selection);
+  const blocking = useSettings((x) => x.blocking);
+  const postMinutes = useSettings((x) => x.postMinutes);
+  const postLimit = useSettings((x) => x.postLimit);
+  usePostModeReconcile(selection, blocking);
+  const openToPost = async () => {
+    setPostAsk(false);
+    const r = await startPostMode(selection, blocking, postMinutes, postLimit);
+    const line = r === 'unlocked' ? t(d.client.postUnlocked, { n: postMinutes })
+      : r === 'limited' ? t(d.client.postLimitHit, { n: postLimit })
+        : r === 'failed' ? d.client.postFailed : null;
+    if (line) { setPostNote(line); setTimeout(() => setPostNote(null), 5000); }
+  };
   const [switchFailed, setSwitchFailed] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
   /** Le pseudo connecte, lu sur la page. Nul tant qu'on ne l'a pas. */
@@ -399,6 +420,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
           );
         }
         break;
+      case 'link': setLinkOpen(true); break;
       case 'settings': setPanel(true); break;
       case 'exit': exit(); break;
     }
@@ -473,11 +495,36 @@ export function ClientScreen({ id }: { id: ClientId }) {
           setSwitchOpen(false);
         }}
         onAdd={() => {
-          web.current?.injectJavaScript(
-            `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
-          );
+          // Par la porte d'Instagram d'abord : son selecteur garde les deux
+          // sessions. La page de connexion n'est que le repli.
+          if (id === 'instagram') {
+            web.current?.injectJavaScript('window.__nrAdd && window.__nrAdd(); true;');
+          } else {
+            web.current?.injectJavaScript(
+              `location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`
+            );
+          }
           setSwitchOpen(false);
         }}
+      />
+
+      <LinkSheet
+        id={id}
+        app={LABELS[id].split(' ·')[0]}
+        visible={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        onGo={(url) => web.current?.injectJavaScript(`location.assign(${JSON.stringify(url)}); true;`)}
+      />
+      <PostAsk
+        visible={postAsk}
+        onClose={() => setPostAsk(false)}
+        onOpen={() => { void openToPost(); }}
+        onSettings={() => { setPostAsk(false); setPostSettings(true); }}
+      />
+      <PostModeSheet
+        visible={postSettings}
+        onClose={() => setPostSettings(false)}
+        armed={blocking && !!selection}
       />
 
       <HelpSheet
@@ -575,6 +622,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
                 setSwitchFailed(!m.ok);
                 if (!m.ok) setTimeout(() => setSwitchFailed(false), 4000);
               }
+              // Le « + » : on propose la vraie app pour publier.
+              if (m && m.t === 'post') setPostAsk(true);
+              // L'ajout d'un compte n'a pas trouve sa porte : la page de connexion, alors.
+              if (m && m.t === 'add' && !m.ok) {
+                web.current?.injectJavaScript(
+                  `location.assign(${JSON.stringify(`${ACCOUNT[id].add}?source=switch_account`)}); true;`
+                );
+              }
             } catch {
               /* message qui ne vient pas de nous */
             }
@@ -642,6 +697,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* Le selecteur de comptes met un instant a s'ouvrir, et il peut ne pas
           s'ouvrir du tout : dans les deux cas on le dit. */}
+      {postNote && (
+        <View style={styles.valve} pointerEvents="none">
+          <Text variant="label" color={c.accent}>{postNote}</Text>
+        </View>
+      )}
+
       {(switching || switchFailed) && (
         <View style={styles.valve} pointerEvents="none">
           <Text variant="label" color={switchFailed ? c.danger : c.accent}>
@@ -716,6 +777,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         id={id}
         visible={panel}
         onPass={() => setPass(true)}
+        onPost={() => setPostSettings(true)}
         onClose={() => setPanel(false)}
         onGo={(url) => {
           setPanel(false);
