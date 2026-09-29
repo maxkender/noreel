@@ -2,9 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
-import {
-  Award, Check, Flame, Lock, Medal, Sparkles, Star, Sunrise, Trophy, Zap,
-} from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -24,6 +22,7 @@ import { BADGES, badgeGap, claimBadges, unlockedBadges, type Badge } from '@/ser
 import { claimCheer } from '@/services/cheer';
 import { useT } from '@/i18n';
 import { Celebrate } from './Celebrate';
+import { BadgeArt } from './BadgeArt';
 import type { Scroll } from './parts';
 
 /*
@@ -36,12 +35,6 @@ import type { Scroll } from './parts';
  * descendre. Les niveaux sont des paliers d'XP. Une fenetre ne s'ouvre que
  * pour ce qui le merite : un badge, un niveau.
  */
-
-const BADGE_ICON: Record<string, typeof Award> = {
-  day1: Sunrise, day7: Flame, day30: Medal, day100: Trophy,
-  reels100: Zap, reels1000: Star, reels10000: Award,
-  care1: Sparkles, care10: Sparkles, care3: Check,
-};
 
 /** Le mot et la ligne d'un badge, lus dans le dictionnaire par son identifiant. */
 const NAME: Record<string, ['bDay1' | 'bDay7' | 'bDay30' | 'bDay100' | 'bReels100' | 'bReels1000' | 'bReels10000' | 'bCare1' | 'bCare10' | 'bCare3', 'bDay1H' | 'bDay7H' | 'bDay30H' | 'bDay100H' | 'bReels100H' | 'bReels1000H' | 'bReels10000H' | 'bCare1H' | 'bCare10H' | 'bCare3H']> = {
@@ -210,8 +203,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         <Text variant="label" tone="tertiary" style={st.h}>{`${have.length} / ${BADGES.length}`}</Text>
       </View>
       <View style={st.badges}>
-        {BADGES.map((b) => {
-          const Icon = BADGE_ICON[b.id];
+        {BADGES.map((b, i) => {
           const on = have.includes(b.id);
           return (
             <Pressable
@@ -222,11 +214,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
               accessibilityLabel={d.cortiTab[NAME[b.id][0]]}
               accessibilityState={{ selected: on }}
             >
-              <View style={[st.medal, on ? { backgroundColor: withAlpha(c.accent, 0.18), borderColor: withAlpha(c.accent, 0.6) } : st.medalOff]}>
-                {on
-                  ? <Icon size={22} strokeWidth={2} color={c.accent} />
-                  : <Lock size={16} strokeWidth={2} color={withAlpha(c.mist, 0.35)} />}
-              </View>
+              <BadgeArt id={b.id} on={on} size={60} index={i} />
               <Text variant="label" tone={on ? 'primary' : 'tertiary'} style={st.badgeName} numberOfLines={2}>
                 {d.cortiTab[NAME[b.id][0]]}
               </Text>
@@ -268,6 +256,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         body={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[1]] : pop?.kind === 'level' ? t(d.cortiTab.levelUpBody, { name: names[pop.level] }) : ''}
         cta={d.cortiTab.ok}
         onClose={() => setPops((p) => p.slice(1))}
+        icon={pop?.kind === 'badge' ? <BadgeArt id={pop.id} on size={150} big /> : undefined}
       />
 
       {/* Un badge regarde de pres : ce que c'est, et ce qu'il manque. */}
@@ -280,11 +269,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
           : ''}
         cta={d.cortiTab.ok}
         onClose={() => setPeek(null)}
-        icon={peek ? (() => { const Icon = BADGE_ICON[peek.id]; return (
-          <View style={[st.medalBig, have.includes(peek.id) ? { backgroundColor: withAlpha(c.accent, 0.18), borderColor: withAlpha(c.accent, 0.6) } : st.medalOff]}>
-            <Icon size={44} strokeWidth={1.8} color={have.includes(peek.id) ? c.accent : withAlpha(c.mist, 0.4)} />
-          </View>
-        ); })() : undefined}
+        icon={peek ? <BadgeArt id={peek.id} on={have.includes(peek.id)} size={140} big /> : undefined}
       />
     </Animated.ScrollView>
   );
@@ -371,15 +356,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   h: { marginTop: space.xl, marginBottom: space.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   badge: { width: '18%', alignItems: 'center', gap: 6, marginBottom: space.sm },
-  medal: {
-    width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  medalBig: {
-    width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2,
-  },
-  medalOff: { backgroundColor: withAlpha(c.mist, 0.05), borderColor: withAlpha(c.mist, 0.14) },
   badgeName: { textAlign: 'center', fontSize: 10 },
   more: { marginTop: space.md, marginBottom: space.sm, alignSelf: 'flex-start' },
   how: { marginTop: space.xl, alignSelf: 'center' },
