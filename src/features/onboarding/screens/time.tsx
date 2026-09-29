@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -20,6 +20,42 @@ import { compareGuess } from '../calculations';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
 import { PICKABLE } from './setup';
+import { authorizationStatus } from '@/services/shield.real';
+import {
+  ScreenTimeReportView, prepareReport, reportAvailable, type ReportStrings,
+} from '@/native/screenTimeReport';
+
+/**
+ * Le rapport d'Apple peut-il s'afficher ICI, maintenant ?
+ *
+ * Il faut l'extension dans le binaire ET l'autorisation Temps d'ecran. La
+ * seconde ne se sait qu'en demandant : d'ou trois etats, et non deux — tant
+ * qu'on ne sait pas, on n'affiche ni la vue native ni la saisie, sinon l'une
+ * des deux apparait pour disparaitre aussitot.
+ */
+function useNativeReport(): 'yes' | 'no' | 'unknown' {
+  const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
+  useEffect(() => {
+    if (!reportAvailable()) return;
+    let alive = true;
+    void authorizationStatus().then((a) => { if (alive) setState(a === 'approved' ? 'yes' : 'no'); });
+    return () => { alive = false; };
+  }, []);
+  return state;
+}
+
+/** Les textes que l'extension dessinera, dans la langue de l'app. */
+function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
+  const t = d.time;
+  return {
+    lessTitle: t.lessTitle, lessSub: t.lessSub, moreTitle: t.moreTitle, moreSub: t.moreSub,
+    sameTitle: t.sameTitle, sameSub: t.sameSub, deltaLess: t.deltaLess, deltaMore: t.deltaMore,
+    deltaSame: t.deltaSame, guessLabel: t.guessLabel, realLabel: t.realLabel,
+    analysisTitle: t.analysisTitle, analysisSub: t.analysisSub, perYear: t.perYear,
+    pickupsTitle: t.pickupsTitle, pickupsBody: t.pickupsBody, topApps: t.topApps,
+    unitH: t.unitH, unitMin: t.unitMin,
+  };
+}
 
 type P = { onNext: () => void };
 
@@ -156,8 +192,37 @@ export function Compare({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
   const { d, t } = useT();
   const guess = useOnboardingStore((x) => x.minutesPerDay);
-  const real = useOnboardingStore((x) => x.realMinutes) ?? guess;
+  const storedReal = useOnboardingStore((x) => x.realMinutes);
+  const real = storedReal ?? guess;
   const { pct, verdict } = compareGuess(guess, real);
+  const native = useNativeReport();
+  // Le chiffre a-t-il ete recopie ? Sinon, et sans extension, on le demande
+  // d'abord — ici meme, pas sur un ecran de plus.
+  const [entered, setEntered] = useState(storedReal !== undefined);
+
+  useEffect(() => {
+    if (native !== 'yes') return;
+    prepareReport(guess, reportStrings(d), {
+      accent: c.accent, danger: c.danger, good: '#2E9E5B', ink: c.mist, inkSoft: withAlpha(c.mist, 0.6),
+    });
+  }, [native, guess, d, c]);
+
+  if (native === 'unknown') return <Screen center hue="accent"><View /></Screen>;
+
+  /*
+    Le chemin d'Apple : la comparaison est DESSINEE par l'extension, avec
+    le vrai chiffre que nous ne verrons jamais. On lui reserve la hauteur ;
+    tout le reste de l'ecran est a elle.
+  */
+  if (native === 'yes' && ScreenTimeReportView) {
+    return (
+      <Screen cta={d.ob.keepGoing} onPress={onNext} center still hue="accent">
+        <ScreenTimeReportView context="compare" days={7} style={{ height: 460 }} />
+      </Screen>
+    );
+  }
+
+  if (!entered) return <RealTime onNext={() => setEntered(true)} />;
 
   const tone = verdict === 'less' ? '#2E9E5B' : verdict === 'more' ? c.danger : c.accent;
   const Icon = verdict === 'less' ? ArrowDown : verdict === 'more' ? ArrowUp : Equal;
@@ -228,6 +293,34 @@ export function Analysis({ onNext }: P) {
   const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
   const picked = useOnboardingStore((x) => x.distractions);
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
+  const native = useNativeReport();
+
+  if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
+
+  // Avec l'extension : sept vraies journees, les prises en main et les apps
+  // les plus gourmandes, dessinees par Apple. Le choix des distractions
+  // reste a nous — c'est une decision, pas une mesure.
+  if (native === 'yes' && ScreenTimeReportView) {
+    return (
+      <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="ember">
+        <ScreenTimeReportView context="overview" days={7} style={{ height: 560 }} />
+        <Text variant="button" style={{ marginTop: space.xl }}>{d.time.appsTitle}</Text>
+        <Text variant="body" tone="secondary" style={{ marginTop: 2 }}>{d.time.appsBody}</Text>
+        <View style={st.list}>
+          {PICKABLE.map((a) => (
+            <SelectCard
+              key={a.id}
+              shape="check"
+              label={a.name}
+              lead={<Image source={LOGOS[a.id]} style={st.logo} contentFit="contain" />}
+              selected={picked.includes(a.id)}
+              onPress={() => toggle(a.id)}
+            />
+          ))}
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="ember">

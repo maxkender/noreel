@@ -1,0 +1,22 @@
+Pod::Spec.new do |s|
+  s.name           = 'ScreenTimeReportHost'
+  s.version        = '1.0.0'
+  s.summary        = 'Affiche le rapport Temps d’écran d’Apple dans une vue React Native.'
+  s.description    = 'Vue hôte de DeviceActivityReport. Les chiffres sont dessinés par l’extension ScreenTimeReport ; cette vue ne les voit jamais.'
+  s.author         = 'Vik Studios'
+  s.homepage       = 'https://vikstudios.com/unswipe'
+  s.license        = { :type => 'Proprietary' }
+  s.platforms      = { :ios => '15.1' }
+  s.swift_version  = '5.9'
+  s.source         = { :git => '' }
+  s.static_framework = true
+
+  s.dependency 'ExpoModulesCore'
+
+  s.pod_target_xcconfig = {
+    'DEFINES_MODULE' => 'YES',
+    'SWIFT_COMPILATION_MODE' => 'wholemodule'
+  }
+
+  s.source_files = '**/*.swift'
+end

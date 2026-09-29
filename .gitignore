@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Cibles natives copiees a l'evaluation de la config (voir plugins/withScreenTimeReport.js)
+targets/

@@ -96,6 +96,9 @@ export function Permissions({ onDone }: { onDone: () => void }) {
       <Screen secondary={d.rate.later} onSecondary={onDone} hue="warm">
         <Text variant="displayM">{d.perms.connect}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
+          {d.perms.connectBody}
+        </Text>
+        <Text variant="label" tone="tertiary" style={{ marginTop: space.lg }}>
           {d.perms.press}
         </Text>
       </Screen>

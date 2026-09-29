@@ -50,6 +50,16 @@ const config: ExpoConfig = {
     // l'animation d'ouverture, ce qui faisait un a-coup. Noir plein, et
     // l'animation enchaine sans couture.
     ['expo-splash-screen', { backgroundColor: NIGHT }],
+    /*
+      Le rapport Temps d'ecran : une extension de plus, derriere son propre
+      flag. Ce plugin copie la cible dans targets/ quand
+      EXPO_PUBLIC_SCREEN_TIME_REPORT=1 et l'en retire sinon ; il doit passer
+      AVANT la bibliotheque, qui ramasse targets/ au moment ou elle s'evalue.
+      Avant d'activer le flag : creer l'App ID
+      com.vikstudios.noreel.ScreenTimeReport dans le portail Apple, avec
+      Family Controls et le groupe group.com.vikstudios.noreel.
+    */
+    ...(FAMILY_CONTROLS ? ['./plugins/withScreenTimeReport'] : []),
     ...(FAMILY_CONTROLS
       ? [[
           'react-native-device-activity',

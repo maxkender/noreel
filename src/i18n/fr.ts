@@ -72,6 +72,9 @@ export const fr = {
   },
 
   time: {
+    topApps: 'Tes apps les plus gourmandes',
+    unitH: 'h',
+    unitMin: 'min',
     realTitle: 'Maintenant, le vrai chiffre.',
     realBody: 'Ton téléphone le connaît. Reporte-le ici.',
     step1: 'Ouvre Réglages',
@@ -460,7 +463,8 @@ export const fr = {
     soonAndroid: 'Le blocage Android arrive bientôt.',
     openSettings: 'Ouvrir Réglages',
     skip: `Continuer sans activer Temps d'écran`,
-    connect: `Connectons UnSwipe à Temps d'écran.`,
+    connect: 'Maintenant, découvrons ton vrai temps d’écran. Prêt ?',
+    connectBody: 'Autorise UnSwipe à lire Temps d’écran : on prépare ton bilan.',
     alertTitle: `« UnSwipe » souhaite accéder à Temps d'écran`,
     alertBody: `Cela permet de voir tes données d'activité et de limiter l'utilisation d'Apps et de sites web.`,
     connected: `Temps d'écran connecté`,

@@ -67,6 +67,9 @@ export const en: Dict = {
   },
 
   time: {
+    topApps: 'Your most distracting apps',
+    unitH: 'h',
+    unitMin: 'min',
     realTitle: 'Now, the real number.',
     realBody: 'Your phone already knows it. Copy it here.',
     step1: 'Open Settings',
@@ -440,7 +443,8 @@ export const en: Dict = {
     soonAndroid: 'Android blocking is coming soon.',
     openSettings: 'Open Settings',
     skip: 'Continue without Screen Time',
-    connect: 'Let’s connect UnSwipe to Screen Time.',
+    connect: 'Now let’s uncover your actual screen time. Ready?',
+    connectBody: 'Give UnSwipe access to Screen Time and we’ll prepare your personal overview.',
     alertTitle: '“UnSwipe” would like to access Screen Time',
     alertBody: 'This lets it see your activity data and limit the use of apps and websites.',
     connected: 'Screen Time connected',
