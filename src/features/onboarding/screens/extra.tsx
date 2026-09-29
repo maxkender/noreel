@@ -41,7 +41,6 @@ type P = { onNext: () => void };
  * quelqu'un a cote de soi pendant qu'on regarde ses propres chiffres.
  */
 export function Meet({ onNext }: P) {
-  const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d, t } = useT();
   const name = useOnboardingStore((x) => x.firstName);
@@ -67,9 +66,6 @@ export function Meet({ onNext }: P) {
       </Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
         {d.corti.meetBody}
-      </Text>
-      <Text variant="label" color={c.accent} style={[st.mid, { marginTop: space.lg }]}>
-        {d.corti.meetKicker}
       </Text>
     </Screen>
   );
@@ -322,9 +318,6 @@ export function Attribution({ onNext }: P) {
   return (
     <Screen emblem={<Emblem icon={Compass} />} cta={d.pay.ctaPlain} onPress={onNext} disabled={!pick} hue="deep">
       <Text variant="displayM">{d.source.title}</Text>
-      <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-        {d.source.body}
-      </Text>
 
       <View style={{ marginTop: space.xl, gap: space.md }}>
         {SOURCES.map(([k, proper]) => (

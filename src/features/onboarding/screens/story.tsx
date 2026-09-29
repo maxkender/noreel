@@ -74,11 +74,6 @@ export function NotBlocker({ onNext }: P) {
         })}
       </View>
 
-      <Animated.View entering={FadeIn.delay(3000).duration(520)}>
-        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.xl }]}>
-          {d.story.whyNote}
-        </Text>
-      </Animated.View>
     </Screen>
   );
 }

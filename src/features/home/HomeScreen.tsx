@@ -35,13 +35,10 @@ import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
-import {
-  Milestone, ProtectionStatus, ReclaimedNote, useProtect,
-} from './Recovery';
+import { ProtectionStatus, useProtect } from './Recovery';
 import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { CortiTab } from './CortiTab';
-import { nudgeOfTheDay } from '@/services/nudge';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
 
@@ -177,9 +174,6 @@ function HomeTab({
   const st = useMemo(() => sheet(c), [c]);
   const { s: prot } = useProtect();
   const level = cortiLevel(prot?.days ?? 0);
-  // Le tirage est deterministe : la meme journee donne toujours la meme
-  // phrase. Tire au hasard, elle changerait a chaque ouverture de l'app.
-  const nudge = useMemo(() => nudgeOfTheDay(prot), [prot]);
   // Cree UNE fois : la demande porte un numero, et c'est lui qui declenche.
   // Refabriquee a chaque rendu, elle ferait saluer Corti sans arret.
   const [hello] = useState(() => cortiReact('wave'));
@@ -210,18 +204,6 @@ function HomeTab({
       </Pressable>
 
       <AppSlider minutes={minutes} />
-
-      {/*
-        Le rappel du jour, sous les applis.
-        Il part du temps qu'on a VRAIMENT repris et le projette sur trois mois.
-        Ce n'est pas une citation motivante — de celles-la on se lasse en trois
-        jours — c'est son propre chiffre, tourne autrement, et il change chaque
-        matin.
-      */}
-      <Glass radius={22} intensity={50} warmEdge="none" style={st.nudge}>
-        <Text variant="label" color={c.accent}>{nudge.title}</Text>
-        <Text variant="body" style={{ marginTop: space.xs }}>{nudge.body}</Text>
-      </Glass>
     </Animated.ScrollView>
   );
 }
@@ -262,9 +244,8 @@ function BlockTab({
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
   const [paywall, setPaywall] = useState(false);
-  // Le registre de la protection : reels evites, temps repris, jours
-  // proteges, indice de recuperation, et l'etat du filtre.
-  const { s: prot, prize, clear } = useProtect();
+  // Le registre de la protection, pour l'etat du filtre.
+  const { s: prot } = useProtect();
   // Le blocage des apps d'origine et le mode strict sont payants : grises et
   // cadenasses plutot qu'absents, pour qu'on voie ce qu'on n'a pas.
   const pro = useProStore((x) => x.pro);
@@ -337,14 +318,10 @@ function BlockTab({
         d'applications choisies, ouvrait sur une mascotte. Il ouvre maintenant
         sur ce qu'on vient y regler.
       */}
-      {prot && (
-        <>
-          <ReclaimedNote s={prot} />
-          <ProtectionStatus
-            s={prot}
-            onFix={() => { haptics.press(); void pullAndRestart(); }}
-          />
-        </>
+      {/* Le filtre ne parle que s'il a un doute : une page qui dit « tout va
+          bien » a chaque ouverture finit par ne plus etre lue. */}
+      {prot?.shaky && (
+        <ProtectionStatus s={prot} onFix={() => { haptics.press(); void pullAndRestart(); }} />
       )}
 
       {/* Puis les trois chiffres du jour : le temps passe dans les versions
@@ -364,11 +341,12 @@ function BlockTab({
         <Text variant="title" style={{ textAlign: 'center' }}>
           {on ? d.blockTab.onTitle : d.blockTab.offTitle}
         </Text>
-        <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
-          {needsAuth
-            ? d.blockTab.needAuth
-            : selection ? d.blockTab.ready : d.blockTab.pick}
-        </Text>
+        {/* Une phrase seulement quand il y a quelque chose a FAIRE. */}
+        {(needsAuth || !selection) && (
+          <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
+            {needsAuth ? d.blockTab.needAuth : d.blockTab.pick}
+          </Text>
+        )}
         <Pressable
           onPress={() => {
             if (!on) { void arm(); return; }
@@ -397,7 +375,6 @@ function BlockTab({
       <Card>
         <Row
           title={d.blockTab.more}
-          body={selection ? d.blockTab.moreOn : d.blockTab.moreOff}
           onPress={() => (pro ? router.push('/picker') : setPaywall(true))}
           right={pro
             ? <Text variant="body" tone="tertiary">›</Text>
@@ -405,7 +382,6 @@ function BlockTab({
         />
         <Row
           title="Mode strict"
-          body={hard ? d.blockTab.hardOn : d.blockTab.hardOff}
           right={!pro ? <LockedPill label="Pro" onPress={() => setPaywall(true)} /> : (
             <Toggle
               on={hard}
@@ -421,21 +397,6 @@ function BlockTab({
       </Card>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
-
-      {/*
-        Le palier se feter une fois, au retour sur l'ecran.
-        Une pause GELE le compte au lieu de le remettre a zero : un compteur
-        efface enseigne « c'est perdu de toute facon », et c'est precisement la
-        que les gens desinstallent.
-      */}
-      {prize && prot && (
-        <Milestone
-          prize={prize}
-          days={prot.days}
-          blocked={prot.blocked}
-          onClose={clear}
-        />
-      )}
 
       <HardModeIntro
         visible={intro}
@@ -454,7 +415,6 @@ function BlockTab({
       <Card>
         <Row
           title={d.block.homeScreen}
-          body={d.block.homeScreenBody}
           onPress={() => router.push('/widgets')}
           right={<Text variant="body" tone="tertiary">›</Text>}
         />
@@ -521,7 +481,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   greet: { alignItems: 'center', gap: space.sm, paddingBottom: space.lg },
-  nudge: { marginTop: space.lg, paddingHorizontal: space.lg, paddingVertical: space.lg },
   stripLine: { width: StyleSheet.hairlineWidth, height: 28, backgroundColor: withAlpha(c.mist, 0.14) },
   cardRow: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

@@ -231,6 +231,8 @@ export type Stats = {
   passes: number;
   /** Les gestes declares AUJOURD'HUI. */
   careToday: string[];
+  /** Tous les gestes comptes, plafond du jour applique : ce que les badges lisent. */
+  careTotal: number;
 };
 
 /**
@@ -294,6 +296,7 @@ export async function stats(): Promise<Stats> {
     days,
     brain: brainIndex(days, rawDays, l.passes, careScore(l.care ?? {})),
     careToday: (l.care ?? {})[dayKey()] ?? [],
+    careTotal: careScore(l.care ?? {}),
     passes: l.passes,
     checkedAt,
     fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,
