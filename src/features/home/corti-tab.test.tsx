@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { CortiTab } from './CortiTab';
 import { dict } from '@/i18n';
 import { BADGES } from '@/services/badges';
+import { XP } from '@/services/protect';
 
 jest.mock('react-native-device-activity', () => ({}));
 jest.mock('expo-router', () => ({ useFocusEffect: (fn: () => void) => fn() }));
@@ -32,14 +33,13 @@ it('montre les dix badges, verrouilles au depart, et dit comment les avoir', asy
   expect(screen.getByText(new RegExp(dict.cortiTab.bDay7H))).toBeTruthy();
 });
 
-it('fete le geste du jour, puis le premier badge', async () => {
+it('un geste rapporte de l’XP sous les yeux, puis le premier badge', async () => {
   render(<CortiTab onScroll={noop} />);
   await screen.findByText(dict.stats.reelsAvoided);
   fireEvent.press(screen.getAllByRole('checkbox')[0]);
-  // Le merci d'abord.
-  expect(await screen.findByText(dict.cortiTab.careThanks)).toBeTruthy();
-  fireEvent.press(screen.getByText(dict.cortiTab.ok));
-  // Puis le badge « premier geste », debloque par ce geste.
+  // L'XP d'abord, sans fenetre : le gain s'envole au-dessus de la barre.
+  expect(await screen.findByText(`+${XP.care} XP`)).toBeTruthy();
+  // Puis le badge « premier geste », debloque par ce geste — lui a sa fenetre.
   expect(await screen.findByText(dict.cortiTab.unlocked)).toBeTruthy();
   expect(screen.getByText(dict.cortiTab.bCare1H)).toBeTruthy();
 });

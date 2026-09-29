@@ -80,6 +80,31 @@ const DEDUPE_MS = 30 * 60_000;
  */
 export const MINUTES_PER_SESSION = 12;
 
+/*
+ * L'XP de Corti : ce qui le repare, et ce qui l'abime.
+ *
+ * Son etat suivait les jours proteges, un compte qui ne bouge qu'a minuit :
+ * on cochait un geste et rien ne changeait sous les yeux. L'XP bouge tout de
+ * suite. Un geste rapporte, une journee protegee rapporte ; ouvrir des Reels
+ * (un laissez-passer) coute, et une journee sans filtre coute davantage.
+ * Les niveaux sont des paliers d'XP, et la barre entre deux paliers monte a
+ * chaque geste.
+ */
+export const XP = { day: 20, care: 15, pass: -20, raw: -30 } as const;
+/** Les paliers : au sol, en veilleuse, allume, rayonnant. */
+export const XP_LEVELS = [0, 40, 160, 400] as const;
+export type Level = 0 | 1 | 2 | 3;
+
+export function xpOf(days: number, rawDays: number, passes: number, cares: number): number {
+  return Math.max(0, days * XP.day + cares * XP.care + passes * XP.pass + rawDays * XP.raw);
+}
+
+export function levelFromXp(xp: number): Level {
+  let level: Level = 0;
+  XP_LEVELS.forEach((at, i) => { if (xp >= at) level = i as Level; });
+  return level;
+}
+
 /** Les paliers. Ni trop rapproches ni hors d'atteinte. */
 export const MILESTONES: { id: string; kind: 'days' | 'reels'; at: number }[] = [
   { id: 'days:7', kind: 'days', at: 7 },
@@ -233,6 +258,9 @@ export type Stats = {
   careToday: string[];
   /** Tous les gestes comptes, plafond du jour applique : ce que les badges lisent. */
   careTotal: number;
+  /** L'XP de Corti, et son niveau. */
+  xp: number;
+  level: Level;
 };
 
 /**
@@ -297,6 +325,8 @@ export async function stats(): Promise<Stats> {
     brain: brainIndex(days, rawDays, l.passes, careScore(l.care ?? {})),
     careToday: (l.care ?? {})[dayKey()] ?? [],
     careTotal: careScore(l.care ?? {}),
+    xp: xpOf(days, rawDays, l.passes, careScore(l.care ?? {})),
+    level: levelFromXp(xpOf(days, rawDays, l.passes, careScore(l.care ?? {}))),
     passes: l.passes,
     checkedAt,
     fresh: checkedAt > 0 && Date.now() - checkedAt < 36 * 3600 * 1000,

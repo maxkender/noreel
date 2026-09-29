@@ -36,7 +36,7 @@ import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
 import { ProtectionStatus, useProtect } from './Recovery';
-import { cortiLevel, cortiLine } from '@/components/Corti';
+import { cortiLine } from '@/components/Corti';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { CortiTab } from './CortiTab';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
@@ -173,7 +173,7 @@ function HomeTab({
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { s: prot } = useProtect();
-  const level = cortiLevel(prot?.days ?? 0);
+  const level = prot?.level ?? 0;
   // Cree UNE fois : la demande porte un numero, et c'est lui qui declenche.
   // Refabriquee a chaque rendu, elle ferait saluer Corti sans arret.
   const [hello] = useState(() => cortiReact('wave'));

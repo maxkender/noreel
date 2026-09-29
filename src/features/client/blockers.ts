@@ -505,6 +505,18 @@ const COMMON = `
   const SHORT = 0.65;
   let __left = 0;
   let __exits = 0;
+  /*
+    Le PREMIER lecteur plein ecran se regarde ; le suivant, non.
+
+    Un reel recu en message, un reel ouvert depuis le profil d'un ami :
+    c'est ce qu'on est venu voir, et il se joue en entier. Ce qu'on refuse,
+    c'est l'enchainement — le doigt vers le haut qui en amene un autre. On
+    retient donc la video du premier lecteur, et on ne sort que quand un
+    AUTRE lecteur plein ecran prend sa place. Une nouvelle adresse remet le
+    compteur a zero : ouvrir un second reel depuis la grille est un choix.
+  */
+  let __firstShort = null;
+  let __shortPath = '';
   const __escape = () => {
     if (__auth()) return;
     // Pendant une ouverture, on ne sort pas : c'est le moment qu'elle autorise.
@@ -559,6 +571,10 @@ const COMMON = `
       return r.height > innerHeight * 0.85 && r.top < innerHeight * 0.15;
     });
     if (!big.length) return;
+    if (__shortPath !== location.pathname) { __shortPath = location.pathname; __firstShort = null; }
+    const cur = big[0];
+    if (!__firstShort || !document.contains(__firstShort)) { __firstShort = cur; return; }
+    if (cur === __firstShort) return;
     tall.forEach(__stop);
     __escape();
   };
@@ -632,6 +648,15 @@ export const INSTAGRAM_BLOCKER = `
   const posts = () => document.querySelectorAll('article');
   /** Le fil d'accueil, le seul endroit qu'on s'interdit de toucher. */
   const __home = () => location.pathname === '/';
+  /*
+    Un profil : /{compte}/, sa grille de reels, ses identifications.
+    Ce qu'on y voit, on l'a choisi en cherchant la personne — ses reels
+    compris. La grille reste entiere ; c'est l'enchainement qui est refuse.
+  */
+  const __profile = () => {
+    const m = location.pathname.match(/^[/]([A-Za-z0-9._]{1,30})[/](reels[/]?|tagged[/]?)?$/);
+    return !!m && !['explore', 'reels', 'reel', 'direct', 'accounts', 'p', 'stories'].includes(m[1]);
+  };
   /*
     Personne n'est connecte : la racine du site, c'est alors le formulaire
     de connexion, et pas le fil. Le mur du fil se posait dessus — « Fil
@@ -948,6 +973,12 @@ export const INSTAGRAM_BLOCKER = `
         el.style.removeProperty('display');
         el.removeAttribute('data-nr');
       });
+    } else if (__profile()) {
+      // Sur un profil, rien n'est cache : les reels de la personne se voient.
+      document.querySelectorAll('[data-nr="short"]').forEach((el) => {
+        el.style.removeProperty('display');
+        el.removeAttribute('data-nr');
+      });
     } else {
       document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
         __hide(__safe(a.closest('article')) || a, 'short');
@@ -1015,7 +1046,8 @@ export const INSTAGRAM_BLOCKER = `
       __go('/direct/inbox/');
       return;
     }
-    if (/^\\/reels?(\\/|$)/.test(location.pathname)) __go('/');
+    // Le FIL des reels renvoie au fil ; un reel seul, avec son identifiant, se regarde.
+    if (/^[/]reels([/]|$)|^[/]reel[/]?$/.test(location.pathname)) __go('/');
     /*
       Chercher un compte passe par /explore : c'est LA page de recherche.
 
@@ -1299,7 +1331,8 @@ export const CLIENTS = {
     login: 'https://www.instagram.com/accounts/login/',
     host: 'instagram.com',
     script: INSTAGRAM_BLOCKER,
-    blocked: (p: string) => /^\/reels?(\/|$)/.test(p),
+    // Le fil des reels est ferme ; un reel seul (/reel/{id}/) se regarde, une fois.
+    blocked: (p: string) => /^\/reels(\/|$)|^\/reel\/?$/.test(p),
     chrome: { dark: '#0C1014', light: '#FFFFFF' } as Chrome,
   },
   tiktok: {

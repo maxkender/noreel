@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
 import {
   Award, Check, Flame, Lock, Medal, Sparkles, Star, Sunrise, Trophy, Zap,
 } from 'lucide-react-native';
@@ -17,8 +17,8 @@ import { formatHours } from '@/lib/format';
 import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
 import { cortiReact, type CortiReaction } from '@/components/CortiRig';
-import { cortiLevel, cortiLine } from '@/components/Corti';
-import { CARE_PER_DAY, logCare, stats, type CareId, type Stats } from '@/services/protect';
+import { cortiLine } from '@/components/Corti';
+import { CARE_PER_DAY, XP, XP_LEVELS, logCare, stats, type CareId, type Stats } from '@/services/protect';
 import { CARE, careOfTheDay } from '@/services/care';
 import { BADGES, badgeGap, claimBadges, unlockedBadges, type Badge } from '@/services/badges';
 import { claimCheer } from '@/services/cheer';
@@ -27,17 +27,15 @@ import { Celebrate } from './Celebrate';
 import type { Scroll } from './parts';
 
 /*
- * L'onglet de Corti : un niveau, des badges, un geste.
+ * L'onglet de Corti : un niveau en XP, des badges, un geste.
  *
- * Il portait un indice en pourcentage et tout ce qu'il fallait pour le
- * comprendre — et on ne le comprenait pas. Trois choses a la place, qui
- * n'ont pas besoin d'explication : le NIVEAU de Corti et ce qu'il manque
- * pour le suivant, les BADGES gagnes, et le GESTE du jour qui rapporte un
- * merci. Chaque progres se fete dans une fenetre, une fois.
+ * Son etat suivait les jours, un compte qui ne bouge qu'a minuit : on
+ * cochait un geste et rien ne changeait sous les yeux. Maintenant chaque
+ * geste rapporte de l'XP, la barre monte tout de suite, « +15 XP » s'envole
+ * — et ce qui l'abime (un laissez-passer, une journee sans filtre) la fait
+ * descendre. Les niveaux sont des paliers d'XP. Une fenetre ne s'ouvre que
+ * pour ce qui le merite : un badge, un niveau.
  */
-
-/** Les paliers des niveaux, en journees protegees. Voir cortiLevel. */
-const NEXT = [1, 7, 30];
 
 const BADGE_ICON: Record<string, typeof Award> = {
   day1: Sunrise, day7: Flame, day30: Medal, day100: Trophy,
@@ -54,7 +52,7 @@ const NAME: Record<string, ['bDay1' | 'bDay7' | 'bDay30' | 'bDay100' | 'bReels10
 
 type Pop =
   | { kind: 'badge'; id: string }
-  | { kind: 'care'; all: boolean };
+  | { kind: 'level'; level: number };
 
 export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const c = useColors();
@@ -69,7 +67,12 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [pops, setPops] = useState<Pop[]>([]);
   /** Le badge qu'on regarde de pres, gagne ou pas. */
   const [peek, setPeek] = useState<Badge | null>(null);
+  /** Le « +15 XP » qui s'envole, et une cle pour le rejouer. */
+  const [gain, setGain] = useState<{ n: number; id: number } | null>(null);
+  const [dayDone, setDayDone] = useState(false);
   const today = careOfTheDay();
+  // La barre d'XP vit sur le fil natif : elle monte a chaque geste.
+  const [bar] = useState(() => new RNAnimated.Value(0));
 
   const load = useCallback(async () => {
     const x = await stats();
@@ -83,12 +86,16 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const tick = async (id: CareId) => {
     if (done.includes(id)) return;
     haptics.success();
+    const before = s?.level ?? 0;
     const list = await logCare(id);
     setDone(list);
-    // Le merci d'abord, puis le badge si le geste en a debloque un.
-    setPops((p) => [...p, { kind: 'care', all: list.length >= CARE_PER_DAY }]);
     const x = await stats();
     setS(x);
+    // L'XP d'abord, sous les yeux : la barre monte, le gain s'envole.
+    setGain({ n: XP.care, id: Date.now() });
+    if (list.length >= CARE_PER_DAY) setDayDone(true);
+    // Puis ce qui se fete dans une fenetre : un niveau, un badge.
+    if (x.level > before) setPops((p) => [...p, { kind: 'level', level: x.level }]);
     const fresh = await claimBadges(x);
     if (fresh.length) setPops((p) => [...p, ...fresh.map((b) => ({ kind: 'badge', id: b } as Pop))]);
   };
@@ -102,18 +109,33 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [hooray, setHooray] = useState<CortiReaction | undefined>();
   useEffect(() => {
     let alive = true;
-    void claimCheer(cortiLevel(s?.days ?? 0)).then((ok) => { if (alive && ok) setCheer(true); });
+    void claimCheer(s?.level ?? 0).then((ok) => { if (alive && ok) setCheer(true); });
     return () => { alive = false; };
-  }, [s?.days]);
+  }, [s?.level]);
 
-  const days = s?.days ?? 0;
-  const level = cortiLevel(days);
+  const xp = s?.xp ?? 0;
+  const level = s?.level ?? 0;
   const names = [d.corti.off, d.corti.dim, d.corti.lit, d.corti.bright];
   const tone = level === 0 ? c.danger : level === 1 ? c.ember : c.accent;
-  const next = NEXT[level] ?? null;
-  const from = level === 0 ? 0 : NEXT[level - 1];
-  const progress = next ? Math.min(1, (days - from) / (next - from)) : 1;
-  const missing = next ? next - days : 0;
+  const next: number | null = XP_LEVELS[level + 1] ?? null;
+  const from = XP_LEVELS[level];
+  const progress = next ? Math.min(1, (xp - from) / (next - from)) : 1;
+  const missing = next ? next - xp : 0;
+
+  useEffect(() => {
+    RNAnimated.timing(bar, { toValue: progress, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [progress, bar]);
+  // Le gain s'efface tout seul, et la journee complete aussi.
+  useEffect(() => {
+    if (!gain) return;
+    const id = setTimeout(() => setGain(null), 1400);
+    return () => clearTimeout(id);
+  }, [gain]);
+  useEffect(() => {
+    if (!dayDone) return;
+    const id = setTimeout(() => setDayDone(false), 2600);
+    return () => clearTimeout(id);
+  }, [dayDone]);
 
   const have = s ? unlockedBadges(s) : [];
   const pop = pops[0];
@@ -149,22 +171,27 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         <Text variant="lead" color={c.accent} style={st.line}>{cortiLine(level, s.days)}</Text>
       )}
 
-      {/* Le niveau, et ce qu'il manque pour le suivant. Une barre qui se
-          remplit par journees, pas un pourcentage qui bouge de 2,4. */}
+      {/* Le niveau, en XP : la barre monte a chaque geste, sous les yeux. */}
       <Glass radius={24} intensity={50} warmEdge="none" style={st.card}>
         <View style={st.between}>
           <Text variant="label" tone="tertiary">{t(d.cortiTab.level, { n: level + 1 })}</Text>
-          <Text variant="label" color={tone}>{`${days} j`}</Text>
+          <Text variant="label" color={tone}>
+            {next ? t(d.cortiTab.xp, { n: xp, m: next }) : t(d.cortiTab.xpMax, { n: xp })}
+          </Text>
         </View>
         <Text variant="displayM" color={tone} style={{ textTransform: 'capitalize' }}>{names[level]}</Text>
         <View style={st.track}>
-          <View style={[st.fill, { width: `${Math.round(progress * 100)}%`, backgroundColor: tone }]} />
+          <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
+          {gain && (
+            <Animated.View key={gain.id} entering={FadeInUp.duration(320)} exiting={FadeOut.duration(300)} style={st.gain} pointerEvents="none">
+              <Text variant="button" color={tone}>{t(d.cortiTab.gain, { n: gain.n })}</Text>
+            </Animated.View>
+          )}
         </View>
-        <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
-          {next
-            ? t(d.cortiTab.nextIn, { n: missing, s: missing > 1 ? 's' : '', level: names[level + 1] })
-            : d.cortiTab.maxed}
+        <Text variant="body" tone="secondary" style={{ marginTop: space.md }}>
+          {next ? t(d.cortiTab.nextIn, { n: missing, level: names[level + 1] }) : d.cortiTab.maxed}
         </Text>
+        <Text variant="label" tone="tertiary" style={{ marginTop: space.xs }}>{d.cortiTab.rules}</Text>
       </Glass>
 
       {/* Les trois nombres qu'on a OBSERVES. */}
@@ -211,7 +238,9 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
       {/* UN geste, mis en avant. Les huit autres attendent derriere une ligne. */}
       <View style={st.between}>
         <Text variant="button" style={st.h}>{d.cortiTab.todayTitle}</Text>
-        <Text variant="label" tone="tertiary" style={st.h}>{`${Math.min(done.length, CARE_PER_DAY)} / ${CARE_PER_DAY}`}</Text>
+        <Text variant="label" color={dayDone ? c.accent : undefined} tone={dayDone ? undefined : 'tertiary'} style={st.h}>
+          {dayDone ? d.cortiTab.dayDone : `${Math.min(done.length, CARE_PER_DAY)} / ${CARE_PER_DAY}`}
+        </Text>
       </View>
       <CareCard id={today} done={done.includes(today)} featured onPress={() => { void tick(today); }} />
       <Pressable onPress={() => { haptics.tap(); setAll((x) => !x); }} hitSlop={8} accessibilityRole="button" style={st.more}>
@@ -231,12 +260,12 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
 
       <HelpSheet visible={help} onClose={() => setHelp(false)} topics={topics} />
 
-      {/* Les fetes, une a la fois. */}
+      {/* Les fetes, une a la fois : un badge, un niveau. */}
       <Celebrate
         visible={!!pop}
         kicker={pop?.kind === 'badge' ? d.cortiTab.unlocked : d.cortiTab.gotIt}
-        title={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[0]] : pop?.kind === 'care' && pop.all ? d.cortiTab.bCare3 : d.cortiTab.todayPick}
-        body={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[1]] : pop?.kind === 'care' && pop.all ? d.cortiTab.careAllDone : d.cortiTab.careThanks}
+        title={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[0]] : pop?.kind === 'level' ? t(d.cortiTab.levelUp, { n: pop.level + 1 }) : ''}
+        body={pop?.kind === 'badge' && popWords ? d.cortiTab[popWords[1]] : pop?.kind === 'level' ? t(d.cortiTab.levelUpBody, { name: names[pop.level] }) : ''}
         cta={d.cortiTab.ok}
         onClose={() => setPops((p) => p.slice(1))}
       />
@@ -332,7 +361,8 @@ const sheet = (c: Palette) => StyleSheet.create({
     height: 8, borderRadius: 4, overflow: 'hidden', marginTop: space.sm,
     backgroundColor: withAlpha(c.mist, 0.1),
   },
-  fill: { height: 8, borderRadius: 4 },
+  fill: { height: 8, borderRadius: 4, width: '100%', transformOrigin: 'left' },
+  gain: { position: 'absolute', right: 0, top: -30 },
   figures: {
     flexDirection: 'row', gap: space.md, marginTop: space.md,
     paddingVertical: space.lg, borderRadius: 20,

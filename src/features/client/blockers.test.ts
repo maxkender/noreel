@@ -17,10 +17,14 @@ describe('les scripts injectes compilent', () => {
 });
 
 describe('les regles de blocage d’adresse', () => {
-  it('coupe un reel Instagram, au singulier comme au pluriel', () => {
-    expect(CLIENTS.instagram.blocked('/reel/Cx7')).toBe(true);
+  it('coupe le fil des reels, et laisse un reel seul se regarder', () => {
+    // Le FIL — l'onglet, l'adresse sans identifiant — est ferme.
     expect(CLIENTS.instagram.blocked('/reels/')).toBe(true);
     expect(CLIENTS.instagram.blocked('/reels')).toBe(true);
+    expect(CLIENTS.instagram.blocked('/reel/')).toBe(true);
+    // Un reel precis — envoye par un ami, ouvert depuis un profil — passe :
+    // c'est le suivant que le script refuse, pas celui-la.
+    expect(CLIENTS.instagram.blocked('/reel/Cx7')).toBe(false);
   });
 
   it('laisse passer un profil, un post et les messages', () => {

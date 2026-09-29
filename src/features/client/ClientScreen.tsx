@@ -776,15 +776,12 @@ const sheet = (c: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: c.night },
   bar: { backgroundColor: c.night },
   /*
-    Une hauteur de barre de navigation, la meme partout.
-    Le bandeau ne faisait que la hauteur de son texte : la page demarrait
-    donc juste sous l'encoche, et l'en-tete du site — les coeurs d'Instagram,
-    par exemple — se retrouvait a portee du pouce de personne, a demi sous
-    l'ilot dynamique. 44 points, c'est la hauteur qu'iOS donne a ses propres
-    barres, et elle ne depend pas du site affiche.
+    Cinquante-deux points : la hauteur de l'en-tete de la vraie app
+    Instagram (« Pour vous », le coeur), relevee sur une capture. Le bandeau
+    prend sa place, et la page commence la ou elle commence la-bas.
   */
   barRow: {
-    height: 44, flexDirection: 'row', alignItems: 'center',
+    height: 52, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble

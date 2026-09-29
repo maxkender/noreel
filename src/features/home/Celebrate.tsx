@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, withTiming } from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -19,7 +19,21 @@ import { haptics } from '@/lib/haptics';
  * rayonnant qui arrive en sautant, un mot en haut, le titre, une ligne, un
  * bouton. Elle se ferme d'un tap n'importe ou — une fete qu'on ne peut pas
  * quitter n'en est plus une.
+ *
+ * Elle arrive SIMPLEMENT : un fondu et trois pour cent d'echelle, un quart
+ * de seconde. Le ressort qui la faisait rebondir, et Corti qui tombait
+ * dedans, faisaient deux mouvements pour une seule chose a lire.
  */
+function soft() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.97 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 220 }),
+      transform: [{ scale: withTiming(1, { duration: 260 }) }],
+    },
+  };
+}
 export function Celebrate({
   visible, kicker, title, body, cta, onClose, icon,
 }: {
@@ -39,7 +53,7 @@ export function Celebrate({
     <Modal visible animationType="fade" onRequestClose={onClose} transparent>
       <Pressable style={st.scrim} onPress={onClose} accessibilityRole="button">
         <SafeAreaView style={st.center} pointerEvents="box-none">
-          <Animated.View entering={ZoomIn.springify().damping(14)} style={st.card}>
+          <Animated.View entering={soft} style={st.card}>
             <LinearGradient
               colors={[withAlpha(c.accent, 0.24), withAlpha(c.accentWarm, 0.08)]}
               start={{ x: 0, y: 0 }}
@@ -50,9 +64,9 @@ export function Celebrate({
               <X size={18} strokeWidth={2.2} color={withAlpha(c.mist, 0.6)} />
             </Pressable>
             <View style={st.art}>
-              {icon ?? <CortiRig level={3} size={150} expression="ravi" arrive />}
+              {icon ?? <CortiRig level={3} size={150} expression="ravi" />}
             </View>
-            <Animated.View entering={FadeIn.delay(200).duration(400)} style={{ alignItems: 'center' }}>
+            <Animated.View entering={FadeIn.delay(80).duration(300)} style={{ alignItems: 'center' }}>
               <Text variant="label" color={c.accent}>{kicker}</Text>
               <Text variant="displayM" style={st.mid}>{title}</Text>
               <Text variant="body" tone="secondary" style={[st.mid, { marginTop: space.xs }]}>{body}</Text>
