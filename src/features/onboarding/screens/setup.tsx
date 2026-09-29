@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import * as Notifications from 'expo-notifications';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
@@ -230,6 +231,8 @@ export function NotificationsAsk({ onNext }: P) {
 }
 
 /* ---------- La promesse ---------- */
+const SIGNING = require('@/assets/rig/corti-pose-signe.png');
+
 export function PromiseScreen({ onNext }: P) {
   const { d, t } = useT();
   const c = useColors();
@@ -247,9 +250,9 @@ export function PromiseScreen({ onNext }: P) {
   return (
     <Screen cta={d.ob.commit} onPress={onNext} disabled={!signed} hue="accent">
       <Animated.View entering={FadeInDown.duration(620)} style={st.mascot}>
-        {/* En cours de retablissement : le sommet est reserve au paywall,
-            qui le propose. */}
-        <CortiRig level={2} size={120} expression="content" />
+        {/* Corti signe, lui aussi. La pose du studio, faite pour cet ecran :
+            on ne demande pas un geste qu'on ne fait pas soi-meme. */}
+        <Image source={SIGNING} style={{ width: 150, height: 150 }} contentFit="contain" />
       </Animated.View>
 
       {/*

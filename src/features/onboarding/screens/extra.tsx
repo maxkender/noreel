@@ -16,7 +16,7 @@ import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { type CortiLevel } from '@/components/Corti';
-import { CortiRig } from '@/components/CortiRig';
+import { CortiRig, cortiReact, type CortiExpression, type CortiReaction } from '@/components/CortiRig';
 import { FaceCloud } from '@/components/FaceCloud';
 import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
@@ -470,7 +470,8 @@ const sheet = () => StyleSheet.create({
   sayings: { height: 56, marginTop: space.lg },
   saying: { position: 'absolute', left: 0, right: 0, top: 0 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
-  gaugeStage: { height: 190, alignItems: 'center', justifyContent: 'center' },
+  gaugeStage: { height: 200, alignItems: 'center', justifyContent: 'center' },
+  wordSlot: { height: 24, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },
   slideHit: { alignSelf: 'stretch', height: 56, justifyContent: 'center' },
   rail: { height: 6, borderRadius: 3, overflow: 'hidden' },
   railOn: { position: 'absolute', left: 0, top: 0, bottom: 0 },
@@ -511,31 +512,40 @@ const sheet = () => StyleSheet.create({
 /** Les quatre paliers, et ou ils tombent sur la piste. */
 const STOPS: CortiLevel[] = [0, 1, 2, 3];
 
+/*
+ * Comment il a l'air a chaque palier — sur CET ecran.
+ *
+ * Ailleurs, le palier zero est l'image du studio de Corti ecrase au sol :
+ * juste pour l'onglet blocage, ou l'on vient constater. Ici on demande a
+ * quelqu'un de se placer, et personne ne se place volontiers sur un cerveau
+ * gris qui sue. Tout en bas il est triste, pas mort ; puis somnolent, puis
+ * pose, puis ravi. Il reste lui-meme du premier au dernier cran, et c'est
+ * le CORPS qui dit le reste : il s'affaisse en continu vers le bas de la
+ * piste, sous le doigt, sans attendre un palier.
+ */
+const LOOK: Record<CortiLevel, { level: CortiLevel; expression: CortiExpression }> = {
+  0: { level: 1, expression: 'triste' },
+  1: { level: 1, expression: 'somnolent' },
+  2: { level: 2, expression: 'neutre' },
+  3: { level: 3, expression: 'ravi' },
+};
+
 export function Health({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const [level, setLevel] = useState<CortiLevel>(1);
+  // Le ressort qui accompagne un changement de palier : il monte, il s'affaisse.
+  const [bounce, setBounce] = useState<CortiReaction | undefined>();
 
-  /*
-    Un vrai curseur, et Corti qui suit LE DOIGT.
-
-    C'etaient quatre barres a toucher. Ca marche, et ca ne raconte rien : on
-    appuie sur la troisieme, Corti change, on n'a rien senti passer. Sous le
-    doigt, en continu, ce n'est plus un formulaire — on le fait s'affaisser et
-    se redresser soi-meme, et c'est ce geste-la qu'on se rappelle quand
-    l'ecran suivant dit ce que les reels lui font.
-
-    Le palier ne remonte au rendu QUE s'il a change : sinon chaque pixel
-    parcouru redessinerait ses dix calques, et le curseur accrocherait.
-  */
   const track = useSharedValue(0);
   const x = useSharedValue(0);
   const at = useSharedValue<number>(1);
 
   const place = (n: CortiLevel) => {
     if (n === level) return;
-    haptics.tick();
+    if (n === 3) haptics.success(); else haptics.tick();
+    setBounce(cortiReact(n > level ? 'rise' : 'collapse'));
     setLevel(n);
   };
 
@@ -559,37 +569,76 @@ export function Health({ onNext }: P) {
   const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const fill = useAnimatedStyle(() => ({ width: x.value }));
 
+  /*
+    Le corps suit le DOIGT, pas le palier.
+    Entre deux crans, rien ne changeait : on tirait, et Corti attendait le
+    cran suivant pour bouger d'un coup. Ici son affaissement est une fonction
+    continue de la position — plus la piste est basse, plus il est tasse et
+    large — ancree a ses pieds, comme dans le rig, pour qu'il s'ecrase et non
+    qu'il retrecisse. Le palier ne fait plus que changer sa figure et donner
+    le ressort.
+  */
+  const SIZE = 176;
+  const anchor = (0.83 - 0.5) * SIZE;
+  const body = useAnimatedStyle(() => {
+    const p = track.value > 0 ? x.value / track.value : 0.33;
+    return {
+      transform: [
+        { translateY: anchor },
+        { scaleX: 1.12 - p * 0.12 },
+        { scaleY: 0.8 + p * 0.2 },
+        { translateY: -anchor },
+      ],
+    };
+  });
+
+  const look = LOOK[level];
+  const word = [d.corti.off, d.corti.dim, d.corti.lit, d.corti.bright][level];
+
   return (
-    <Screen cta={d.corti.healthCta} onPress={onNext} center hue="warm">
+    <Screen
+      cta={d.corti.healthCta}
+      onPress={onNext}
+      center
+      still
+      hue={level >= 2 ? 'accent' : 'ember'}
+      hueLevel={0.35 + (level / 3) * 0.65}
+    >
       <Text variant="displayM" style={st.mid}>{d.corti.healthTitle}</Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
         {d.corti.healthBody}
       </Text>
 
-      {/* Sa place est FIXE : il grandit et retrecit selon le palier, et sans
-          reserve tout le bas de l'ecran monterait et descendrait avec lui. */}
+      {/* Sa place est FIXE : il change de taille et de forme, et sans reserve
+          tout le bas de l'ecran monterait et descendrait avec lui. */}
       <View style={st.gaugeStage}>
-        <CortiRig level={level} size={168} />
+        <Animated.View style={body}>
+          <CortiRig level={look.level} expression={look.expression} size={SIZE} reaction={bounce} />
+        </Animated.View>
+      </View>
+
+      {/* Le mot du palier, sous lui : il change avec la figure, en fondu. */}
+      <View style={st.wordSlot}>
+        <Animated.View key={level} entering={FadeIn.duration(320)} exiting={FadeOut.duration(160)}>
+          <Text variant="label" color={level >= 2 ? c.accent : c.ember} style={st.mid}>
+            {word.toUpperCase()}
+          </Text>
+        </Animated.View>
       </View>
 
       <GestureDetector gesture={Gesture.Race(pan, tap)}>
-        {/* La zone tactile deborde largement la piste : une piste de six
-            points de haut est increvable au pouce. */}
         <View
           style={st.slideHit}
           onLayout={(e) => {
             track.value = e.nativeEvent.layout.width;
-            // La position de depart suit le palier initial, sinon le curseur
-            // est a gauche pendant que Corti est en veilleuse.
             x.value = (e.nativeEvent.layout.width / 3) * level;
           }}
           accessibilityRole="adjustable"
           accessibilityValue={{ min: 0, max: 3, now: level }}
         >
           <View style={[st.rail, { backgroundColor: withAlpha(c.mist, 0.14) }]}>
-            <Animated.View style={[st.railOn, fill, { backgroundColor: c.accent }]} />
+            <Animated.View style={[st.railOn, fill, { backgroundColor: level >= 2 ? c.accent : c.ember }]} />
           </View>
-          {/* Les quatre reperes : on voit qu'il y a des crans, et ou ils sont. */}
           <View style={st.notches} pointerEvents="none">
             {STOPS.map((n) => (
               <View
@@ -599,7 +648,7 @@ export function Health({ onNext }: P) {
             ))}
           </View>
           <Animated.View
-            style={[st.knob, knob, { backgroundColor: c.accent, shadowColor: c.accent }]}
+            style={[st.knob, knob, { backgroundColor: level >= 2 ? c.accent : c.ember, shadowColor: level >= 2 ? c.accent : c.ember }]}
             pointerEvents="none"
           />
         </View>

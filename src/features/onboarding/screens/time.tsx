@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowDown, ArrowUp, Cake, Equal, Hourglass, Minus, Plus } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
@@ -71,6 +71,8 @@ type P = { onNext: () => void };
  * de chercher son propre chiffre. Une question, une jauge, une phrase pour
  * dire qu'on ne juge pas.
  */
+const THINKING = require('@/assets/rig/corti-pose-pense.png');
+
 export function Guess({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
@@ -79,7 +81,7 @@ export function Guess({ onNext }: P) {
   const [minutes, setDraft] = useState(stored);
 
   return (
-    <Screen emblem={<Emblem icon={Hourglass} />}
+    <Screen emblem={<Image source={THINKING} style={{ width: 132, height: 132 }} contentFit="contain" />}
       cta={d.s5.ctaA}
       onPress={() => {
         setMinutes(minutes);
