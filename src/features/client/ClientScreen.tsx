@@ -752,13 +752,19 @@ const sheet = (c: Palette) => StyleSheet.create({
     l'ilot dynamique. 44 points, c'est la hauteur qu'iOS donne a ses propres
     barres, et elle ne depend pas du site affiche.
   */
+  /*
+    Trente-huit points, pas cinquante-huit.
+    Le bandeau ne porte qu'un chrono et un « i » : a cinquante-huit points il
+    prenait la hauteur d'une barre de titre pour une ligne de douze, et
+    repoussait d'autant le fil de la personne. Assez pour le pouce, pas plus.
+  */
   barRow: {
-    height: 58, flexDirection: 'row', alignItems: 'center',
+    height: 38, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
   // paraissait de travers des que la minute passait a deux chiffres.
-  info: { position: 'absolute', right: 0, padding: 6 },
+  info: { position: 'absolute', right: 0, padding: 4 },
   // Colle sous le bandeau, a la place ou tous les navigateurs la mettent.
   wire: { flexDirection: 'row', height: 2, overflow: 'hidden' },
   wireOn: { borderRadius: 1 },

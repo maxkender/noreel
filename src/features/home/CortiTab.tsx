@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import {
-  ArrowDown, ArrowUp, BookOpen, Check, Crosshair, Footprints, Hourglass, Moon, Snowflake,
-  Sun, Sunrise, Ticket, Timer,
-} from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Check, Ticket } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -272,10 +270,25 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   );
 }
 
-/** Une icone par geste : ce qu'il est, avant qu'on lise ce qu'il fait. */
+/*
+ * Une icone illustree par geste, dans le style de Corti.
+ *
+ * Les pictos en trait etaient corrects et pas beaux : neuf lignes grises
+ * cote a cote font une liste de reglages. Celles-ci sont dessinees par le
+ * studio, avec le meme verre bleu glace et la meme lueur que la mascotte —
+ * l'onglet a enfin l'air d'appartenir a la meme app que Corti. Elles portent
+ * leur propre halo : on ne les enferme donc plus dans un anneau.
+ */
 const CARE_ICON = {
-  morning: Sunrise, bored: Hourglass, sleep: Moon, focus: Crosshair, read: BookOpen,
-  delay: Timer, sun: Sun, move: Footprints, cold: Snowflake,
+  morning: require('@/assets/care/morning.png'),
+  bored: require('@/assets/care/bored.png'),
+  sleep: require('@/assets/care/sleep.png'),
+  focus: require('@/assets/care/focus.png'),
+  read: require('@/assets/care/read.png'),
+  delay: require('@/assets/care/delay.png'),
+  sun: require('@/assets/care/sun.png'),
+  move: require('@/assets/care/move.png'),
+  cold: require('@/assets/care/cold.png'),
 } as const;
 
 const GROUP_LABEL = (d: ReturnType<typeof useT>['d']): Record<CareGroup, string> => ({
@@ -295,7 +308,6 @@ function CareCard({
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
-  const Icon = CARE_ICON[id];
   const title = d.cortiTab[`${id}T` as const];
   const why = d.cortiTab[`${id}W` as const];
   const tone = done ? c.accent : featured ? c.ember : withAlpha(c.mist, 0.7);
@@ -307,9 +319,11 @@ function CareCard({
       accessibilityRole="checkbox"
       accessibilityState={{ checked: done }}
     >
-      <View style={[st.careIcon, { backgroundColor: withAlpha(tone, 0.14), borderColor: withAlpha(tone, 0.3) }]}>
-        <Icon size={featured ? 22 : 18} strokeWidth={2.2} color={tone} />
-      </View>
+      <Image
+        source={CARE_ICON[id]}
+        style={[st.careIcon, featured && st.careIconBig, !done && !featured && st.careIconDim]}
+        contentFit="contain"
+      />
       <View style={{ flex: 1 }}>
         {featured && (
           <Text variant="label" color={c.ember} style={{ marginBottom: 2 }}>{d.cortiTab.todayPick}</Text>
@@ -362,10 +376,11 @@ const sheet = (c: Palette) => StyleSheet.create({
     marginTop: space.lg, padding: space.lg, borderRadius: 20,
     borderColor: withAlpha(c.ember, 0.4), backgroundColor: withAlpha(c.ember, 0.07),
   },
-  careIcon: {
-    width: 40, height: 40, borderRadius: 20, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  careIcon: { width: 44, height: 44 },
+  careIconBig: { width: 64, height: 64 },
+  // Un geste pas encore fait reste un peu en retrait ; fait ou du jour, il
+  // brille de toute sa lueur.
+  careIconDim: { opacity: 0.72 },
   groupH: { marginTop: space.lg, marginBottom: space.sm },
   tick: {
     width: 20, height: 20, borderRadius: 10, borderWidth: 1.5,
