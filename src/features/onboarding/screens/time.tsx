@@ -10,20 +10,18 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter } from '@/components/type/Typewriter';
-import { SelectCard } from '@/components/SelectCard';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { track } from '@/services';
 import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
-import { LOGOS } from '@/features/home/AppSlider';
 import { compareGuess } from '../calculations';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
-import { PICKABLE } from './setup';
 import { ScreenTimeReportView, reportAvailable } from '@/native/screenTimeReport';
 import { authorizationStatus } from '@/services/shield.real';
 import { useNativeReport, useReportHeight } from '../report';
+import { ReportSkeleton } from '../ReportSkeleton';
 
 type P = { onNext: () => void };
 
@@ -109,6 +107,7 @@ const SCAN_STEP = 800;
  */
 export function Scan({ onNext }: P) {
   const c = useColors();
+  const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const [show, setShow] = useState(false);
   const lines = [d.time.scan1, d.time.scan2, d.time.scan3];
@@ -133,6 +132,12 @@ export function Scan({ onNext }: P) {
   return (
     <Screen center still hue="accent">
       {show && lines.map((l, i) => <ScanLine key={l} label={l} delay={SCAN_STEP * i} accent={c.accent} />)}
+      {/* Une vue d'un point, invisible : elle lance le processus de
+          l'extension maintenant, pour que le vrai dessin, sur l'ecran
+          suivant, n'ait plus qu'a s'afficher. */}
+      {show && ScreenTimeReportView && (
+        <ScreenTimeReportView context="compare" days={7} style={st.warm} />
+      )}
     </Screen>
   );
 }
@@ -234,6 +239,20 @@ export function RealTime({ onNext }: P) {
 /* ---------- La comparaison ---------- */
 
 const BAR_H = 150;
+/** Le temps qu'on laisse au squelette avant de s'effacer : l'extension a
+ *  presque toujours dessine avant, et on ne l'attend pas plus longtemps. */
+const SKELETON_MS = 1400;
+
+/** Vrai pendant la premiere seconde et demie d'un ecran natif. */
+function useSkeleton(active: boolean): boolean {
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    if (!active) return;
+    const id = setTimeout(() => setOn(false), SKELETON_MS);
+    return () => clearTimeout(id);
+  }, [active]);
+  return active && on;
+}
 
 /**
  * Ce qu'on croyait, a cote de ce qui est.
@@ -254,7 +273,8 @@ export function Compare({ onNext }: P) {
   const real = storedReal ?? guess;
   const { pct, verdict } = compareGuess(guess, real);
   const native = useNativeReport(guess);
-  const reportH = useReportHeight(440, 620);
+  const reportH = useReportHeight(360, 500);
+  const skeleton = useSkeleton(native === 'yes');
   // Le chiffre a-t-il ete recopie ? Sinon, et sans extension, on le demande
   // d'abord — ici meme, pas sur un ecran de plus.
   const [entered, setEntered] = useState(storedReal !== undefined);
@@ -262,14 +282,21 @@ export function Compare({ onNext }: P) {
   if (native === 'unknown') return <Screen center hue="accent"><View /></Screen>;
 
   /*
-    Le chemin d'Apple : la comparaison est DESSINEE par l'extension, avec
-    le vrai chiffre que nous ne verrons jamais. On lui reserve la hauteur ;
-    tout le reste de l'ecran est a elle.
+    Le chemin d'Apple : ce qui depend du vrai chiffre — le verdict, le
+    nombre, l'ecart, les barres — est DESSINE par l'extension, avec un
+    chiffre que nous ne verrons jamais. Le titre, lui, est a l'app : il ne
+    depend de rien, et un ecran qui commence par un dessin qu'on attend se
+    lit comme une panne.
   */
   if (native === 'yes' && ScreenTimeReportView) {
     return (
       <Screen cta={d.ob.keepGoing} onPress={onNext} center still hue="accent">
-        <ScreenTimeReportView context="compare" days={7} style={{ height: reportH }} />
+        <Typewriter text={d.time.cmpTitle} variant="displayM" style={st.center} />
+        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.cmpSub}</Text>
+        <View style={[st.report, { height: reportH }]}>
+          {skeleton && <ReportSkeleton rows={3} />}
+          <ScreenTimeReportView context="compare" days={7} style={StyleSheet.absoluteFill} />
+        </View>
       </Screen>
     );
   }
@@ -329,12 +356,16 @@ function Bar({
 /**
  * Ce que le vrai chiffre contient.
  *
- * Pas de graphe sur sept jours : on n'a pas sept valeurs, on en a UNE — la
- * moyenne que la personne a recopiee — et dessiner sept barres a partir
- * d'une moyenne serait inventer six chiffres. On montre ce qu'on tient :
- * la moyenne, ce qu'elle fait a l'annee, les prises en main, et les apps
- * qui prennent le plus — choisies ici, puisque c'est ici qu'on regarde son
- * telephone en face.
+ * Avec l'extension : la moyenne, ce qu'elle fait a l'annee, sept vraies
+ * journees, les prises en main et les apps les plus gourmandes — dessines
+ * par Apple, sous un titre qui est a nous. Sans elle : ce qu'on tient, la
+ * moyenne recopiee et ce qu'elle fait a l'annee ; dessiner sept barres a
+ * partir d'une moyenne serait inventer six chiffres.
+ *
+ * Il y avait ici, sous le rapport, une liste d'apps a cocher « tes plus
+ * grandes distractions ». Elle ne servait a rien dans l'app — et posee
+ * sous les apps les plus gourmandes qu'Apple venait de nommer, elle
+ * demandait ce qu'on venait de lire. Retiree.
  */
 export function Analysis({ onNext }: P) {
   const c = useColors();
@@ -343,39 +374,26 @@ export function Analysis({ onNext }: P) {
   const guess = useOnboardingStore((x) => x.minutesPerDay);
   const real = useOnboardingStore((x) => x.realMinutes) ?? guess;
   const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
-  const picked = useOnboardingStore((x) => x.distractions);
-  const toggle = useOnboardingStore((x) => x.toggleDistraction);
   const native = useNativeReport(guess);
+  const skeleton = useSkeleton(native === 'yes');
 
   if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
 
-  // Avec l'extension : sept vraies journees, les prises en main et les apps
-  // les plus gourmandes, dessinees par Apple. Le choix des distractions
-  // reste a nous — c'est une decision, pas une mesure.
   if (native === 'yes' && ScreenTimeReportView) {
     return (
-      <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="ember">
-        <ScreenTimeReportView context="overview" days={7} style={{ height: 620 }} />
-        <Text variant="button" style={{ marginTop: space.xl }}>{d.time.appsTitle}</Text>
-        <Text variant="body" tone="secondary" style={{ marginTop: 2 }}>{d.time.appsBody}</Text>
-        <View style={st.list}>
-          {PICKABLE.map((a) => (
-            <SelectCard
-              key={a.id}
-              shape="check"
-              label={a.name}
-              lead={<Image source={LOGOS[a.id]} style={st.logo} contentFit="contain" />}
-              selected={picked.includes(a.id)}
-              onPress={() => toggle(a.id)}
-            />
-          ))}
+      <Screen cta={d.ob.keepGoing} onPress={onNext} hue="ember">
+        <Text variant="displayM" style={st.center}>{d.time.analysisTitle}</Text>
+        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.analysisSub}</Text>
+        <View style={[st.report, { height: 540 }]}>
+          {skeleton && <ReportSkeleton rows={4} />}
+          <ScreenTimeReportView context="overview" days={7} style={StyleSheet.absoluteFill} />
         </View>
       </Screen>
     );
   }
 
   return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="ember">
+    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="ember">
       <Text variant="displayM" style={st.center}>{d.time.analysisTitle}</Text>
       <Text variant="hero" color={c.danger} style={[st.center, { marginTop: space.md }]} numberOfLines={1} adjustsFontSizeToFit>
         {formatHours(real)}
@@ -393,21 +411,6 @@ export function Analysis({ onNext }: P) {
           </Text>
         </View>
       )}
-
-      <Text variant="button" style={{ marginTop: space.xl }}>{d.time.appsTitle}</Text>
-      <Text variant="body" tone="secondary" style={{ marginTop: 2 }}>{d.time.appsBody}</Text>
-      <View style={st.list}>
-        {PICKABLE.map((a) => (
-          <SelectCard
-            key={a.id}
-            shape="check"
-            label={a.name}
-            lead={<Image source={LOGOS[a.id]} style={st.logo} contentFit="contain" />}
-            selected={picked.includes(a.id)}
-            onPress={() => toggle(a.id)}
-          />
-        ))}
-      </View>
     </Screen>
   );
 }
@@ -466,7 +469,7 @@ const sheet = () => StyleSheet.create({
     marginTop: space.lg, padding: space.md, borderRadius: 18, borderWidth: 1,
     backgroundColor: withAlpha('#FAFAFA', 0.05),
   },
-  list: { gap: space.sm, marginTop: space.md },
-  logo: { width: 26, height: 26 },
+  report: { alignSelf: 'stretch', marginTop: space.lg },
+  warm: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });

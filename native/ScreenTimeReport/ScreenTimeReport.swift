@@ -72,6 +72,21 @@ struct Theme {
   }
 }
 
+/*
+ * Les polices de l'app, dans l'extension.
+ *
+ * Le rapport se dessinait en San Francisco au milieu d'un parcours en
+ * Poppins : la meme page, deux ecritures, et l'oeil le sentait avant de
+ * savoir quoi — « bizarre ». Les trois graisses sont embarquees avec la
+ * cible et declarees dans son Info.plist ; si l'une manque, SwiftUI retombe
+ * sur la police systeme sans rien casser.
+ */
+enum Fonts {
+  static func bold(_ size: CGFloat) -> Font { .custom("Poppins-Bold", size: size) }
+  static func semi(_ size: CGFloat) -> Font { .custom("Poppins-SemiBold", size: size) }
+  static func text(_ size: CGFloat) -> Font { .custom("Poppins-Regular", size: size) }
+}
+
 extension Color {
   init(hex: String) {
     var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -187,11 +202,11 @@ struct NoData: View {
   var body: some View {
     VStack(spacing: 10) {
       Text(th.t("noDataTitle"))
-        .font(.system(size: 28, weight: .bold))
+        .font(Fonts.bold(28))
         .foregroundColor(th.ink)
         .multilineTextAlignment(.center)
       Text(th.t("noDataBody"))
-        .font(.system(size: 15))
+        .font(Fonts.text(15))
         .foregroundColor(th.inkSoft)
         .multilineTextAlignment(.center)
     }
@@ -211,37 +226,33 @@ struct CompareView: View {
     let th = m.theme
     let (pct, v) = verdict(guess: m.guess, real: m.real)
     let tone: Color = v == .less ? th.good : v == .more ? th.danger : th.accent
-    let title = th.t(v == .less ? "lessTitle" : v == .more ? "moreTitle" : "sameTitle")
-    let sub = th.t(v == .less ? "lessSub" : v == .more ? "moreSub" : "sameSub")
+    let verdictLine = th.t(v == .less ? "verdictLess" : v == .more ? "verdictMore" : "verdictSame")
     let delta = th.t(v == .less ? "deltaLess" : v == .more ? "deltaMore" : "deltaSame", ["p": String(pct)])
     let top = max(m.guess, m.real, 1)
 
-    VStack(spacing: 10) {
-      Text(title)
-        .font(.system(size: 28, weight: .bold))
-        .foregroundColor(th.ink)
-        .multilineTextAlignment(.center)
-      Text(sub)
-        .font(.system(size: 15))
-        .foregroundColor(th.inkSoft)
-        .multilineTextAlignment(.center)
-
+    // Le titre de l'ecran est a l'app, qui le sait sans rien mesurer. Ici,
+    // seulement ce qui depend du vrai chiffre : le verdict, le nombre, l'ecart.
+    VStack(spacing: 8) {
       ZStack {
-        Circle().fill(tone).frame(width: 48, height: 48)
+        Circle().fill(tone).frame(width: 44, height: 44)
         Image(systemName: v == .less ? "arrow.down" : v == .more ? "arrow.up" : "equal")
-          .font(.system(size: 20, weight: .bold))
+          .font(.system(size: 18, weight: .bold))
           .foregroundColor(.white)
       }
-      .padding(.top, 18)
 
       Text(th.hours(m.real))
-        .font(.system(size: 56, weight: .bold))
+        .font(Fonts.bold(56))
         .foregroundColor(th.ink)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
+      Text(verdictLine)
+        .font(Fonts.semi(17))
+        .foregroundColor(tone)
+        .multilineTextAlignment(.center)
       Text(delta)
-        .font(.system(size: 15))
+        .font(Fonts.text(15))
         .foregroundColor(th.inkSoft)
+        .multilineTextAlignment(.center)
 
       HStack(alignment: .bottom, spacing: 14) {
         Bar(h: CGFloat(m.guess) / CGFloat(top), fill: th.inkSoft.opacity(0.28), rim: th.inkSoft,
@@ -279,8 +290,8 @@ struct Bar: View {
           .frame(height: max(6, 150 * h))
       }
       .frame(height: 150)
-      Text(value).font(.system(size: 16, weight: .semibold)).foregroundColor(valueTone)
-      Text(label).font(.system(size: 12)).foregroundColor(soft)
+      Text(value).font(Fonts.semi(16)).foregroundColor(valueTone)
+      Text(label).font(Fonts.text(12)).foregroundColor(soft)
     }
     .frame(maxWidth: .infinity)
   }
@@ -335,7 +346,7 @@ struct Key: View {
   var body: some View {
     HStack(spacing: 6) {
       RoundedRectangle(cornerRadius: 3).fill(colour).frame(width: 9, height: 9)
-      Text(label).font(.system(size: 12)).foregroundColor(soft)
+      Text(label).font(Fonts.text(12)).foregroundColor(soft)
     }
   }
 }
@@ -386,12 +397,12 @@ struct ShareView: View {
 
       // La part PARTIE, pas le temps qui reste : c'est ce qui pese.
       Text(done ? "\(screen)\u{202F}%" : "…")
-        .font(.system(size: 56, weight: .bold))
+        .font(Fonts.bold(56))
         .foregroundColor(th.danger)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
       Text(!done ? "…" : over ? th.t("overflow") : th.t("gone"))
-        .font(.system(size: 17))
+        .font(Fonts.text(17))
         .foregroundColor(th.inkSoft)
         .multilineTextAlignment(.center)
         .padding(.top, 8)
@@ -451,19 +462,19 @@ struct YearsView: View {
 
     VStack(spacing: 6) {
       Text(th.t("lifeOf", ["n": String(m.left)]))
-        .font(.system(size: 11, weight: .semibold))
+        .font(Fonts.semi(11))
         .foregroundColor(th.inkSoft)
       Text(th.t("years", ["y": String(y)]))
-        .font(.system(size: 56, weight: .bold))
+        .font(Fonts.bold(56))
         .foregroundColor(th.danger)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
       Text(th.t("bodyShort"))
-        .font(.system(size: 17))
+        .font(Fonts.text(17))
         .foregroundColor(th.inkSoft)
         .multilineTextAlignment(.center)
       Text(th.t("basis"))
-        .font(.system(size: 12))
+        .font(Fonts.text(12))
         .foregroundColor(th.inkSoft.opacity(0.8))
         .multilineTextAlignment(.center)
         .padding(.top, 10)
@@ -515,19 +526,15 @@ struct OverviewView: View {
     let top = max(1, m.days.map { $0.minutes }.max() ?? 1)
     let fmt: DateFormatter = { let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("EEEEE"); return f }()
 
+    // Le titre et son explication sont a l'app : ici le chiffre, et ce qu'il contient.
     VStack(spacing: 8) {
-      Text(th.t("analysisTitle"))
-        .font(.system(size: 28, weight: .bold))
-        .foregroundColor(th.ink)
-        .multilineTextAlignment(.center)
       Text(th.hours(m.avg))
-        .font(.system(size: 56, weight: .bold))
+        .font(Fonts.bold(56))
         .foregroundColor(th.danger)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
-      Text(th.t("analysisSub")).font(.system(size: 15)).foregroundColor(th.inkSoft)
       Text(th.t("perYear", ["h": th.hours(m.avg * 365)]))
-        .font(.system(size: 13, weight: .semibold))
+        .font(Fonts.semi(13))
         .foregroundColor(th.accent)
 
       // Sept vraies journees. On ne dessine que ce qu'on a recu : un jour
@@ -538,7 +545,7 @@ struct OverviewView: View {
             RoundedRectangle(cornerRadius: 5)
               .fill(th.danger.opacity(0.75))
               .frame(height: max(4, 110 * CGFloat(d.minutes) / CGFloat(top)))
-            Text(fmt.string(from: d.start)).font(.system(size: 11)).foregroundColor(th.inkSoft)
+            Text(fmt.string(from: d.start)).font(Fonts.text(11)).foregroundColor(th.inkSoft)
           }
           .frame(maxWidth: .infinity)
         }
@@ -548,10 +555,10 @@ struct OverviewView: View {
 
       if m.pickups > 0 {
         HStack {
-          Text(th.t("pickupsTitle").uppercased()).font(.system(size: 11, weight: .semibold)).foregroundColor(th.inkSoft)
+          Text(th.t("pickupsTitle").uppercased()).font(Fonts.semi(11)).foregroundColor(th.inkSoft)
           Spacer()
           Text(th.t("pickupsBody", ["n": String(m.pickups), "y": String(m.pickups * 365)]))
-            .font(.system(size: 15, weight: .semibold)).foregroundColor(th.ink)
+            .font(Fonts.semi(15)).foregroundColor(th.ink)
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 16).fill(th.ink.opacity(0.06)))
@@ -560,18 +567,18 @@ struct OverviewView: View {
 
       if !m.apps.isEmpty {
         VStack(alignment: .leading, spacing: 10) {
-          Text(th.t("topApps")).font(.system(size: 16, weight: .semibold)).foregroundColor(th.ink)
+          Text(th.t("topApps")).font(Fonts.semi(16)).foregroundColor(th.ink)
           ForEach(m.apps, id: \.id) { a in
             HStack {
               // L'etiquette d'Apple : nom et icone, sans que l'app hote sache
               // jamais lesquels — c'est tout l'interet de l'extension.
               if let token = a.token {
-                Label(token).font(.system(size: 15)).foregroundColor(th.ink)
+                Label(token).font(Fonts.text(15)).foregroundColor(th.ink)
               } else {
-                Text(a.name).font(.system(size: 15)).foregroundColor(th.ink)
+                Text(a.name).font(Fonts.text(15)).foregroundColor(th.ink)
               }
               Spacer()
-              Text(th.hours(a.minutes)).font(.system(size: 15, weight: .semibold)).foregroundColor(th.danger)
+              Text(th.hours(a.minutes)).font(Fonts.semi(15)).foregroundColor(th.danger)
             }
           }
         }

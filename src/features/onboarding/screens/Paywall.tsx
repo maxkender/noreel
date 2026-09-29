@@ -356,6 +356,12 @@ export function Paywall(
       {/* Le fragment colore est pose au milieu de la phrase par un marqueur :
           decoupee en trois morceaux, la phrase ne se traduirait pas dans le
           meme ordre. */}
+      {/* Le paywall est la FIN du parcours, pas une page de plus : ce qu'on
+          a repondu — ses apps, son chiffre, son objectif — est devenu un
+          programme, et c'est lui qu'on ouvre. */}
+      <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
+        {d.pay.ready}
+      </Text>
       <Text variant="displayM" style={st.center}>
         {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
         <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>

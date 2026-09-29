@@ -14,7 +14,7 @@ import { S1, S6, S6Years } from './screens';
 import { Constat, Name, NotificationsAsk, PromiseScreen } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
-import { Attribution, Health, Meet, Proof, RateAsk } from './screens/extra';
+import { Attribution, Health, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { AgeAsk, Analysis, Compare, Guess, Scan } from './screens/time';
@@ -166,6 +166,7 @@ export function OnboardingFlow() {
     <NotificationsAsk key="notif" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
+    <Prep key="prep" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Health, Meet, Proof, RateAsk } from './extra';
+import { Attribution, Health, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 import { AgeAsk, Analysis, Compare, Guess, RealTime, Scan } from './time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
@@ -55,6 +55,12 @@ describe('les ecrans du parcours se montent', () => {
     // Sans rapport a preparer, l'ecran ne fait pas semblant : il enchaine.
     await new Promise((r) => setTimeout(r, 20));
     expect(onNext).toHaveBeenCalled();
+  });
+
+  it('la preparation du programme', () => {
+    const r = render(<Prep onNext={noop} />);
+    expect(r.toJSON()).toBeTruthy();
+    r.unmount();
   });
 
   it('« tu n’es pas accro »', () => {

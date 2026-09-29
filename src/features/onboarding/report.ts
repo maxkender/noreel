@@ -23,6 +23,7 @@ export function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
     lessTitle: t.lessTitle, lessSub: t.lessSub, moreTitle: t.moreTitle, moreSub: t.moreSub,
     sameTitle: t.sameTitle, sameSub: t.sameSub, deltaLess: t.deltaLess, deltaMore: t.deltaMore,
     deltaSame: t.deltaSame, guessLabel: t.guessLabel, realLabel: t.realLabel,
+    verdictLess: t.verdictLess, verdictMore: t.verdictMore, verdictSame: t.verdictSame,
     analysisTitle: t.analysisTitle, analysisSub: t.analysisSub, perYear: t.perYear,
     pickupsTitle: t.pickupsTitle, pickupsBody: t.pickupsBody, topApps: t.topApps,
     noDataTitle: t.noDataTitle, noDataBody: t.noDataBody,

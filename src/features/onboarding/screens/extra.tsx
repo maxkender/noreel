@@ -5,7 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing, FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated';
-import { Apple, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
+import { Apple, Check, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
@@ -71,6 +71,52 @@ export function Meet({ onNext }: P) {
       <Text variant="label" color={c.accent} style={[st.mid, { marginTop: space.lg }]}>
         {d.corti.meetKicker}
       </Text>
+    </Screen>
+  );
+}
+
+/* ---------- La preparation du programme ---------- */
+
+const PREP_STEP = 700;
+
+/**
+ * Trois coches avant le paywall.
+ *
+ * On arrive au prix apres avoir tout donne : ses apps, son chiffre, son
+ * objectif, sa signature. Le paywall doit etre la SUITE de tout ca — un
+ * programme qu'on ouvre — et non une page de vente posee la. Deux secondes
+ * ou ce qu'on a repondu se transforme sous les yeux en trois lignes cochees,
+ * et l'ecran d'apres s'ouvre sur « ton programme est pret ».
+ */
+export function Prep({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(), []);
+  const { d } = useT();
+  const [done, setDone] = useState(0);
+  const rows = [d.prep.s1, d.prep.s2, d.prep.s3];
+
+  useEffect(() => {
+    const ts = [1, 2, 3].map((i) => setTimeout(() => { setDone(i); haptics.tick(); }, PREP_STEP * i));
+    const end = setTimeout(onNext, PREP_STEP * 3 + 700);
+    return () => { ts.forEach(clearTimeout); clearTimeout(end); };
+  }, [onNext]);
+
+  return (
+    <Screen center still hue="accent">
+      <View style={st.mid}>
+        <CortiRig level={3} size={150} expression="ravi" />
+      </View>
+      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>{d.prep.title}</Text>
+      <View style={st.prepList}>
+        {rows.map((r, i) => (
+          <View key={r} style={st.prepRow}>
+            <View style={[st.prepDot, { backgroundColor: done > i ? c.accent : withAlpha(c.mist, 0.12) }]}>
+              {done > i && <Check size={13} strokeWidth={3} color={c.night} />}
+            </View>
+            <Text variant="body" tone={done > i ? undefined : 'tertiary'}>{r}</Text>
+          </View>
+        ))}
+      </View>
     </Screen>
   );
 }
@@ -383,6 +429,9 @@ export function RateAsk({ onNext }: P) {
 const sheet = () => StyleSheet.create({
   mid: { textAlign: 'center', alignItems: 'center' },
   srcLogo: { width: 26, height: 26 },
+  prepList: { alignSelf: 'stretch', gap: space.md, marginTop: space.xl, paddingHorizontal: space.xl },
+  prepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  prepDot: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   srcIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   stage: { alignItems: 'center', marginTop: space.xl },
   proofStage: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.md },
