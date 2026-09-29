@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -12,10 +12,12 @@ import { Typewriter } from '@/components/type/Typewriter';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { dict, useT } from '@/i18n';
-import { screenYears } from '../calculations';
+import { LIFE_YEARS, yearsOnScreen } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { CortiRig } from '@/components/CortiRig';
 import { SignaturePad } from '../scenes/SignaturePad';
+import { Emblem } from '../scenes/Emblem';
+import { Bell } from 'lucide-react-native';
 
 type P = { onNext: () => void };
 
@@ -207,7 +209,7 @@ export function NotificationsAsk({ onNext }: P) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Screen secondary={d.rate.later} onSecondary={onNext} hue="deep">
+      <Screen emblem={<Emblem icon={Bell} />} secondary={d.rate.later} onSecondary={onNext} hue="deep">
         <Text variant="displayM">{d.ob.notifTitle}</Text>
         <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
           {d.ob.notifBody}
@@ -234,37 +236,45 @@ export function PromiseScreen({ onNext }: P) {
   const st = useMemo(() => sheet(c), [c]);
   const name = useOnboardingStore((x) => x.firstName);
   const minutes = useOnboardingStore(effectiveMinutes);
+  const age = useOnboardingStore((x) => x.age);
   const [signed, setSigned] = useState(false);
 
-  // Le chiffre vient de SON temps d'ecran : trente pour cent repris sur les
-  // annees qu'il y laisse. Un nombre rond invente ne vaut rien ici.
-  const years = Math.max(1, Math.round(screenYears(minutes) * 0.3));
+  // Le chiffre vient de SON temps d'ecran et de SON age : trente pour cent
+  // repris sur les annees qu'il y laisserait. Un nombre rond invente ne vaut
+  // rien ici.
+  const years = Math.max(1, Math.round(yearsOnScreen(minutes, LIFE_YEARS - age) * 0.3));
 
   return (
     <Screen cta={d.ob.commit} onPress={onNext} disabled={!signed} hue="accent">
-      <Animated.View entering={FadeIn.duration(620)} style={st.mascot}>
+      <Animated.View entering={FadeInDown.duration(620)} style={st.mascot}>
         {/* En cours de retablissement : le sommet est reserve au paywall,
-            qui le propose. Trois ecrans de suite au niveau maximum et le
-            progres ne veut plus rien dire. */}
-        <CortiRig level={2} size={140} />
+            qui le propose. */}
+        <CortiRig level={2} size={120} expression="content" />
       </Animated.View>
 
-      <Text variant="displayM" style={st.center}>
-        {name ? `${name}, ` : ''}{d.ob.promiseA}{' '}
-        <Text variant="displayM" color={c.accent}>{t(d.ob.promiseYears, { y: years })}</Text>
-        {' '}{d.ob.promiseB}
+      {/*
+        Une promesse a celui qu'on sera dans cinq ans — et une signature.
+        Trois promesses a LIRE ont laisse la place a une promesse a FAIRE :
+        le texte s'adresse a la personne de plus tard, par son prenom, et le
+        bouton reste ferme tant que le papier est blanc. Le chiffre du haut
+        rappelle ce qu'il y a a reprendre, en petit : ce n'est plus le sujet
+        de l'ecran, c'est sa raison.
+      */}
+      <Animated.View entering={FadeIn.delay(200).duration(520)}>
+        <Text variant="label" color={c.accent} style={st.center}>
+          {t(d.ob.promiseKick, { y: years }).toUpperCase()}
+        </Text>
+      </Animated.View>
+      <Text variant="displayM" style={[st.center, { marginTop: space.sm }]}>
+        {name ? t(d.ob.promiseNamed, { name }) : d.ob.promiseSelf}
       </Text>
 
-      {/*
-        Trois promesses a lire ont laisse la place a un carre ou signer.
-        On les lisait, ou pas, et on appuyait. Une signature, meme au doigt,
-        ne se donne pas distraitement : c'est cette seconde d'application
-        qu'on veut juste avant de montrer un prix. Le bouton reste ferme
-        tant que le papier est blanc — s'engager, c'est d'abord ce geste.
-      */}
-      <View style={{ marginTop: space.xl }}>
+      <Animated.View entering={FadeInUp.delay(500).duration(520)} style={{ marginTop: space.xl }}>
+        <Text variant="label" tone="tertiary" style={[st.center, { marginBottom: space.sm }]}>
+          {d.ob.signBelow}
+        </Text>
         <SignaturePad onInk={setSigned} hint={d.ob.signHint} clearLabel={d.ob.signClear} />
-      </View>
+      </Animated.View>
     </Screen>
   );
 }

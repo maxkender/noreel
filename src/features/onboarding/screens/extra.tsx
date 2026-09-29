@@ -6,7 +6,8 @@ import Animated, {
   Easing, FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue,
   withDelay, withTiming,
 } from 'react-native-reanimated';
-import { Star } from 'lucide-react-native';
+import { Compass, Star } from 'lucide-react-native';
+import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -342,7 +343,7 @@ export function Attribution({ onNext }: P) {
   const setSource = useOnboardingStore((x) => x.setSource);
 
   return (
-    <Screen cta={d.pay.ctaPlain} onPress={onNext} disabled={!pick} hue="deep">
+    <Screen emblem={<Emblem icon={Compass} />} cta={d.pay.ctaPlain} onPress={onNext} disabled={!pick} hue="deep">
       <Text variant="displayM">{d.source.title}</Text>
       <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
         {d.source.body}

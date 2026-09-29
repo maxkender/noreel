@@ -18,7 +18,7 @@ import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/ext
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { AgeAsk, Analysis, Compare, Guess } from './screens/time';
-import { Dopamine, LovePage, NothingLands, Reclaim, ReceptorsPage } from './screens/science';
+import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './screens/science';
 
 /**
  * Le parcours : on accroche, on comprend, on mesure, on parametre, on
@@ -139,6 +139,7 @@ export function OnboardingFlow() {
   const screens = [
     <S1 key="s1" onNext={next} />,
     <Name key="name" onNext={next} />,
+    <Attribution key="src" onNext={next} />,
     <Meet key="meet" onNext={next} />,
     <Health key="health" onNext={next} />,
     <Constat key="con" onNext={next} />,
@@ -154,11 +155,9 @@ export function OnboardingFlow() {
     <NothingLands key="flat" onNext={next} />,
     <LovePage key="love" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
-    <Reclaim key="hold" onNext={next} />,
     <Ninety key="90" onNext={next} />,
     <Proof key="proof" onNext={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
-    <Attribution key="src" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
@@ -211,7 +210,7 @@ export function OnboardingFlow() {
           */}
           <Animated.View
             key={step}
-            entering={rise}
+            entering={REVEAL.has(String(screens[step]?.key)) ? reveal : rise}
             exiting={FadeOut.duration(460)}
             style={StyleSheet.absoluteFill}
           >
@@ -236,6 +235,29 @@ export function OnboardingFlow() {
  * AVANT le mouvement — l'ecran est lisible pendant qu'il finit de se poser,
  * au lieu de se poser puis de devenir lisible.
  */
+/*
+ * Deux entrees, pas une.
+ *
+ * Tous les ecrans montaient de quatorze points en apparaissant. Correct, et
+ * au vingtieme on ne le voyait plus. Les ecrans qui LIVRENT un chiffre —
+ * la comparaison, l'analyse, la part de journee, les annees — arrivent
+ * autrement : ils se revelent sur place, en grandissant a peine, comme un
+ * resultat qu'on decouvre plutot qu'une page qu'on tourne. Le contraste avec
+ * les autres est ce qui fait sentir que quelque chose vient d'etre dit.
+ */
+const REVEAL = new Set(['cmp', 'ana', 's6', 's6y', 'proof']);
+
+function reveal() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.94 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 320, easing: easings.out }),
+      transform: [{ scale: withTiming(1, { duration: 560, easing: easings.out }) }],
+    },
+  };
+}
+
 function rise() {
   'worklet';
   return {

@@ -19,7 +19,7 @@ import { Corti, type CortiLevel } from './Corti';
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
   tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti, note,
-  still = false,
+  still = false, emblem,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -76,6 +76,8 @@ export function Screen({
    * doigt sauf ce qu'on regle.
    */
   still?: boolean;
+  /** Une icone en tete du contenu : ce que l'ecran demande, avant qu'on lise. */
+  emblem?: ReactNode;
 }) {
   const bar = useContext(ProgressContext);
   const c = useColors();
@@ -103,6 +105,7 @@ export function Screen({
           scrollEnabled={!still}
           bounces={!still}
         >
+          {emblem && <View style={styles.emblem}>{emblem}</View>}
           {children}
         </ScrollView>
 
@@ -151,6 +154,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   safe: { flex: 1 },
   progress: { paddingHorizontal: gutter, paddingTop: space.sm },
   mascot: { alignItems: 'center', paddingTop: space.sm },
+  emblem: { alignItems: 'center', marginBottom: space.lg },
   scroll: { flex: 1 },
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space.xl },
   centered: { flexGrow: 1, justifyContent: 'center' },

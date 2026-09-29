@@ -19,7 +19,7 @@ import { render } from '@testing-library/react-native';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
-import { Dopamine, LovePage, NothingLands, Reclaim, ReceptorsPage } from './science';
+import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './science';
 import { PromiseScreen } from './setup';
 import { useOnboardingStore } from '@/store/onboarding';
 
@@ -112,6 +112,5 @@ describe('une page par idee', () => {
   it('les recepteurs', () => { render(<ReceptorsPage onNext={noop} />); });
   it('plus rien ne fait d’effet', () => { render(<NothingLands onNext={noop} />); });
   it('l’amour', () => { render(<LovePage onNext={noop} />); });
-  it('le bouton qu’on maintient', () => { render(<Reclaim onNext={noop} />); });
   it('le serment, a signer', () => { render(<PromiseScreen onNext={noop} />); });
 });

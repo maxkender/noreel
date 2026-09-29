@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowDown, ArrowUp, Equal, Minus, Plus } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Cake, Equal, Hourglass, Minus, Plus } from 'lucide-react-native';
+import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -78,7 +79,7 @@ export function Guess({ onNext }: P) {
   const [minutes, setDraft] = useState(stored);
 
   return (
-    <Screen
+    <Screen emblem={<Emblem icon={Hourglass} />}
       cta={d.s5.ctaA}
       onPress={() => {
         setMinutes(minutes);
@@ -371,7 +372,7 @@ export function AgeAsk({ onNext }: P) {
   const [ok, setOk] = useState(false);
 
   return (
-    <Screen
+    <Screen emblem={<Emblem icon={Cake} />}
       cta={d.s5.ctaB}
       onPress={() => { track('age_set', { age }); onNext(); }}
       disabled={!ok}

@@ -11,7 +11,7 @@ import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
-import { WAKING_HOURS, screenYears, wakingShare } from '../calculations';
+import { LIFE_YEARS, WAKING_HOURS, wakingShare, yearsOnScreen } from '../calculations';
 
 
 /*
@@ -207,7 +207,9 @@ export function S6Years({ onNext }: P) {
   const s = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
   const minutes = useOnboardingStore(effectiveMinutes);
-  const years = Math.round(screenYears(minutes));
+  const age = useOnboardingStore((x) => x.age);
+  const left = Math.max(1, LIFE_YEARS - age);
+  const years = Math.round(yearsOnScreen(minutes, left));
 
   const [y, setY] = useState(0);
 
@@ -228,7 +230,7 @@ export function S6Years({ onNext }: P) {
   return (
     <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
       <Animated.View entering={FadeIn.duration(700)} style={s.years}>
-        <Text variant="label" tone="tertiary">{d.s6.lifeOf}</Text>
+        <Text variant="label" tone="tertiary">{t(d.s6.lifeOf, { n: left })}</Text>
         <Text
           variant="hero"
           color={c.danger}

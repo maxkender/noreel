@@ -78,7 +78,8 @@ const ROWS = ['r1', 'r2', 'r3', 'r4'] as const;
 // La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
 // est un piege, et l'App Store le refuse.
-const EXIT_AFTER = 10000;
+// Sept secondes : le temps de lire le titre et le prix, pas celui de douter.
+const EXIT_AFTER = 7000;
 
 /*
  * Au-dela, on n'attend plus le magasin.

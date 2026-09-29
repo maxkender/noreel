@@ -87,3 +87,16 @@ export function compareGuess(guess: number, real: number): { pct: number; verdic
   if (pct < 10) return { pct, verdict: 'same' };
   return { pct, verdict: real < guess ? 'less' : 'more' };
 }
+
+/**
+ * Les annees eveillees passees sur un ecran, sur les annees qu'il RESTE.
+ *
+ * L'age etait demande puis oublie : le verdict comptait sur quatre-vingts
+ * ans pour tout le monde, et une question dont la reponse ne sert a rien est
+ * une question de trop. Compte sur ce qui reste, le chiffre est a la fois
+ * plus juste et plus personnel — et a vingt ans il fait plus mal, ce qui est
+ * le but.
+ */
+export function yearsOnScreen(minutesPerDay: number, yearsLeft: number): number {
+  return ((minutesPerDay / 60) / WAKING_HOURS) * Math.max(0, yearsLeft);
+}
