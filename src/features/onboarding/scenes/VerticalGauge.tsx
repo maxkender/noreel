@@ -17,6 +17,7 @@ export const GAUGE_MAX = 720;
 export const GAUGE_STEP = 15;
 
 const W = 104;
+/** La hauteur par defaut ; l'ecran la reduit quand il n'a pas la place. */
 const H = 280;
 
 /**
@@ -32,25 +33,28 @@ const H = 280;
  * quart d'heure. Arrondir la hauteur faisait sauter la jauge par crans.
  */
 export function VerticalGauge({
-  minutes, onChange, onCommit,
+  minutes, onChange, onCommit, height = H,
 }: {
   minutes: number;
   onChange: (m: number) => void;
   onCommit?: (m: number) => void;
+  /** En points. La colonne doit tenir AU-DESSUS du bouton, quel que soit l'ecran. */
+  height?: number;
 }) {
   const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
+  const h = height;
+  const st = useMemo(() => sheet(c, h), [c, h]);
   const ratio = (minutes - GAUGE_MIN) / (GAUGE_MAX - GAUGE_MIN);
-  const fill = useSharedValue(ratio * H);
+  const fill = useSharedValue(ratio * h);
   const grab = useSharedValue(0);
 
   const commit = (px: number) => {
-    const r = Math.min(1, Math.max(0, px / H));
+    const r = Math.min(1, Math.max(0, px / h));
     const v = Math.round((GAUGE_MIN + r * (GAUGE_MAX - GAUGE_MIN)) / GAUGE_STEP) * GAUGE_STEP;
     if (v !== minutes) { onChange(v); haptics.tick(); }
   };
   const release = (px: number) => {
-    const r = Math.min(1, Math.max(0, px / H));
+    const r = Math.min(1, Math.max(0, px / h));
     onCommit?.(Math.round((GAUGE_MIN + r * (GAUGE_MAX - GAUGE_MIN)) / GAUGE_STEP) * GAUGE_STEP);
   };
 
@@ -64,11 +68,11 @@ export function VerticalGauge({
       grab.value = withSpring(1, springs.snappy);
       // Toucher la colonne y pose le niveau : on n'a pas a aller chercher
       // la surface du liquide pour commencer a regler.
-      fill.value = Math.min(H, Math.max(0, H - e.y));
+      fill.value = Math.min(h, Math.max(0, h - e.y));
       runOnJS(commit)(fill.value);
     })
     .onChange((e) => {
-      fill.value = Math.min(H, Math.max(0, fill.value - e.changeY));
+      fill.value = Math.min(h, Math.max(0, fill.value - e.changeY));
       runOnJS(commit)(fill.value);
     })
     .onFinalize(() => {
@@ -102,11 +106,11 @@ export function VerticalGauge({
   );
 }
 
-const sheet = (c: Palette) => StyleSheet.create({
+const sheet = (c: Palette, h: number) => StyleSheet.create({
   root: { alignItems: 'center', gap: 14 },
   value: { textAlign: 'center', alignSelf: 'stretch' },
   column: {
-    width: W, height: H, borderRadius: W / 2, overflow: 'hidden',
+    width: W, height: h, borderRadius: W / 2, overflow: 'hidden',
     justifyContent: 'flex-end',
     backgroundColor: withAlpha(c.accent, 0.16),
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),

@@ -14,7 +14,7 @@ import { S1, S6, S6Years } from './screens';
 import { Constat, Name, NotificationsAsk, PromiseScreen } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
-import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/extra';
+import { Attribution, Health, Meet, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { AgeAsk, Analysis, Compare, Guess, Scan } from './screens/time';
@@ -159,7 +159,6 @@ export function OnboardingFlow() {
     <NothingLands key="flat" onNext={next} />,
     <LovePage key="love" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
-    <Ninety key="90" onNext={next} />,
     <Ready key="ready" onNext={next} />,
     <NotBlocker key="nb" onNext={next} />,
     <Proof key="proof" onNext={next} />,

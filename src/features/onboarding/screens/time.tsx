@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
@@ -47,6 +47,16 @@ export function Guess({ onNext }: P) {
   const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
   const [minutes, setDraft] = useState(stored);
   /*
+    Tout doit tenir AU-DESSUS du bouton, sans defiler : la jauge se regle
+    au doigt, et une page qui bouge sous le doigt est une page qu'on ne
+    peut pas regler. On mesure l'ecran et on donne a la colonne ce qui
+    reste une fois le titre, Corti et le bouton poses — et sur un petit
+    ecran, Corti cede sa place a la jauge.
+  */
+  const { height: winH } = useWindowDimensions();
+  const gaugeH = Math.max(150, Math.min(280, winH - 630));
+  const showCorti = winH >= 720;
+  /*
     La ligne sous la jauge REPOND, sans juger : en bas, elle rappelle que
     presque tout le monde sous-estime ; en haut, elle dit que c'est beaucoup
     et qu'on va s'en occuper. Elle change de phrase, jamais de place — une
@@ -56,7 +66,7 @@ export function Guess({ onNext }: P) {
   const line = tier === 'high' ? d.s5.high : tier === 'low' ? d.s5.low : d.s5.noJudge;
 
   return (
-    <Screen emblem={<Image source={THINKING} style={{ width: 132, height: 132 }} contentFit="contain" />}
+    <Screen emblem={showCorti ? <Image source={THINKING} style={{ width: 96, height: 96 }} contentFit="contain" /> : undefined}
       cta={d.s5.ctaA}
       onPress={() => {
         setMinutes(minutes);
@@ -71,8 +81,8 @@ export function Guess({ onNext }: P) {
       <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>
         {d.s5.hint}
       </Text>
-      <View style={st.gauge}>
-        <VerticalGauge minutes={minutes} onChange={setDraft} onCommit={setMinutes} />
+      <View style={st.gaugeTight}>
+        <VerticalGauge minutes={minutes} onChange={setDraft} onCommit={setMinutes} height={gaugeH} />
       </View>
       <View style={st.reassure}>
         <Animated.View key={tier} entering={FadeIn.duration(320)}>
@@ -431,6 +441,7 @@ export function AgeAsk({ onNext }: P) {
 const sheet = () => StyleSheet.create({
   center: { textAlign: 'center' },
   gauge: { alignItems: 'center', marginVertical: space.xl },
+  gaugeTight: { alignItems: 'center', marginVertical: space.lg },
   reassure: { height: 48, justifyContent: 'center' },
   scanRow: { alignSelf: 'stretch', gap: space.sm, marginBottom: space.lg },
   scanTrack: { height: 6, borderRadius: 3, overflow: 'hidden' },

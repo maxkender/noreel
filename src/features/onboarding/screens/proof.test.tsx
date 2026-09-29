@@ -2,9 +2,9 @@
  * La sequence de la preuve, temps par temps.
  *
  * Elle est la raison d'etre de l'ecran : on regarde un fil ORDINAIRE, les
- * Reels tombent, puis on vient voir la barre du bas de pres et l'onglet s'en
- * va. Monter l'ecran ne prouve que le premier temps — et la version d'avant se
- * montait tres bien en n'ayant jamais eu les deux autres.
+ * Reels tombent pendant que la barre du bas sort du cadre, puis l'onglet
+ * s'en va. Monter l'ecran ne prouve que le premier temps — et la version
+ * d'avant se montait tres bien en n'ayant jamais eu les autres.
  */
 import { act, render, screen } from '@testing-library/react-native';
 import { dict } from '@/i18n';
@@ -30,35 +30,27 @@ afterEach(() => jest.useRealTimers());
 it('deroule les trois temps dans l’ordre', () => {
   render(<Proof onNext={() => {}} />);
 
-  // 1. Un fil ordinaire. Filtre tout de suite, il n'y aurait rien a comparer.
+  // 1. Un fil ordinaire, le temps d'une image. Filtre tout de suite, il n'y
+  // aurait rien a comparer.
   expect(screen.getByText(dict.proof.raw)).toBeTruthy();
   expect(screen.queryByText(dict.proof.fall)).toBeNull();
 
-  // 2. Les Reels tombent — tout de suite. Deux secondes de fil intact avant
-  // que rien ne bouge se lisaient comme un chargement.
-  tick(700);
-  expect(screen.getByText(dict.proof.fall)).toBeTruthy();
-
   /*
-    3. La barre du bas, grossie, AVEC son onglet Reels encore la.
-    C'est l'ordre qui prouve quelque chose : une barre deja amputee ne dit
-    rien, on ne sait pas ce qu'il y avait avant. Il faut voir la porte, puis
-    la voir partir.
+    2. Dans la premiere seconde : les Reels tombent ET la barre du bas sort
+    du cadre, grossie, AVEC son onglet Reels encore la. C'est l'ordre qui
+    prouve quelque chose : une barre deja amputee ne dit rien, on ne sait pas
+    ce qu'il y avait avant. Il faut voir la porte, puis la voir partir.
   */
-  tick(1200);
+  tick(400);
+  expect(screen.getByText(dict.proof.fall)).toBeTruthy();
   expect(screen.getByTestId('proof-loupe')).toBeTruthy();
-  expect(screen.getByText(dict.proof.fall)).toBeTruthy();
 
   /*
-    4. L'onglet s'en va, et la phrase ne le dit qu'a ce moment-la. Annoncee
-    plus tot, elle decrivait un bouton qu'on avait encore sous les yeux.
-
-    Il s'ecoule une seconde et demie entre les deux : c'est le temps qu'il
-    faut pour compter cinq boutons. La sequence durait trois secondes et
-    demie en tout — on voyait qu'il se passait quelque chose sans avoir le
-    temps de voir QUOI, alors que tout l'ecran tient dans ce detail-la.
+    3. L'onglet s'en va, et la phrase ne le dit qu'a ce moment-la. Annoncee
+    plus tot, elle decrivait un bouton qu'on avait encore sous les yeux. Une
+    seconde entre les deux : le temps de compter cinq boutons.
   */
-  tick(1800);
+  tick(1000);
   expect(screen.getByText(dict.proof.tab)).toBeTruthy();
 });
 

@@ -11,6 +11,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { dict } from '@/i18n';
 import { Paywall } from './Paywall';
+import { formatHours } from '@/lib/format';
 
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
@@ -65,11 +66,15 @@ it('montre la destination, pas le point de depart', () => {
   /*
     Corti arrivait grille et se reparait sous les yeux : sur la page ou l'on
     sort sa carte, la premiere image etait celle d'un cerveau mort. On vend ce
-    qu'on obtient. Le chiffre est celui que l'app affiche ensuite tous les
-    jours — la promesse et la jauge doivent dire la meme chose.
+    qu'on obtient : son temps d'aujourd'hui, et la moitie comme objectif —
+    sur SON chiffre, jamais une moyenne. L'estimation par defaut est de
+    2 h 30 ; la cible est donc 1 h 15.
   */
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getByText('90 %')).toBeTruthy();   // brainIndex(30 jours)
-  expect(screen.getByText(dict.pay.pctThen)).toBeTruthy();
-  expect(screen.queryByText('18 %')).toBeNull();
+  // « Aujourd'hui » est aussi le premier jour de la frise : on compte, on ne cherche pas l'unique.
+  expect(screen.getAllByText(dict.pay.today).length).toBeGreaterThanOrEqual(1);
+  expect(screen.getByText(dict.pay.goal)).toBeTruthy();
+  expect(screen.getByText(formatHours(150))).toBeTruthy();
+  expect(screen.getByText(formatHours(75))).toBeTruthy();
+  expect(screen.queryByText('90 %')).toBeNull();
 });

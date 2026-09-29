@@ -5,7 +5,7 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Bell, Check, CreditCard, Lock, Unlock, X } from 'lucide-react-native';
+import { ArrowRight, Bell, Check, CreditCard, Lock, Unlock, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -19,7 +19,6 @@ import { useProStore } from '@/store/pro';
 import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
 } from '@/services/purchases';
-import { brainIndex } from '@/services/protect';
 import { scheduleTrialReminder } from '@/services/trial';
 import { CortiRig } from '@/components/CortiRig';
 import { GlassApps } from '@/components/GlassApps';
@@ -368,15 +367,10 @@ export function Paywall(
 
       <Healing />
 
-      {/* Son chiffre, rappele une fois. Il n'est pas la pour convaincre mais
-          pour rappeler ce que coute le statu quo, juste avant de lire un prix. */}
-      {minutes > 0 && (
-        <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.wound}>
-          <Text variant="label" color={c.ember}>
-            {t(d.pay.wound, { h: formatHours(minutes), d: daysLost })}
-          </Text>
-        </Animated.View>
-      )}
+      {/* Son chiffre, et la cible : la moitie, sur SON temps a lui — pas sur
+          une moyenne. C'est le seul chiffre de cet ecran qu'il a donne, et
+          c'est pour ca qu'il porte. */}
+      {minutes > 0 && <Goal minutes={minutes} days={daysLost} />}
 
       <Trial plan={plan} />
 
@@ -384,10 +378,10 @@ export function Paywall(
         <PlanCard
           label={d.pay.annual}
           price={price(annual, FALLBACK.annual)}
-          note={t(d.pay.annualNote, {
-            n: TRIAL_DAYS,
-            p: `${(ANNUAL_EUR / 365).toFixed(2).replace('.', ',')} €`,
-          })}
+          // Par SEMAINE, comme l'hebdomadaire juste en dessous : deux prix dans
+          // la meme unite se comparent d'un coup d'oeil, et c'est la
+          // comparaison qui rend l'annuel evident.
+          note={t(d.pay.annualNote, { n: TRIAL_DAYS, p: money(euros(annual, ANNUAL_EUR) / 52) })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
@@ -493,7 +487,6 @@ export function Paywall(
 function Healing() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
 
   /*
     Le decor lourd attend que la TRANSITION soit finie.
@@ -535,14 +528,50 @@ function Healing() {
         )}
       </View>
 
-      <View style={st.healSlot}>
-        <Text variant="displayM" color={c.accent} style={st.center}>
-          {`${brainIndex(30, 0)} %`}
-        </Text>
-        <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.xs }]}>
-          {d.pay.pctThen}
-        </Text>
+    </View>
+  );
+}
+
+/**
+ * Aujourd'hui, et l'objectif : deux barres, la seconde moitie moins haute.
+ *
+ * L'ecran affichait un indice de recuperation a trente jours — juste, mais
+ * abstrait : « 90 % » ne dit pas ce qu'on va vivre. Deux barres le disent :
+ * son temps d'aujourd'hui, et la moitie, en heures. La cible est la moitie
+ * de SON chiffre, arrondie au quart d'heure, jamais une moyenne — un
+ * objectif qu'on reconnait comme le sien se tient.
+ */
+function Goal({ minutes, days }: { minutes: number; days: number }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const { d, t } = useT();
+  const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
+  return (
+    <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.goal}>
+      <View style={st.goalRow}>
+        <GoalBar label={d.pay.today} value={formatHours(minutes)} h={1} tone={c.danger} />
+        <ArrowRight size={18} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 26 }} />
+        <GoalBar label={d.pay.goal} value={formatHours(target)} h={target / Math.max(minutes, 1)} tone={c.accent} />
       </View>
+      <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
+        {t(d.pay.goalNote, { d: days })}
+      </Text>
+    </Animated.View>
+  );
+}
+
+function GoalBar({
+  label, value, h, tone,
+}: { label: string; value: string; h: number; tone: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  return (
+    <View style={st.goalCol}>
+      <Text variant="button" color={tone}>{value}</Text>
+      <View style={st.goalTrack}>
+        <View style={[st.goalFill, { height: Math.max(8, 56 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
+      </View>
+      <Text variant="label" tone="tertiary">{label}</Text>
     </View>
   );
 }
@@ -694,6 +723,11 @@ const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
   sub: { marginTop: space.md },
   heal: { alignItems: 'center', marginTop: space.lg },
+  goal: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.lg },
+  goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg },
+  goalCol: { alignItems: 'center', gap: 6, width: 96 },
+  goalTrack: { height: 56, justifyContent: 'flex-end', alignSelf: 'stretch' },
+  goalFill: { borderRadius: 6, borderTopWidth: 3 },
   // Hauteur RESERVEE : le decor arrive apres la transition, et sans
   // reserve tout ce qui suit sauterait a son arrivee.
   orbit: { alignSelf: 'stretch', justifyContent: 'center', minHeight: 236 },
@@ -704,12 +738,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   healSlot: {
     height: 84, justifyContent: 'center', marginTop: space.sm,
     paddingHorizontal: space.lg,
-  },
-  wound: {
-    alignSelf: 'center', marginTop: space.lg,
-    paddingHorizontal: space.md, paddingVertical: 6, borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.ember, 0.4),
-    backgroundColor: withAlpha(c.ember, 0.1),
   },
   trial: {
     /*

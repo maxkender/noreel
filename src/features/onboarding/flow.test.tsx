@@ -59,8 +59,8 @@ it('demande le temps dans le bon ordre', () => {
   expect(at('perm')).toBeLessThan(at('cmp'));
   expect(at('cmp')).toBeLessThan(at('ana'));
   expect(at('ana')).toBeLessThan(at('age'));
-  // Et l'engagement vient apres les quatre-vingt-dix jours, avant la demo.
-  expect(at('90')).toBeLessThan(at('ready'));
+  // Et l'engagement vient apres les annees perdues, avant la demo.
+  expect(at('s6y')).toBeLessThan(at('ready'));
   expect(at('ready')).toBeLessThan(at('proof'));
   expect(keys[keys.length - 1]).toBe('pw');
 });

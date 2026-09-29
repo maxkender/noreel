@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  Easing, FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue,
-  withDelay, withTiming,
+  Easing, FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated';
-import { Compass, Star } from 'lucide-react-native';
+import { Apple, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
@@ -23,6 +23,7 @@ import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
 import { useT } from '@/i18n';
 import { useOnboardingStore } from '@/store/onboarding';
+import { LOGOS } from '@/features/home/AppSlider';
 
 type P = { onNext: () => void };
 
@@ -74,93 +75,6 @@ export function Meet({ onNext }: P) {
   );
 }
 
-/** Les paliers que Corti traverse. Les phrases viennent du dictionnaire. */
-const ARC: { n: number; level: CortiLevel; key: 'arc1' | 'arc2' | 'arc3' | 'arc4' }[] = [
-  { n: 1, level: 0, key: 'arc1' },
-  { n: 7, level: 1, key: 'arc2' },
-  { n: 30, level: 2, key: 'arc3' },
-  { n: 90, level: 3, key: 'arc4' },
-];
-
-const STEP_MS = 1750;
-
-/**
- * Quatre-vingt-dix jours, montres et non dits.
- *
- * C'est le seul ecran du parcours qui promet quelque chose de LONG, et une
- * promesse longue ecrite en une phrase ne se ressent pas. Corti la traverse
- * sous les yeux : elle s'allume palier par palier, et on regarde le trajet
- * plutot que de lire une duree.
- *
- * Le defilement est automatique et ne se rejoue pas : on le regarde une fois,
- * comme on regarderait quelqu'un aller mieux.
- */
-export function Ninety({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(), []);
-  const { d, t } = useT();
-  const [i, setI] = useState(0);
-
-  useEffect(() => {
-    if (i >= ARC.length - 1) return;
-    const t = setTimeout(() => { setI(i + 1); haptics.tick(); }, STEP_MS);
-    return () => clearTimeout(t);
-  }, [i]);
-
-  const at = ARC[i];
-  const done = i >= ARC.length - 1;
-
-  return (
-    <Screen
-      cta={d.pay.ctaPlain}
-      onPress={onNext}
-      // On laisse le trajet aller jusqu'au bout : passer avant la fin, c'est
-      // n'avoir rien vu.
-      disabled={!done}
-      center
-      hue="accent"
-      hueLevel={i / (ARC.length - 1)}
-    >
-      {/* Apres les annees perdues, l'ecran qui suit doit s'annoncer comme
-          ce qu'il est : la bonne nouvelle. */}
-      <Text variant="label" color={c.accent} style={[st.mid, { marginBottom: space.md }]}>
-        {d.corti.goodNews}
-      </Text>
-      <View style={st.mid}>
-        <CortiRig level={at.level} size={190} />
-      </View>
-
-      {/* Les deux lignes ont une place FIXE : sans elle, une legende plus
-          longue recentrerait Corti a chaque palier. */}
-      <View style={st.arcSlot}>
-        <Animated.View key={at.n} entering={FadeIn.duration(520)} style={st.mid}>
-          <Text variant="label" color={c.accent}>
-            {t(d.corti.day, { n: at.n }).toUpperCase()}
-          </Text>
-          <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.sm }]}>
-            {d.corti[at.key]}
-          </Text>
-        </Animated.View>
-      </View>
-
-      <View style={st.dots}>
-        {ARC.map((a, k) => (
-          <View key={a.n} style={[st.dot, k <= i && { backgroundColor: c.accent }]} />
-        ))}
-      </View>
-
-      {/* La duree est un fragment colore au milieu de la phrase : le texte
-          entoure donc un marqueur, plutot que d'etre coupe en trois morceaux
-          qui ne se traduiraient pas dans le meme ordre. */}
-      <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        {t(d.corti.ninety, { d: '\u0000' }).split('\u0000')[0]}
-        <Text variant="displayM" color={c.accent}>{d.corti.ninetyDays}</Text>
-        {t(d.corti.ninety, { d: '\u0000' }).split('\u0000')[1]}
-      </Text>
-    </Screen>
-  );
-}
-
 /* ---------- La demonstration ---------- */
 
 /**
@@ -173,24 +87,23 @@ export function Ninety({ onNext }: P) {
  * paragraphe explicatif ne faisaient que rediger ce qui etait deja a l'image.
  */
 /** Les trois temps de la demonstration. */
-type Beat = 'raw' | 'filtered' | 'zoom';
+type Beat = 'raw' | 'zoom';
 
 /*
  * Les temps de la demonstration.
  *
- * Les reels partent TOUT DE SUITE : on arrive sur cet ecran en sachant deja
- * ce qu'on vient y voir, et deux secondes de fil intact avant que rien ne
- * bouge se lisent comme un chargement. Le temps de reconnaitre Instagram est
- * celui d'une image, pas d'une pose.
+ * Tout se passe dans la premiere seconde : on reconnait Instagram le temps
+ * d'une image, puis la barre du bas SORT DU CADRE, grossie, pendant que les
+ * Reels tombent du fil. On voit les deux a la fois, et c'est voulu : ce
+ * sont les deux moities de la meme phrase — on retire un format, pas des
+ * publications. Un temps de pose, et l'onglet Reels s'efface de la barre
+ * sous les yeux, les autres boutons se rapprochant pour combler le trou.
  *
- * Le dernier temps, lui, reste long. C'est le seul qui apprend quelque chose
- * — un bouton de quatorze points qui s'en va — et c'est la que le regard doit
- * avoir le temps d'arriver. Accelerer le debut et garder la fin est ce qui
- * fait la difference entre une animation qu'on subit et une qu'on lit.
+ * L'ordre fait tout. Montrer la barre deja amputee ne prouve rien : il faut
+ * voir la porte, PUIS la voir partir.
  */
-const RAW_MS = 500;     // le temps d'une image : on reconnait, on n'attend pas
-const FALL_MS = 1100;   // la cascade, et un court temps de pose
-const HELD_MS = 1600;   // la barre grossie, l'onglet Reels ENCORE la
+const RAW_MS = 300;     // le temps d'une image : on reconnait, on n'attend pas
+const HELD_MS = 1000;   // la barre grossie, l'onglet Reels ENCORE la
 
 /** La largeur du telephone. Le fil est dessine pour 188 points utiles,
  *  d'ou le rapport passe a MockFeed : le cadre lui en prend huit. */
@@ -222,16 +135,14 @@ export function Proof({ onNext }: P) {
 
   useEffect(() => {
     const ts = [
-      setTimeout(() => { setBeat('filtered'); haptics.success(); }, RAW_MS),
-      setTimeout(() => setBeat('zoom'), RAW_MS + FALL_MS),
-      setTimeout(() => { setTab(false); haptics.stop(); }, RAW_MS + FALL_MS + HELD_MS),
+      setTimeout(() => { setBeat('zoom'); haptics.success(); }, RAW_MS),
+      setTimeout(() => { setTab(false); haptics.stop(); }, RAW_MS + HELD_MS),
     ];
     return () => ts.forEach(clearTimeout);
   }, []);
 
-  // Le telephone s'efface pendant qu'on regarde la barre. Deux choses nettes
-  // au meme instant et l'oeil ne sait pas laquelle suivre ; il ne reste alors
-  // de la sequence qu'une impression de mouvement.
+  // Le telephone recule un peu quand la barre sort : assez pour que la barre
+  // soit le sujet, pas assez pour qu'on cesse de voir les Reels tomber.
   const back = useSharedValue(0);
   useEffect(() => {
     back.value = withTiming(beat === 'zoom' ? 1 : 0, {
@@ -239,8 +150,8 @@ export function Proof({ onNext }: P) {
     });
   }, [beat, back]);
   const away = useAnimatedStyle(() => ({
-    opacity: 1 - back.value * 0.5,
-    transform: [{ scale: 1 - back.value * 0.05 }],
+    opacity: 1 - back.value * 0.25,
+    transform: [{ scale: 1 - back.value * 0.03 }],
   }));
 
   /*
@@ -252,9 +163,9 @@ export function Proof({ onNext }: P) {
   useEffect(() => {
     // Elle MONTE, elle ne surgit pas : un rebond sec fait sursauter l'oeil et
     // il arrive apres le mouvement. Un ressort long le laisse suivre.
-    pop.value = withDelay(beat === 'zoom' ? 220 : 0, withTiming(beat === 'zoom' ? 1 : 0, {
-      duration: 900, easing: Easing.out(Easing.back(1.1)),
-    }));
+    pop.value = withTiming(beat === 'zoom' ? 1 : 0, {
+      duration: 700, easing: Easing.out(Easing.back(1.1)),
+    });
   }, [beat, pop]);
   const rise = useAnimatedStyle(() => ({
     // Le rebond depasse 1 : on borne l'opacite, pas l'echelle — c'est l'echelle
@@ -301,10 +212,9 @@ export function Proof({ onNext }: P) {
           pointerEvents="none"
           testID="proof-loupe"
         >
-          {/* Le depart de l'onglet dure presque une seconde. A trois cents
-              millisecondes il avait disparu avant qu'on ait fini de compter
-              les boutons — on voyait un changement, pas un depart. */}
-          <MockTabBar u={2.4} gone={!tab} ms={900} />
+          {/* Le depart de l'onglet prend son temps : trop court, on voit un
+              changement, pas un depart. */}
+          <MockTabBar u={2.4} gone={!tab} ms={700} />
         </Animated.View>
       </View>
 
@@ -343,9 +253,25 @@ const SOURCES: ['tiktok' | 'instagram' | 'friend' | 'appstore' | 'other', string
  * qu'on aura jamais — l'App Store ne dit pas d'ou viennent les gens.
  */
 export function Attribution({ onNext }: P) {
+  const c = useColors();
+  const st = useMemo(() => sheet(), []);
   const { d } = useT();
   const [pick, setPick] = useState<string | null>(null);
   const setSource = useOnboardingStore((x) => x.setSource);
+
+  // Le logo pour les reseaux, une icone pour le reste : une ligne sans
+  // image se lit moins vite qu'une ligne avec, et on repond du regard.
+  const lead = (k: string) => {
+    if (k === 'tiktok' || k === 'instagram') {
+      return <Image source={LOGOS[k]} style={st.srcLogo} contentFit="contain" />;
+    }
+    const Icon = k === 'friend' ? Users : k === 'appstore' ? Apple : Ellipsis;
+    return (
+      <View style={[st.srcIcon, { backgroundColor: withAlpha(c.mist, 0.1) }]}>
+        <Icon size={15} strokeWidth={2.2} color={c.mist} />
+      </View>
+    );
+  };
 
   return (
     <Screen emblem={<Emblem icon={Compass} />} cta={d.pay.ctaPlain} onPress={onNext} disabled={!pick} hue="deep">
@@ -359,6 +285,7 @@ export function Attribution({ onNext }: P) {
           <SelectCard
             key={k}
             label={proper ?? d.source[k as 'friend' | 'appstore' | 'other']}
+            lead={lead(k)}
             selected={pick === k}
             onPress={() => {
               haptics.tick();
@@ -455,9 +382,8 @@ export function RateAsk({ onNext }: P) {
 // directement sur la palette, au rendu.
 const sheet = () => StyleSheet.create({
   mid: { textAlign: 'center', alignItems: 'center' },
-  arcSlot: { height: 96, justifyContent: 'center', marginTop: space.lg },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.md },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFFFFF22' },
+  srcLogo: { width: 26, height: 26 },
+  srcIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   stage: { alignItems: 'center', marginTop: space.xl },
   proofStage: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.md },
   phoneWrap: { width: PHONE },

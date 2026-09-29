@@ -89,8 +89,8 @@ export const REELS = POSTS.filter((p) => p.reel).length;
  */
 const WIDTH = 188;
 
-const FALL = 420;   // duree de l'effondrement d'un reel
-const STEP = 130;   // decalage entre deux reels : ils tombent en cascade
+const FALL = 300;   // duree de l'effondrement d'un reel
+const STEP = 90;    // decalage entre deux reels : ils tombent en cascade
 
 /**
  * Le fil, avant et apres le filtre.
