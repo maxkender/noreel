@@ -27,12 +27,25 @@ module.exports = function withScreenTimeReport(config) {
   const dst = path.join(root, 'targets', 'ScreenTimeReport');
   const on = process.env.EXPO_PUBLIC_SCREEN_TIME_REPORT === '1';
 
-  if (on) {
-    fs.mkdirSync(path.dirname(dst), { recursive: true });
-    fs.rmSync(dst, { recursive: true, force: true });
-    fs.cpSync(src, dst, { recursive: true });
-  } else if (fs.existsSync(dst)) {
-    fs.rmSync(dst, { recursive: true, force: true });
+  if (!on) {
+    if (fs.existsSync(dst)) fs.rmSync(dst, { recursive: true, force: true });
+    return config;
+  }
+
+  /*
+    On COPIE, on n'efface jamais.
+
+    La config s'evalue plusieurs fois : au prebuild, puis de nouveau pendant
+    la compilation Xcode, quand Expo relit le manifeste. Entre les deux,
+    l'outil de cibles a ecrit dans ce dossier un fichier de droits genere
+    (generated.entitlements) dont la signature depend. Vider le dossier a
+    chaque passage l'emportait, et le build 90 est mort a la signature :
+    « generated.entitlements could not be opened ». Chaque fichier source est
+    donc pose un par un, par-dessus, et tout ce que l'outil y a ajoute reste.
+  */
+  fs.mkdirSync(dst, { recursive: true });
+  for (const name of fs.readdirSync(src)) {
+    fs.copyFileSync(path.join(src, name), path.join(dst, name));
   }
   return config;
 };
