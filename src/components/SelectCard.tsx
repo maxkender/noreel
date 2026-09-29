@@ -47,7 +47,6 @@ export function SelectCard({
     transform: [{ scale: 1 - press.value * 0.025 }],
   }));
   const lit = useAnimatedStyle(() => ({ opacity: on.value }));
-  const lift = useAnimatedStyle(() => ({ transform: [{ scale: 1 + on.value * 0.12 }] }));
   const tick = useAnimatedStyle(() => ({
     opacity: on.value,
     transform: [{ scale: 0.5 + on.value * 0.5 }],
@@ -81,7 +80,9 @@ export function SelectCard({
       </Animated.View>
       <Animated.View style={[st.ring, lit]} pointerEvents="none" />
 
-      {lead ? <Animated.View style={[st.lead, lift]}>{lead}</Animated.View> : null}
+      {/* Le logo reste tel quel : agrandi a la selection, un PNG de vingt-six
+          points se reechantillonnait et paraissait flou. */}
+      {lead ? <View style={st.lead}>{lead}</View> : null}
 
       <View style={st.text}>
         <Text variant="body">{label}</Text>

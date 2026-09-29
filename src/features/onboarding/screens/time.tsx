@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
+import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { Cake, Minus, Plus } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { Typewriter } from '@/components/type/Typewriter';
+import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { track } from '@/services';
@@ -18,10 +19,6 @@ import { useOnboardingStore } from '@/store/onboarding';
 import { compareGuess } from '../calculations';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
-import { ScreenTimeReportView, reportAvailable } from '@/native/screenTimeReport';
-import { authorizationStatus } from '@/services/shield.real';
-import { useNativeReport, useReportHeight } from '../report';
-import { ReportSkeleton } from '../ReportSkeleton';
 
 type P = { onNext: () => void };
 
@@ -88,72 +85,6 @@ export function Guess({ onNext }: P) {
         </Animated.View>
       </View>
     </Screen>
-  );
-}
-
-/* ---------- L'analyse qui se prepare ---------- */
-
-const SCAN_STEP = 800;
-
-/**
- * Trois lignes qui se remplissent l'une apres l'autre, avant le bilan.
- *
- * Rien ne se calcule ici : le rapport d'Apple se dessine tout seul. Mais un
- * resultat qui tombe sans qu'on l'ait vu se preparer ne pese rien ; deux
- * secondes de « ca travaille » lui donnent son poids. On ne le joue que
- * quand il y a un bilan a preparer — sans extension ni autorisation, c'est
- * la saisie qui suit, et on ne fait pas semblant d'analyser ce qu'on va
- * demander.
- */
-export function Scan({ onNext }: P) {
-  const c = useColors();
-  const { d } = useT();
-  const [show, setShow] = useState(false);
-  const lines = [d.time.scan1, d.time.scan2, d.time.scan3];
-
-  useEffect(() => {
-    let alive = true;
-    void (async () => {
-      const ok = reportAvailable() && (await authorizationStatus()) === 'approved';
-      if (!alive) return;
-      if (ok) setShow(true); else onNext();
-    })();
-    return () => { alive = false; };
-  }, [onNext]);
-
-  useEffect(() => {
-    if (!show) return;
-    const ticks = [0, 1, 2].map((i) => setTimeout(() => haptics.tick(), SCAN_STEP * i + 200));
-    const end = setTimeout(onNext, SCAN_STEP * 3 + 500);
-    return () => { ticks.forEach(clearTimeout); clearTimeout(end); };
-  }, [show, onNext]);
-
-  return (
-    <Screen center still hue="accent">
-      {show && lines.map((l, i) => <ScanLine key={l} label={l} delay={SCAN_STEP * i} accent={c.accent} />)}
-    </Screen>
-  );
-}
-
-function ScanLine({ label, delay, accent }: { label: string; delay: number; accent: string }) {
-  const st = useMemo(() => sheet(), []);
-  const c = useColors();
-  // L'API Animated de React Native, sur le fil natif : une echelle, pas une
-  // largeur, pour que la barre avance sans repasser par la mise en page.
-  const [fill] = useState(() => new RNAnimated.Value(0));
-  useEffect(() => {
-    RNAnimated.timing(fill, {
-      toValue: 1, duration: SCAN_STEP - 120, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true,
-    }).start();
-  }, [delay, fill]);
-
-  return (
-    <Animated.View entering={FadeIn.delay(delay).duration(300)} style={st.scanRow}>
-      <Text variant="body" tone="secondary">{label}</Text>
-      <View style={[st.scanTrack, { backgroundColor: withAlpha(c.mist, 0.12) }]}>
-        <RNAnimated.View style={[st.scanFill, { backgroundColor: accent, transform: [{ scaleX: fill }] }]} />
-      </View>
-    </Animated.View>
   );
 }
 
@@ -231,151 +162,194 @@ export function RealTime({ onNext }: P) {
 
 /* ---------- La comparaison ---------- */
 
-const BAR_H = 150;
-/** Le temps qu'on laisse au squelette avant de s'effacer : l'extension a
- *  presque toujours dessine avant, et on ne l'attend pas plus longtemps. */
-const SKELETON_MS = 1400;
-
-/** Apres ce delai, on propose de saisir le chiffre soi-meme. */
-const RESCUE_MS = 4000;
+const COL_H = 220;
+const GROW_MS = 1100;
 
 /**
- * Le secours : si le dessin n'est pas la, la personne peut le dire.
- *
- * L'app ne saura jamais si l'extension a dessine — c'est la regle d'Apple —
- * et il existe des iPhone ou son processus ne se lance pas du tout (iOS
- * 26.4, rapporte sur les forums d'Apple avec le projet modele lui-meme).
- * Un ecran vide sans issue est le pire des cas ; une ligne qui propose de
- * recopier le chiffre depuis Reglages en est la sortie.
+ * Faut-il montrer la comparaison ? Seulement si la realite depasse
+ * l'estimation. Quand on a vu plus grand que le vrai chiffre, il n'y a rien
+ * a apprendre — et « moins que tu ne pensais » felicite quelqu'un qui s'est
+ * juste trompe dans l'autre sens.
  */
-function useRescue(active: boolean): boolean {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    if (!active) return;
-    const id = setTimeout(() => setOn(true), RESCUE_MS);
-    return () => clearTimeout(id);
-  }, [active]);
-  return active && on;
-}
-
-/** Vrai pendant la premiere seconde et demie d'un ecran natif. */
-function useSkeleton(active: boolean): boolean {
-  const [on, setOn] = useState(true);
-  useEffect(() => {
-    if (!active) return;
-    const id = setTimeout(() => setOn(false), SKELETON_MS);
-    return () => clearTimeout(id);
-  }, [active]);
-  return active && on;
+export function shouldCompare(guess: number, real: number): boolean {
+  return real >= guess;
 }
 
 /**
- * Ce qu'on croyait, a cote de ce qui est.
+ * Ce qu'on croyait, puis ce qui est.
  *
- * Deux colonnes, la meme echelle, et un verdict qui S'ADAPTE : « moins que
- * tu ne pensais » est une bonne nouvelle a dire comme telle, « plus » n'est
- * pas une faute — presque tout le monde sous-estime — et sous dix pour cent
- * on ne tranche pas du tout. L'ecart est en pourcentage de l'estimation,
- * parce que « 30 % de plus » se comprend et « 45 minutes de plus » demande
- * de refaire le calcul.
+ * Le chiffre est SAISI depuis Reglages : Apple ne le donne a aucune app, et
+ * l'extension qui sait le dessiner ne se lance pas sur tous les telephones.
+ * Une fois saisi, si la realite depasse l'estimation, on la montre : la
+ * scene, pas un tableau.
  */
 export function Compare({ onNext }: P) {
+  const guess = useOnboardingStore((x) => x.minutesPerDay);
+  const storedReal = useOnboardingStore((x) => x.realMinutes);
+  const [entered, setEntered] = useState(storedReal !== undefined);
+  const real = storedReal ?? guess;
+
+  // Saisi, et plus petit que l'estimation : rien a montrer, on passe.
+  const skip = entered && !shouldCompare(guess, real);
+  useEffect(() => { if (skip) onNext(); }, [skip, onNext]);
+
+  if (!entered) return <RealTime onNext={() => setEntered(true)} />;
+  if (skip) return <Screen center hue="accent"><View /></Screen>;
+  return <Reveal guess={guess} real={real} onNext={onNext} />;
+}
+
+/**
+ * La scene, en trois temps.
+ *
+ * L'estimation monte d'abord, seule, son chiffre avec elle : on regarde ce
+ * qu'on croyait. Puis la realite monte a cote — plus haut — et l'estimation
+ * s'efface un peu quand elle est depassee. Enfin l'ecart se pose entre les
+ * deux, et le verdict dessous. Rien ne s'affiche d'un coup : c'est le
+ * trajet qui se ressent, pas la valeur finale. Le bouton attend la fin.
+ */
+function Reveal({ guess, real, onNext }: { guess: number; real: number; onNext: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d, t } = useT();
-  const guess = useOnboardingStore((x) => x.minutesPerDay);
-  const storedReal = useOnboardingStore((x) => x.realMinutes);
-  const real = storedReal ?? guess;
   const { pct, verdict } = compareGuess(guess, real);
-  const native = useNativeReport(guess);
-  const reportH = useReportHeight(360, 500);
-  const skeleton = useSkeleton(native === 'yes');
-  const rescue = useRescue(native === 'yes');
-  // Le dessin n'est pas venu : on passe a la saisie, ici meme.
-  const [manual, setManual] = useState(false);
-  // Le chiffre a-t-il ete recopie ? Sinon, et sans extension, on le demande
-  // d'abord — ici meme, pas sur un ecran de plus.
-  const [entered, setEntered] = useState(storedReal !== undefined);
-
-  if (native === 'unknown') return <Screen center hue="accent"><View /></Screen>;
-
-  /*
-    Le chemin d'Apple : ce qui depend du vrai chiffre — le verdict, le
-    nombre, l'ecart, les barres — est DESSINE par l'extension, avec un
-    chiffre que nous ne verrons jamais. Le titre, lui, est a l'app : il ne
-    depend de rien, et un ecran qui commence par un dessin qu'on attend se
-    lit comme une panne.
-  */
-  if (native === 'yes' && !manual && ScreenTimeReportView) {
-    return (
-      <Screen
-        cta={d.ob.keepGoing}
-        onPress={onNext}
-        center
-        still
-        hue="accent"
-        note={rescue ? (
-          <Pressable onPress={() => { haptics.tap(); setManual(true); }} hitSlop={8} accessibilityRole="button">
-            <Text variant="label" color={c.accent} style={st.center}>{d.time.noShow}</Text>
-          </Pressable>
-        ) : undefined}
-      >
-        <Typewriter text={d.time.cmpTitle} variant="displayM" style={st.center} />
-        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.cmpSub}</Text>
-        <View style={[st.report, { height: reportH }]}>
-          {skeleton && <ReportSkeleton rows={3} />}
-          <ScreenTimeReportView context="compare" days={7} style={StyleSheet.absoluteFill} />
-        </View>
-      </Screen>
-    );
-  }
-
-  if (!entered) return <RealTime onNext={() => setEntered(true)} />;
-
-  const tone = verdict === 'less' ? '#2E9E5B' : verdict === 'more' ? c.danger : c.accent;
-  const Icon = verdict === 'less' ? ArrowDown : verdict === 'more' ? ArrowUp : Equal;
-  const title = verdict === 'less' ? d.time.lessTitle : verdict === 'more' ? d.time.moreTitle : d.time.sameTitle;
-  const sub = verdict === 'less' ? d.time.lessSub : verdict === 'more' ? d.time.moreSub : d.time.sameSub;
-  const delta = verdict === 'less' ? d.time.deltaLess : verdict === 'more' ? d.time.deltaMore : d.time.deltaSame;
+  const more = verdict === 'more';
+  const tone = more ? c.danger : c.accent;
   const top = Math.max(guess, real, 1);
+  const [phase, setPhase] = useState(0);
+  const [gN, setGN] = useState(0);
+  const [rN, setRN] = useState(0);
+  const [gScale] = useState(() => new RNAnimated.Value(0));
+  const [rScale] = useState(() => new RNAnimated.Value(0));
+  const [gDim] = useState(() => new RNAnimated.Value(1));
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tickers: ReturnType<typeof setInterval>[] = [];
+    // Le chiffre monte AVEC la colonne : trente pas, un tic tous les six.
+    const count = (to: number, set: (n: number) => void, ms: number) => {
+      const steps = 30;
+      let i = 0;
+      tickers.push(setInterval(() => {
+        i += 1;
+        set(Math.round((to * i) / steps));
+        if (i % 6 === 0) haptics.tick();
+        if (i >= steps) clearInterval(tickers[tickers.length - 1]);
+      }, ms / steps));
+    };
+    const grow = (v: RNAnimated.Value, to: number, ms: number) => {
+      RNAnimated.timing(v, { toValue: to, duration: ms, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    };
+    const t0 = typeDuration(d.time.cmpTitle, 32, 0) + 300;
+    const t1 = t0 + GROW_MS + 500;
+    const t2 = t1 + GROW_MS + 300 + 450;
+    timers.push(setTimeout(() => { setPhase(1); grow(gScale, guess / top, GROW_MS); count(guess, setGN, GROW_MS); }, t0));
+    timers.push(setTimeout(() => {
+      setPhase(2);
+      grow(rScale, real / top, GROW_MS + 300);
+      count(real, setRN, GROW_MS + 300);
+      // L'estimation s'efface un peu au moment ou la realite la depasse.
+      if (more) {
+        RNAnimated.timing(gDim, { toValue: 0.45, duration: 600, delay: GROW_MS * 0.6, useNativeDriver: true }).start();
+      }
+    }, t1));
+    timers.push(setTimeout(() => { setPhase(3); haptics.success(); }, t2));
+    return () => { timers.forEach(clearTimeout); tickers.forEach(clearInterval); };
+  }, [d.time.cmpTitle, guess, real, top, more, gScale, rScale, gDim]);
 
   return (
-    <Screen cta={d.ob.keepGoing} onPress={onNext} center hue={verdict === 'more' ? 'ember' : 'accent'}>
-      <Text variant="displayM" style={st.center}>{title}</Text>
-      <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.sm }]}>{sub}</Text>
+    <Screen
+      cta={d.ob.keepGoing}
+      onPress={onNext}
+      center
+      still
+      hue={more ? 'ember' : 'accent'}
+      hueLevel={phase >= 2 ? 0.8 : 0.3}
+      disabled={phase < 3}
+    >
+      <Typewriter text={d.time.cmpTitle} variant="displayM" style={st.center} />
 
-      <Animated.View entering={FadeIn.delay(300).duration(520)} style={st.verdict}>
-        <View style={[st.ring, { backgroundColor: tone }]}>
-          <Icon size={22} strokeWidth={2.6} color="#FFFFFF" />
+      <View style={st.stage}>
+        <Column
+          value={gN}
+          shown={phase >= 1}
+          scale={gScale}
+          dim={gDim}
+          label={d.time.guessLabel}
+          colors={[withAlpha(c.mist, 0.5), withAlpha(c.mist, 0.14)]}
+          rim={withAlpha(c.mist, 0.75)}
+          tone={c.mist}
+        />
+        {/* L'ecart se pose ENTRE les deux : c'est lui qu'on retient. */}
+        <View style={st.deltaSlot}>
+          {phase >= 3 && (
+            <Animated.View
+              entering={ZoomIn.springify().damping(12)}
+              style={[st.deltaPill, { backgroundColor: withAlpha(tone, 0.16), borderColor: withAlpha(tone, 0.5) }]}
+            >
+              <Text variant="button" color={tone}>{more ? `+${formatHours(real - guess)}` : '≈'}</Text>
+              <Text variant="label" color={tone} style={st.center}>
+                {t(more ? d.time.deltaMore : d.time.deltaSame, { p: pct })}
+              </Text>
+            </Animated.View>
+          )}
         </View>
-        <Text variant="hero" style={st.center} numberOfLines={1} adjustsFontSizeToFit>
-          {formatHours(real)}
-        </Text>
-        <Text variant="body" tone="secondary" style={st.center}>{t(delta, { p: pct })}</Text>
-      </Animated.View>
+        <Column
+          value={rN}
+          shown={phase >= 2}
+          scale={rScale}
+          label={d.time.realLabel}
+          colors={more ? [c.danger, c.ember] : [c.accent, withAlpha(c.accent, 0.4)]}
+          rim="#FFFFFF"
+          tone={tone}
+        />
+      </View>
 
-      <View style={st.bars}>
-        <Bar h={(guess / top) * BAR_H} colour={withAlpha(c.mist, 0.28)} rim={withAlpha(c.mist, 0.6)} value={formatHours(guess)} label={d.time.guessLabel} delay={500} />
-        <Bar h={(real / top) * BAR_H} colour={withAlpha(tone, 0.32)} rim={tone} value={formatHours(real)} label={d.time.realLabel} delay={700} valueColour={tone} />
+      {/* Le verdict a une place FIXE : il arrive en dernier, et rien ne
+          doit bouger quand il se pose. */}
+      <View style={st.verdictSlot}>
+        {phase >= 3 && (
+          <Animated.View entering={FadeInUp.duration(520)}>
+            <Text variant="displayM" color={tone} style={st.center}>
+              {more ? d.time.verdictMore : d.time.verdictSame}
+            </Text>
+            <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
+              {more ? d.time.moreSub : d.time.sameSub}
+            </Text>
+          </Animated.View>
+        )}
       </View>
     </Screen>
   );
 }
 
-function Bar({
-  h, colour, rim, value, label, delay, valueColour,
-}: { h: number; colour: string; rim: string; value: string; label: string; delay: number; valueColour?: string }) {
+/** Une colonne fine, qui monte depuis le sol, avec son chiffre au-dessus. */
+function Column({
+  value, shown, scale, dim, label, colors, rim, tone,
+}: {
+  value: number;
+  shown: boolean;
+  scale: RNAnimated.Value;
+  dim?: RNAnimated.Value;
+  label: string;
+  colors: [string, string];
+  rim: string;
+  tone: string;
+}) {
   const st = useMemo(() => sheet(), []);
   return (
     <View style={st.col}>
-      <View style={{ height: BAR_H, justifyContent: 'flex-end' }}>
-        <Animated.View
-          entering={FadeIn.delay(delay).duration(420)}
-          style={[st.bar, { height: Math.max(6, h), backgroundColor: colour, borderTopColor: rim }]}
-        />
+      <View style={st.colValue}>
+        {shown && (
+          <Text variant="title" color={tone} numberOfLines={1} adjustsFontSizeToFit>{formatHours(value)}</Text>
+        )}
       </View>
-      <Text variant="button" color={valueColour}>{value}</Text>
-      <Text variant="label" tone="tertiary">{label}</Text>
+      <View style={st.colTrack}>
+        <RNAnimated.View style={[st.colFill, { transform: [{ scaleY: scale }], opacity: dim ?? 1 }]}>
+          <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+          <View style={[st.colRim, { backgroundColor: rim }]} />
+        </RNAnimated.View>
+      </View>
+      <Text variant="label" tone="tertiary" style={st.center}>{label}</Text>
     </View>
   );
 }
@@ -383,18 +357,10 @@ function Bar({
 /* ---------- L'analyse ---------- */
 
 /**
- * Ce que le vrai chiffre contient.
- *
- * Avec l'extension : la moyenne, ce qu'elle fait a l'annee, sept vraies
- * journees, les prises en main et les apps les plus gourmandes — dessines
- * par Apple, sous un titre qui est a nous. Sans elle : ce qu'on tient, la
- * moyenne recopiee et ce qu'elle fait a l'annee ; dessiner sept barres a
- * partir d'une moyenne serait inventer six chiffres.
- *
- * Il y avait ici, sous le rapport, une liste d'apps a cocher « tes plus
- * grandes distractions ». Elle ne servait a rien dans l'app — et posee
- * sous les apps les plus gourmandes qu'Apple venait de nommer, elle
- * demandait ce qu'on venait de lire. Retiree.
+ * Ce que le chiffre contient : la moyenne, ce qu'elle fait a l'annee, les
+ * prises en main. Pas de graphe sur sept jours — on n'a qu'UNE valeur, celle
+ * qu'on a recopiee, et dessiner sept barres a partir d'une moyenne serait
+ * inventer six chiffres.
  */
 export function Analysis({ onNext }: P) {
   const c = useColors();
@@ -403,39 +369,6 @@ export function Analysis({ onNext }: P) {
   const guess = useOnboardingStore((x) => x.minutesPerDay);
   const real = useOnboardingStore((x) => x.realMinutes) ?? guess;
   const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
-  const native = useNativeReport(guess);
-  const skeleton = useSkeleton(native === 'yes');
-  const rescue = useRescue(native === 'yes');
-  const [manual, setManual] = useState(false);
-  const storedReal = useOnboardingStore((x) => x.realMinutes);
-  const [entered, setEntered] = useState(storedReal !== undefined);
-
-  if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
-
-  // Le secours : d'abord le chiffre, s'il n'a pas encore ete saisi.
-  if (manual && !entered) return <RealTime onNext={() => setEntered(true)} />;
-
-  if (native === 'yes' && !manual && ScreenTimeReportView) {
-    return (
-      <Screen
-        cta={d.ob.keepGoing}
-        onPress={onNext}
-        hue="ember"
-        note={rescue ? (
-          <Pressable onPress={() => { haptics.tap(); setManual(true); }} hitSlop={8} accessibilityRole="button">
-            <Text variant="label" color={c.accent} style={st.center}>{d.time.noShow}</Text>
-          </Pressable>
-        ) : undefined}
-      >
-        <Text variant="displayM" style={st.center}>{d.time.analysisTitle}</Text>
-        <Text variant="body" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>{d.time.analysisSub}</Text>
-        <View style={[st.report, { height: 540 }]}>
-          {skeleton && <ReportSkeleton rows={4} />}
-          <ScreenTimeReportView context="overview" days={7} style={StyleSheet.absoluteFill} />
-        </View>
-      </Screen>
-    );
-  }
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="ember">
@@ -505,15 +438,21 @@ const sheet = () => StyleSheet.create({
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
     backgroundColor: withAlpha('#FAFAFA', 0.1),
   },
-  verdict: { alignItems: 'center', gap: space.sm, marginTop: space.xl },
-  ring: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  bars: { flexDirection: 'row', gap: space.md, marginTop: space.xl },
-  col: { flex: 1, alignItems: 'center', gap: 4 },
-  bar: { alignSelf: 'stretch', borderRadius: 6, borderTopWidth: 3 },
+  stage: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.md, marginTop: space.xl },
+  col: { alignItems: 'center', gap: space.sm, width: 92 },
+  colValue: { height: 28, justifyContent: 'flex-end' },
+  colTrack: {
+    width: 30, height: COL_H, justifyContent: 'flex-end', borderRadius: 15, overflow: 'hidden',
+    backgroundColor: withAlpha('#FAFAFA', 0.05),
+  },
+  colFill: { width: 30, height: COL_H, borderRadius: 15, overflow: 'hidden', transformOrigin: 'bottom' },
+  colRim: { position: 'absolute', top: 0, left: 7, right: 7, height: 2, borderRadius: 1, opacity: 0.85 },
+  deltaSlot: { width: 112, height: COL_H + 28 + space.sm, alignItems: 'center', justifyContent: 'center' },
+  deltaPill: { alignItems: 'center', gap: 2, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1 },
+  verdictSlot: { minHeight: 120, marginTop: space.xl },
   card: {
     marginTop: space.lg, padding: space.md, borderRadius: 18, borderWidth: 1,
     backgroundColor: withAlpha('#FAFAFA', 0.05),
   },
-  report: { alignSelf: 'stretch', marginTop: space.lg },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });

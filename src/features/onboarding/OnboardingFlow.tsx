@@ -14,10 +14,10 @@ import { S1, S6, S6Years } from './screens';
 import { Constat, Name, NotificationsAsk, PromiseScreen } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
-import { Attribution, Health, Meet, Prep, Proof, RateAsk } from './screens/extra';
+import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
-import { AgeAsk, Analysis, Compare, Guess, Scan } from './screens/time';
+import { AgeAsk, Analysis, Compare, Guess } from './screens/time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './screens/science';
 import { Ready } from './screens/ready';
 import { DmReel, NotBlocker } from './screens/story';
@@ -143,11 +143,9 @@ export function OnboardingFlow() {
     <Name key="name" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <Meet key="meet" onNext={next} />,
-    <Health key="health" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <Guess key="guess" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
-    <Scan key="scan" onNext={next} />,
     <Compare key="cmp" onNext={next} />,
     <Analysis key="ana" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,

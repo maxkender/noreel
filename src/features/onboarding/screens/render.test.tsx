@@ -16,9 +16,9 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Health, Meet, Prep, Proof, RateAsk } from './extra';
+import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
-import { AgeAsk, Analysis, Compare, Guess, RealTime, Scan } from './time';
+import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
 import { PromiseScreen } from './setup';
 import { Ready } from './ready';
@@ -49,14 +49,6 @@ describe('les ecrans du parcours se montent', () => {
     render(<Meet onNext={noop} />);
   });
 
-  it('l’analyse qui se prepare passe son tour sans extension', async () => {
-    const onNext = jest.fn();
-    render(<Scan onNext={onNext} />);
-    // Sans rapport a preparer, l'ecran ne fait pas semblant : il enchaine.
-    await new Promise((r) => setTimeout(r, 20));
-    expect(onNext).toHaveBeenCalled();
-  });
-
   it('la preparation du programme', () => {
     const r = render(<Prep onNext={noop} />);
     expect(r.toJSON()).toBeTruthy();
@@ -65,11 +57,6 @@ describe('les ecrans du parcours se montent', () => {
 
   it('« tu n’es pas accro »', () => {
     const r = render(<Exploited onNext={noop} />);
-    expect(r.toJSON()).toBeTruthy();
-  });
-
-  it('le curseur de sante', () => {
-    const r = render(<Health onNext={noop} />);
     expect(r.toJSON()).toBeTruthy();
   });
 
