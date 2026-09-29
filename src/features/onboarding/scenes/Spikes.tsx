@@ -17,16 +17,22 @@ const H = 120;
  * meme temps que ses voisines, sans jamais s'arreter — c'est la repetition
  * qui porte l'idee, et elle ne tient pas dans une phrase.
  *
- * Les durees sont tirees une fois au montage : des pics tous synchrones
- * feraient un egaliseur, pas une avalanche.
+ * Les durees sont irregulieres sans etre tirees au sort : des pics tous
+ * synchrones feraient un egaliseur, pas une avalanche — et un rendu qui
+ * tire au sort n'est plus pur, ce qui rend l'ecran different a chaque
+ * montage. Trois multiplicateurs premiers suffisent a casser tout motif
+ * visible sur quatorze barres.
  */
+const SEEDS = Array.from({ length: N }, (_, i) => ({
+  up: 160 + ((i * 37) % 140),
+  rest: 400 + ((i * 53) % 900),
+  wait: (i * 97) % 1200,
+}));
+
 export function Spikes() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const seeds = useMemo(
-    () => Array.from({ length: N }, () => ({ up: 160 + Math.random() * 140, rest: 400 + Math.random() * 900, wait: Math.random() * 1200 })),
-    []
-  );
+  const seeds = SEEDS;
   return (
     <View style={st.root}>
       {seeds.map((s, i) => <Spike key={i} seed={s} colour={i % 3 === 0 ? c.ember : c.accent} />)}
