@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type TextStyle } from 'react-native';
 import { useColors } from '@/theme/useColors';
 import { Text } from './Text';
@@ -28,66 +28,67 @@ const parse = (s: string): Seg[] =>
  * chaine du premier au dernier caractere, donc les coupures sont celles du
  * texte final des la premiere lettre. Rien ne peut bouger.
  *
- * Le curseur prend la place du prochain caractere au lieu de s'y ajouter :
- * ajoute, il changeait la longueur de la ligne et ramenait le probleme.
+ * Le curseur a disparu. Il clignotait en couleur toutes les demi-secondes
+ * pendant que les lettres arrivaient toutes les trente millisecondes : une
+ * barre coloree qui saute de lettre en lettre en clignotant a contretemps —
+ * c'est ce qui rendait la frappe « bizarre ». Et pour ne pas changer la
+ * longueur de la ligne il devait remplacer le caractere suivant, dont la
+ * largeur n'est jamais la sienne. Un texte qui apparait, sans rien devant.
  */
 export function Typewriter({
-  text, variant = 'displayM', speed = 32, delay = 0, style, cursor = true,
+  text, variant = 'displayM', speed = 32, delay = 0, style,
 }: {
   text: string;
   variant?: TypeName;
   speed?: number;
   delay?: number;
   style?: TextStyle;
+  /** Accepte, ignore : il n'y a plus de curseur. Voir ci-dessous. */
   cursor?: boolean;
 }) {
   const c = useColors();
   const segs = useMemo(() => parse(text), [text]);
   const total = useMemo(() => segs.reduce((n, s) => n + s.text.length, 0), [segs]);
   const [n, setN] = useState(0);
-  const [blink, setBlink] = useState(true);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  /*
+    La cadence se calcule depuis l'INSTANT DE DEPART, pas de tick en tick.
+    Une chaine de minuteurs derive : chaque rappel arrive un peu apres son
+    heure, et les retards s'additionnent — le texte accelerait et ralentissait
+    au gre de ce que le fil principal avait d'autre a faire. Ici chaque image
+    demande « combien de lettres devraient etre la, maintenant ? » et affiche
+    exactement ca. Les espaces passent avec la lettre qui les precede : un
+    temps mort sur un blanc se lit comme une hesitation.
+  */
   useEffect(() => {
     setN(0);
-    let i = 0;
-    const tick = () => {
-      i += 1;
-      setN(i);
-      if (i < total) timer.current = setTimeout(tick, speed);
+    let raf = 0;
+    const t0 = Date.now() + delay;
+    const step = () => {
+      const due = Math.max(0, Math.floor((Date.now() - t0) / speed));
+      let k = Math.min(total, due);
+      // On termine le mot en cours quand la lettre suivante est un blanc.
+      const flat = segs.map((s) => s.text).join('');
+      while (k < total && flat[k] === ' ') k += 1;
+      setN(k);
+      if (k < total) raf = requestAnimationFrame(step);
     };
-    const first = setTimeout(tick, delay);
-    return () => { clearTimeout(first); clearTimeout(timer.current); };
-  }, [total, speed, delay]);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [segs, total, speed, delay]);
 
-  useEffect(() => {
-    if (!cursor) return;
-    const id = setInterval(() => setBlink((b) => !b), 480);
-    return () => clearInterval(id);
-  }, [cursor]);
-
-  const done = n >= total;
   let at = 0;
-
   return (
     <Text variant={variant} style={style}>
       {segs.map((s, i) => {
         const start = at;
         at += s.text.length;
         const cut = Math.min(s.text.length, Math.max(0, n - start));
-        const shown = s.text.slice(0, cut);
-        let hidden = s.text.slice(cut);
-        // Le curseur remplace le caractere suivant : meme longueur, meme ligne.
-        const caret = cursor && !done && cut < s.text.length && start + cut === n;
-        if (caret) hidden = hidden.slice(1);
         return (
           <Text key={i} variant={variant} color={s.accent ? c.accent : undefined}>
-            {shown}
-            {caret && (
-              <Text variant={variant} color={blink ? c.accent : 'transparent'}>|</Text>
-            )}
-            {hidden.length > 0 && (
-              <Text variant={variant} color="transparent">{hidden}</Text>
+            {s.text.slice(0, cut)}
+            {cut < s.text.length && (
+              <Text variant={variant} color="transparent">{s.text.slice(cut)}</Text>
             )}
           </Text>
         );

@@ -50,6 +50,7 @@ export function Guess({ onNext }: P) {
         onNext();
       }}
       center
+      still
       hue="accent"
     >
       <Typewriter text={d.s5.titleA} variant="displayM" style={st.center} />

@@ -45,17 +45,6 @@ it('rend le texte ENTIER a chaque instant de la frappe', () => {
   }
 });
 
-it('garde la longueur meme avec le curseur', () => {
-  // Le curseur REMPLACE le caractere suivant : ajoute, il changeait la
-  // longueur de la ligne et ramenait le saut qu'on venait de supprimer.
-  const text = 'Dose de dopamine trop élevée';
-  const r = render(<Typewriter text={text} speed={10} />);
-  act(() => { jest.advanceTimersByTime(80); });
-  const s = rendered(r.toJSON());
-  expect(s.length).toBe(text.length - 1);
-  expect(text.startsWith(s.slice(0, 7))).toBe(true);
-});
-
 it('ne compte pas les accolades du balisage', () => {
   // « {temps éveillé} » se lit « temps éveillé » : la duree et la frappe
   // portent sur ce qui s'affiche, pas sur les accolades.

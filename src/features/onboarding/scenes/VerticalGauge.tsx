@@ -57,6 +57,9 @@ export function VerticalGauge({
   // Un glissement vers le HAUT remplit : changeY est negatif quand on monte.
   const pan = Gesture.Pan()
     .minDistance(0)
+    // Un geste vertical, annonce comme tel : sans ca, un parent qui defile
+    // pouvait le reclamer au premier pixel et la jauge restait figee.
+    .activeOffsetY([-1, 1])
     .onBegin((e) => {
       grab.value = withSpring(1, springs.snappy);
       // Toucher la colonne y pose le niveau : on n'a pas a aller chercher

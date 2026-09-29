@@ -19,6 +19,7 @@ import { Corti, type CortiLevel } from './Corti';
 export function Screen({
   children, cta, onPress, disabled, secondary, onSecondary, center = false,
   tapToContinue, hintDelay = 1800, hue = 'accent', hueLevel = 0, backdrop, corti, note,
+  still = false,
 }: {
   children: ReactNode;
   /** Absent : aucun pied de page. L'ecran fournit alors sa propre action. */
@@ -65,6 +66,16 @@ export function Screen({
    * ne semblait se passer, et on recommencait.
    */
   note?: ReactNode;
+  /**
+   * L'ecran ne DEFILE pas.
+   *
+   * Un ecran qui porte un geste vertical — une jauge qu'on remplit vers le
+   * haut — ne peut pas aussi defiler : le doigt qui monte faisait bouger la
+   * page au lieu du niveau, et le niveau au lieu de la page, sans qu'on sache
+   * lequel allait gagner. Ici tout tient a l'ecran, et rien ne bouge sous le
+   * doigt sauf ce qu'on regle.
+   */
+  still?: boolean;
 }) {
   const bar = useContext(ProgressContext);
   const c = useColors();
@@ -89,6 +100,8 @@ export function Screen({
           style={styles.scroll}
           contentContainerStyle={[styles.content, center && styles.centered]}
           showsVerticalScrollIndicator={false}
+          scrollEnabled={!still}
+          bounces={!still}
         >
           {children}
         </ScrollView>
