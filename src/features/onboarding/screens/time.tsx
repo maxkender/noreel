@@ -298,6 +298,13 @@ export function Analysis({ onNext }: P) {
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
   const native = useNativeReport();
 
+  useEffect(() => {
+    if (native !== 'yes') return;
+    prepareReport(guess, reportStrings(d), {
+      accent: c.accent, danger: c.danger, good: '#2E9E5B', ink: c.mist, inkSoft: withAlpha(c.mist, 0.6),
+    });
+  }, [native, guess, d, c]);
+
   if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
 
   // Avec l'extension : sept vraies journees, les prises en main et les apps

@@ -35,3 +35,29 @@ it('le parcours se monte sans lever', () => {
   const r = render(<OnboardingFlow />);
   expect(r.toJSON()).toBeTruthy();
 });
+
+/*
+ * L'ordre du milieu du parcours, verrouille.
+ *
+ * Estimation, permission Temps d'ecran, comparaison, analyse, age : c'est la
+ * sequence qui fait que le vrai chiffre existe AVANT qu'on s'en serve, et
+ * elle a bouge trois fois en deux jours. Un ecran deplace d'un cran et la
+ * comparaison se joue avant que la permission soit demandee — sans qu'aucun
+ * montage ne leve.
+ */
+import fs from 'fs';
+import path from 'path';
+
+it('demande le temps dans le bon ordre', () => {
+  const src = fs.readFileSync(path.join(__dirname, 'OnboardingFlow.tsx'), 'utf8');
+  const keys = [...src.matchAll(/key="([a-z0-9]+)"/g)].map((m) => m[1]);
+  const at = (k: string) => { const i = keys.indexOf(k); expect(i).toBeGreaterThanOrEqual(0); return i; };
+  expect(at('guess')).toBeLessThan(at('perm'));
+  expect(at('perm')).toBeLessThan(at('cmp'));
+  expect(at('cmp')).toBeLessThan(at('ana'));
+  expect(at('ana')).toBeLessThan(at('age'));
+  // Et l'engagement vient apres les quatre-vingt-dix jours, avant la demo.
+  expect(at('90')).toBeLessThan(at('ready'));
+  expect(at('ready')).toBeLessThan(at('proof'));
+  expect(keys[keys.length - 1]).toBe('pw');
+});
