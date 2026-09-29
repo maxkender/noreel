@@ -1,12 +1,13 @@
 /**
- * L'onglet qui EXPLIQUE le pourcentage.
+ * L'onglet qui dit UNE chose par bloc.
  *
- * Le chiffre etait affiche a trois endroits sans qu'on dise nulle part ce
- * qu'il mesure ni comment il bouge. Un pourcentage sans regle se lit soit
- * comme un verdict, soit comme une decoration — dans les deux cas on cesse de
- * le regarder, et le jour ou il DESCEND c'est l'app qu'on soupconne.
+ * Il expliquait tout — la regle chiffree, les etats, la pause, ce que ce
+ * n'est pas — et on ne comprenait rien. Il montre maintenant Corti, le
+ * chiffre, une phrase et le geste du jour ; la regle entiere attend derriere
+ * « comment ca marche ? », malus compris, parce que la cacher rendrait la
+ * jauge incomprehensible le jour ou elle descend.
  */
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { CortiTab } from './CortiTab';
 import { dict } from '@/i18n';
 
@@ -18,50 +19,35 @@ jest.mock('@/services/cheer', () => ({ claimCheer: (n: number) => mockClaim(n) }
 
 const noop = (() => {}) as never;
 
-it('donne la regle en entier, malus compris', () => {
+it('montre le chiffre et une seule phrase', () => {
   render(<CortiTab onScroll={noop} />);
-
-  // Ce qui le fait monter.
-  expect(screen.getByText(dict.cortiTab.upL)).toBeTruthy();
-  expect(screen.getByText(dict.cortiTab.upV)).toBeTruthy();
-
-  /*
-    Et surtout ce qui le fait DESCENDRE. Les cacher rendrait la jauge
-    incomprehensible le jour ou elle baisse, et c'est precisement le jour ou
-    il ne faut pas laisser croire que le chiffre est arbitraire.
-  */
-  expect(screen.getByText(dict.cortiTab.rawL)).toBeTruthy();
-  expect(screen.getByText(dict.cortiTab.rawV)).toBeTruthy();
-  expect(screen.getByText(dict.cortiTab.passL)).toBeTruthy();
-  expect(screen.getByText(dict.cortiTab.passV)).toBeTruthy();
-});
-
-it('dit que ce n’est pas une mesure du cerveau', () => {
-  // Un pourcentage affiche a cote d'un cerveau se lit comme une mesure du
-  // cerveau. Ce n'en est pas une, et le taire serait le laisser croire.
-  render(<CortiTab onScroll={noop} />);
-  expect(screen.getByText(dict.cortiTab.honestTitle)).toBeTruthy();
-  expect(screen.getByText(dict.cortiTab.honestB)).toBeTruthy();
-});
-
-it('montre les quatre etats et le depart a 18', () => {
-  render(<CortiTab onScroll={noop} />);
-  for (const s of [dict.cortiTab.s0, dict.cortiTab.s1, dict.cortiTab.s2, dict.cortiTab.s3]) {
-    expect(screen.getByText(s)).toBeTruthy();
-  }
   // Sans registre, l'indice vaut son point de depart — pas zero.
   expect(screen.getByText('18 %')).toBeTruthy();
+  expect(screen.getByText(dict.cortiTab.oneLine)).toBeTruthy();
+  // Le detail n'est PAS sur la page.
+  expect(screen.queryByText(dict.cortiTab.honestB)).toBeNull();
+  expect(screen.queryByText(dict.cortiTab.upB)).toBeNull();
+});
+
+it('garde la regle entiere, malus compris, derriere « comment ca marche »', () => {
+  render(<CortiTab onScroll={noop} />);
+  fireEvent.press(screen.getByText(dict.cortiTab.how));
+  for (const title of [
+    dict.cortiTab.plainTitle, dict.cortiTab.howTitle, dict.cortiTab.statesTitle,
+    dict.cortiTab.careTitle, dict.cortiTab.honestTitle,
+  ]) {
+    expect(screen.getByText(title)).toBeTruthy();
+  }
+  // Ce qui le fait DESCENDRE est ecrit, avec le chiffre.
+  fireEvent.press(screen.getByText(dict.cortiTab.howTitle));
+  expect(screen.getByText(new RegExp(dict.cortiTab.rawV))).toBeTruthy();
+  expect(screen.getByText(new RegExp(dict.cortiTab.passV))).toBeTruthy();
 });
 
 /*
-  Ce qui a SUIVI Corti sur cet onglet.
-
-  La carte de l'onglet blocage portait sa soucoupe, sa phrase, la celebration
-  des paliers et les trois chiffres qui justifient l'abonnement. En deplacant
-  Corti ici j'ai retire cette carte — et tout ce qu'elle portait a disparu de
-  l'app sans qu'aucun test ne bronche : l'animation de six secondes du studio,
-  trois megaoctets et demi embarques, n'etait plus atteignable nulle part.
-  Ces tests-la sont ce qui rend la suppression sure.
+  Ce qui a SUIVI Corti sur cet onglet : sa soucoupe, sa phrase, la
+  celebration des paliers et les trois chiffres qui justifient l'abonnement.
+  Ces tests-la sont ce qui rend chaque simplification sure.
 */
 describe('ce qui a suivi Corti', () => {
   // Les chiffres viennent du disque : ils n'existent qu'au second rendu.
@@ -73,35 +59,23 @@ describe('ce qui a suivi Corti', () => {
   });
 
   it('demande encore la celebration des paliers', async () => {
-    // Sans cet appel, le septieme et le trentieme jour ne se fetent plus, et
-    // le fichier anime du studio ne sert plus a rien dans le paquet.
     render(<CortiTab onScroll={noop} />);
     await waitFor(() => expect(mockClaim).toHaveBeenCalled());
   });
 });
 
 describe('reparer l’indice', () => {
-  it('propose des gestes, et dit qu’on te croit sur parole', () => {
-    /*
-      L'indice ne descendait que par des malus et ne montait qu'en attendant
-      le lendemain : aucune prise dans l'instant, donc un compteur qu'on
-      regarde une fois. Et comme rien de tout cela n'est verifiable, la page
-      doit l'ecrire — un chiffre qui prend ta parole sans le dire est un
-      chiffre que personne ne peut contester.
-    */
+  it('propose UN geste, et les autres sur demande', () => {
     render(<CortiTab onScroll={noop} />);
-    expect(screen.getByText(dict.cortiTab.careTitle)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.todayTitle)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.careShort)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.todayPick)).toBeTruthy();
+    // Un seul geste visible : les huit autres attendent derriere une ligne.
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    fireEvent.press(screen.getByText(dict.cortiTab.more));
+    expect(screen.getAllByRole('checkbox')).toHaveLength(9);
     // Chaque geste porte sa RAISON : c'est elle qui fait qu'on le choisit.
     expect(screen.getByText(dict.cortiTab.focusT)).toBeTruthy();
     expect(screen.getByText(dict.cortiTab.focusW)).toBeTruthy();
-    expect(screen.getByText(dict.cortiTab.todayPick)).toBeTruthy();
-    expect(screen.getByText(dict.cortiTab.careBody)).toBeTruthy();
-  });
-
-  it('explique l’indice en une phrase avant le detail', () => {
-    // Le tableau chiffre repondait a « comment » avant qu'on ait compris
-    // « quoi ».
-    render(<CortiTab onScroll={noop} />);
-    expect(screen.getByText(dict.cortiTab.plainBody)).toBeTruthy();
   });
 });

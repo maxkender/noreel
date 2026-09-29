@@ -1,42 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowDown, ArrowUp, Check, Ticket } from 'lucide-react-native';
+import Animated from 'react-native-reanimated';
+import { Check } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
+import { HelpSheet, type HelpTopic } from '@/components/HelpSheet';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
-import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
-import { cortiLevel, cortiLine, type CortiLevel } from '@/components/Corti';
+import { cortiReact, type CortiReaction } from '@/components/CortiRig';
+import { cortiLevel, cortiLine } from '@/components/Corti';
 import { CARE_PER_DAY, logCare, stats, type CareId, type Stats } from '@/services/protect';
-import { CARE, CARE_GROUPS, careOfTheDay, type CareGroup } from '@/services/care';
+import { CARE, careOfTheDay } from '@/services/care';
 import { claimCheer } from '@/services/cheer';
 import { useT } from '@/i18n';
 import type { Scroll } from './parts';
 
 /*
- * L'onglet de Corti : ce qu'est le chiffre, et d'ou il vient.
+ * L'onglet de Corti : lui, son chiffre, une phrase, un geste.
  *
- * Il etait affiche a trois endroits — sous la mascotte, dans une jauge, sur
- * le paywall — et nulle part on ne disait ce qu'il mesure. Un pourcentage
- * sans regle se lit soit comme un verdict, soit comme une decoration ; dans
- * les deux cas on cesse de le regarder. Celui-la a une regle simple, et elle
- * tient sur un ecran : on la donne en entier, chiffres compris, y compris ce
- * qui le fait BAISSER.
- *
- * Montrer les malus est un choix. Les cacher rendrait la jauge incomprehensible
- * le jour ou elle descend — et ce jour-la, c'est l'app qu'on soupconne.
+ * Il portait tout ce qu'on pouvait dire de l'indice — la regle en trois
+ * lignes chiffrees, les quatre etats, la pause, ce que ce n'est pas — et
+ * neuf gestes en trois familles. Tout etait vrai, et on ne comprenait rien :
+ * une page qui explique tout n'explique plus rien. Elle dit maintenant UNE
+ * chose par bloc, et le reste attend derriere « comment ca marche ? » pour
+ * qui le veut. La regle entiere, malus compris, y est toujours : la cacher
+ * rendrait la jauge incomprehensible le jour ou elle descend.
  */
-
-const ROW_ICON = { up: ArrowUp, raw: ArrowDown, pass: Ticket };
-
 export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -44,6 +40,8 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [s, setS] = useState<Stats | null>(null);
   /** Les gestes deja declares aujourd'hui. */
   const [done, setDone] = useState<string[]>([]);
+  const [help, setHelp] = useState(false);
+  const [all, setAll] = useState(false);
   const today = careOfTheDay();
   const tick = (id: CareId) => {
     if (done.includes(id)) return;
@@ -60,11 +58,6 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
     complete : Corti passe d'affaisse a rayonnant, une fois, puis la scene
     reprend — sur un saut de joie, pas sur un arret net. C'est le seul moment
     ou l'app se rejouit ; le reste du temps elle dit ou l'on en est.
-
-    Elle vivait sur l'onglet blocage. En deplacant Corti ici, je l'ai rendue
-    INATTEIGNABLE : la carte qui la portait n'etait plus rendue nulle part, et
-    les six secondes du studio — trois megaoctets et demi embarques — ne
-    pouvaient plus se jouer. Elle suit donc Corti, comme le reste.
   */
   const [cheer, setCheer] = useState(false);
   const [hooray, setHooray] = useState<CortiReaction | undefined>();
@@ -78,14 +71,26 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const brain = s?.brain ?? 18;
   const tone = brain < 35 ? c.danger : brain < 70 ? c.ember : c.accent;
 
-  const moves: [keyof typeof ROW_ICON, string, string, string, string][] = [
-    ['up', d.cortiTab.upV, d.cortiTab.upL, d.cortiTab.upB, c.accent],
-    ['raw', d.cortiTab.rawV, d.cortiTab.rawL, d.cortiTab.rawB, c.danger],
-    ['pass', d.cortiTab.passV, d.cortiTab.passL, d.cortiTab.passB, c.ember],
-  ];
-
-  const states: [CortiLevel, string][] = [
-    [0, d.cortiTab.s0], [1, d.cortiTab.s1], [2, d.cortiTab.s2], [3, d.cortiTab.s3],
+  // Tout le detail, range derriere une ligne. Les memes mots qu'avant, au
+  // meme endroit pour qui les cherche — et hors du chemin de qui ne veut
+  // que savoir comment va Corti.
+  const topics: HelpTopic[] = [
+    { t: d.cortiTab.plainTitle, h: d.cortiTab.oneLine, b: `${d.cortiTab.plainBody}\n\n${d.cortiTab.startB}` },
+    {
+      t: d.cortiTab.howTitle, h: d.cortiTab.howH,
+      b: [
+        `${d.cortiTab.upL} : ${d.cortiTab.upV}. ${d.cortiTab.upB}`,
+        `${d.cortiTab.rawL} : ${d.cortiTab.rawV}. ${d.cortiTab.rawB}`,
+        `${d.cortiTab.passL} : ${d.cortiTab.passV}. ${d.cortiTab.passB}`,
+        '', d.cortiTab.pauseB,
+      ].join('\n'),
+    },
+    {
+      t: d.cortiTab.statesTitle, h: d.cortiTab.statesH,
+      b: [d.cortiTab.s0, d.cortiTab.s1, d.cortiTab.s2, d.cortiTab.s3, '', d.cortiTab.statesB].join('\n'),
+    },
+    { t: d.cortiTab.careTitle, h: d.cortiTab.careShort, b: d.cortiTab.careBody },
+    { t: d.cortiTab.honestTitle, h: d.cortiTab.honestH, b: d.cortiTab.honestB },
   ];
 
   return (
@@ -95,22 +100,9 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
-      <Text variant="displayM">{d.cortiTab.title}</Text>
-      <Text variant="lead" tone="secondary" style={{ marginTop: space.sm }}>
-        {d.cortiTab.lead}
-      </Text>
-
-      {/*
-        Lui d'abord, sur sa soucoupe, et le chiffre ensuite.
-
-        C'est son etat qu'on vient voir ; le pourcentage n'est que la legende
-        de ce qu'on lit deja sur sa figure. Et il est POSE sur la scene du
-        studio plutot que sur du vide : elle ne s'arrete jamais — le socle
-        flotte, l'anneau tourne, les eclats derivent — et le halo prend la
-        couleur de l'indice, si bien qu'on sait ou l'on en est avant d'avoir
-        lu le moindre chiffre. Une vignette immobile ne donne aucune raison de
-        revenir sur cet onglet ; une scene qui vit, si.
-      */}
+      {/* Lui d'abord, sur sa soucoupe : c'est son etat qu'on vient voir. Le
+          halo prend la couleur de l'indice, et on sait ou l'on en est avant
+          d'avoir lu un chiffre. */}
       <View style={st.stage}>
         {cheer ? (
           <CortiRecovery
@@ -123,7 +115,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         )}
       </View>
 
-      {/* Sa phrase a lui. C'est la seule ligne de l'app qui ne rapporte pas un
+      {/* Sa phrase a lui : la seule ligne de l'app qui ne rapporte pas un
           chiffre, et c'est pour elle qu'on revient voir comment il va. */}
       {s && (
         <Text variant="lead" color={c.accent} style={st.line}>
@@ -131,6 +123,7 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         </Text>
       )}
 
+      {/* Le chiffre, et UNE phrase. Le reste attend derriere la ligne bleue. */}
       <Glass radius={24} intensity={50} warmEdge="none" style={st.gauge}>
         <View style={st.gaugeTop}>
           <Text variant="label" tone="tertiary">{d.cortiTab.index}</Text>
@@ -139,27 +132,19 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         <View style={st.track}>
           <View style={[st.fill, { width: `${brain}%`, backgroundColor: tone }]} />
         </View>
-
-        {/* Les trois nombres d'ou sort le pourcentage. Sans eux la regle qui
-            suit reste une theorie : la, on peut refaire le calcul soi-meme. */}
-        {s && (
-          <View style={st.counts}>
-            <Count v={String(s.days)} label={d.cortiTab.daysL} c={c.accent} />
-            <Count v={String(s.passes)} label={d.cortiTab.passesL} c={c.ember} />
-          </View>
-        )}
+        <Text variant="body" tone="secondary" style={{ marginTop: space.md }}>{d.cortiTab.oneLine}</Text>
+        <Pressable
+          onPress={() => { haptics.tap(); setHelp(true); }}
+          hitSlop={8}
+          accessibilityRole="button"
+          style={st.how}
+        >
+          <Text variant="label" color={c.accent}>{d.cortiTab.how}</Text>
+        </Pressable>
       </Glass>
 
-      {/*
-        Les chiffres qui justifient l'abonnement a la fin du mois.
-
-        Ils vivaient sur la carte de l'onglet blocage. En deplacant Corti ici
-        j'ai retire cette carte, et ces trois-la ont disparu de l'app avec
-        elle : les reels evites, le temps repris, les jours tenus. Ce sont les
-        seuls chiffres qu'on ait le droit de montrer — ceux qu'on a OBSERVES —
-        et les perdre en reorganisant des onglets aurait ete le genre de
-        regression qu'on ne voit qu'au moment de resilier.
-      */}
+      {/* Les trois chiffres qu'on a OBSERVES — ceux qui justifient
+          l'abonnement a la fin du mois. Trois nombres, pas un paragraphe. */}
       {s && (
         <View style={st.figures}>
           <Count v={String(s.blocked)} label={d.stats.reelsAvoided} c={c.accent} />
@@ -169,103 +154,33 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
       )}
 
       {/*
-        UNE phrase avant le detail.
-
-        La page ouvrait sur un tableau de trois lignes chiffrees : c'est la
-        reponse a « comment » avant qu'on ait compris « quoi ». On dit d'abord
-        ce qu'est l'indice en une phrase, et le detail vient pour qui le veut.
+        UN geste, mis en avant. Neuf cases sont un formulaire ; une
+        proposition est un geste. Les huit autres attendent derriere une
+        ligne, pour qui en veut plus aujourd'hui.
       */}
-      <Text variant="button" style={st.h}>{d.cortiTab.plainTitle}</Text>
-      <Text variant="body" tone="secondary">{d.cortiTab.plainBody}</Text>
-
-      {/*
-        Et de quoi le REPARER — avec la raison de chaque geste.
-
-        La premiere liste (boire de l'eau, bouger, lire) etait une liste de
-        bonnes resolutions : rien ne disait ce que chaque geste faisait au
-        cerveau, donc rien ne donnait envie de le faire. Neuf gestes, en
-        trois familles, et chacun porte sa raison en une ligne. Un seul est
-        mis en avant chaque jour : neuf cases sont un formulaire, une
-        proposition est un geste. Ils rapportent peu et l'ecran le dit — on
-        ne verifie rien, on croit sur parole.
-      */}
-      <Text variant="button" style={st.h}>{d.cortiTab.careTitle}</Text>
-      <Text variant="body" tone="secondary">{d.cortiTab.careBody}</Text>
-
+      <Text variant="button" style={st.h}>{d.cortiTab.todayTitle}</Text>
+      <Text variant="body" tone="secondary">{d.cortiTab.careShort}</Text>
       <CareCard id={today} done={done.includes(today)} featured onPress={() => tick(today)} />
 
-      {CARE_GROUPS.map((g) => (
-        <View key={g}>
-          <Text variant="label" tone="tertiary" style={st.groupH}>{GROUP_LABEL(d)[g]}</Text>
-          <View style={st.cares}>
-            {CARE.filter((x) => x.group === g && x.id !== today).map((x) => (
-              <CareCard key={x.id} id={x.id} done={done.includes(x.id)} onPress={() => tick(x.id)} />
-            ))}
-          </View>
+      <Pressable onPress={() => { haptics.tap(); setAll((x) => !x); }} hitSlop={8} accessibilityRole="button" style={st.more}>
+        <Text variant="label" color={c.accent}>{all ? d.cortiTab.less : d.cortiTab.more}</Text>
+      </Pressable>
+      {all && (
+        <View style={st.cares}>
+          {CARE.filter((x) => x.id !== today).map((x) => (
+            <CareCard key={x.id} id={x.id} done={done.includes(x.id)} onPress={() => tick(x.id)} />
+          ))}
         </View>
-      ))}
-      <Text variant="label" tone="tertiary" style={st.note}>
-        {done.length >= CARE_PER_DAY
-          ? d.cortiTab.careFull
-          : t(d.cortiTab.careLeft, { n: Math.min(done.length, CARE_PER_DAY) })}
-      </Text>
+      )}
+      {done.length > 0 && (
+        <Text variant="label" tone="tertiary" style={st.note}>
+          {done.length >= CARE_PER_DAY
+            ? d.cortiTab.careFull
+            : t(d.cortiTab.careLeft, { n: Math.min(done.length, CARE_PER_DAY) })}
+        </Text>
+      )}
 
-      <Text variant="button" style={st.h}>{d.cortiTab.howTitle}</Text>
-      <View style={st.moves}>
-        {moves.map(([k, v, label, body, col], i) => {
-          const Icon = ROW_ICON[k];
-          return (
-            <Animated.View
-              key={k}
-              entering={FadeIn.delay(60 * i).duration(320)}
-              style={[st.move, { borderColor: withAlpha(col, 0.25) }]}
-            >
-              <View style={[st.badge, { backgroundColor: withAlpha(col, 0.14) }]}>
-                <Icon size={15} strokeWidth={2.4} color={col} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={st.moveTop}>
-                  <Text variant="button" style={{ flex: 1 }}>{label}</Text>
-                  <Text variant="button" color={col}>{v}</Text>
-                </View>
-                <Text variant="body" tone="secondary" style={{ marginTop: 2 }}>{body}</Text>
-              </View>
-            </Animated.View>
-          );
-        })}
-      </View>
-      <Text variant="body" tone="tertiary" style={st.note}>{d.cortiTab.startB}</Text>
-
-      <Text variant="button" style={st.h}>{d.cortiTab.pauseTitle}</Text>
-      <Text variant="body" tone="secondary">{d.cortiTab.pauseB}</Text>
-
-      <Text variant="button" style={st.h}>{d.cortiTab.statesTitle}</Text>
-      <View style={st.states}>
-        {states.map(([n, label]) => (
-          <View key={n} style={[st.state, level === n && { borderColor: c.accent }]}>
-            {/* Fige : quatre mascottes animees cote a cote se disputent le
-                regard, et on ne voit plus laquelle est la sienne. */}
-            <CortiRig level={n} size={54} animated={false} />
-            <Text
-              variant="label"
-              tone={level === n ? 'primary' : 'tertiary'}
-              style={st.stateLabel}
-            >
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
-      <Text variant="body" tone="tertiary" style={st.note}>{d.cortiTab.statesB}</Text>
-
-      {/*
-        Ce que ce n'est pas.
-        Un pourcentage affiche a cote d'un cerveau se lit comme une mesure du
-        cerveau. Ce n'en est pas une, personne ne peut en faire une depuis un
-        telephone, et le dire ici coute moins cher que de le laisser croire.
-      */}
-      <Text variant="button" style={st.h}>{d.cortiTab.honestTitle}</Text>
-      <Text variant="body" tone="secondary">{d.cortiTab.honestB}</Text>
+      <HelpSheet visible={help} onClose={() => setHelp(false)} topics={topics} />
     </Animated.ScrollView>
   );
 }
@@ -290,10 +205,6 @@ const CARE_ICON = {
   move: require('@/assets/care/move.png'),
   cold: require('@/assets/care/cold.png'),
 } as const;
-
-const GROUP_LABEL = (d: ReturnType<typeof useT>['d']): Record<CareGroup, string> => ({
-  reset: d.cortiTab.groupReset, train: d.cortiTab.groupTrain, fuel: d.cortiTab.groupFuel,
-});
 
 /**
  * Un geste : son icone, son titre, sa raison, et une coche.
@@ -357,14 +268,14 @@ const sheet = (c: Palette) => StyleSheet.create({
     backgroundColor: withAlpha(c.mist, 0.1),
   },
   fill: { height: 8, borderRadius: 4 },
-  counts: { flexDirection: 'row', marginTop: space.lg, gap: space.md },
   figures: {
     flexDirection: 'row', gap: space.md, marginTop: space.md,
     paddingVertical: space.lg, borderRadius: 20,
     backgroundColor: withAlpha(c.mist, 0.06),
   },
   h: { marginTop: space.xl, marginBottom: space.sm },
-  moves: { gap: space.sm },
+  how: { marginTop: space.md, alignSelf: 'flex-start' },
+  more: { marginTop: space.md, marginBottom: space.sm, alignSelf: 'flex-start' },
   cares: { gap: space.sm },
   care: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
@@ -380,27 +291,10 @@ const sheet = (c: Palette) => StyleSheet.create({
   // Un geste pas encore fait reste un peu en retrait ; fait ou du jour, il
   // brille de toute sa lueur.
   careIconDim: { opacity: 0.72 },
-  groupH: { marginTop: space.lg, marginBottom: space.sm },
   tick: {
     width: 20, height: 20, borderRadius: 10, borderWidth: 1.5,
     borderColor: withAlpha(c.mist, 0.3),
     alignItems: 'center', justifyContent: 'center',
   },
-  move: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: space.md,
-    padding: space.md, borderRadius: 18, borderWidth: 1,
-    backgroundColor: withAlpha(c.mist, 0.05),
-  },
-  badge: {
-    width: 30, height: 30, borderRadius: 15,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  moveTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   note: { marginTop: space.md },
-  states: { flexDirection: 'row', gap: space.sm },
-  state: {
-    flex: 1, alignItems: 'center', gap: 4, paddingVertical: space.md,
-    borderRadius: 16, borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
-  },
-  stateLabel: { textAlign: 'center', paddingHorizontal: 4 },
 });
