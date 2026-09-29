@@ -14,7 +14,7 @@ import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { useT } from '@/i18n';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
@@ -128,7 +128,7 @@ export function Paywall(
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(exitDelay === 0);
   const [winback, setWinback] = useState(false);

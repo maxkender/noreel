@@ -10,7 +10,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { ACTIVITIES, activityCount } from '../calculations';
 
 type P = { onNext: () => void };
@@ -38,7 +38,7 @@ export function Activities({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
   const hours = (minutes * 365) / 60;
 
   /*

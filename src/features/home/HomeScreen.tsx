@@ -19,7 +19,7 @@ import { formatHours } from '@/lib/format';
 import { shield } from '@/services';
 import { today as usageToday, streak as usageStreak, type Today } from '@/services/usage';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, type Scroll } from './parts';
 import { AppSlider } from './AppSlider';
@@ -468,7 +468,7 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
   const [sources, setSources] = useState(false);
   const { d } = useT();
   const router = useRouter();
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
   const age = useOnboardingStore((x) => x.age);
   const reset = useOnboardingStore((x) => x.reset);
 

@@ -11,7 +11,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { formatHours } from '@/lib/format';
 import { dict } from '@/i18n';
 
@@ -94,7 +94,7 @@ function Wait({ onDone }: { onDone: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [left, setLeft] = useState(WAIT);
-  const minutes = useOnboardingStore((x) => x.minutesPerDay);
+  const minutes = useOnboardingStore(effectiveMinutes);
 
   useEffect(() => {
     const id = setInterval(() => setLeft((n) => (n <= 1 ? 0 : n - 1)), 1000);
