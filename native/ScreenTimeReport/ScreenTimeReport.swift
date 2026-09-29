@@ -1,4 +1,7 @@
 import DeviceActivity
+import FamilyControls
+import Foundation
+import ManagedSettings
 import SwiftUI
 
 /*
@@ -322,7 +325,7 @@ struct OverviewView: View {
       if !m.apps.isEmpty {
         VStack(alignment: .leading, spacing: 10) {
           Text(th.t("topApps")).font(.system(size: 16, weight: .semibold)).foregroundColor(th.ink)
-          ForEach(m.apps) { a in
+          ForEach(m.apps, id: \.id) { a in
             HStack {
               // L'etiquette d'Apple : nom et icone, sans que l'app hote sache
               // jamais lesquels — c'est tout l'interet de l'extension.
