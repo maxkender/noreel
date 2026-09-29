@@ -15,7 +15,6 @@ import { track } from '@/services';
 import { dict, useT } from '@/i18n';
 import { LIFE_YEARS, yearsOnScreen } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
-import { CortiRig } from '@/components/CortiRig';
 import { SignaturePad } from '../scenes/SignaturePad';
 import { Emblem } from '../scenes/Emblem';
 import { Bell } from 'lucide-react-native';
