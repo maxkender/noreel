@@ -62,6 +62,11 @@ const UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) ' +
   'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 
+/** Le message d'iOS quand un filtre de contenu bloque la page, en toute langue. */
+export function filtered(message: string): boolean {
+  return /filtre de contenu|content filter|contentfilter/i.test(message);
+}
+
 export function ClientScreen({ id }: { id: ClientId }) {
   const c = useColors();
   const theme = useResolvedTheme();
@@ -823,9 +828,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {error && (
         <View style={styles.overlay}>
-          <Text variant="title">Impossible de charger</Text>
-          <Text variant="body" tone="secondary" style={styles.errText}>{error}</Text>
-          <View style={{ width: 220 }}>
+          {/*
+            « L'URL a ete bloquee par un filtre de contenu » n'est pas une
+            panne reseau : c'est iOS qui applique le blocage d'une categorie
+            ou d'un site web coche dans le selecteur — a toutes les vues web,
+            la notre comprise. Recharger ne sert a rien ; revoir la
+            selection, si.
+          */}
+          <Text variant="title">{filtered(error) ? d.client.filterTitle : 'Impossible de charger'}</Text>
+          <Text variant="body" tone="secondary" style={styles.errText}>
+            {filtered(error) ? d.client.filterBody : error}
+          </Text>
+          <View style={{ width: 220, gap: space.sm }}>
+            {filtered(error) && (
+              <Button label={d.client.filterFix} onPress={() => { haptics.tap(); router.push('/picker'); }} />
+            )}
             <Button label={d.client.retry} onPress={() => { setError(null); web.current?.reload(); }} />
           </View>
         </View>

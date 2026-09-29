@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import Animated, {
-  Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming,
+  Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { Apple, Check, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -73,8 +73,10 @@ export function Meet({ onNext }: P) {
 
 /* ---------- La preparation du programme ---------- */
 
-const PREP_STEP = 950;
+const PREP_STEP = 1000;
 const PREP_ROWS = 5;
+/** Le temps de lire « ton programme est pret » avant que le paywall s'ouvre. */
+const PREP_TAIL = 1700;
 
 /**
  * Cinq coches avant le paywall, et un anneau qui se remplit.
@@ -85,6 +87,10 @@ const PREP_ROWS = 5;
  * ou ce qu'on a repondu se transforme sous les yeux en cinq lignes cochees,
  * chacune avec son detail, pendant qu'un anneau se referme autour de Corti.
  * Puis « ton programme est pret », un temps, et le paywall s'ouvre.
+ *
+ * Chaque coche ARRIVE — elle grandit, sa ligne s'allume, son detail glisse
+ * dessous — au lieu de changer d'etat d'un coup. L'anneau avance sans
+ * a-coup, et a la fin il eclate une fois autour de Corti.
  */
 export function Prep({ onNext }: P) {
   const c = useColors();
@@ -94,6 +100,7 @@ export function Prep({ onNext }: P) {
   const [done, setDone] = useState(0);
   const [ready, setReady] = useState(false);
   const ring = useSharedValue(0);
+  const burst = useSharedValue(0);
   // La cible : la moitie, arrondie au quart d'heure — la meme que le paywall.
   const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
   const rows: [string, string][] = [
@@ -105,37 +112,58 @@ export function Prep({ onNext }: P) {
   ];
 
   useEffect(() => {
-    ring.value = withTiming(1, { duration: PREP_STEP * PREP_ROWS, easing: Easing.linear });
+    ring.value = withTiming(1, { duration: PREP_STEP * PREP_ROWS, easing: Easing.inOut(Easing.sin) });
     const ts = Array.from({ length: PREP_ROWS }, (_, i) => setTimeout(() => { setDone(i + 1); haptics.tick(); }, PREP_STEP * (i + 1)));
-    const fin = setTimeout(() => { setReady(true); haptics.success(); }, PREP_STEP * PREP_ROWS + 200);
-    const end = setTimeout(onNext, PREP_STEP * PREP_ROWS + 1500);
+    const fin = setTimeout(() => {
+      setReady(true);
+      haptics.success();
+      burst.value = withSequence(withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }), withTiming(0, { duration: 800 }));
+    }, PREP_STEP * PREP_ROWS + 150);
+    const end = setTimeout(onNext, PREP_STEP * PREP_ROWS + 150 + PREP_TAIL);
     return () => { ts.forEach(clearTimeout); clearTimeout(fin); clearTimeout(end); };
-  }, [onNext, ring]);
+  }, [onNext, ring, burst]);
+
+  const halo = useAnimatedStyle(() => ({
+    opacity: 0.2 + ring.value * 0.35 + burst.value * 0.4,
+    transform: [{ scale: 0.8 + ring.value * 0.3 + burst.value * 0.8 }],
+  }));
 
   return (
     <Screen center still hue="accent" hueLevel={ready ? 1 : 0.4}>
       <View style={st.mid}>
+        <Animated.View style={[st.prepHalo, { backgroundColor: withAlpha(c.accent, 0.4) }, halo]} pointerEvents="none" />
         <HoldRing progress={ring} size={176} stroke={4}>
           <CortiRig level={3} size={120} expression={ready ? 'ravi' : 'auto'} />
         </HoldRing>
       </View>
-      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>{ready ? d.prep.done : d.prep.title}</Text>
+      <View style={st.prepTitle}>
+        <Animated.View key={ready ? 'ready' : 'prep'} entering={FadeIn.duration(420)}>
+          <Text variant="displayM" style={st.mid}>{ready ? d.prep.done : d.prep.title}</Text>
+        </Animated.View>
+      </View>
       <View style={st.prepList}>
-        {rows.map(([title, detail], i) => (
-          <View key={title} style={st.prepRow}>
-            <View style={[st.prepDot, { backgroundColor: done > i ? c.accent : withAlpha(c.mist, 0.12) }]}>
-              {done > i && <Check size={13} strokeWidth={3} color={c.night} />}
+        {rows.map(([title, detail], i) => {
+          const on = done > i;
+          return (
+            <View key={title} style={st.prepRow}>
+              <View style={[st.prepDot, { backgroundColor: on ? c.accent : withAlpha(c.mist, 0.12) }]}>
+                {on && (
+                  <Animated.View entering={ZoomIn.springify().damping(11).stiffness(220)}>
+                    <Check size={13} strokeWidth={3} color={c.night} />
+                  </Animated.View>
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text variant="body" tone={on ? undefined : 'tertiary'}>{title}</Text>
+                {on && (
+                  <Animated.View entering={FadeInDown.duration(380)}>
+                    <Text variant="label" tone="tertiary">{detail}</Text>
+                  </Animated.View>
+                )}
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="body" tone={done > i ? undefined : 'tertiary'}>{title}</Text>
-              {done > i && (
-                <Animated.View entering={FadeIn.duration(360)}>
-                  <Text variant="label" tone="tertiary">{detail}</Text>
-                </Animated.View>
-              )}
-            </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </Screen>
   );
@@ -445,6 +473,8 @@ export function RateAsk({ onNext }: P) {
 // directement sur la palette, au rendu.
 const sheet = () => StyleSheet.create({
   mid: { textAlign: 'center', alignItems: 'center' },
+  prepHalo: { position: 'absolute', width: 176, height: 176, borderRadius: 88 },
+  prepTitle: { minHeight: 76, justifyContent: 'center', marginTop: space.lg },
   srcLogo: { width: 26, height: 26 },
   prepList: { alignSelf: 'stretch', gap: space.md, marginTop: space.xl, paddingHorizontal: space.xl },
   prepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },

@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { House, Info, LogIn, Search, Send, Timer, User } from 'lucide-react-native';
+import {
+  ChevronLeft, ChevronRight, House, Info, Link, LogIn, RotateCw, Search, Send, Settings, Timer, User, UsersRound,
+} from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { radii, space } from '@/theme/spacing';
@@ -18,17 +20,18 @@ import type { ClientId } from './blockers';
 
 /** Le temps d'une story : deux phrases, pas plus. */
 const SLIDE_MS = 4500;
-const SLIDES = 6;
+const SLIDES = 7;
 
 /*
  * La premiere fois qu'on ouvre Instagram ici : une story, pas un mode d'emploi.
  *
  * Le format que la personne connait le mieux — des barres en haut, un tap
- * pour avancer, un tap a gauche pour revenir — et six temps qui vont droit
+ * pour avancer, un tap a gauche pour revenir — et sept temps qui vont droit
  * au but : ce qui reste, l'onglet Reels qui part (on le voit partir), les
- * quatre boutons de la barre du bas nommes un par un, le chrono et le « i »
- * en haut, le reel qu'un ami envoie, la page de connexion qui n'est pas la
- * notre. Chaque temps se fond dans le suivant. Une fois, et on peut passer.
+ * quatre boutons de la barre d'Instagram nommes un par un, NOTRE barre et
+ * ses sept touches, le chrono et le « i » en haut, le reel qu'un ami envoie,
+ * la page de connexion qui n'est pas la notre. Chaque temps se fond dans le
+ * suivant. Une fois, et on peut passer.
  */
 export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => void }) {
   const c = useColors();
@@ -57,6 +60,7 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
   const slides = [
     [d.tuto.t1, d.tuto.b1], [d.tuto.t2, d.tuto.b2], [d.tuto.t3, d.tuto.b3],
     [d.tuto.t4, d.tuto.b4], [d.tuto.t5, d.tuto.b5], [d.tuto.t6, d.tuto.b6],
+    [d.tuto.t7, d.tuto.b7],
   ] as const;
   const [title, body] = slides[i];
 
@@ -139,7 +143,30 @@ function Art({ i }: { i: number }) {
           </View>
         </View>
       );
-    case 3:
+    case 3: {
+      // Notre barre, telle qu'elle s'ouvre : sept touches, chacune nommee.
+      const keys = [
+        [ChevronLeft, d.tuto.nav1], [House, d.tuto.nav2], [RotateCw, d.tuto.nav3], [ChevronRight, d.tuto.nav4],
+        [UsersRound, d.tuto.nav5], [Link, d.tuto.nav6], [Settings, d.tuto.nav7],
+      ] as const;
+      return (
+        <View style={[st.card, st.nav]}>
+          {keys.map(([Icon, label], k) => {
+            const I = Icon as typeof House;
+            const last = k === keys.length - 1;
+            return (
+              <View key={label} style={st.navKey}>
+                <View style={[st.navIcon, last && { backgroundColor: withAlpha(c.accent, 0.18) }]}>
+                  <I size={18} strokeWidth={2.2} color={last ? c.accent : c.mist} />
+                </View>
+                <Text variant="label" tone="secondary" style={st.center}>{label}</Text>
+              </View>
+            );
+          })}
+        </View>
+      );
+    }
+    case 4:
       return (
         <View style={[st.card, st.topBar]}>
           <Timer size={16} strokeWidth={2.2} color={soft} />
@@ -148,7 +175,7 @@ function Art({ i }: { i: number }) {
           <View style={st.info}><Info size={16} strokeWidth={2.2} color={soft} /></View>
         </View>
       );
-    case 4:
+    case 5:
       return <PhoneFrame width={150}><MockDM playing /></PhoneFrame>;
     default:
       return (
@@ -180,6 +207,15 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   labelCol: { alignItems: 'center', gap: 4, width: 64 },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, height: 52 },
+  nav: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+    paddingVertical: space.md, paddingHorizontal: space.sm, gap: space.sm,
+  },
+  navKey: { width: 70, alignItems: 'center', gap: 5 },
+  navIcon: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.mist, 0.08),
+  },
   info: {
     width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.2),

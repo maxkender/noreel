@@ -33,7 +33,7 @@ export function Picker({ onNext }: P) {
   const st = useMemo(() => sheet(c), [c]);
   const saved = useSettings((s) => s.selection);
   const set = useSettings((s) => s.set);
-  const [counts, setCounts] = useState({ apps: 0, cats: 0, whole: false });
+  const [counts, setCounts] = useState({ apps: 0, cats: 0, webs: 0, whole: false });
   // Sans autorisation Temps d'ecran, le selecteur d'Apple s'affiche VIDE :
   // on voyait un cadre gris et rien d'autre, sans savoir pourquoi.
   const [auth, setAuth] = useState<string>('notDetermined');
@@ -72,8 +72,16 @@ export function Picker({ onNext }: P) {
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
       <Text variant="displayM">{d.picker.choose}</Text>
+      {/*
+        Des APPS, et rien d'autre.
+        Le selecteur d'Apple propose aussi des categories et des sites web.
+        Or le blocage d'une categorie ou d'un site s'applique a TOUTES les
+        vues web du telephone, la notre comprise : instagram.com ne se
+        chargeait plus dans UnSwipe, avec « bloque par un filtre de contenu ».
+        Une app cochee ne bloque que l'app.
+      */}
       <Text variant="lead" tone="secondary" style={{ marginTop: space.sm }}>
-        Ces apps deviendront inaccessibles hors de UnSwipe.
+        {d.picker.appsOnly}
       </Text>
 
       <View style={st.picker}>
@@ -84,12 +92,14 @@ export function Picker({ onNext }: P) {
             familyActivitySelection: string | null;
             applicationCount: number;
             categoryCount: number;
+            webDomainCount: number;
             includeEntireCategory: boolean;
           } }) => {
             const v = e.nativeEvent;
             setCounts({
               apps: v.applicationCount,
               cats: v.categoryCount,
+              webs: v.webDomainCount ?? 0,
               whole: v.includeEntireCategory,
             });
             set('selection', v.familyActivitySelection);
@@ -100,17 +110,16 @@ export function Picker({ onNext }: P) {
         />
       </View>
 
-      {counts.cats > 0 && (
+      {(counts.cats > 0 || counts.webs > 0) && (
         <Animated.View entering={FadeIn.duration(320)} style={st.warn}>
           <AlertTriangle size={16} strokeWidth={2.2} color={c.danger} />
           <Text variant="label" color={c.danger} style={{ flex: 1, lineHeight: 17 }}>
-            Sélectionner une catégorie entière peut bloquer des apps
-            auxquelles tu ne penses pas. Déplie-la pour choisir une par une.
+            {counts.cats > 0 ? d.picker.catWarn : d.picker.webWarn}
           </Text>
         </Animated.View>
       )}
 
-      {counts.apps + counts.cats > 0 && counts.cats === 0 && (
+      {counts.apps > 0 && counts.cats === 0 && counts.webs === 0 && (
         <Text variant="label" tone="tertiary" style={{ marginTop: space.md }}>
           {t(d.picker.selected, { n: counts.apps, s: counts.apps > 1 ? 's' : '' })}
         </Text>

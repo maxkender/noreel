@@ -18,13 +18,12 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
-import { AgeAsk, Compare, Guess, RealTime } from './time';
+import { AgeAsk, Guess } from './time';
 import { LifeYears, S6Years } from './index';
-import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
+import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './science';
 import { PromiseScreen, Welcome } from './setup';
 import { Ready } from './ready';
 import { DmReel, NotBlocker } from './story';
-import { useOnboardingStore } from '@/store/onboarding';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
 // doivent afficher leurs prix de secours et non tomber.
@@ -94,30 +93,20 @@ describe('les ecrans du parcours se montent', () => {
 });
 
 /*
-  Le milieu du parcours, refait : une estimation a la jauge, le vrai chiffre
-  recopie, la comparaison, l'analyse, puis une page par idee et le bouton
-  qu'on maintient. Huit ecrans nouveaux ou reecrits — chacun est monte, et
-  la comparaison l'est dans ses trois verdicts, puisque c'est elle qui
-  choisit son titre.
+  Le milieu du parcours, refait : une estimation a la jauge, l'age, les
+  annees, puis une page par idee et le bouton qu'on maintient. Chacun est
+  monte.
 */
-describe('le temps d’ecran, en quatre ecrans', () => {
+describe('le temps d’ecran', () => {
   it('l’estimation a la jauge', () => { render(<Guess onNext={noop} />); });
-  it('le vrai chiffre', () => { render(<RealTime onNext={noop} />); });
   it('l’age', () => { render(<AgeAsk onNext={noop} />); });
   it('les annees qu’il reste', () => { const r = render(<LifeYears onNext={noop} />); r.unmount(); });
   it('les annees sur le telephone', () => { const r = render(<S6Years onNext={noop} />); r.unmount(); });
 
-  it('la comparaison, dans ses trois verdicts', () => {
-    for (const real of [60, 150, 300]) {
-      useOnboardingStore.setState({ minutesPerDay: 150, realMinutes: real });
-      const r = render(<Compare onNext={noop} />);
-      expect(r.toJSON()).toBeTruthy();
-      r.unmount();
-    }
-  });
 });
 
 describe('une page par idee', () => {
+  it('l’annonce des scientifiques', () => { render(<ScienceIntro onNext={noop} />); });
   it('la dose', () => { render(<Dopamine onNext={noop} />); });
   it('les recepteurs', () => { render(<ReceptorsPage onNext={noop} />); });
   it('plus rien ne fait d’effet', () => { render(<NothingLands onNext={noop} />); });

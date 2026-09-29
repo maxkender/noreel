@@ -39,8 +39,8 @@ describe('activités, pour 1 095 h/an', () => {
   const cost = (id: string) => ACTIVITIES.find((a) => a.id === id)!.costHours;
 
   it.each([
-    ['books', 182], ['chinese', 1], ['guitar', 5],
-    ['marathon', 10], ['code', 2],
+    ['books', 182], ['business', 2], ['gym', 7],
+    ['marathon', 10], ['code', 2], ['degree', 0],
   ])('%s → %i', (id, expected) => {
     expect(Math.floor(activityCount(H, cost(id as string)))).toBe(expected);
   });

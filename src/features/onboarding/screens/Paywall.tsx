@@ -1,11 +1,11 @@
 import { useMemo, useEffect, useState } from 'react';
-import {
-  InteractionManager, Linking, Platform, Pressable, StyleSheet, View,
-} from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowRight, Bell, Check, CreditCard, Lock, Unlock, X } from 'lucide-react-native';
+import {
+  ArrowRight, BarChart3, Bell, Check, CreditCard, Lock, ShieldCheck, SlidersHorizontal, Sparkles, Unlock, X,
+} from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -20,8 +20,6 @@ import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
 } from '@/services/purchases';
 import { scheduleTrialReminder } from '@/services/trial';
-import { CortiRig } from '@/components/CortiRig';
-import { GlassApps } from '@/components/GlassApps';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
@@ -73,6 +71,7 @@ const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
  * recoit.
  */
 const ROWS = ['r1', 'r2', 'r3', 'r4'] as const;
+const ICONS = [Sparkles, SlidersHorizontal, ShieldCheck, BarChart3] as const;
 
 // La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
@@ -371,8 +370,6 @@ export function Paywall(
         {d.pay.sub}
       </Text>
 
-      <Healing />
-
       {/* Son chiffre, et la cible : la moitie, sur SON temps a lui — pas sur
           une moyenne. C'est le seul chiffre de cet ecran qu'il a donne, et
           c'est pour ca qu'il porte. */}
@@ -402,24 +399,22 @@ export function Paywall(
       </View>
 
       {/*
-        Quatre cases plutot que quatre lignes.
-        Empilees, elles faisaient une liste de courses qu'on parcourt du regard
-        sans rien lire. Cote a cote, elles se prennent d'un coup d'oeil et
-        rendent la page a la decision.
+        Quatre lignes courtes, une icone chacune : ce qu'on obtient, et rien
+        sur ce qu'on n'a pas. Elles se lisent d'un regard sous les forfaits,
+        sans faire un tableau.
       */}
-      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.grid}>
-        {ROWS.map((key, i) => (
-          <Animated.View
-            key={key}
-            entering={FadeIn.delay(260 + i * 90).duration(420)}
-            style={st.cell}
-          >
-            <Check size={13} strokeWidth={3} color={c.accent} />
-            <Text variant="label" tone="secondary" style={st.cellText}>
-              {d.pay[key]}
-            </Text>
-          </Animated.View>
-        ))}
+      <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.list}>
+        {ROWS.map((key, i) => {
+          const Icon = ICONS[i];
+          return (
+            <Animated.View key={key} entering={FadeIn.delay(260 + i * 90).duration(420)} style={st.row}>
+              <View style={st.rowIcon}>
+                <Icon size={15} strokeWidth={2.2} color={c.accent} />
+              </View>
+              <Text variant="label" tone="secondary" style={st.rowText}>{d.pay[key]}</Text>
+            </Animated.View>
+          );
+        })}
       </Animated.View>
 
       <Text variant="label" tone="tertiary" style={st.terms}>
@@ -476,69 +471,6 @@ export function Paywall(
 }
 
 /**
- * Corti, en forme, et rien d'autre.
- *
- * Il arrivait grille et se reparait sous les yeux — la sequence complete du
- * studio, six secondes, du gris au bleu. C'etait juste comme demonstration et
- * mauvais comme argument : sur la page ou l'on sort sa carte, la premiere
- * image etait celle d'un cerveau mort. On vend ce qu'on obtient, pas ce dont
- * on souffre ; le constat a deja eu lieu quinze ecrans plus tot, et le
- * repeter ici ne fait que retarder la seule chose qu'on vient chercher.
- *
- * Il reste donc rayonnant, et le chiffre montre la destination — pas le
- * point de depart. C'est l'indice de recuperation que l'app affiche ensuite
- * tous les jours : la promesse et la jauge doivent dire la meme chose, sinon
- * l'une des deux ment.
- */
-function Healing() {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-
-  /*
-    Le decor lourd attend que la TRANSITION soit finie.
-
-    Cet ecran arrive en glissant, et il monte en meme temps quarante-trois
-    calques de mascotte, quatre tuiles de verre floutees et deux degrades. Le
-    fil principal fabrique tout ca pendant que l'animation se joue, et
-    l'animation saute — juste avant l'ecran qui doit donner envie de payer.
-
-    On laisse donc les gestes en cours se terminer, puis on pose le decor.
-    Ce n'est pas un delai fixe : c'est le systeme qui dit quand il a fini,
-    donc l'attente est nulle sur un appareil rapide.
-
-    La place est RESERVEE, sinon tout le contenu sauterait a son arrivee —
-    on aurait echange un a-coup contre un autre.
-  */
-  const [decor, setDecor] = useState(false);
-  useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setDecor(true));
-    return () => task.cancel();
-  }, []);
-
-  return (
-    <View style={st.heal}>
-      {/*
-        Les quatre apps flottent AUTOUR de lui.
-        L'ecran disait ce qu'on obtient sans jamais montrer sur quoi ; les
-        logos le disent en une image, et le verre au-dessus du degrade donne a
-        la page la profondeur qui lui manquait.
-      */}
-      <View style={st.orbit}>
-        {decor && (
-          <Animated.View entering={FadeIn.duration(420)}>
-            <GlassApps height={236} />
-            <View style={st.orbitMid} pointerEvents="none">
-              <CortiRig level={3} size={188} expression="ravi" />
-            </View>
-          </Animated.View>
-        )}
-      </View>
-
-    </View>
-  );
-}
-
-/**
  * Aujourd'hui, et l'objectif : deux barres, la seconde moitie moins haute.
  *
  * L'ecran affichait un indice de recuperation a trente jours — juste, mais
@@ -554,12 +486,18 @@ function Goal({ minutes, days }: { minutes: number; days: number }) {
   const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
   return (
     <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.goal}>
+      <LinearGradient
+        colors={[withAlpha(c.mist, 0.08), withAlpha(c.mist, 0.03)]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={st.goalRow}>
         <GoalBar label={d.pay.today} value={formatHours(minutes)} h={1} tone={c.danger} />
-        <ArrowRight size={18} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 26 }} />
+        <ArrowRight size={20} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 34 }} />
         <GoalBar label={d.pay.goal} value={formatHours(target)} h={target / Math.max(minutes, 1)} tone={c.accent} />
       </View>
-      <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
+      <Text variant="label" tone="secondary" style={[st.center, { marginTop: space.md }]}>
         {t(d.pay.goalNote, { d: days })}
       </Text>
     </Animated.View>
@@ -573,9 +511,9 @@ function GoalBar({
   const st = useMemo(() => sheet(c), [c]);
   return (
     <View style={st.goalCol}>
-      <Text variant="button" color={tone}>{value}</Text>
+      <Text variant="title" color={tone}>{value}</Text>
       <View style={st.goalTrack}>
-        <View style={[st.goalFill, { height: Math.max(8, 56 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
+        <View style={[st.goalFill, { height: Math.max(10, 88 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
       </View>
       <Text variant="label" tone="tertiary">{label}</Text>
     </View>
@@ -727,24 +665,21 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   center: { textAlign: 'center' },
-  sub: { marginTop: space.md },
-  heal: { alignItems: 'center', marginTop: space.lg },
-  goal: { alignSelf: 'stretch', alignItems: 'center', marginTop: space.lg },
-  goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg },
-  goalCol: { alignItems: 'center', gap: 6, width: 96 },
-  goalTrack: { height: 56, justifyContent: 'flex-end', alignSelf: 'stretch' },
-  goalFill: { borderRadius: 6, borderTopWidth: 3 },
-  // Hauteur RESERVEE : le decor arrive apres la transition, et sans
-  // reserve tout ce qui suit sauterait a son arrivee.
-  orbit: { alignSelf: 'stretch', justifyContent: 'center', minHeight: 236 },
-  orbitMid: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
+  sub: { marginTop: space.sm },
+  /*
+    Le chiffre au centre de la page, dans une carte : c'est lui qui a
+    remplace Corti et ses quatre tuiles de verre. Il prenait la moitie de
+    l'ecran pour dire « on est content » — le chiffre dit ou l'on va.
+  */
+  goal: {
+    alignSelf: 'stretch', alignItems: 'center', marginTop: space.xl,
+    paddingVertical: space.lg, paddingHorizontal: space.lg, borderRadius: 22, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
   },
-  healSlot: {
-    height: 84, justifyContent: 'center', marginTop: space.sm,
-    paddingHorizontal: space.lg,
-  },
+  goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xl },
+  goalCol: { alignItems: 'center', gap: 8, width: 104 },
+  goalTrack: { height: 88, justifyContent: 'flex-end', alignSelf: 'stretch' },
+  goalFill: { borderRadius: 8, borderTopWidth: 3 },
   trial: {
     /*
       Hauteur FIXE.
@@ -771,16 +706,13 @@ const sheet = (c: Palette) => StyleSheet.create({
   bulletOn: { borderColor: withAlpha(c.accent, 0.65), backgroundColor: withAlpha(c.accent, 0.12) },
   wire: { flex: 1, width: 1.5, backgroundColor: withAlpha(c.accent, 0.28) },
   stepText: { flex: 1, paddingBottom: space.md, gap: 1 },
-  grid: {
-    flexDirection: 'row', flexWrap: 'wrap', marginTop: space.xl, gap: space.sm,
+  list: { marginTop: space.lg, gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 4 },
+  rowIcon: {
+    width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.accent, 0.12),
   },
-  cell: {
-    width: '48%', flexDirection: 'row', gap: space.sm,
-    paddingVertical: space.md, paddingHorizontal: space.md, borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
-    backgroundColor: withAlpha(c.mist, 0.05),
-  },
-  cellText: { flex: 1, lineHeight: 15 },
+  rowText: { flex: 1, lineHeight: 16 },
   plans: { marginTop: space.lg, gap: space.sm },
   plan: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,

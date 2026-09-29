@@ -1,40 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withTiming,
+  Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated';
+import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
-import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { ACTIVITIES, activityCount } from '../calculations';
 
 type P = { onNext: () => void };
 
-const A = Animated.createAnimatedComponent(BlurView);
-
-const SHARPEN = 450;   // le temps que la ligne se fasse nette
-const HOLD = 1300;     // le temps qu'on la lise — pas plus
-const SOFTEN = 300;    // le temps qu'elle se redissolve
-
-const LANGS = ['spanish', 'japanese', 'italian', 'chinese'] as const;
+/** Points par seconde : le rythme d'un generique, lisible sans s'arreter. */
+const SPEED = 30;
+/** La hauteur de la fenetre ou ca defile. */
+const STAGE = 300;
+/** Le bouton attend qu'on ait vu quelques lignes passer. */
+const READ_MS = 2500;
 
 /**
- * Ce que l'annee ecoulee aurait pu contenir.
+ * Ce que l'annee ecoulee aurait pu contenir — en defilement continu.
  *
- * Le chiffre brut — « 1 095 heures » — ne veut rien dire : personne ne sait
- * a quoi ressemblent mille heures. Converti en choses qu'on se represente,
- * il redevient une perte qu'on sent.
+ * Le chiffre brut, « 1 095 heures », ne veut rien dire. Converti en choses
+ * qu'on se represente, il redevient une perte qu'on sent. Et ce sont des
+ * choses qui font AVANCER : lire, monter sa boite, courir, apprendre a
+ * coder, se transformer. Pas des loisirs.
  *
- * Les trois equivalences arrivent UNE PAR UNE, floues, et se font nettes.
- * Empilees en liste, l'oeil les comparait au lieu de les recevoir : trois
- * lignes cote a cote font un tableau de conversion. Une seule a l'ecran, qui
- * se precise puis se dissout, force a la regarder — et le rythme change,
- * dans un parcours ou tout le reste s'affiche d'un coup.
+ * Les lignes montent sans fin, comme un generique : on ne lit pas une liste,
+ * on regarde passer tout ce qu'on n'a pas fait. La liste est doublee et
+ * recommence sans couture quand la premiere copie est sortie du cadre.
  */
 export function Activities({ onNext }: P) {
   const c = useColors();
@@ -43,95 +41,52 @@ export function Activities({ onNext }: P) {
   const minutes = useOnboardingStore(effectiveMinutes);
   const hours = (minutes * 365) / 60;
 
-  /*
-    Trois lignes : une langue au milieu, deux autres choses autour.
-    La langue est tiree selon le chiffre — pas toujours le chinois — et les
-    deux autres aussi, parmi celles qu'on aurait pu faire au moins une fois.
-    Le tirage est deterministe : la meme personne revoit les memes lignes.
-  */
-  const rows = useMemo(() => {
-    const all = ACTIVITIES.map((a) => ({ id: a.id, kind: a.kind, n: activityCount(hours, a.costHours) }));
-    const seed = Math.floor(hours);
-    const lang = all.find((a) => a.id === LANGS[seed % LANGS.length])!;
-    const others = all.filter((a) => a.kind !== 'language');
-    const pool = others.filter((a) => a.n >= 1);
-    const src = pool.length >= 2 ? pool : [...others].sort((x, y) => y.n - x.n);
-    const i1 = seed % src.length;
-    let i2 = (seed * 7 + 3) % src.length;
-    if (i2 === i1) i2 = (i2 + 1) % src.length;
-    return [src[i1], lang, src[i2]];
-  }, [hours]);
+  const rows = useMemo(() => ACTIVITIES.map((a) => {
+    const n = activityCount(hours, a.costHours);
+    const whole = Math.floor(n);
+    const w = d.s6.activities[a.id];
+    const text = whole >= 2 ? w.other.replace('{n}', String(whole))
+      : whole === 1 ? w.one
+      : t(d.s6.progress, { p: String(Math.round(n * 100)), what: w.one });
+    return { id: a.id, text, detail: w.detail };
+  }), [hours, d, t]);
 
-  const [i, setI] = useState(0);
-  const sharp = useSharedValue(0);
-  const last = i >= rows.length - 1;
+  const [h, setH] = useState(0);
+  const [read, setRead] = useState(false);
+  const y = useSharedValue(0);
 
   useEffect(() => {
-    sharp.value = 0;
-    sharp.value = withTiming(1, { duration: SHARPEN, easing: Easing.out(Easing.cubic) });
-    haptics.tick();
-    if (i >= rows.length - 1) return;
-    // Les deux minuteries font avancer, jamais le corps de l'effet : un etat
-    // ecrit la ferait rendre deux fois a chaque ligne.
-    const soften = setTimeout(() => {
-      sharp.value = withTiming(0, { duration: SOFTEN, easing: Easing.in(Easing.cubic) });
-    }, HOLD);
-    const next = setTimeout(() => setI((n) => n + 1), HOLD + SOFTEN);
-    return () => { clearTimeout(soften); clearTimeout(next); };
-  }, [i, rows.length, sharp]);
+    const id = setTimeout(() => setRead(true), READ_MS);
+    return () => clearTimeout(id);
+  }, []);
 
-  // Le texte se pose en meme temps qu'il se fait net : l'echelle seule
-  // suffirait a donner la mise au point, le flou la rend litterale.
-  const line = useAnimatedStyle(() => ({
-    opacity: 0.25 + sharp.value * 0.75,
-    transform: [{ scale: 0.97 + sharp.value * 0.03 }],
-  }));
-  const veil = useAnimatedStyle(() => ({ opacity: 1 - sharp.value }));
+  // Une copie de la liste sort du cadre, et on repart de zero : la seconde
+  // copie est exactement la ou la premiere etait.
+  useEffect(() => {
+    if (!h) return;
+    y.value = 0;
+    y.value = withRepeat(withTiming(-h, { duration: (h / SPEED) * 1000, easing: Easing.linear }), -1, false);
+    return () => cancelAnimation(y);
+  }, [h, y]);
 
-  const row = rows[i];
-  const a = d.s6.activities[row.id];
-  const whole = Math.floor(row.n);
-  const text = whole >= 2 ? a.other.replace('{n}', String(whole))
-    : whole === 1 ? a.one
-    // t() prend le TEXTE, pas la cle : ecrite entre guillemets, la cle
-    // ressortait telle quelle a l'ecran — « s6.progress » en toutes lettres.
-    : t(d.s6.progress, { p: String(Math.round(row.n * 100)), what: a.one });
+  const roll = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
 
   return (
-    <Screen
-      cta={d.s6.cta2}
-      onPress={onNext}
-      // On laisse les trois passer : partir avant, c'est n'en avoir lu qu'une.
-      disabled={!last}
-      center
-      hue="ember"
-      hueLevel={0.5}
-    >
+    <Screen cta={d.s6.cta2} onPress={onNext} disabled={!read} center hue="ember" hueLevel={0.5}>
       <Text variant="displayM" style={st.title}>{d.s6.afterTitle}</Text>
 
-      {/* Hauteur FIXE : une equivalence de deux lignes recentrerait tout le
-          bloc, et le texte sauterait a chaque passage. */}
       <View style={st.stage}>
-        <Animated.View style={line}>
-          <Text variant="hero" style={st.big} numberOfLines={3} adjustsFontSizeToFit>
-            {text}
-          </Text>
+        <Animated.View style={roll}>
+          <View onLayout={(e) => setH(e.nativeEvent.layout.height)}>
+            {rows.map((r) => <Row key={r.id} text={r.text} detail={r.detail} />)}
+          </View>
+          {rows.map((r) => <Row key={`${r.id}2`} text={r.text} detail={r.detail} />)}
         </Animated.View>
 
-        {/* Le voile flou par-dessus, qui se retire : c'est un vrai flou qui
-            se resout, pas une opacite qui imite la mise au point. */}
-        <A
-          intensity={22}
-          tint="dark"
-          style={[StyleSheet.absoluteFill, veil]}
-          pointerEvents="none"
-        />
-      </View>
-
-      <View style={st.dots}>
-        {rows.map((r, k) => (
-          <View key={r.id} style={[st.dot, k <= i && { backgroundColor: c.ember }]} />
-        ))}
+        {/* Les bords se fondent dans le fond : les lignes naissent en bas et
+            s'effacent en haut, au lieu d'etre coupees net. */}
+        <LinearGradient colors={[c.night, withAlpha(c.night, 0)]} style={[st.fade, { top: 0 }]} pointerEvents="none" />
+        <LinearGradient colors={[withAlpha(c.night, 0), c.night]} style={[st.fade, { bottom: 0 }]} pointerEvents="none" />
       </View>
 
       <Text variant="label" tone="tertiary" style={st.note}>{d.s6.estimates}</Text>
@@ -139,14 +94,22 @@ export function Activities({ onNext }: P) {
   );
 }
 
+function Row({ text, detail }: { text: string; detail: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  return (
+    <View style={st.row}>
+      <Text variant="title" style={st.center}>{text}</Text>
+      <Text variant="label" tone="tertiary" style={st.center}>{detail}</Text>
+    </View>
+  );
+}
+
 const sheet = (c: Palette) => StyleSheet.create({
   title: { textAlign: 'center' },
-  stage: {
-    height: 200, marginTop: space.xl,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-  },
-  big: { textAlign: 'center' },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.xl },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: c.line },
-  note: { marginTop: space.xl, textAlign: 'center' },
+  stage: { height: STAGE, marginTop: space.lg, alignSelf: 'stretch', overflow: 'hidden' },
+  fade: { position: 'absolute', left: 0, right: 0, height: 70 },
+  row: { paddingVertical: space.md, gap: 3, alignItems: 'center' },
+  center: { textAlign: 'center' },
+  note: { marginTop: space.lg, textAlign: 'center' },
 });

@@ -17,8 +17,8 @@ import { Activities } from './screens/Activities';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
-import { AgeAsk, Compare, Guess } from './screens/time';
-import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './screens/science';
+import { AgeAsk, Guess } from './screens/time';
+import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './screens/science';
 import { Ready } from './screens/ready';
 import { DmReel, NotBlocker } from './screens/story';
 
@@ -127,11 +127,10 @@ export function OnboardingFlow() {
     L'ordre raconte quelque chose, et il a change.
 
     On demandait le temps d'ecran, puis on enchainait sur ce qu'il coute.
-    Sauf que le chiffre etait une estimation, et tout le monde sous-estime :
-    la suite reposait sur un nombre trop petit. Le vrai chiffre est demande
-    juste apres l'estimation — Temps d'ecran connecte, puis recopie depuis
-    Reglages — et les deux sont mis cote a cote avant qu'on aille plus loin.
-    Tout ce qui suit raisonne sur le vrai.
+    Le vrai chiffre, Apple ne le donne a aucune app : l'extension qui sait le
+    dessiner ne se lance meme pas sur tous les telephones, et l'ecran qui
+    demandait de le recopier depuis Reglages passait pour une panne. Il est
+    parti. Tout ce qui suit raisonne sur l'estimation, sans le dire deux fois.
 
     Le milieu est devenu une page par idee : la dose, les recepteurs, le
     plaisir qui s'eteint, l'amour. Elles vivaient sur un ecran qu'on tapait
@@ -147,12 +146,12 @@ export function OnboardingFlow() {
     <Constat key="con" onNext={next} />,
     <Guess key="guess" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
-    <Compare key="cmp" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
     <LifeYears key="life" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
     <Exploited key="hook" onNext={next} />,
+    <ScienceIntro key="sci" onNext={next} />,
     <Dopamine key="dopa" onNext={next} />,
     <ReceptorsPage key="rec" onNext={next} />,
     <NothingLands key="flat" onNext={next} />,
@@ -250,7 +249,7 @@ export function OnboardingFlow() {
  * resultat qu'on decouvre plutot qu'une page qu'on tourne. Le contraste avec
  * les autres est ce qui fait sentir que quelque chose vient d'etre dit.
  */
-const REVEAL = new Set(['cmp', 'life', 'proof', 'dm']);
+const REVEAL = new Set(['life', 'proof', 'dm']);
 
 function reveal() {
   'worklet';
@@ -271,10 +270,10 @@ function reveal() {
 function unveil() {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ scale: 0.9 }] },
+    initialValues: { opacity: 0, transform: [{ scale: 0.95 }] },
     animations: {
-      opacity: withTiming(1, { duration: 520, easing: easings.out }),
-      transform: [{ scale: withTiming(1, { duration: 820, easing: easings.out }) }],
+      opacity: withTiming(1, { duration: 640, easing: easings.out }),
+      transform: [{ scale: withTiming(1, { duration: 900, easing: easings.out }) }],
     },
   };
 }

@@ -53,29 +53,24 @@ export function lifeStats(minutesPerDay: number, age: number): LifeStats {
 /*
  * Ce qu'une annee de telephone aurait pu contenir.
  *
- * Des choses qu'on se represente, pas des heures : une langue (avec son
- * drapeau), un instrument, un sommet, un brevet de pilote. Le cout est un
- * ordre de grandeur, et il est ecrit sur l'ecran pour qu'on puisse refaire le
- * calcul. Les langues sont a part : on en montre UNE, tiree selon le chiffre,
- * pour ne pas toujours parler chinois.
+ * Des choses qui font AVANCER, pas des loisirs : lire, monter sa boite,
+ * courir, apprendre a coder, se transformer a la salle. Le cout est un ordre
+ * de grandeur, ecrit sur l'ecran pour qu'on puisse refaire le calcul. La
+ * liste defile en boucle ; l'ordre est celui de la liste.
  */
 export const ACTIVITIES = [
-  { id: 'spanish', kind: 'language', costHours: 600 },
-  { id: 'japanese', kind: 'language', costHours: 1000 },
-  { id: 'italian', kind: 'language', costHours: 500 },
-  { id: 'chinese', kind: 'language', costHours: 1000 },
-  { id: 'guitar', kind: 'other', costHours: 200 },
-  { id: 'piano', kind: 'other', costHours: 300 },
-  { id: 'marathon', kind: 'other', costHours: 100 },
-  { id: 'surf', kind: 'other', costHours: 60 },
-  { id: 'summit', kind: 'other', costHours: 150 },
-  { id: 'cook', kind: 'other', costHours: 200 },
-  { id: 'code', kind: 'other', costHours: 450 },
-  { id: 'books', kind: 'other', costHours: 6 },
-  { id: 'draw', kind: 'other', costHours: 300 },
-  { id: 'pilot', kind: 'other', costHours: 45 },
-  { id: 'blackbelt', kind: 'other', costHours: 1500 },
-  { id: 'bike', kind: 'other', costHours: 120 },
+  { id: 'books', costHours: 6 },
+  { id: 'business', costHours: 500 },
+  { id: 'marathon', costHours: 100 },
+  { id: 'gym', costHours: 150 },
+  { id: 'code', costHours: 450 },
+  { id: 'language', costHours: 600 },
+  { id: 'writing', costHours: 400 },
+  { id: 'meditation', costHours: 122 },
+  { id: 'investing', costHours: 100 },
+  { id: 'piano', costHours: 300 },
+  { id: 'speaking', costHours: 80 },
+  { id: 'degree', costHours: 1500 },
 ] as const;
 
 export type ActivityId = (typeof ACTIVITIES)[number]['id'];

@@ -1,7 +1,7 @@
 import { useMemo, type ComponentType, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { BellRing, CloudOff, HeartCrack, TrendingDown, Zap } from 'lucide-react-native';
+import { BellRing, CloudOff, FlaskConical, HeartCrack, TrendingDown, Zap } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { radii, space } from '@/theme/spacing';
 import { useColors } from '@/theme/useColors';
@@ -36,12 +36,14 @@ type IconProps = { size?: number; color?: string; strokeWidth?: number };
  * poser.
  */
 function SciencePage({
-  level, expression, icon, tone, title, body, cite, harm, children, onNext, big = true,
+  level, expression, icon, tone, kicker, title, body, cite, harm, children, onNext, big = true,
 }: P & {
   level: CortiLevel;
   expression?: CortiExpression;
   icon: ComponentType<IconProps>;
   tone?: string;
+  /** « Effet 2 sur 4 » : le fil qui relie les quatre pages a l'annonce. */
+  kicker?: string;
   title: string;
   body?: string;
   cite?: string;
@@ -61,6 +63,12 @@ function SciencePage({
             second sujet a regarder. */}
         <Emblem icon={icon} tone={tone ?? c.ember} size={46} style={st.badge} />
       </Animated.View>
+
+      {kicker ? (
+        <Animated.View entering={FadeIn.duration(400)}>
+          <Text variant="label" color={c.ember} style={[st.center, { marginBottom: space.sm }]}>{kicker}</Text>
+        </Animated.View>
+      ) : null}
 
       <Typewriter text={title} variant={big ? 'displayL' : 'displayM'} speed={42} style={st.center} />
 
@@ -114,35 +122,61 @@ export function Exploited({ onNext }: P) {
   );
 }
 
-export function Dopamine({ onNext }: P) {
+/**
+ * L'annonce, avant les quatre effets.
+ *
+ * « Selon les scientifiques » pose l'autorite une fois, et les quatre pages
+ * qui suivent n'ont plus a la reclamer chacune : elles se numerotent, et le
+ * halo monte d'une page a l'autre. Sans cette annonce, la dose de dopamine
+ * arrivait de nulle part, juste apres « tu n'es pas accro ».
+ */
+export function ScienceIntro({ onNext }: P) {
   const { d } = useT();
+  const c = useColors();
   return (
-    <SciencePage level={2} expression="surpris" icon={Zap} harm={0.25} title={d.brain.step1} body={d.brain.step1b} onNext={onNext}>
+    <SciencePage
+      level={3}
+      expression="auto"
+      icon={FlaskConical}
+      tone={c.accent}
+      harm={0.05}
+      big={false}
+      title={d.brain.sciTitle}
+      body={d.brain.sciBody}
+      onNext={onNext}
+    />
+  );
+}
+
+export function Dopamine({ onNext }: P) {
+  const { d, t } = useT();
+  return (
+    <SciencePage level={2} expression="surpris" icon={Zap} harm={0.25} kicker={t(d.brain.effect, { n: 1 })} title={d.brain.step1} body={d.brain.step1b} onNext={onNext}>
       <Spikes />
     </SciencePage>
   );
 }
 
 export function ReceptorsPage({ onNext }: P) {
-  const { d } = useT();
+  const { d, t } = useT();
   return (
-    <SciencePage level={1} expression="somnolent" icon={TrendingDown} harm={0.5} title={d.brain.step2} body={d.brain.step2b} onNext={onNext}>
+    <SciencePage level={1} expression="somnolent" icon={TrendingDown} harm={0.5} kicker={t(d.brain.effect, { n: 2 })} title={d.brain.step2} body={d.brain.step2b} onNext={onNext}>
       <Receptors />
     </SciencePage>
   );
 }
 
 export function NothingLands({ onNext }: P) {
-  const { d } = useT();
+  const { d, t } = useT();
   return (
-    <SciencePage level={0} icon={CloudOff} harm={0.75} title={d.brain.step3} body={d.brain.step3b} onNext={onNext}>
+    <SciencePage level={0} icon={CloudOff} harm={0.75} kicker={t(d.brain.effect, { n: 3 })} title={d.brain.step3} body={d.brain.step3b} onNext={onNext}>
       <Dulled />
     </SciencePage>
   );
 }
 
 export function LovePage({ onNext }: P) {
-  const { d } = useT();
+  const { d, t } = useT();
   const c = useColors();
   return (
     <SciencePage
@@ -151,6 +185,7 @@ export function LovePage({ onNext }: P) {
       tone={c.danger}
       harm={1}
       big={false}
+      kicker={t(d.brain.effect, { n: 4 })}
       title={d.brain.love}
       body={d.brain.loveSub}
       cite={d.brain.loveCite}
