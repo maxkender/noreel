@@ -31,7 +31,7 @@ export function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
     // JavaScript, pour que les deux chemins racontent la meme chose.
     gone: d.s6.gone, overflow: d.misc.overflow,
     screenKey: d.misc.screenKey, workKey: d.misc.workKey, freeKey: d.misc.freeKey,
-    years: d.s6.years, lifeOf: d.s6.lifeOf, bodyShort: d.s6.bodyShort,
+    years: d.s6.years, lifeOf: d.s6.lifeOf, bodyShort: d.s6.bodyShort, basis: d.s6.basis,
   };
 }
 

@@ -18,8 +18,8 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
-import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
-import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './science';
+import { AgeAsk, Analysis, Compare, Guess, RealTime, Scan } from './time';
+import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
 import { PromiseScreen } from './setup';
 import { Ready } from './ready';
 import { DmReel, NotBlocker } from './story';
@@ -47,6 +47,19 @@ const noop = () => {};
 describe('les ecrans du parcours se montent', () => {
   it('la rencontre avec Corti', () => {
     render(<Meet onNext={noop} />);
+  });
+
+  it('l’analyse qui se prepare passe son tour sans extension', async () => {
+    const onNext = jest.fn();
+    render(<Scan onNext={onNext} />);
+    // Sans rapport a preparer, l'ecran ne fait pas semblant : il enchaine.
+    await new Promise((r) => setTimeout(r, 20));
+    expect(onNext).toHaveBeenCalled();
+  });
+
+  it('« tu n’es pas accro »', () => {
+    const r = render(<Exploited onNext={noop} />);
+    expect(r.toJSON()).toBeTruthy();
   });
 
   it('le curseur de sante', () => {

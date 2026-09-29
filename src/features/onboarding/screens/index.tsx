@@ -263,7 +263,7 @@ export function S6Years({ onNext }: P) {
   if (native === 'yes' && ScreenTimeReportView) {
     return (
       <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
-        <ScreenTimeReportView context="years" days={7} style={{ height: 180 }} />
+        <ScreenTimeReportView context="years" days={7} style={{ height: 210 }} />
       </Screen>
     );
   }
@@ -283,6 +283,11 @@ export function S6Years({ onNext }: P) {
         </Text>
         <Text variant="lead" tone="secondary" style={s.center}>
           {d.s6.bodyShort}
+        </Text>
+        {/* La base du calcul, dite : un chiffre qui fait mal doit pouvoir
+            etre verifie, sinon on le rejette avec la douleur. */}
+        <Text variant="label" tone="tertiary" style={[s.center, { marginTop: space.md }]}>
+          {d.s6.basis}
         </Text>
       </Animated.View>
     </Screen>

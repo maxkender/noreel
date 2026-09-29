@@ -1,8 +1,9 @@
 import { useMemo, type ComponentType, type ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { CloudOff, HeartCrack, TrendingDown, Zap } from 'lucide-react-native';
-import { space } from '@/theme/spacing';
+import { BellRing, CloudOff, HeartCrack, TrendingDown, Zap } from 'lucide-react-native';
+import { withAlpha } from '@/theme/colors';
+import { radii, space } from '@/theme/spacing';
 import { useColors } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
@@ -82,6 +83,37 @@ function SciencePage({
   );
 }
 
+/**
+ * « Tu n'es pas accro. » — la page qui enleve la faute avant d'expliquer.
+ *
+ * Tout ce qui suit dit ce que le scroll fait au cerveau, et sans ce
+ * preambule ca se lit comme un reproche. Ce n'est pas une faiblesse, c'est
+ * une industrie : les trois bulles sont ses outils, et on les reconnait
+ * toutes.
+ */
+export function Exploited({ onNext }: P) {
+  const st = useMemo(() => sheet(), []);
+  const c = useColors();
+  const { d } = useT();
+  const chips = [d.brain.hookChip1, d.brain.hookChip2, d.brain.hookChip3];
+  return (
+    <SciencePage level={2} expression="surpris" icon={BellRing} harm={0.15} title={d.brain.hookTitle} body={d.brain.hookBody} onNext={onNext} big={false}>
+      <View style={st.chips}>
+        {chips.map((label, i) => (
+          <Animated.View
+            key={label}
+            entering={FadeInDown.delay(1200 + i * 350).duration(420)}
+            style={[st.chip, { backgroundColor: withAlpha(c.mist, 0.08), borderColor: withAlpha(c.mist, 0.14) }]}
+          >
+            <View style={[st.chipDot, { backgroundColor: c.danger }]} />
+            <Text variant="label">{label}</Text>
+          </Animated.View>
+        ))}
+      </View>
+    </SciencePage>
+  );
+}
+
 export function Dopamine({ onNext }: P) {
   const { d } = useT();
   return (
@@ -128,6 +160,12 @@ export function LovePage({ onNext }: P) {
 }
 
 const sheet = () => StyleSheet.create({
+  chips: { alignSelf: 'stretch', alignItems: 'center', gap: space.sm, marginTop: space.xl },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: radii.pill, borderWidth: 1,
+  },
+  chipDot: { width: 7, height: 7, borderRadius: 4 },
   center: { textAlign: 'center' },
   face: { alignSelf: 'center', marginBottom: space.lg },
   badge: { position: 'absolute', right: -14, bottom: -4 },

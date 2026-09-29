@@ -121,6 +121,11 @@ export function Ninety({ onNext }: P) {
       hue="accent"
       hueLevel={i / (ARC.length - 1)}
     >
+      {/* Apres les annees perdues, l'ecran qui suit doit s'annoncer comme
+          ce qu'il est : la bonne nouvelle. */}
+      <Text variant="label" color={c.accent} style={[st.mid, { marginBottom: space.md }]}>
+        {d.corti.goodNews}
+      </Text>
       <View style={st.mid}>
         <CortiRig level={at.level} size={190} />
       </View>

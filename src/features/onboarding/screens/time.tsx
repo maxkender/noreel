@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
@@ -21,7 +21,8 @@ import { compareGuess } from '../calculations';
 import { VerticalGauge } from '../scenes/VerticalGauge';
 import { AgeInput } from '../scenes/AgeInput';
 import { PICKABLE } from './setup';
-import { ScreenTimeReportView } from '@/native/screenTimeReport';
+import { ScreenTimeReportView, reportAvailable } from '@/native/screenTimeReport';
+import { authorizationStatus } from '@/services/shield.real';
 import { useNativeReport, useReportHeight } from '../report';
 
 type P = { onNext: () => void };
@@ -45,6 +46,14 @@ export function Guess({ onNext }: P) {
   const stored = useOnboardingStore((x) => x.minutesPerDay);
   const setMinutes = useOnboardingStore((x) => x.setMinutesPerDay);
   const [minutes, setDraft] = useState(stored);
+  /*
+    La ligne sous la jauge REPOND, sans juger : en bas, elle rappelle que
+    presque tout le monde sous-estime ; en haut, elle dit que c'est beaucoup
+    et qu'on va s'en occuper. Elle change de phrase, jamais de place — une
+    hauteur fixe, sinon la jauge bougerait sous le doigt.
+  */
+  const tier = minutes >= 240 ? 'high' : minutes < 90 ? 'low' : 'mid';
+  const line = tier === 'high' ? d.s5.high : tier === 'low' ? d.s5.low : d.s5.noJudge;
 
   return (
     <Screen emblem={<Image source={THINKING} style={{ width: 132, height: 132 }} contentFit="contain" />}
@@ -65,8 +74,78 @@ export function Guess({ onNext }: P) {
       <View style={st.gauge}>
         <VerticalGauge minutes={minutes} onChange={setDraft} onCommit={setMinutes} />
       </View>
-      <Text variant="body" tone="tertiary" style={st.center}>{d.s5.noJudge}</Text>
+      <View style={st.reassure}>
+        <Animated.View key={tier} entering={FadeIn.duration(320)}>
+          <Text variant="body" tone="tertiary" style={st.center}>{line}</Text>
+        </Animated.View>
+      </View>
     </Screen>
+  );
+}
+
+/* ---------- L'analyse qui se prepare ---------- */
+
+const SCAN_STEP = 800;
+
+/**
+ * Trois lignes qui se remplissent l'une apres l'autre, avant le bilan.
+ *
+ * Rien ne se calcule ici : le rapport d'Apple se dessine tout seul. Mais un
+ * resultat qui tombe sans qu'on l'ait vu se preparer ne pese rien ; deux
+ * secondes de « ca travaille » lui donnent son poids. On ne le joue que
+ * quand il y a un bilan a preparer — sans extension ni autorisation, c'est
+ * la saisie qui suit, et on ne fait pas semblant d'analyser ce qu'on va
+ * demander.
+ */
+export function Scan({ onNext }: P) {
+  const c = useColors();
+  const { d } = useT();
+  const [show, setShow] = useState(false);
+  const lines = [d.time.scan1, d.time.scan2, d.time.scan3];
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const ok = reportAvailable() && (await authorizationStatus()) === 'approved';
+      if (!alive) return;
+      if (ok) setShow(true); else onNext();
+    })();
+    return () => { alive = false; };
+  }, [onNext]);
+
+  useEffect(() => {
+    if (!show) return;
+    const ticks = [0, 1, 2].map((i) => setTimeout(() => haptics.tick(), SCAN_STEP * i + 200));
+    const end = setTimeout(onNext, SCAN_STEP * 3 + 500);
+    return () => { ticks.forEach(clearTimeout); clearTimeout(end); };
+  }, [show, onNext]);
+
+  return (
+    <Screen center still hue="accent">
+      {show && lines.map((l, i) => <ScanLine key={l} label={l} delay={SCAN_STEP * i} accent={c.accent} />)}
+    </Screen>
+  );
+}
+
+function ScanLine({ label, delay, accent }: { label: string; delay: number; accent: string }) {
+  const st = useMemo(() => sheet(), []);
+  const c = useColors();
+  // L'API Animated de React Native, sur le fil natif : une echelle, pas une
+  // largeur, pour que la barre avance sans repasser par la mise en page.
+  const [fill] = useState(() => new RNAnimated.Value(0));
+  useEffect(() => {
+    RNAnimated.timing(fill, {
+      toValue: 1, duration: SCAN_STEP - 120, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+    }).start();
+  }, [delay, fill]);
+
+  return (
+    <Animated.View entering={FadeIn.delay(delay).duration(300)} style={st.scanRow}>
+      <Text variant="body" tone="secondary">{label}</Text>
+      <View style={[st.scanTrack, { backgroundColor: withAlpha(c.mist, 0.12) }]}>
+        <RNAnimated.View style={[st.scanFill, { backgroundColor: accent, transform: [{ scaleX: fill }] }]} />
+      </View>
+    </Animated.View>
   );
 }
 
@@ -352,6 +431,10 @@ export function AgeAsk({ onNext }: P) {
 const sheet = () => StyleSheet.create({
   center: { textAlign: 'center' },
   gauge: { alignItems: 'center', marginVertical: space.xl },
+  reassure: { height: 48, justifyContent: 'center' },
+  scanRow: { alignSelf: 'stretch', gap: space.sm, marginBottom: space.lg },
+  scanTrack: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  scanFill: { height: 6, borderRadius: 3, transformOrigin: 'left' },
   path: { marginTop: space.lg, gap: space.sm },
   pathRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

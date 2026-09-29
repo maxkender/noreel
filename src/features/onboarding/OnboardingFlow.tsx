@@ -17,8 +17,8 @@ import { Activities } from './screens/Activities';
 import { Attribution, Health, Meet, Ninety, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
-import { AgeAsk, Analysis, Compare, Guess } from './screens/time';
-import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './screens/science';
+import { AgeAsk, Analysis, Compare, Guess, Scan } from './screens/time';
+import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './screens/science';
 import { Ready } from './screens/ready';
 import { DmReel, NotBlocker } from './screens/story';
 
@@ -147,11 +147,13 @@ export function OnboardingFlow() {
     <Constat key="con" onNext={next} />,
     <Guess key="guess" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
+    <Scan key="scan" onNext={next} />,
     <Compare key="cmp" onNext={next} />,
     <Analysis key="ana" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
     <S6 key="s6" onNext={next} />,
     <Activities key="act" onNext={next} />,
+    <Exploited key="hook" onNext={next} />,
     <Dopamine key="dopa" onNext={next} />,
     <ReceptorsPage key="rec" onNext={next} />,
     <NothingLands key="flat" onNext={next} />,

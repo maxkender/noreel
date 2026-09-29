@@ -462,6 +462,11 @@ struct YearsView: View {
         .font(.system(size: 17))
         .foregroundColor(th.inkSoft)
         .multilineTextAlignment(.center)
+      Text(th.t("basis"))
+        .font(.system(size: 12))
+        .foregroundColor(th.inkSoft.opacity(0.8))
+        .multilineTextAlignment(.center)
+        .padding(.top, 10)
     }
     .padding(.horizontal, 8)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
