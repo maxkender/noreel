@@ -58,15 +58,6 @@ it('change le prix sous le bouton quand on change de forfait', () => {
   expect(screen.getAllByText(/par semaine|per week|\/ ?week/i).length).toBeGreaterThanOrEqual(1);
 });
 
-it('dit ce que chaque colonne contient', () => {
-  // Instagram est gratuit, le reste est Pro : le tableau le dit ligne par ligne.
-  render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getByText(dict.pay.tableTitle)).toBeTruthy();
-  expect(screen.getByText(dict.pay.f1)).toBeTruthy();
-  expect(screen.getByText(dict.pay.f4)).toBeTruthy();
-  expect(screen.getByText(dict.pay.freeCap)).toBeTruthy();
-});
-
 it('montre la destination, pas le point de depart', () => {
   /*
     Corti arrivait grille et se reparait sous les yeux : sur la page ou l'on

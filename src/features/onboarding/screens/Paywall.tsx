@@ -3,7 +3,7 @@ import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowRight, Check, Minus, X } from 'lucide-react-native';
+import { ArrowRight, Check, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -361,8 +361,6 @@ export function Paywall(
         />
       </View>
 
-      <Table />
-
       <Text variant="label" tone="tertiary" style={st.terms}>{d.pay.renew}</Text>
 
       <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
@@ -437,48 +435,6 @@ function GoalBar({
       </View>
       <Text variant="label" tone="tertiary" style={st.center}>{label}</Text>
     </View>
-  );
-}
-
-/*
- * Ce que chaque colonne contient, tel que l'app le fait vraiment.
- *
- * Instagram est gratuit, quinze minutes par jour ; le reste est Pro. Les
- * lignes que les deux ont — Corti, la publication — sont la aussi : un
- * tableau qui ne montre que des manques se lit comme un reproche.
- */
-const FEATURES: ['f1' | 'f2' | 'f3' | 'f4' | 'f5' | 'f6' | 'f7' | 'f8', 'yes' | 'no' | 'cap'][] = [
-  ['f1', 'yes'], ['f2', 'no'], ['f3', 'cap'], ['f4', 'no'], ['f5', 'no'], ['f6', 'no'], ['f7', 'yes'], ['f8', 'yes'],
-];
-
-/** Le tableau : ce qu'on obtient, gratuit contre Pro, ligne par ligne. */
-function Table() {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  return (
-    <Animated.View entering={FadeIn.delay(160).duration(480)} style={st.table}>
-      <View style={st.tableHead}>
-        <Text variant="button" style={{ flex: 1 }}>{d.pay.tableTitle}</Text>
-        <Text variant="label" tone="tertiary" style={st.colFree}>{d.pay.colFree}</Text>
-        <View style={st.colPro}>
-          <Text variant="label" color={c.night}>{d.pay.colPro}</Text>
-        </View>
-      </View>
-      {FEATURES.map(([key, free], i) => (
-        <View key={key} style={[st.tableRow, i === FEATURES.length - 1 && { borderBottomWidth: 0 }]}>
-          <Text variant="label" tone="secondary" style={{ flex: 1, lineHeight: 16 }}>{d.pay[key]}</Text>
-          <View style={st.colFree}>
-            {free === 'yes' && <Check size={15} strokeWidth={2.6} color={withAlpha(c.mist, 0.55)} />}
-            {free === 'no' && <Minus size={15} strokeWidth={2.4} color={withAlpha(c.mist, 0.28)} />}
-            {free === 'cap' && <Text variant="label" tone="tertiary">{d.pay.freeCap}</Text>}
-          </View>
-          <View style={[st.colPro, st.colProCell]}>
-            <Check size={16} strokeWidth={3} color={c.accent} />
-          </View>
-        </View>
-      ))}
-    </Animated.View>
   );
 }
 
@@ -570,27 +526,6 @@ const sheet = (c: Palette) => StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7,
     backgroundColor: c.accent,
   },
-  table: {
-    marginTop: space.lg, borderRadius: 20, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
-    backgroundColor: withAlpha(c.mist, 0.04),
-  },
-  tableHead: {
-    flexDirection: 'row', alignItems: 'center', gap: space.sm,
-    paddingLeft: space.md, paddingVertical: space.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.14),
-  },
-  tableRow: {
-    flexDirection: 'row', alignItems: 'center', gap: space.sm,
-    paddingLeft: space.md, paddingVertical: 9,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: withAlpha(c.mist, 0.08),
-  },
-  colFree: { width: 64, alignItems: 'center', justifyContent: 'center' },
-  colPro: {
-    width: 56, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 6, backgroundColor: c.accent,
-  },
-  colProCell: { backgroundColor: withAlpha(c.accent, 0.14) },
   terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
   legal: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center',

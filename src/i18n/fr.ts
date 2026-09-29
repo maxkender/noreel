@@ -486,18 +486,6 @@ export const fr = {
     beta: 'Gratuit pendant la bêta',
     promo: `J'ai un code`,
     renew: 'Renouvelé automatiquement. Annule quand tu veux.',
-    tableTitle: 'Ce que tu débloques',
-    colFree: 'Gratuit',
-    colPro: 'Pro',
-    freeCap: '15 min / j',
-    f1: 'Instagram sans les Reels',
-    f2: 'TikTok, X et YouTube filtrés',
-    f3: 'Temps dans les apps filtrées',
-    f4: 'Blocage des apps d’origine',
-    f5: 'Mode strict',
-    f6: 'Réglages app par app',
-    f7: 'Corti, points et badges',
-    f8: 'Mode publication et lien à coller',
   },
 
   tune: {

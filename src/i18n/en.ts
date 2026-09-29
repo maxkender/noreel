@@ -466,18 +466,6 @@ export const en: Dict = {
     beta: 'Free during the beta',
     promo: 'I have a code',
     renew: 'Renews automatically. Cancel anytime.',
-    tableTitle: 'What you unlock',
-    colFree: 'Free',
-    colPro: 'Pro',
-    freeCap: '15 min / day',
-    f1: 'Instagram without Reels',
-    f2: 'TikTok, X and YouTube filtered',
-    f3: 'Time in filtered apps',
-    f4: 'Blocking the original apps',
-    f5: 'Strict mode',
-    f6: 'Per-app settings',
-    f7: 'Corti, points and badges',
-    f8: 'Post mode and paste a link',
   },
 
   tune: {
