@@ -19,7 +19,7 @@ import { render } from '@testing-library/react-native';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 import { AgeAsk, Compare, Guess, RealTime } from './time';
-import { LifeYears } from './index';
+import { LifeYears, S6Years } from './index';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage } from './science';
 import { PromiseScreen, Welcome } from './setup';
 import { Ready } from './ready';
@@ -105,6 +105,7 @@ describe('le temps d’ecran, en quatre ecrans', () => {
   it('le vrai chiffre', () => { render(<RealTime onNext={noop} />); });
   it('l’age', () => { render(<AgeAsk onNext={noop} />); });
   it('les annees qu’il reste', () => { const r = render(<LifeYears onNext={noop} />); r.unmount(); });
+  it('les annees sur le telephone', () => { const r = render(<S6Years onNext={noop} />); r.unmount(); });
 
   it('la comparaison, dans ses trois verdicts', () => {
     for (const real of [60, 150, 300]) {

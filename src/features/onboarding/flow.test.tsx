@@ -60,7 +60,9 @@ it('demande le temps dans le bon ordre', () => {
   // L'age vient apres la comparaison, et les annees qu'il reste juste apres.
   expect(at('cmp')).toBeLessThan(at('age'));
   expect(at('age')).toBeLessThan(at('life'));
-  expect(at('life')).toBeLessThan(at('act'));
+  // Le chiffre des cases, seul et en grand, juste apres elles.
+  expect(at('life')).toBeLessThan(at('s6y'));
+  expect(at('s6y')).toBeLessThan(at('act'));
   // Et l'engagement vient apres les annees, avant la demo.
   expect(at('life')).toBeLessThan(at('ready'));
   expect(at('ready')).toBeLessThan(at('proof'));

@@ -99,13 +99,21 @@ export const fr = {
   },
 
   ready: {
-    hold: 'Maintiens l’écran pour t’engager',
-    holding: 'Tiens bon… il se relève',
+    hold: 'Maintiens l’écran pour reprendre le contrôle',
+    holding: 'Tiens bon… les Reels s’effacent',
   },
   prep: {
+    s1b: 'Instagram, TikTok, X et YouTube, sans le scroll infini',
+    s2: 'Ton objectif',
+    s2b: '{h} par jour — moitié moins qu’aujourd’hui',
+    s3b: 'Corti se relève palier par palier',
+    s4: 'Tes amis, toujours là',
+    s4b: 'Messages, stories, et les Reels qu’on t’envoie',
+    s5: 'Tes badges',
+    s5b: 'Dix jalons à débloquer, un geste par jour',
+    done: 'Ton programme est prêt.',
     title: 'Préparation de ton programme…',
     s1: 'Tes apps, filtrées',
-    s2: 'Ton objectif : moitié moins',
     s3: 'Ton programme sur 30 jours',
   },
   life: {
@@ -129,6 +137,9 @@ export const fr = {
   },
 
   s6: {
+    lifeOf: 'SUR LES {n} ANS QU’IL TE RESTE',
+    years: '{y} ans',
+    bodyShort: 'passés sur ton téléphone.',
     pill: '{h} par jour, {n} ans',
     title: 'Voici la part de ton {temps éveillé} passée sur un écran.',
     subtitle: `Un carreau, c'est un mois.`,
@@ -235,10 +246,10 @@ export const fr = {
     step1: 'Dose de dopamine trop élevée',
     step1b: 'Chaque vidéo courte déclenche une récompense. Des centaines par jour.',
     hookTitle: 'Tu n’es pas accro. Ton cerveau est exploité.',
-    hookBody: 'Ces apps sont conçues pour capturer ton attention. UnSwipe te la rend — sans supprimer tes apps.',
-    hookChip1: 'Ça pourrait te plaire',
-    hookChip2: 'Quelqu’un a aimé ta photo',
-    hookChip3: 'Nouveau Reel',
+    hookBody: 'UnSwipe te rend ton temps et ton attention — sans supprimer l’app, sans te forcer. Tu restes notifié : quelqu’un aime ta photo, un message, une envie de poster.',
+    hookChip1: '❤️ Quelqu’un a aimé ta photo',
+    hookChip2: '💬 Nouveau message',
+    hookChip3: '📸 Publier une photo',
     step2: 'Tes récepteurs s’aplatissent',
     step2b: 'Ton cerveau baisse le volume pour se protéger de l’excès.',
     step3: 'Plus rien ne fait d’effet',
@@ -430,7 +441,7 @@ export const fr = {
   },
 
   proof: {
-    title: 'Ton Instagram, sans le fil sans fin.',
+    title: 'Ton Instagram, sans les Reels.',
     raw: 'Ton fil, comme d’habitude.',
     fall: 'Les Reels sont retirés du fil, un par un.',
     tab: 'Et l’onglet Reels disparaît. Il ne reste que tes amis.',

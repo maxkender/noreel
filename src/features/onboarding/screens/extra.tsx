@@ -20,7 +20,9 @@ import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
 import { useT } from '@/i18n';
-import { useOnboardingStore } from '@/store/onboarding';
+import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
+import { formatHours } from '@/lib/format';
+import { HoldRing } from '../scenes/HoldRing';
 import { LOGOS } from '@/features/home/AppSlider';
 
 type P = { onNext: () => void };
@@ -71,43 +73,67 @@ export function Meet({ onNext }: P) {
 
 /* ---------- La preparation du programme ---------- */
 
-const PREP_STEP = 700;
+const PREP_STEP = 950;
+const PREP_ROWS = 5;
 
 /**
- * Trois coches avant le paywall.
+ * Cinq coches avant le paywall, et un anneau qui se remplit.
  *
  * On arrive au prix apres avoir tout donne : ses apps, son chiffre, son
  * objectif, sa signature. Le paywall doit etre la SUITE de tout ca — un
- * programme qu'on ouvre — et non une page de vente posee la. Deux secondes
- * ou ce qu'on a repondu se transforme sous les yeux en trois lignes cochees,
- * et l'ecran d'apres s'ouvre sur « ton programme est pret ».
+ * programme qu'on ouvre — et non une page de vente posee la. Cinq secondes
+ * ou ce qu'on a repondu se transforme sous les yeux en cinq lignes cochees,
+ * chacune avec son detail, pendant qu'un anneau se referme autour de Corti.
+ * Puis « ton programme est pret », un temps, et le paywall s'ouvre.
  */
 export function Prep({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
-  const { d } = useT();
+  const { d, t } = useT();
+  const minutes = useOnboardingStore(effectiveMinutes);
   const [done, setDone] = useState(0);
-  const rows = [d.prep.s1, d.prep.s2, d.prep.s3];
+  const [ready, setReady] = useState(false);
+  const ring = useSharedValue(0);
+  // La cible : la moitie, arrondie au quart d'heure — la meme que le paywall.
+  const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
+  const rows: [string, string][] = [
+    [d.prep.s1, d.prep.s1b],
+    [d.prep.s2, t(d.prep.s2b, { h: formatHours(target) })],
+    [d.prep.s3, d.prep.s3b],
+    [d.prep.s4, d.prep.s4b],
+    [d.prep.s5, d.prep.s5b],
+  ];
 
   useEffect(() => {
-    const ts = [1, 2, 3].map((i) => setTimeout(() => { setDone(i); haptics.tick(); }, PREP_STEP * i));
-    const end = setTimeout(onNext, PREP_STEP * 3 + 700);
-    return () => { ts.forEach(clearTimeout); clearTimeout(end); };
-  }, [onNext]);
+    ring.value = withTiming(1, { duration: PREP_STEP * PREP_ROWS, easing: Easing.linear });
+    const ts = Array.from({ length: PREP_ROWS }, (_, i) => setTimeout(() => { setDone(i + 1); haptics.tick(); }, PREP_STEP * (i + 1)));
+    const fin = setTimeout(() => { setReady(true); haptics.success(); }, PREP_STEP * PREP_ROWS + 200);
+    const end = setTimeout(onNext, PREP_STEP * PREP_ROWS + 1500);
+    return () => { ts.forEach(clearTimeout); clearTimeout(fin); clearTimeout(end); };
+  }, [onNext, ring]);
 
   return (
-    <Screen center still hue="accent">
+    <Screen center still hue="accent" hueLevel={ready ? 1 : 0.4}>
       <View style={st.mid}>
-        <CortiRig level={3} size={150} expression="ravi" />
+        <HoldRing progress={ring} size={176} stroke={4}>
+          <CortiRig level={3} size={120} expression={ready ? 'ravi' : 'auto'} />
+        </HoldRing>
       </View>
-      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>{d.prep.title}</Text>
+      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>{ready ? d.prep.done : d.prep.title}</Text>
       <View style={st.prepList}>
-        {rows.map((r, i) => (
-          <View key={r} style={st.prepRow}>
+        {rows.map(([title, detail], i) => (
+          <View key={title} style={st.prepRow}>
             <View style={[st.prepDot, { backgroundColor: done > i ? c.accent : withAlpha(c.mist, 0.12) }]}>
               {done > i && <Check size={13} strokeWidth={3} color={c.night} />}
             </View>
-            <Text variant="body" tone={done > i ? undefined : 'tertiary'}>{r}</Text>
+            <View style={{ flex: 1 }}>
+              <Text variant="body" tone={done > i ? undefined : 'tertiary'}>{title}</Text>
+              {done > i && (
+                <Animated.View entering={FadeIn.duration(360)}>
+                  <Text variant="label" tone="tertiary">{detail}</Text>
+                </Animated.View>
+              )}
+            </View>
           </View>
         ))}
       </View>
@@ -421,7 +447,7 @@ const sheet = () => StyleSheet.create({
   mid: { textAlign: 'center', alignItems: 'center' },
   srcLogo: { width: 26, height: 26 },
   prepList: { alignSelf: 'stretch', gap: space.md, marginTop: space.xl, paddingHorizontal: space.xl },
-  prepRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  prepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   prepDot: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   srcIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   stage: { alignItems: 'center', marginTop: space.xl },

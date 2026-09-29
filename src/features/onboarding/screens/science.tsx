@@ -87,9 +87,9 @@ function SciencePage({
  * « Tu n'es pas accro. » — la page qui enleve la faute avant d'expliquer.
  *
  * Tout ce qui suit dit ce que le scroll fait au cerveau, et sans ce
- * preambule ca se lit comme un reproche. Ce n'est pas une faiblesse, c'est
- * une industrie : les trois bulles sont ses outils, et on les reconnait
- * toutes.
+ * preambule ca se lit comme un reproche. Puis ce qu'UnSwipe rend, sans
+ * rien supprimer : les trois bulles sont ce qu'on GARDE — le coeur, le
+ * message, la photo a publier.
  */
 export function Exploited({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
@@ -105,7 +105,7 @@ export function Exploited({ onNext }: P) {
             entering={FadeInDown.delay(1200 + i * 350).duration(420)}
             style={[st.chip, { backgroundColor: withAlpha(c.mist, 0.08), borderColor: withAlpha(c.mist, 0.14) }]}
           >
-            <View style={[st.chipDot, { backgroundColor: c.danger }]} />
+            <View style={[st.chipDot, { backgroundColor: c.accent }]} />
             <Text variant="label">{label}</Text>
           </Animated.View>
         ))}

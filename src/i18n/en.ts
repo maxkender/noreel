@@ -94,13 +94,21 @@ export const en: Dict = {
   },
 
   ready: {
-    hold: 'Hold the screen to commit',
-    holding: 'Hold on… he’s getting up',
+    hold: 'Hold the screen to take back control',
+    holding: 'Hold on… the Reels are fading',
   },
   prep: {
+    s1b: 'Instagram, TikTok, X and YouTube, without the endless scroll',
+    s2: 'Your goal',
+    s2b: '{h} a day — half of today',
+    s3b: 'Corti recovers level by level',
+    s4: 'Your friends, still there',
+    s4b: 'Messages, stories, and the Reels they send you',
+    s5: 'Your badges',
+    s5b: 'Ten milestones to unlock, one gesture a day',
+    done: 'Your program is ready.',
     title: 'Preparing your program…',
     s1: 'Your apps, filtered',
-    s2: 'Your goal: half as much',
     s3: 'Your 30-day program',
   },
   life: {
@@ -124,6 +132,9 @@ export const en: Dict = {
   },
 
   s6: {
+    lifeOf: 'OUT OF THE {n} YEARS YOU HAVE LEFT',
+    years: '{y} years',
+    bodyShort: 'spent on your phone.',
     pill: '{h} a day, {n} years old',
     title: 'Here’s the share of your {waking hours} spent on a screen.',
     subtitle: 'One square is one month.',
@@ -230,10 +241,10 @@ export const en: Dict = {
     step1: 'Dopamine spikes, over and over',
     step1b: 'Every short video fires a reward. Hundreds a day.',
     hookTitle: 'You’re not addicted. Your brain is being exploited.',
-    hookBody: 'These apps are engineered to hijack your attention. UnSwipe gives it back — without deleting your apps.',
-    hookChip1: 'You might like this',
-    hookChip2: 'Someone liked your photo',
-    hookChip3: 'New Reel',
+    hookBody: 'UnSwipe gives you back your time and attention — without deleting the app, without forcing you. You stay notified: someone liked your photo, a message, the urge to post.',
+    hookChip1: '❤️ Someone liked your photo',
+    hookChip2: '💬 New message',
+    hookChip3: '📸 Post a photo',
     step2: 'Your receptors flatten out',
     step2b: 'Your brain turns the volume down to protect itself.',
     step3: 'Nothing lands anymore',
@@ -410,7 +421,7 @@ export const en: Dict = {
   },
 
   proof: {
-    title: 'Your Instagram, without the endless feed.',
+    title: 'Your Instagram, without Reels.',
     raw: 'Your feed, just as it is.',
     fall: 'Reels are pulled out of the feed, one by one.',
     tab: 'And the Reels tab disappears. Only your friends are left.',

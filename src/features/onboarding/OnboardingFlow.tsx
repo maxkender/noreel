@@ -10,7 +10,7 @@ import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
 import { Intro } from '@/components/Intro';
 import { StepBoundary } from '@/components/StepBoundary';
-import { LifeYears, S1 } from './screens';
+import { LifeYears, S1, S6Years } from './screens';
 import { Constat, Name, NotificationsAsk, PromiseScreen, Welcome } from './screens/setup';
 import { Permissions } from './screens/Permissions';
 import { Activities } from './screens/Activities';
@@ -150,6 +150,7 @@ export function OnboardingFlow() {
     <Compare key="cmp" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
     <LifeYears key="life" onNext={next} />,
+    <S6Years key="s6y" onNext={next} />,
     <Activities key="act" onNext={next} />,
     <Exploited key="hook" onNext={next} />,
     <Dopamine key="dopa" onNext={next} />,
@@ -214,7 +215,7 @@ export function OnboardingFlow() {
           */}
           <Animated.View
             key={step}
-            entering={REVEAL.has(String(screens[step]?.key)) ? reveal : rise}
+            entering={screens[step]?.key === 'pw' ? unveil : REVEAL.has(String(screens[step]?.key)) ? reveal : rise}
             exiting={FadeOut.duration(460)}
             style={StyleSheet.absoluteFill}
           >
@@ -258,6 +259,22 @@ function reveal() {
     animations: {
       opacity: withTiming(1, { duration: 320, easing: easings.out }),
       transform: [{ scale: withTiming(1, { duration: 560, easing: easings.out }) }],
+    },
+  };
+}
+
+/**
+ * Le paywall ne se tourne pas, il s'ouvre : plus lent que les autres, et de
+ * plus loin — la preparation vient de dire « ton programme est pret », et
+ * c'est lui qu'on decouvre.
+ */
+function unveil() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.9 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 520, easing: easings.out }),
+      transform: [{ scale: withTiming(1, { duration: 820, easing: easings.out }) }],
     },
   };
 }

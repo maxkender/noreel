@@ -182,7 +182,50 @@ export function LifeYears({ onNext }: P) {
   );
 }
 
+/**
+ * Le chiffre des cases, seul et en grand : les annees sur le telephone,
+ * sur celles qu'il reste. Il monte au lieu de s'afficher — c'est le trajet
+ * qui fait mal, pas la valeur finale. Le meme calcul que la grille, pour
+ * que les deux ecrans disent la meme chose.
+ */
+export function S6Years({ onNext }: P) {
+  const c = useColors();
+  const s = useMemo(() => sheet(c), [c]);
+  const { d, t } = useT();
+  const age = useOnboardingStore((x) => x.age);
+  const minutes = useOnboardingStore(effectiveMinutes);
+  const L = useMemo(() => lifeYears(age, minutes), [age, minutes]);
+  const [y, setY] = useState(0);
+
+  useEffect(() => {
+    // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
+    // plus vite qu'un grand.
+    const steps = 34;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setY(Math.round((L.phone * i) / steps));
+      if (i % 8 === 0) haptics.tick();
+      if (i >= steps) clearInterval(id);
+    }, 1600 / steps);
+    return () => clearInterval(id);
+  }, [L.phone]);
+
+  return (
+    <Screen cta={d.misc.reclaim} onPress={onNext} center hue="ember">
+      <Animated.View entering={FadeIn.duration(700)} style={s.yearsBlock}>
+        <Text variant="label" tone="tertiary">{t(d.s6.lifeOf, { n: L.remaining })}</Text>
+        <Text variant="hero" color={c.danger} style={s.center} numberOfLines={1} adjustsFontSizeToFit>
+          {t(d.s6.years, { y })}
+        </Text>
+        <Text variant="lead" tone="secondary" style={s.center}>{d.s6.bodyShort}</Text>
+      </Animated.View>
+    </Screen>
+  );
+}
+
 const sheet = (c: Palette) => StyleSheet.create({
+  yearsBlock: { alignItems: 'center', gap: space.xs },
   mark: { width: 64, height: 64, alignSelf: 'center', marginBottom: space.xl },
   center: { textAlign: 'center' },
   years: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', marginTop: space.xl },

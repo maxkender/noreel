@@ -1,102 +1,80 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  Easing, FadeIn, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue, withTiming,
+  Easing, FadeIn, ZoomIn, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue,
+  withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
-import { space } from '@/theme/spacing';
+import { withAlpha } from '@/theme/colors';
+import { gutter, space } from '@/theme/spacing';
 import { useColors } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter } from '@/components/type/Typewriter';
-import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
-import type { CortiLevel } from '@/components/Corti';
+import { CortiRig } from '@/components/CortiRig';
+import { LOGOS } from '@/features/home/AppSlider';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { HoldRing } from '../scenes/HoldRing';
 
 type P = { onNext: () => void };
 
-/** Trois secondes : le temps de vouloir, pas celui de cliquer. */
-const HOLD_MS = 3000;
-/** Les paliers : a quel point du maintien Corti passe au niveau suivant. */
-const STEPS: [number, CortiLevel][] = [[0.15, 1], [0.5, 2], [0.85, 3]];
+/** Le temps de vouloir, pas celui de cliquer. */
+const HOLD_MS = 2600;
+const APPS = ['instagram', 'tiktok', 'twitter', 'youtube'] as const;
 
 /**
- * « Tu es pret ? » — on repond en TENANT.
+ * « Tu es pret ? » — on repond en TENANT, et on voit ce que ca fait.
  *
- * Tout le parcours se traverse du doigt. Ici on demande la premiere
- * decision, et elle ne peut pas se prendre avec le geste qui vaut zero. On
- * appuie n'importe ou sur l'ecran, et on tient : un anneau se remplit
- * autour de Corti et, palier par palier, il se releve — ecrase, puis en
- * veilleuse, puis allume, puis rayonnant. On lache avant la fin : il
- * retombe, et l'anneau se vide. On tient jusqu'au bout : il saute de joie,
- * et c'est lui qu'on vient de relever.
- *
- * La sequence en images du studio faisait six secondes et saccadait : trop
- * lourde a decoder pendant qu'on tient, et impossible a reprendre au
- * milieu. Le rig, lui, vit sur le fil d'animation — l'anneau et la taille
- * suivent le doigt image par image — et il se reprend la ou on l'a lache.
+ * Les quatre applis sont la, en icones. On appuie n'importe ou et on
+ * tient : une vague de couleur monte du bas de l'ecran, et les icones
+ * tombent l'une apres l'autre — elles basculent, retrecissent, s'effacent.
+ * On lache avant la fin : la vague redescend, les icones remontent. On
+ * tient jusqu'au bout : il ne reste que la couleur, et Corti rayonnant
+ * arrive dedans. Tout vit sur le fil d'animation, image par image.
  */
 export function Ready({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(), []);
   const { d } = useT();
+  const { height } = useWindowDimensions();
   const [holding, setHolding] = useState(false);
-  const [level, setLevel] = useState<CortiLevel>(0);
-  const [reaction, setReaction] = useState<CortiReaction | undefined>(undefined);
+  const [done, setDone] = useState(false);
   const fill = useSharedValue(0);
   const fired = useRef(false);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
-  useEffect(() => clearTimers, []);
-
-  const done = () => {
+  const finish = () => {
     if (fired.current) return;
     fired.current = true;
+    setDone(true);
     haptics.success();
-    setLevel(3);
-    setReaction(cortiReact('celebrate'));
-    // On le laisse sauter avant de tourner la page : c'est sa joie qu'on
-    // vient chercher, pas l'ecran suivant.
-    timers.current.push(setTimeout(onNext, 800));
+    // Corti a le temps d'arriver avant qu'on tourne la page.
+    timer.current = setTimeout(onNext, 1100);
   };
 
   const grab = () => {
     if (fired.current) return;
     setHolding(true);
     haptics.press();
-    clearTimers();
-    // On repart d'ou en etait l'anneau : lache puis repris, il ne saute pas
-    // a zero, et les paliers restants tombent au bon moment.
+    // On repart d'ou en etait la vague : lache puis repris, rien ne saute.
     const from = fill.value;
-    STEPS.forEach(([at, lv]) => {
-      const ms = Math.max(0, (at - from) * HOLD_MS);
-      timers.current.push(setTimeout(() => {
-        setLevel(lv);
-        haptics.tick();
-        if (lv > 1) setReaction(cortiReact('hop'));
-      }, ms));
-    });
-    fill.value = withTiming(1, { duration: (1 - from) * HOLD_MS, easing: Easing.linear }, (finished) => {
-      if (finished) runOnJS(done)();
+    fill.value = withTiming(1, { duration: (1 - from) * HOLD_MS, easing: Easing.inOut(Easing.quad) }, (finished) => {
+      if (finished) runOnJS(finish)();
     });
   };
 
   const release = () => {
     if (fired.current) return;
     setHolding(false);
-    clearTimers();
-    setLevel(0);
     cancelAnimation(fill);
-    // Il se vide plus vite qu'il ne s'est rempli : lacher est une reponse.
-    fill.value = withTiming(0, { duration: 320 });
+    fill.value = withSpring(0, { damping: 14, stiffness: 120 });
   };
 
-  // Il GRANDIT en meme temps que l'anneau se remplit : on sent le maintien
-  // dans le corps, pas seulement dans un trait qui tourne.
-  const grow = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.92 + fill.value * 0.1 }],
+  // La vague : un degrade plein ecran qui monte du bas avec le maintien.
+  const wave = useAnimatedStyle(() => ({
+    transform: [{ translateY: (1 - fill.value) * height }],
   }));
 
   return (
@@ -108,6 +86,14 @@ export function Ready({ onNext }: P) {
         accessibilityRole="button"
         accessibilityHint={d.ready.hold}
       >
+        <Animated.View style={[st.wave, { left: -gutter, right: -gutter }, wave]} pointerEvents="none">
+          <LinearGradient
+            colors={[withAlpha(c.accent, 0), withAlpha(c.accent, 0.55), c.accent]}
+            locations={[0, 0.35, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
         <Typewriter text={d.brain.fix} variant="displayM" speed={38} style={st.center} />
         <Animated.View entering={FadeIn.delay(1500).duration(500)}>
           <Text variant="displayM" color={c.accent} style={[st.center, { marginTop: space.sm }]}>
@@ -116,16 +102,13 @@ export function Ready({ onNext }: P) {
         </Animated.View>
 
         <View style={st.stage}>
-          <HoldRing progress={fill} size={264}>
-            <Animated.View style={grow}>
-              <CortiRig
-                level={level}
-                size={220}
-                expression={level === 3 ? 'ravi' : 'auto'}
-                reaction={reaction}
-              />
+          {done ? (
+            <Animated.View entering={ZoomIn.springify().damping(12)}>
+              <CortiRig level={3} size={200} expression="ravi" arrive />
             </Animated.View>
-          </HoldRing>
+          ) : (
+            APPS.map((id, i) => <Falling key={id} id={id} i={i} fill={fill} />)
+          )}
         </View>
 
         <Animated.View entering={FadeIn.delay(2400).duration(600)}>
@@ -138,9 +121,44 @@ export function Ready({ onNext }: P) {
   );
 }
 
+/**
+ * Une icone qui tombe avec le maintien.
+ *
+ * Chacune part a son tour — un cinquieme de trajet d'ecart — et met un peu
+ * moins de la moitie du trajet a disparaitre : elle bascule, retrecit,
+ * s'efface. La valeur partagee est lue sur le fil d'animation, jamais
+ * recalculee par React.
+ */
+function Falling({ id, i, fill }: { id: (typeof APPS)[number]; i: number; fill: SharedValue<number> }) {
+  const st = useMemo(() => sheet(), []);
+  const style = useAnimatedStyle(() => {
+    const start = i * 0.16;
+    const local = Math.min(1, Math.max(0, (fill.value - start) / 0.4));
+    return {
+      opacity: 1 - local,
+      transform: [
+        { translateY: local * 180 },
+        { rotate: `${(i % 2 === 0 ? -1 : 1) * local * 55}deg` },
+        { scale: 1 - local * 0.5 },
+      ],
+    };
+  });
+  return (
+    <Animated.View style={[st.icon, style]}>
+      <Image source={LOGOS[id]} style={st.logo} contentFit="contain" />
+    </Animated.View>
+  );
+}
+
 const sheet = () => StyleSheet.create({
   // Toute la page est la zone de prise : on n'a pas a viser.
-  press: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
+  press: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', overflow: 'hidden' },
+  wave: { position: 'absolute', top: 0, bottom: 0 },
   center: { textAlign: 'center' },
-  stage: { alignItems: 'center', marginVertical: space.xl },
+  stage: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: space.md, height: 220, marginVertical: space.xl,
+  },
+  icon: { width: 64, height: 64, borderRadius: 16, overflow: 'hidden' },
+  logo: { width: 64, height: 64 },
 });
