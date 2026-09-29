@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { withMod } = require('@expo/config-plugins');
 
 /**
  * Pose (ou retire) la cible du rapport Temps d'ecran.
@@ -19,7 +20,9 @@ const path = require('path');
  *
  * Ce plugin doit etre liste AVANT react-native-device-activity : la copie se
  * fait de facon synchrone, ici, comme le fait la bibliotheque pour ses
- * propres cibles.
+ * propres cibles. Et c'est aussi ce qui place sa retouche du projet Xcode
+ * APRES celle de l'outil de cibles — les retouches s'executent dans l'ordre
+ * inverse de leur enregistrement.
  */
 module.exports = function withScreenTimeReport(config) {
   const root = config._internal?.projectRoot ?? process.cwd();
@@ -47,5 +50,39 @@ module.exports = function withScreenTimeReport(config) {
   for (const name of fs.readdirSync(src)) {
     fs.copyFileSync(path.join(src, name), path.join(dst, name));
   }
-  return config;
+
+  /*
+    Un rapport Temps d'ecran est une extension ExtensionKit.
+
+    Apple l'exige a la validation : « it must be built as an ExtensionKit
+    extension » — dans le dossier Extensions/ de l'app, pas PlugIns/, avec
+    la cle EXAppExtensionAttributes. L'outil de cibles ne sait produire ce
+    genre d'extension que pour un type, « app-intent », qu'on lui declare
+    donc. Mais ce type fige deux choses qu'on corrige ici, une fois la cible
+    creee : il vise iOS 17 alors que le rapport existe depuis iOS 16, et il
+    nomme le produit « .app » alors qu'une extension, meme ExtensionKit,
+    est un « .appex ».
+
+    Le nom du mod est celui que l'outil de cibles donne au sien : c'est le
+    meme projet, ouvert une fois, que les deux retouchent.
+  */
+  return withMod(config, {
+    platform: 'ios',
+    mod: 'xcodeProjectBeta2',
+    action(cfg) {
+      const project = cfg.modResults;
+      const target = project?.rootObject?.props?.targets?.find(
+        (t) => t?.props?.name === 'ScreenTimeReport',
+      );
+      if (!target) {
+        throw new Error('withScreenTimeReport : la cible ScreenTimeReport manque au projet Xcode.');
+      }
+      target.setBuildSetting('IPHONEOS_DEPLOYMENT_TARGET', '16.0');
+      const ref = target.props.productReference;
+      if (ref?.props?.path?.endsWith('.app')) {
+        ref.props.path = `${ref.props.path.slice(0, -'.app'.length)}.appex`;
+      }
+      return cfg;
+    },
+  });
 };

@@ -11,6 +11,10 @@ import UIKit
  * filtre demande les sept derniers jours en tranches quotidiennes — c'est
  * ce que la scene « overview » dessine barre par barre, et ce que la scene
  * « compare » moyenne.
+ *
+ * La journee en cours n'en fait pas partie : a neuf heures du matin elle
+ * pese quelques minutes, et une moyenne qui la compte dit « moins que tu
+ * ne pensais » a quelqu'un qui n'a pas encore commence sa journee.
  */
 class ScreenTimeReportHostView: ExpoView {
   private var host: UIViewController?
@@ -44,8 +48,8 @@ class ScreenTimeReportHostView: ExpoView {
     guard #available(iOS 16.0, *) else { return }
 
     let cal = Calendar.current
-    let end = Date()
-    let start = cal.date(byAdding: .day, value: -days, to: cal.startOfDay(for: end)) ?? end
+    let end = cal.startOfDay(for: Date())
+    let start = cal.date(byAdding: .day, value: -days, to: end) ?? end
     let filter = DeviceActivityFilter(
       segment: .daily(during: DateInterval(start: start, end: end)),
       users: .all,

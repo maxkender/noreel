@@ -143,6 +143,10 @@ func average(_ days: [Daily]) -> (minutes: Int, pickups: Int) {
 struct CompareModel {
   var real: Int
   var guess: Int
+  /// Faux quand Temps d'ecran n'a rien enregistre sur la fenetre : un zero
+  /// dessine comme un vrai chiffre dirait « tu n'as pas touche ton
+  /// telephone », ce qui est faux et se voit.
+  var hasData: Bool
   var theme: Theme
 }
 
@@ -153,7 +157,10 @@ struct CompareScene: DeviceActivityReportScene {
   func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> CompareModel {
     let (days, _) = await collect(data)
     let guess = defaults?.integer(forKey: "unswipe.report.guess") ?? 0
-    return CompareModel(real: average(days).minutes, guess: guess, theme: Theme.load())
+    return CompareModel(
+      real: average(days).minutes, guess: guess,
+      hasData: days.contains { $0.minutes > 0 }, theme: Theme.load()
+    )
   }
 }
 
@@ -170,10 +177,35 @@ func verdict(guess: Int, real: Int) -> (pct: Int, v: Verdict) {
   return (pct, real < guess ? .less : .more)
 }
 
+/// Ce que l'extension dit quand elle n'a rien recu. Le parcours continue
+/// sur l'estimation, et on le dit — plutot qu'un zero qui aurait l'air vrai.
+struct NoData: View {
+  let th: Theme
+
+  var body: some View {
+    VStack(spacing: 10) {
+      Text(th.t("noDataTitle"))
+        .font(.system(size: 28, weight: .bold))
+        .foregroundColor(th.ink)
+        .multilineTextAlignment(.center)
+      Text(th.t("noDataBody"))
+        .font(.system(size: 15))
+        .foregroundColor(th.inkSoft)
+        .multilineTextAlignment(.center)
+    }
+    .padding(.horizontal, 8)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+  }
+}
+
 struct CompareView: View {
   let m: CompareModel
 
   var body: some View {
+    if m.hasData { filled } else { NoData(th: m.theme) }
+  }
+
+  @ViewBuilder var filled: some View {
     let th = m.theme
     let (pct, v) = verdict(guess: m.guess, real: m.real)
     let tone: Color = v == .less ? th.good : v == .more ? th.danger : th.accent
@@ -218,7 +250,9 @@ struct CompareView: View {
       .padding(.top, 22)
     }
     .padding(.horizontal, 8)
-    .frame(maxWidth: .infinity)
+    // Cale en haut : la vue hote a une hauteur fixe, et un contenu centre
+    // qui deborde perd son titre avant ses pieds.
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(Color.clear)
   }
 }
@@ -275,6 +309,10 @@ struct OverviewView: View {
   let m: OverviewModel
 
   var body: some View {
+    if m.days.contains(where: { $0.minutes > 0 }) { filled } else { NoData(th: m.theme) }
+  }
+
+  @ViewBuilder var filled: some View {
     let th = m.theme
     let top = max(1, m.days.map { $0.minutes }.max() ?? 1)
     let fmt: DateFormatter = { let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("EEEEE"); return f }()
@@ -344,7 +382,7 @@ struct OverviewView: View {
       }
     }
     .padding(.horizontal, 8)
-    .frame(maxWidth: .infinity)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(Color.clear)
   }
 }

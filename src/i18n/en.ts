@@ -70,6 +70,8 @@ export const en: Dict = {
     topApps: 'Your most distracting apps',
     unitH: 'h',
     unitMin: 'min',
+    noDataTitle: 'No number yet.',
+    noDataBody: 'Screen Time hasn’t recorded anything on this phone in the last seven days. We’ll go on with your guess.',
     realTitle: 'Now, the real number.',
     realBody: 'Your phone already knows it. Copy it here.',
     step1: 'Open Settings',

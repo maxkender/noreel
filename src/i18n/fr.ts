@@ -75,6 +75,8 @@ export const fr = {
     topApps: 'Tes apps les plus gourmandes',
     unitH: 'h',
     unitMin: 'min',
+    noDataTitle: 'Pas encore de chiffre.',
+    noDataBody: 'Temps d’écran n’a rien enregistré sur ce téléphone ces sept derniers jours. On continue avec ton estimation.',
     realTitle: 'Maintenant, le vrai chiffre.',
     realBody: 'Ton téléphone le connaît. Reporte-le ici.',
     step1: 'Ouvre Réglages',

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { ArrowDown, ArrowUp, Cake, Equal, Minus, Plus } from 'lucide-react-native';
@@ -26,25 +26,6 @@ import {
   ScreenTimeReportView, prepareReport, reportAvailable, type ReportStrings,
 } from '@/native/screenTimeReport';
 
-/**
- * Le rapport d'Apple peut-il s'afficher ICI, maintenant ?
- *
- * Il faut l'extension dans le binaire ET l'autorisation Temps d'ecran. La
- * seconde ne se sait qu'en demandant : d'ou trois etats, et non deux — tant
- * qu'on ne sait pas, on n'affiche ni la vue native ni la saisie, sinon l'une
- * des deux apparait pour disparaitre aussitot.
- */
-function useNativeReport(): 'yes' | 'no' | 'unknown' {
-  const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
-  useEffect(() => {
-    if (!reportAvailable()) return;
-    let alive = true;
-    void authorizationStatus().then((a) => { if (alive) setState(a === 'approved' ? 'yes' : 'no'); });
-    return () => { alive = false; };
-  }, []);
-  return state;
-}
-
 /** Les textes que l'extension dessinera, dans la langue de l'app. */
 function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
   const t = d.time;
@@ -54,8 +35,63 @@ function reportStrings(d: ReturnType<typeof useT>['d']): ReportStrings {
     deltaSame: t.deltaSame, guessLabel: t.guessLabel, realLabel: t.realLabel,
     analysisTitle: t.analysisTitle, analysisSub: t.analysisSub, perYear: t.perYear,
     pickupsTitle: t.pickupsTitle, pickupsBody: t.pickupsBody, topApps: t.topApps,
+    noDataTitle: t.noDataTitle, noDataBody: t.noDataBody,
     unitH: t.unitH, unitMin: t.unitMin,
   };
+}
+
+/**
+ * Le rapport d'Apple peut-il s'afficher ICI, maintenant ?
+ *
+ * Il faut l'extension dans le binaire ET l'autorisation Temps d'ecran. La
+ * seconde ne se sait qu'en demandant : d'ou trois etats, et non deux — tant
+ * qu'on ne sait pas, on n'affiche ni la vue native ni la saisie, sinon l'une
+ * des deux apparait pour disparaitre aussitot.
+ *
+ * « yes » n'est dit qu'une fois l'estimation et les textes ECRITS dans le
+ * groupe partage. L'extension les lit au moment ou iOS lui demande son
+ * dessin, c'est-a-dire des que la vue existe : ecrire apres l'avoir montee,
+ * c'etait courir contre elle, et perdre revenait a comparer le vrai chiffre
+ * a zero.
+ */
+function useNativeReport(guess: number): 'yes' | 'no' | 'unknown' {
+  const c = useColors();
+  const { d } = useT();
+  const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
+  // Lu au moment d'ecrire, pas au moment de s'abonner : ni les textes ni les
+  // couleurs ne changent pendant le parcours, et les mettre en dependance
+  // ferait redemander l'autorisation a chaque rendu.
+  const payload = useRef({ d, c });
+  payload.current = { d, c };
+
+  useEffect(() => {
+    if (!reportAvailable()) return;
+    let alive = true;
+    void authorizationStatus().then((a) => {
+      if (!alive) return;
+      if (a !== 'approved') { setState('no'); return; }
+      const { d: dict, c: pal } = payload.current;
+      prepareReport(guess, reportStrings(dict), {
+        accent: pal.accent, danger: pal.danger, good: '#2E9E5B', ink: pal.mist, inkSoft: withAlpha(pal.mist, 0.6),
+      });
+      setState('yes');
+    });
+    return () => { alive = false; };
+  }, [guess]);
+  return state;
+}
+
+/**
+ * La place qu'on reserve au dessin d'Apple.
+ *
+ * L'extension ne dit pas sa taille — elle ne dit rien — et la vue hote rogne
+ * ce qui deborde. On lui donne donc ce que l'ecran a, entre un plancher
+ * sous lequel les barres perdraient leurs pieds et un plafond au-dela duquel
+ * le bouton partirait sous le bord.
+ */
+function useReportHeight(min: number, max: number): number {
+  const { height } = useWindowDimensions();
+  return Math.min(max, Math.max(min, height - 300));
 }
 
 type P = { onNext: () => void };
@@ -198,17 +234,11 @@ export function Compare({ onNext }: P) {
   const storedReal = useOnboardingStore((x) => x.realMinutes);
   const real = storedReal ?? guess;
   const { pct, verdict } = compareGuess(guess, real);
-  const native = useNativeReport();
+  const native = useNativeReport(guess);
+  const reportH = useReportHeight(440, 620);
   // Le chiffre a-t-il ete recopie ? Sinon, et sans extension, on le demande
   // d'abord — ici meme, pas sur un ecran de plus.
   const [entered, setEntered] = useState(storedReal !== undefined);
-
-  useEffect(() => {
-    if (native !== 'yes') return;
-    prepareReport(guess, reportStrings(d), {
-      accent: c.accent, danger: c.danger, good: '#2E9E5B', ink: c.mist, inkSoft: withAlpha(c.mist, 0.6),
-    });
-  }, [native, guess, d, c]);
 
   if (native === 'unknown') return <Screen center hue="accent"><View /></Screen>;
 
@@ -220,7 +250,7 @@ export function Compare({ onNext }: P) {
   if (native === 'yes' && ScreenTimeReportView) {
     return (
       <Screen cta={d.ob.keepGoing} onPress={onNext} center still hue="accent">
-        <ScreenTimeReportView context="compare" days={7} style={{ height: 460 }} />
+        <ScreenTimeReportView context="compare" days={7} style={{ height: reportH }} />
       </Screen>
     );
   }
@@ -296,14 +326,7 @@ export function Analysis({ onNext }: P) {
   const pickups = useOnboardingStore((x) => x.pickups) ?? 0;
   const picked = useOnboardingStore((x) => x.distractions);
   const toggle = useOnboardingStore((x) => x.toggleDistraction);
-  const native = useNativeReport();
-
-  useEffect(() => {
-    if (native !== 'yes') return;
-    prepareReport(guess, reportStrings(d), {
-      accent: c.accent, danger: c.danger, good: '#2E9E5B', ink: c.mist, inkSoft: withAlpha(c.mist, 0.6),
-    });
-  }, [native, guess, d, c]);
+  const native = useNativeReport(guess);
 
   if (native === 'unknown') return <Screen center hue="ember"><View /></Screen>;
 
@@ -313,7 +336,7 @@ export function Analysis({ onNext }: P) {
   if (native === 'yes' && ScreenTimeReportView) {
     return (
       <Screen cta={d.ob.keepGoing} onPress={onNext} disabled={picked.length === 0} hue="ember">
-        <ScreenTimeReportView context="overview" days={7} style={{ height: 560 }} />
+        <ScreenTimeReportView context="overview" days={7} style={{ height: 620 }} />
         <Text variant="button" style={{ marginTop: space.xl }}>{d.time.appsTitle}</Text>
         <Text variant="body" tone="secondary" style={{ marginTop: 2 }}>{d.time.appsBody}</Text>
         <View style={st.list}>
