@@ -45,11 +45,14 @@ it('le parcours se monte sans lever', () => {
  * comparaison se joue avant que la permission soit demandee — sans qu'aucun
  * montage ne leve.
  */
-import fs from 'fs';
-import path from 'path';
+// Sans les types Node : le projet ne les charge pas, et un test n'est pas
+// une raison de les ajouter. Jest sait ou il est ; on lit a cote de lui.
+const fs = require('fs') as { readFileSync(p: string, e: string): string };
+const path = require('path') as { dirname(p: string): string; join(...p: string[]): string };
 
 it('demande le temps dans le bon ordre', () => {
-  const src = fs.readFileSync(path.join(__dirname, 'OnboardingFlow.tsx'), 'utf8');
+  const here = path.dirname(expect.getState().testPath ?? '');
+  const src = fs.readFileSync(path.join(here, 'OnboardingFlow.tsx'), 'utf8');
   const keys = [...src.matchAll(/key="([a-z0-9]+)"/g)].map((m) => m[1]);
   const at = (k: string) => { const i = keys.indexOf(k); expect(i).toBeGreaterThanOrEqual(0); return i; };
   expect(at('guess')).toBeLessThan(at('perm'));
