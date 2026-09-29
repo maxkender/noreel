@@ -18,6 +18,8 @@ import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
 import { SwitchSheet } from './SwitchSheet';
 import { firstRunUrl } from './firstrun';
+import { ClientTutorial } from './ClientTutorial';
+import { markTutorialSeen, tutorialSeen } from './tutorial';
 import { ACCOUNT } from './accounts';
 import { cortiLevel } from '@/components/Corti';
 import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
@@ -167,6 +169,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
       .then((u) => { if (alive) setEntry(u ?? client.url); });
     return () => { alive = false; };
   }, [id, client]);
+
+  /*
+    La story de bienvenue, une fois, avant que la page ne charge.
+
+    Trois etats : on ne sait pas encore (le disque n'a pas repondu), on la
+    montre, on ne la montre pas. Tant qu'on ne sait pas, rien — sinon la page
+    se mettrait a charger derriere une story qu'on va peut-etre afficher, et
+    on arriverait dessus a moitie chargee. Instagram seulement : c'est la
+    seule dont les mots sont ecrits.
+  */
+  const [tuto, setTuto] = useState<'unknown' | 'show' | 'no'>(id === 'instagram' ? 'unknown' : 'no');
+  useEffect(() => {
+    if (id !== 'instagram') return;
+    let alive = true;
+    void tutorialSeen(id).then((seen) => { if (alive) setTuto(seen ? 'no' : 'show'); });
+    return () => { alive = false; };
+  }, [id]);
 
   /*
     Le temps passe ici, en minutes et secondes.
@@ -420,6 +439,16 @@ export function ClientScreen({ id }: { id: ClientId }) {
     return (
       <View style={styles.root}>
         <ProGate visible onClose={exit} />
+      </View>
+    );
+  }
+
+  if (tuto !== 'no') {
+    return (
+      <View style={styles.root}>
+        {tuto === 'show' && (
+          <ClientTutorial id={id} onDone={() => { void markTutorialSeen(id); setTuto('no'); }} />
+        )}
       </View>
     );
   }

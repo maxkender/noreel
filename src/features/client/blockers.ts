@@ -632,6 +632,12 @@ export const INSTAGRAM_BLOCKER = `
   const posts = () => document.querySelectorAll('article');
   /** Le fil d'accueil, le seul endroit qu'on s'interdit de toucher. */
   const __home = () => location.pathname === '/';
+  /*
+    Personne n'est connecte : la racine du site, c'est alors le formulaire
+    de connexion, et pas le fil. Le mur du fil se posait dessus — « Fil
+    bloque » au-dessus d'un champ mot de passe, a la premiere ouverture.
+  */
+  const __anon = () => !!document.querySelector('input[name="password"], form[id*="login" i]');
 
   /*
     Le fil bloque en entier.
@@ -1003,7 +1009,7 @@ export const INSTAGRAM_BLOCKER = `
 
     if (__on('stories')) __hide(__tray(), 'stories');
     else if (__on('feed')) __hide(__tray(), 'feed');
-    if (__on('feed') && __home()) __wall(); else __unwall();
+    if (__on('feed') && __home() && !__anon()) __wall(); else __unwall();
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
       __go('/direct/inbox/');

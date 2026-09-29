@@ -29,5 +29,16 @@ export async function firstRunUrl(id: ClientId, login?: string): Promise<string 
   }
 }
 
+/**
+ * Oublier qu'on est deja venu.
+ *
+ * Recommencer le parcours doit ramener a la page de connexion, comme la
+ * premiere fois : le drapeau vivait plus longtemps que l'onboarding, et
+ * apres une remise a zero on retombait sur un fil vide sans explication.
+ */
+export async function resetFirstRun(): Promise<void> {
+  try { await AsyncStorage.removeItem(KEY); } catch { /* le disque, pas nous */ }
+}
+
 /** Pour les tests : le disque garde le drapeau, pas cette fonction. */
 export const FIRST_RUN_KEY = KEY;

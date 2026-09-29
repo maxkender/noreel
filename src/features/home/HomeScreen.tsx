@@ -20,6 +20,8 @@ import { shield } from '@/services';
 import { today as usageToday, streak as usageStreak, type Today } from '@/services/usage';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
+import { resetFirstRun } from '@/features/client/firstrun';
+import { resetTutorial } from '@/features/client/tutorial';
 import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, type Scroll } from './parts';
 import { AppSlider } from './AppSlider';
@@ -499,7 +501,7 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
       <Card>
         <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.account.restart} onPress={() => { reset(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.account.restart} onPress={() => { reset(); void resetFirstRun(); void resetTutorial(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
       </Card>
 
