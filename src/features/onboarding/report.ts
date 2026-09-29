@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
@@ -54,26 +54,22 @@ export function useNativeReport(guess: number): 'yes' | 'no' | 'unknown' {
   const { d } = useT();
   const age = useOnboardingStore((x) => x.age);
   const [state, setState] = useState<'yes' | 'no' | 'unknown'>(reportAvailable() ? 'unknown' : 'no');
-  // Lu au moment d'ecrire, pas au moment de s'abonner : ni les textes ni les
-  // couleurs ne changent pendant le parcours, et les mettre en dependance
-  // ferait redemander l'autorisation a chaque rendu.
-  const payload = useRef({ d, c, age });
-  payload.current = { d, c, age };
 
+  // Le dictionnaire et la palette sont des objets stables — une langue, un
+  // theme — et l'age un nombre : l'effet ne tourne qu'une fois par ecran.
   useEffect(() => {
     if (!reportAvailable()) return;
     let alive = true;
     void authorizationStatus().then((a) => {
       if (!alive) return;
       if (a !== 'approved') { setState('no'); return; }
-      const { d: dict, c: pal, age: years } = payload.current;
-      prepareReport(guess, reportStrings(dict), {
-        accent: pal.accent, danger: pal.danger, good: '#2E9E5B', ink: pal.mist, inkSoft: withAlpha(pal.mist, 0.6),
-      }, { age: years });
+      prepareReport(guess, reportStrings(d), {
+        accent: c.accent, danger: c.danger, good: '#2E9E5B', ink: c.mist, inkSoft: withAlpha(c.mist, 0.6),
+      }, { age });
       setState('yes');
     });
     return () => { alive = false; };
-  }, [guess]);
+  }, [guess, d, c, age]);
   return state;
 }
 
