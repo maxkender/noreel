@@ -91,8 +91,10 @@ describe('reparer l’indice', () => {
     */
     render(<CortiTab onScroll={noop} />);
     expect(screen.getByText(dict.cortiTab.careTitle)).toBeTruthy();
-    expect(screen.getByText(dict.cortiTab.water)).toBeTruthy();
-    expect(screen.getByText(dict.cortiTab.move)).toBeTruthy();
+    // Chaque geste porte sa RAISON : c'est elle qui fait qu'on le choisit.
+    expect(screen.getByText(dict.cortiTab.focusT)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.focusW)).toBeTruthy();
+    expect(screen.getByText(dict.cortiTab.todayPick)).toBeTruthy();
     expect(screen.getByText(dict.cortiTab.careBody)).toBeTruthy();
   });
 

@@ -21,6 +21,8 @@ import { Paywall } from './Paywall';
 import { AgeAsk, Analysis, Compare, Guess, RealTime } from './time';
 import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './science';
 import { PromiseScreen } from './setup';
+import { Ready } from './ready';
+import { DmReel, NotBlocker } from './story';
 import { useOnboardingStore } from '@/store/onboarding';
 
 // Le magasin d'Apple n'existe pas dans un test : sans offre, les ecrans
@@ -113,4 +115,7 @@ describe('une page par idee', () => {
   it('plus rien ne fait d’effet', () => { render(<NothingLands onNext={noop} />); });
   it('l’amour', () => { render(<LovePage onNext={noop} />); });
   it('le serment, a signer', () => { render(<PromiseScreen onNext={noop} />); });
+  it('« tu es pret ? », a tenir', () => { render(<Ready onNext={noop} />); });
+  it('pas un bloqueur de plus', () => { render(<NotBlocker onNext={noop} />); });
+  it('le reel envoye par un ami', () => { render(<DmReel onNext={noop} />); });
 });

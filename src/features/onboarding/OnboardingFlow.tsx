@@ -19,6 +19,8 @@ import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { AgeAsk, Analysis, Compare, Guess } from './screens/time';
 import { Dopamine, LovePage, NothingLands, ReceptorsPage } from './screens/science';
+import { Ready } from './screens/ready';
+import { DmReel, NotBlocker } from './screens/story';
 
 /**
  * Le parcours : on accroche, on comprend, on mesure, on parametre, on
@@ -155,8 +157,11 @@ export function OnboardingFlow() {
     <NothingLands key="flat" onNext={next} />,
     <LovePage key="love" onNext={next} />,
     <S6Years key="s6y" onNext={next} />,
+    <Ready key="ready" onNext={next} />,
     <Ninety key="90" onNext={next} />,
+    <NotBlocker key="nb" onNext={next} />,
     <Proof key="proof" onNext={next} />,
+    <DmReel key="dm" onNext={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
@@ -245,7 +250,7 @@ export function OnboardingFlow() {
  * resultat qu'on decouvre plutot qu'une page qu'on tourne. Le contraste avec
  * les autres est ce qui fait sentir que quelque chose vient d'etre dit.
  */
-const REVEAL = new Set(['cmp', 'ana', 's6', 's6y', 'proof']);
+const REVEAL = new Set(['cmp', 'ana', 's6', 's6y', 'proof', 'dm']);
 
 function reveal() {
   'worklet';

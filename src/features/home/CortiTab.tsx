@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowDown, ArrowUp, Check, Ticket } from 'lucide-react-native';
+import {
+  ArrowDown, ArrowUp, BookOpen, Check, Crosshair, Footprints, Hourglass, Moon, Snowflake,
+  Sun, Sunrise, Ticket, Timer,
+} from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -14,9 +17,8 @@ import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
 import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { cortiLevel, cortiLine, type CortiLevel } from '@/components/Corti';
-import {
-  CARE_IDS, CARE_PER_DAY, logCare, stats, type Stats,
-} from '@/services/protect';
+import { CARE_PER_DAY, logCare, stats, type CareId, type Stats } from '@/services/protect';
+import { CARE, CARE_GROUPS, careOfTheDay, type CareGroup } from '@/services/care';
 import { claimCheer } from '@/services/cheer';
 import { useT } from '@/i18n';
 import type { Scroll } from './parts';
@@ -44,6 +46,12 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   const [s, setS] = useState<Stats | null>(null);
   /** Les gestes deja declares aujourd'hui. */
   const [done, setDone] = useState<string[]>([]);
+  const today = careOfTheDay();
+  const tick = (id: CareId) => {
+    if (done.includes(id)) return;
+    haptics.success();
+    void logCare(id).then(setDone);
+  };
 
   useFocusEffect(useCallback(() => {
     void stats().then((x) => { setS(x); setDone(x.careToday); });
@@ -173,42 +181,31 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
       <Text variant="body" tone="secondary">{d.cortiTab.plainBody}</Text>
 
       {/*
-        Et de quoi le REPARER.
+        Et de quoi le REPARER — avec la raison de chaque geste.
 
-        L'indice ne descendait que par des malus et ne montait qu'en attendant
-        le lendemain : rien a faire dans l'instant, sinon patienter. Un
-        compteur sur lequel on n'a aucune prise se regarde une fois. Ces
-        gestes-la donnent une action tout de suite — et ils rapportent PEU,
-        parce qu'on ne peut rien verifier : un point chacun, trois par jour au
-        plus, et l'ecran ecrit qu'on te croit sur parole. Un compteur qui
-        prend ta parole sans le dire fabrique un chiffre incontestable, et
-        c'est justement ce qu'on reproche a ces apps-la.
+        La premiere liste (boire de l'eau, bouger, lire) etait une liste de
+        bonnes resolutions : rien ne disait ce que chaque geste faisait au
+        cerveau, donc rien ne donnait envie de le faire. Neuf gestes, en
+        trois familles, et chacun porte sa raison en une ligne. Un seul est
+        mis en avant chaque jour : neuf cases sont un formulaire, une
+        proposition est un geste. Ils rapportent peu et l'ecran le dit — on
+        ne verifie rien, on croit sur parole.
       */}
       <Text variant="button" style={st.h}>{d.cortiTab.careTitle}</Text>
       <Text variant="body" tone="secondary">{d.cortiTab.careBody}</Text>
-      <View style={st.cares}>
-        {CARE_IDS.map((id) => {
-          const on = done.includes(id);
-          return (
-            <Pressable
-              key={id}
-              onPress={() => { if (!on) { haptics.success(); void logCare(id).then(setDone); } }}
-              disabled={on}
-              style={[st.care, on && { borderColor: c.accent, backgroundColor: withAlpha(c.accent, 0.1) }]}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: on }}
-            >
-              <View style={[st.tick, on && { backgroundColor: c.accent }]}>
-                {on && <Check size={12} strokeWidth={3} color={c.night} />}
-              </View>
-              <Text variant="body" tone={on ? 'primary' : 'secondary'} style={{ flex: 1 }}>
-                {d.cortiTab[id]}
-              </Text>
-              {on && <Text variant="label" color={c.accent}>+1</Text>}
-            </Pressable>
-          );
-        })}
-      </View>
+
+      <CareCard id={today} done={done.includes(today)} featured onPress={() => tick(today)} />
+
+      {CARE_GROUPS.map((g) => (
+        <View key={g}>
+          <Text variant="label" tone="tertiary" style={st.groupH}>{GROUP_LABEL(d)[g]}</Text>
+          <View style={st.cares}>
+            {CARE.filter((x) => x.group === g && x.id !== today).map((x) => (
+              <CareCard key={x.id} id={x.id} done={done.includes(x.id)} onPress={() => tick(x.id)} />
+            ))}
+          </View>
+        </View>
+      ))}
       <Text variant="label" tone="tertiary" style={st.note}>
         {done.length >= CARE_PER_DAY
           ? d.cortiTab.careFull
@@ -275,6 +272,58 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
   );
 }
 
+/** Une icone par geste : ce qu'il est, avant qu'on lise ce qu'il fait. */
+const CARE_ICON = {
+  morning: Sunrise, bored: Hourglass, sleep: Moon, focus: Crosshair, read: BookOpen,
+  delay: Timer, sun: Sun, move: Footprints, cold: Snowflake,
+} as const;
+
+const GROUP_LABEL = (d: ReturnType<typeof useT>['d']): Record<CareGroup, string> => ({
+  reset: d.cortiTab.groupReset, train: d.cortiTab.groupTrain, fuel: d.cortiTab.groupFuel,
+});
+
+/**
+ * Un geste : son icone, son titre, sa raison, et une coche.
+ *
+ * En vedette, la carte grandit et porte la mention du jour ; sinon elle
+ * tient sur deux lignes. La raison est toujours la : c'est elle qui fait
+ * qu'on choisit celui-la plutot qu'un autre, et pas la case a cocher.
+ */
+function CareCard({
+  id, done, featured = false, onPress,
+}: { id: CareId; done: boolean; featured?: boolean; onPress: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const { d } = useT();
+  const Icon = CARE_ICON[id];
+  const title = d.cortiTab[`${id}T` as const];
+  const why = d.cortiTab[`${id}W` as const];
+  const tone = done ? c.accent : featured ? c.ember : withAlpha(c.mist, 0.7);
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={done}
+      style={[st.care, featured && st.careFeatured, done && { borderColor: c.accent, backgroundColor: withAlpha(c.accent, 0.1) }]}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: done }}
+    >
+      <View style={[st.careIcon, { backgroundColor: withAlpha(tone, 0.14), borderColor: withAlpha(tone, 0.3) }]}>
+        <Icon size={featured ? 22 : 18} strokeWidth={2.2} color={tone} />
+      </View>
+      <View style={{ flex: 1 }}>
+        {featured && (
+          <Text variant="label" color={c.ember} style={{ marginBottom: 2 }}>{d.cortiTab.todayPick}</Text>
+        )}
+        <Text variant={featured ? 'button' : 'body'} tone={done ? 'primary' : 'primary'}>{title}</Text>
+        <Text variant="label" tone="tertiary" style={{ marginTop: 2 }}>{why}</Text>
+      </View>
+      <View style={[st.tick, done && { backgroundColor: c.accent, borderColor: c.accent }]}>
+        {done && <Check size={12} strokeWidth={3} color={c.night} />}
+      </View>
+    </Pressable>
+  );
+}
+
 function Count({ v, label, c }: { v: string; label: string; c: string }) {
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
@@ -303,12 +352,21 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   h: { marginTop: space.xl, marginBottom: space.sm },
   moves: { gap: space.sm },
-  cares: { gap: space.sm, marginTop: space.md },
+  cares: { gap: space.sm },
   care: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     padding: space.md, borderRadius: 16, borderWidth: 1,
     borderColor: withAlpha(c.mist, 0.12),
   },
+  careFeatured: {
+    marginTop: space.lg, padding: space.lg, borderRadius: 20,
+    borderColor: withAlpha(c.ember, 0.4), backgroundColor: withAlpha(c.ember, 0.07),
+  },
+  careIcon: {
+    width: 40, height: 40, borderRadius: 20, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  groupH: { marginTop: space.lg, marginBottom: space.sm },
   tick: {
     width: 20, height: 20, borderRadius: 10, borderWidth: 1.5,
     borderColor: withAlpha(c.mist, 0.3),

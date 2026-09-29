@@ -269,7 +269,9 @@ export function brainIndex(
 export const CARE_PER_DAY = 3;
 
 /** Les gestes qu'on peut declarer. Ils valent UN point chacun, pas plus. */
-export const CARE_IDS = ['water', 'move', 'sleep', 'read', 'outside'] as const;
+export const CARE_IDS = [
+  'morning', 'bored', 'sleep', 'focus', 'read', 'delay', 'sun', 'move', 'cold',
+] as const;
 export type CareId = (typeof CARE_IDS)[number];
 
 /** Le total des gestes comptes, plafond du jour applique. */
