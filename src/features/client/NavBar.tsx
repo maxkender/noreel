@@ -89,7 +89,7 @@ export function NavBar({
     <>
       {hint && !open && (
         <Animated.View style={styles.hint} pointerEvents="none">
-          <Text variant="label" tone="secondary">Touche ici pour ta barre</Text>
+          <Text variant="label" tone="secondary">{d.ui.navHint}</Text>
         </Animated.View>
       )}
 

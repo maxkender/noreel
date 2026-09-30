@@ -41,10 +41,10 @@ export const LOGOS = {
 } as const;
 
 export const APPS: { id: ClientId; name: string; sub: string }[] = [
-  { id: 'instagram', name: 'Instagram', sub: 'Sans Reels, sans Explorer' },
-  { id: 'tiktok', name: 'TikTok', sub: 'Abonnements uniquement' },
-  { id: 'twitter', name: 'X', sub: 'Sans « Pour vous »' },
-  { id: 'youtube', name: 'YouTube', sub: 'Sans Shorts' },
+  { id: 'instagram', name: 'Instagram', sub: dict.ui.subIg },
+  { id: 'tiktok', name: 'TikTok', sub: dict.ui.subTt },
+  { id: 'twitter', name: 'X', sub: dict.ui.subX },
+  { id: 'youtube', name: 'YouTube', sub: dict.ui.subYt },
 ];
 
 // L'icone occupe presque tout son emplacement : c'est ce qu'on vient
@@ -208,7 +208,7 @@ function Tile({
     <Animated.View style={[st.slot, { width: item }, anim]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Ouvrir ${app.name}`}
+        accessibilityLabel={dict.ui.openApp.replace('{name}', app.name)}
         onPress={() => {
           haptics.press();
           if (locked) { onLocked(); return; }

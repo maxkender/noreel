@@ -1,4 +1,5 @@
 import type { ClientId } from './blockers';
+import { dict } from '@/i18n';
 
 /**
  * Changer de compte, par la porte du site lui-meme.
@@ -28,6 +29,6 @@ export const ACCOUNT: Record<ClientId, { add: string; out: string; note?: string
     // Google refuse souvent la connexion depuis un navigateur integre. On
     // le dit ici plutot que de laisser son message d'erreur passer pour une
     // panne de notre cote.
-    note: 'Google refuse parfois la connexion depuis un navigateur intégré.',
+    note: dict.ui.googleNote,
   },
 };

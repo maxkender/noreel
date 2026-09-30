@@ -74,13 +74,13 @@ export function Widgets() {
           <Text variant="displayM">{dict.misc.homeScreenBody}</Text>
 
           <Glass radius={22} intensity={45} warmEdge="none" style={st.steps}>
-            <Step n="1" text="Copie le lien de l’app ci-dessous." />
-            <Step n="2" text="Ouvre Raccourcis → + → Ouvrir l’URL → colle le lien." />
-            <Step n="3" text="Partager → Sur l’écran d’accueil. Choisis le nom et l’icône." />
+            <Step n="1" text={dict.ui.wStep1} />
+            <Step n="2" text={dict.ui.wStep2} />
+            <Step n="3" text={dict.ui.wStep3} />
           </Glass>
           <Text variant="label" tone="tertiary" style={{ marginTop: space.md }}>{dict.misc.iconHint}</Text>
 
-          <Text variant="label" tone="tertiary" style={{ marginTop: space.xl }}>LIENS</Text>
+          <Text variant="label" tone="tertiary" style={{ marginTop: space.xl }}>{dict.ui.wLinks}</Text>
           <View style={{ gap: space.sm, marginTop: space.sm }}>
             {APPS.map((a) => (
               <Pressable key={a.id} style={st.row} onPress={() => { void copy(a.id); }}>
@@ -105,7 +105,7 @@ export function Widgets() {
               onPress={() => { haptics.press(); void Linking.openURL('shortcuts://'); }}
             >
               <Text variant="button" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                Ouvrir Raccourcis
+                {dict.ui.wOpenShortcuts}
               </Text>
             </Pressable>
           )}

@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeOut, LinearTransition, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ForcedTheme, useColors, type Palette } from '@/theme/useColors';
 import { easings } from '@/theme/motion';
+import { gutter, space } from '@/theme/spacing';
 import { useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { ProgressContext } from '@/components/ProgressContext';
@@ -182,6 +184,12 @@ export function OnboardingFlow() {
     personne. Une seule barre qui GLISSE montre les deux, et son mouvement est
     la recompense de l'ecran qu'on vient de passer.
   */
+  /*
+    La barre est HORS des ecrans : elle ne suit pas leurs transitions.
+    Elle vivait dans chaque ecran, donc elle entrait et sortait avec lui a
+    chaque page. Ici elle est posee une fois, par-dessus, et les ecrans ne
+    recoivent qu'une cale de sa hauteur pour garder leur place.
+  */
   const bar = step > 0 ? (
     <View style={styles.progress}>
       <Animated.View
@@ -191,6 +199,7 @@ export function OnboardingFlow() {
       <View style={{ flex: Math.max(0.001, 1 - (step + 1) / screens.length) }} />
     </View>
   ) : undefined;
+  const barSpace = step > 0 ? <View style={{ height: 3 }} /> : undefined;
 
   return (
     /*
@@ -204,7 +213,7 @@ export function OnboardingFlow() {
       <View style={styles.root}>
         {/* La barre d'etat suit la scene, pas le reglage de l'app. */}
         <StatusBar style="light" />
-        <ProgressContext.Provider value={bar}>
+        <ProgressContext.Provider value={barSpace}>
           {/*
             L'ecran suivant monte de quelques points en se revelant PAR-DESSUS
             le precedent, qui tient sa couleur plus longtemps qu'il ne met a
@@ -225,6 +234,12 @@ export function OnboardingFlow() {
             </StepBoundary>
           </Animated.View>
         </ProgressContext.Provider>
+
+        {bar && (
+          <SafeAreaView edges={['top']} style={styles.barLayer} pointerEvents="none">
+            {bar}
+          </SafeAreaView>
+        )}
 
         {intro && <Intro onDone={() => setIntro(false)} />}
         {finale && <Finale onDone={finish} />}
@@ -294,6 +309,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   // Le fond du parcours suit le theme. Fige sur la palette sombre, il
   // apparaissait en noir sous chaque croisement d'ecrans en mode clair.
   root: { flex: 1, backgroundColor: c.night },
+  barLayer: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: gutter, paddingTop: space.sm },
   progress: {
     flexDirection: 'row', height: 3, borderRadius: 2,
     overflow: 'hidden', backgroundColor: c.line,

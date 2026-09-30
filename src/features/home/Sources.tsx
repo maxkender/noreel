@@ -39,7 +39,7 @@ const CAVEAT = dict.refs.caveat;
  * viennent. La ligne des sources ouvrait sur rien.
  */
 export function Sources({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const { d } = useT();
+  const { d, t } = useT();
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
@@ -59,14 +59,9 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
 
           <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
             <Text variant="label" tone="tertiary" style={st.group}>{d.refs.calc}</Text>
-            <Text variant="body" tone="secondary" style={st.body}>
-              On part de ton temps quotidien et de ton âge, jusqu’à {LIFE_YEARS} ans.
-              Les années passées devant un écran valent ton temps quotidien
-              rapporté à une journée éveillée de {WAKING_HOURS} heures. La part
-              affichée est ce même rapport, en pourcentage.
-            </Text>
+            <Text variant="body" tone="secondary" style={st.body}>{t(d.ui.calc, { life: LIFE_YEARS, waking: WAKING_HOURS })}</Text>
 
-            <Text variant="label" tone="tertiary" style={st.group}>RECHERCHE</Text>
+            <Text variant="label" tone="tertiary" style={st.group}>{d.ui.research}</Text>
             {REFS.map((r) => (
               <View key={r.t} style={st.ref}>
                 <Text variant="body">{r.t}</Text>

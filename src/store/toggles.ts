@@ -1,3 +1,4 @@
+import { dict } from '@/i18n';
 import type { ClientId } from '@/features/client/blockers';
 
 /**
@@ -20,33 +21,33 @@ export type AppToggle = {
 
 export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
-    { key: 'reels', label: 'Bloquer les Reels', locked: true },
-    { key: 'stories', label: 'Bloquer les stories' },
-    { key: 'explore', label: 'Masquer la grille Explorer (la recherche reste)' },
-    { key: 'saved', label: 'Bloquer les publications enregistrées' },
-    { key: 'feed', label: 'Bloquer le fil' },
-    { key: 'dmsOnly', label: 'Messages uniquement' },
-    { key: 'grayscale', label: 'Noir et blanc' },
+    { key: 'reels', label: dict.toggles.igReels, locked: true },
+    { key: 'stories', label: dict.toggles.igStories },
+    { key: 'explore', label: dict.toggles.igExplore },
+    { key: 'saved', label: dict.toggles.igSaved },
+    { key: 'feed', label: dict.toggles.igFeed },
+    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
+    { key: 'grayscale', label: dict.toggles.gray },
   ],
   tiktok: [
-    { key: 'foryou', label: 'Bloquer le fil Pour toi', locked: true },
-    { key: 'explore', label: 'Bloquer la recherche et Découvrir' },
-    { key: 'dmsOnly', label: 'Messages uniquement' },
-    { key: 'grayscale', label: 'Noir et blanc' },
+    { key: 'foryou', label: dict.toggles.ttForyou, locked: true },
+    { key: 'explore', label: dict.toggles.ttExplore },
+    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
+    { key: 'grayscale', label: dict.toggles.gray },
   ],
   twitter: [
-    { key: 'foryou', label: 'Bloquer « Pour vous »', locked: true },
-    { key: 'trends', label: 'Masquer les tendances', locked: true },
-    { key: 'explore', label: 'Bloquer Explorer' },
-    { key: 'dmsOnly', label: 'Messages uniquement' },
-    { key: 'grayscale', label: 'Noir et blanc' },
+    { key: 'foryou', label: dict.toggles.xForyou, locked: true },
+    { key: 'trends', label: dict.toggles.xTrends, locked: true },
+    { key: 'explore', label: dict.toggles.xExplore },
+    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
+    { key: 'grayscale', label: dict.toggles.gray },
   ],
   youtube: [
-    { key: 'shorts', label: 'Bloquer les Shorts', locked: true },
-    { key: 'searchOnly', label: 'Recherche uniquement' },
-    { key: 'ads', label: 'Bloquer les publicités', on: true },
-    { key: 'comments', label: 'Bloquer les commentaires' },
-    { key: 'recommended', label: 'Masquer les suggestions' },
-    { key: 'grayscale', label: 'Noir et blanc' },
+    { key: 'shorts', label: dict.toggles.ytShorts, locked: true },
+    { key: 'searchOnly', label: dict.toggles.ytSearchOnly },
+    { key: 'ads', label: dict.toggles.ytAds, on: true },
+    { key: 'comments', label: dict.toggles.ytComments },
+    { key: 'recommended', label: dict.toggles.ytRecommended },
+    { key: 'grayscale', label: dict.toggles.gray },
   ],
 };

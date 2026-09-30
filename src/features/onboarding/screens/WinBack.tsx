@@ -81,17 +81,16 @@ export function WinBack({ visible, onClose }: { visible: boolean; onClose: () =>
           <View style={{ flex: 1 }} />
 
           <Animated.View entering={FadeIn.duration(520)}>
-            <Text variant="label" color={withAlpha(INK, 0.65)}>OFFRE UNIQUE</Text>
+            <Text variant="label" color={withAlpha(INK, 0.65)}>{dict.ui.wbKicker}</Text>
             <Text variant="displayL" color={INK} style={st.title}>
-              Accès à tout.
+              {dict.ui.wbTitle}
             </Text>
             <View style={st.priceRow}>
               <Text variant="hero" color={INK}>{pack?.product.priceString ?? '24,99 €'}</Text>
-              <Text variant="lead" color={withAlpha(INK, 0.7)}>par an</Text>
+              <Text variant="lead" color={withAlpha(INK, 0.7)}>{dict.ui.wbPerYear}</Text>
             </View>
             <Text variant="lead" color={withAlpha(INK, 0.75)} style={st.body}>
-              Les quatre applis filtrées, le blocage, les réglages. Cette
-              offre ne reviendra pas.
+              {dict.ui.wbBody}
             </Text>
           </Animated.View>
 

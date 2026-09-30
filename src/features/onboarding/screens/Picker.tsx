@@ -51,8 +51,7 @@ export function Picker({ onNext }: P) {
       >
         <Text variant="displayM" style={st.center}>{d.picker.choose}</Text>
         <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
-          Le sélecteur d’apps appartient à iOS. Il lui faut l’accès à Temps
-          d’écran pour t’afficher tes apps — sans lui, il reste vide.
+          {d.ui.pickerNeedsAccess}
         </Text>
       </Screen>
     );
@@ -63,7 +62,7 @@ export function Picker({ onNext }: P) {
       <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent">
         <Text variant="displayM" style={st.center}>{d.picker.choose}</Text>
         <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
-          Le sélecteur d’Apple arrive sur cet appareil.
+          {d.ui.pickerSoon}
         </Text>
       </Screen>
     );

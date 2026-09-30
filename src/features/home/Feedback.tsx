@@ -49,22 +49,22 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
             <Pressable onPress={() => { haptics.tap(); onClose(); }} hitSlop={12}>
               <Text variant="label" color={c.accent}>{dict.misc.cancel}</Text>
             </Pressable>
-            <Text variant="label" tone="tertiary">Faire un retour</Text>
+            <Text variant="label" tone="tertiary">{dict.ui.fbBar}</Text>
             <View style={{ width: 54 }} />
           </View>
 
           <View style={st.body}>
-            <Text variant="displayM">Dis-nous tout.</Text>
+            <Text variant="displayM">{dict.ui.fbTitle}</Text>
             <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>
-              Un bug, une idée, une app qui résiste au filtre. On lit tout.
+              {dict.ui.fbBody}
             </Text>
 
-            <Text variant="label" tone="tertiary" style={st.label}>SUJET</Text>
+            <Text variant="label" tone="tertiary" style={st.label}>{dict.ui.fbSubject}</Text>
             <TextInput
               style={st.input}
               value={subject}
               onChangeText={setSubject}
-              placeholder="Les stories reviennent sur Instagram"
+              placeholder={dict.ui.fbPlaceholder}
               placeholderTextColor={withAlpha(c.mist, 0.3)}
             />
 

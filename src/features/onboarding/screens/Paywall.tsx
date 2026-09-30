@@ -378,8 +378,9 @@ export function Paywall(
       <View style={st.plans}>
         <PlanCard
           label={d.pay.annual}
-          price={price(annual, FALLBACK.annual)}
-          per={t(d.pay.annualNote, { p: money(euros(annual, ANNUAL_EUR) / 52) })}
+          // Par MOIS : c'est l'unite dans laquelle on compare un abonnement.
+          price={t(d.pay.perMonth, { p: money(euros(annual, ANNUAL_EUR) / 12) })}
+          per={t(d.pay.billedYear, { y: price(annual, FALLBACK.annual) })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}

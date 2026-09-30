@@ -297,10 +297,10 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
             <Group title={d.prefs.about} />
             <Line
-              label="Partager UnSwipe"
+              label={d.ui.share}
               onPress={() => {
                 void Share.share({
-                  message: 'UnSwipe : Instagram, TikTok, X et YouTube sans les reels.',
+                  message: d.ui.shareText,
                 });
               }}
             />

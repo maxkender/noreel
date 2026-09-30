@@ -52,7 +52,7 @@ export function ClientSettings({
   const { height: winH } = useWindowDimensions();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
+  const { d, t } = useT();
   const pro = useProStore((p) => p.pro);
   const isOn = useAppsStore((s) => s.isOn);
   const toggle = useAppsStore((s) => s.toggle);
@@ -129,7 +129,7 @@ export function ClientSettings({
             ))}
 
             <Text variant="label" tone="tertiary" style={st.note}>
-              Les changements s’appliquent tout de suite.
+              {d.ui.applyNow}
             </Text>
 
 
@@ -155,13 +155,12 @@ export function ClientSettings({
             >
               <Hourglass size={15} strokeWidth={2} color={c.ember} />
               <Text variant="body" style={{ flex: 1 }}>
-                Débloquer les Reels {PASS_MINUTES} minutes
+                {t(d.ui.passBtn, { n: PASS_MINUTES })}
               </Text>
             </Pressable>
 
             <Text variant="label" tone="tertiary" style={st.note}>
-              Une attente, trois calculs et une suite à retenir. C’est long
-              exprès.
+              {d.ui.passNote}
             </Text>
 
             {id === 'instagram' && (

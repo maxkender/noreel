@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { Easing, FadeInUp, FadeOutUp } from 'react-native-reanimated';
+import Animated, { ZoomIn } from 'react-native-reanimated';
+import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
@@ -12,9 +13,8 @@ import { ACTIVITIES, activityCount } from '../calculations';
 
 type P = { onNext: () => void };
 
-const SHOW = 5;        // le nombre de lignes qu'on fait passer
-const HOLD = 1500;     // le temps qu'on lise une ligne
-const FADE = 350;      // le temps qu'elle s'efface
+const SHOW = 5;        // le nombre de pilules
+const STEP = 420;      // l'ecart entre deux pilules
 
 /**
  * Ce que l'annee ecoulee aurait pu contenir — une ligne a la fois.
@@ -58,40 +58,29 @@ export function Activities({ onNext }: P) {
     return lang ? [picked[0], lang, ...picked.slice(1)] : picked;
   }, [hours, d, t]);
 
-  const [i, setI] = useState(0);
-  const last = i >= rows.length - 1;
-
+  // Le bouton attend la derniere pilule.
+  const [read, setRead] = useState(false);
   useEffect(() => {
-    haptics.tick();
-    if (last) return;
-    const id = setTimeout(() => setI((n) => n + 1), HOLD + FADE);
+    const id = setTimeout(() => setRead(true), STEP * rows.length + 500);
+    for (let k = 0; k < rows.length; k += 1) setTimeout(() => haptics.tick(), STEP * k + 120);
     return () => clearTimeout(id);
-  }, [i, last]);
-
-  const row = rows[i];
+  }, [rows.length]);
 
   return (
-    <Screen cta={d.s6.cta2} onPress={onNext} disabled={!last} center hue="ember" hueLevel={0.5}>
+    <Screen cta={d.s6.cta2} onPress={onNext} disabled={!read} center hue="ember" hueLevel={0.5}>
       <Text variant="displayM" style={st.title}>{d.s6.afterTitle}</Text>
 
-      {/* Hauteur FIXE : une ligne de deux rangees recentrerait tout le bloc,
-          et le texte sauterait a chaque passage. */}
-      <View style={st.stage}>
-        {row && (
-          <Animated.View
-            key={row.id}
-            entering={FadeInUp.duration(520).easing(Easing.out(Easing.cubic)).withInitialValues({ transform: [{ translateY: 26 }] })}
-            exiting={FadeOutUp.duration(FADE).easing(Easing.in(Easing.cubic))}
-            style={st.line}
-          >
-            <Text variant="displayM" style={st.big} numberOfLines={3} adjustsFontSizeToFit>{row.text}</Text>
-          </Animated.View>
-        )}
-      </View>
-
-      <View style={st.dots}>
+      {/* Les pilules, l'une sous l'autre, chacune qui POP a son tour : la
+          premiere, bam, la deuxieme apparait — rien a attendre qui defile. */}
+      <View style={st.pills}>
         {rows.map((r, k) => (
-          <View key={r.id} style={[st.dot, k <= i && { backgroundColor: c.ember }]} />
+          <Animated.View
+            key={r.id}
+            entering={ZoomIn.delay(STEP * k).springify().damping(13).stiffness(260)}
+            style={[st.pill, { backgroundColor: withAlpha(c.ember, 0.14), borderColor: withAlpha(c.ember, 0.45) }]}
+          >
+            <Text variant="title" style={st.pillText}>{r.text}</Text>
+          </Animated.View>
         ))}
       </View>
     </Screen>
@@ -100,9 +89,10 @@ export function Activities({ onNext }: P) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   title: { textAlign: 'center' },
-  stage: { height: 170, marginTop: space.xl, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
-  line: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  big: { textAlign: 'center' },
-  dots: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: space.xl },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: c.line },
+  pills: { alignSelf: 'stretch', gap: space.sm, marginTop: space.xl },
+  pill: {
+    paddingVertical: 14, paddingHorizontal: 18, borderRadius: 18, borderWidth: 1,
+    alignItems: 'center', backgroundColor: withAlpha(c.ember, 0.14),
+  },
+  pillText: { textAlign: 'center' },
 });

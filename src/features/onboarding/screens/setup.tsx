@@ -9,6 +9,7 @@ import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { SelectCard } from '@/components/SelectCard';
+import { HSlider } from '../scenes/HSlider';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
@@ -40,6 +41,7 @@ type Step =
       honest?: boolean;
       options: string[];
     }
+  | { kind: 'slide'; q: string; honest?: boolean; min: number; max: number }
   | { kind: 'say'; q: string; sub?: string };
 
 /*
@@ -51,12 +53,9 @@ type Step =
   laisser passer une.
 */
 const CONSTAT: Step[] = [
-  {
-    kind: 'ask',
-    q: dict.ob.q1,
-    honest: true,
-    options: [dict.ob.q1a, dict.ob.q1b, dict.ob.q1c, dict.ob.q1d],
-  },
+  // Un curseur, de un a vingt : comme pour le temps d'ecran, on donne SON
+  // chiffre au doigt au lieu de choisir une case.
+  { kind: 'slide', q: dict.ob.q1, honest: true, min: 1, max: 20 },
   {
     kind: 'ask',
     q: dict.ob.q2,
@@ -75,10 +74,11 @@ export function Constat({ onNext }: P) {
   const st = useMemo(() => sheet(c), [c]);
   const [i, setI] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
+  const [reels, setReels] = useState(8);
 
   const step = CONSTAT[i];
   const last = i >= CONSTAT.length - 1;
-  const answered = step.kind === 'say' || answer !== null;
+  const answered = step.kind === 'say' || step.kind === 'slide' || answer !== null;
 
   const advance = () => {
     if (last) { onNext(); return; }
@@ -109,7 +109,7 @@ export function Constat({ onNext }: P) {
           style={st.center}
         />
 
-        {step.kind === 'ask' && step.honest ? (
+        {(step.kind === 'ask' || step.kind === 'slide') && step.honest ? (
           <Animated.View entering={FadeIn.delay(1300).duration(420)}>
             <Text variant="lead" tone="tertiary" style={[st.center, { marginTop: space.sm }]}>
               {d.ob.honestly}
@@ -124,6 +124,12 @@ export function Constat({ onNext }: P) {
             </Text>
           </Animated.View>
         ) : null}
+
+        {step.kind === 'slide' && (
+          <Animated.View entering={FadeIn.delay(900).duration(520)} style={{ marginTop: space.xl, alignItems: 'center' }}>
+            <HSlider value={reels} min={step.min} max={step.max} onChange={setReels} unit={d.ob.reelsUnit} maxLabel={d.ob.reelsMax} />
+          </Animated.View>
+        )}
 
         {step.kind === 'ask' && (
           <Animated.View

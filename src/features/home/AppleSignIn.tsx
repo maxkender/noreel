@@ -44,7 +44,7 @@ export function AppleSignIn() {
         <View style={{ flex: 1, gap: 1 }}>
           <Text variant="body">{dict.misc.purchasesLinked}</Text>
           <Text variant="label" tone="tertiary">
-            Ton abonnement te suivra sur un nouveau téléphone.
+            {dict.ui.appleFollow}
           </Text>
         </View>
       </View>
@@ -73,8 +73,7 @@ export function AppleSignIn() {
         }}
       />
       <Text variant="label" tone="tertiary" style={st.note}>
-        Facultatif. Sert uniquement à retrouver ton abonnement sur un autre
-        appareil.
+        {dict.ui.appleNote}
       </Text>
     </View>
   );

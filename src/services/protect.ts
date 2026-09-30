@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { dict } from '@/i18n';
 import type { ClientId } from '@/features/client/blockers';
 import { dayKey } from './usage';
 
@@ -218,8 +219,8 @@ async function warn(): Promise<void> {
     if (!granted) return;
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Le filtre est à vérifier',
-        body: 'Le site a peut-être changé. Ouvre UnSwipe : la mise à jour prend dix secondes.',
+        title: dict.ui.notifCheckTitle,
+        body: dict.ui.notifCheckBody,
       },
       // Immediat : un declencheur nul envoie la notification tout de suite.
       trigger: null,

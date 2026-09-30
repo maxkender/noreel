@@ -13,7 +13,7 @@ import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { formatHours } from '@/lib/format';
-import { dict } from '@/i18n';
+import { dict, interpolate } from '@/i18n';
 
 const WAIT = 60;      // secondes
 const SUMS = 3;       // operations a resoudre
@@ -105,8 +105,7 @@ function Wait({ onDone }: { onDone: () => void }) {
     <View style={st.center}>
       <Text variant="displayM" style={st.mid}>{dict.misc.hardWait}</Text>
       <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        Tu récupérais {formatHours(minutes)} par jour. Si l’envie tient encore
-        dans une minute, tu passeras.
+        {interpolate(dict.ui.hardWaitBody, { h: formatHours(minutes) })}
       </Text>
 
       <Text variant="displayL" style={st.count}>{left}</Text>
@@ -130,9 +129,8 @@ function Wait({ onDone }: { onDone: () => void }) {
 /** Sa propre phrase, a son nom : recopier « I turned Hard Mode on » en
  *  anglais ne coute rien a personne. Celle-ci se lit en la tapant. */
 function pledgeFor(name: string): string {
-  const who = name || 'Moi';
-  return `${who}, je désactive ce que j’ai mis en place pour moi-même. `
-    + `Je sais exactement ce que je fais.`;
+  const who = name || dict.ui.pledgeMe;
+  return interpolate(dict.ui.pledge, { who });
 }
 
 function Pledge({ onDone }: { onDone: () => void }) {
@@ -145,9 +143,9 @@ function Pledge({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text variant="displayM">Recopie cette phrase.</Text>
+      <Text variant="displayM">{dict.ui.pledgeTitle}</Text>
       <Text variant="label" tone="tertiary" style={{ marginTop: space.xs }}>
-        À la lettre près, accents compris.
+        {dict.ui.pledgeHint}
       </Text>
 
       <View style={st.quote}>
@@ -168,7 +166,7 @@ function Pledge({ onDone }: { onDone: () => void }) {
 
       {typed.length > 0 && !ok && (
         <Text variant="label" color={c.danger} style={{ marginTop: space.sm }}>
-          Pas encore identique.
+          {dict.ui.pledgeNotYet}
         </Text>
       )}
 
@@ -252,11 +250,9 @@ export function HardModeIntro({
             <ShieldAlert size={30} strokeWidth={2} color={c.mist} />
           </View>
 
-          <Text variant="displayM" style={st.mid}>Mode strict</Text>
+          <Text variant="displayM" style={st.mid}>{dict.ui.hardTitle}</Text>
           <Text variant="lead" style={[st.mid, { marginTop: space.md }]}>
-            Rendre le blocage demandera une minute d’attente, une phrase à
-            recopier et trois calculs. Compte trois minutes. Tes apps
-            filtrées, elles, continuent de marcher normalement.
+            {dict.ui.hardBody}
           </Text>
 
           <View style={{ flex: 1 }} />

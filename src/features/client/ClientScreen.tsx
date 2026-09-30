@@ -13,7 +13,7 @@ import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { useT } from '@/i18n';
+import { useT, dict } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
 import { SwitchSheet } from './SwitchSheet';
@@ -42,10 +42,10 @@ import { PURCHASES_ENABLED } from '@/services/purchases';
 import { ProGate } from '@/features/home/ProGate';
 
 const LABELS: Record<ClientId, string> = {
-  instagram: 'Instagram · sans reels',
-  tiktok: 'TikTok · abonnements',
-  twitter: 'X · abonnements',
-  youtube: 'YouTube · sans shorts',
+  instagram: dict.ui.labelIg,
+  tiktok: dict.ui.labelTt,
+  twitter: dict.ui.labelX,
+  youtube: dict.ui.labelYt,
 };
 
 /*
@@ -683,7 +683,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             // Qui est connecte, a chaque page : la barre du bas met un instant a se dessiner.
             if (id === 'instagram') setTimeout(() => web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;'), 1500);
           }}
-          onError={(e) => setError(e.nativeEvent.description || 'Connexion impossible')}
+          onError={(e) => setError(e.nativeEvent.description || d.ui.noConnection)}
           // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
           onContentProcessDidTerminate={() => web.current?.reload()}
           onRenderProcessGone={() => web.current?.reload()}
@@ -884,7 +884,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             la notre comprise. Recharger ne sert a rien ; revoir la
             selection, si.
           */}
-          <Text variant="title">{filtered(error) ? d.client.filterTitle : 'Impossible de charger'}</Text>
+          <Text variant="title">{filtered(error) ? d.client.filterTitle : d.ui.loadFail}</Text>
           <Text variant="body" tone="secondary" style={styles.errText}>
             {filtered(error) ? d.client.filterBody : error}
           </Text>

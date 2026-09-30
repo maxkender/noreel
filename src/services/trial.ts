@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { dict } from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /*
@@ -62,8 +63,8 @@ export async function scheduleTrialReminder(): Promise<void> {
     const date = new Date(Date.now() + WARN_AFTER_H * 3600 * 1000);
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Il te reste 24 h d’essai',
-        body: 'Si UnSwipe ne te sert pas, annule maintenant : tu ne paieras rien.',
+        title: dict.ui.trialTitle,
+        body: dict.ui.trialBody,
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
     });
