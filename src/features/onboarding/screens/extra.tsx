@@ -455,6 +455,9 @@ export function RateAsk({ onNext }: P) {
       <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
         {d.rate.title}
       </Text>
+      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
+        {d.rate.body}
+      </Text>
     </Screen>
   );
 }

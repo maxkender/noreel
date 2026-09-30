@@ -162,7 +162,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const script = useMemo(
     () => buildScript(
       client.script, active, theme, valve, tinted ? tint.rgb : null, openUntil,
-      { title: d.client.wallTitle, body: d.client.wallBody, hint: d.client.wallHint }
+      { title: d.client.wallTitle, body: d.client.wallBody, hint: d.client.wallHint, explore: d.client.wallExplore }
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client.script]

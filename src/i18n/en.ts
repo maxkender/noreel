@@ -435,6 +435,7 @@ export const en: Dict = {
     cta: 'Support us',
     later: 'Later',
     title: 'Join the UnSwipe community.',
+    body: 'Give us a rating to help more people get their time back.',
   },
 
   pay: {
@@ -600,6 +601,7 @@ export const en: Dict = {
     switchNone: 'No account saved yet. Log in: it will appear here.',
     accounts: 'ACCOUNTS',
     accountsNote: 'Your accounts are kept on this phone, never sent anywhere. With two accounts, the bar gains a key to switch between them.',
+    wallExplore: 'Explore is hidden. Search for an account, a hashtag or a place.',
   },
 
   pass: {

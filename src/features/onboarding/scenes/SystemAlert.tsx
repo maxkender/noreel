@@ -99,9 +99,11 @@ export function SystemAlert({
           pointerEvents="none"
         />
       )}
-      <Animated.View style={[st.alert, pop]}>
-        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={st.material} />
+      <Animated.View style={[st.alert, inline ? undefined : pop]}>
+        {/* Dans le flux d'une page qui defile, le verre floute rend mal :
+            en ligne, un materiau plein, comme la vraie alerte en sombre. */}
+        {!inline && <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />}
+        <View style={[st.material, inline && { backgroundColor: 'rgba(44,44,46,0.98)' }]} />
 
         <View style={st.copy}>
           <Text variant="title" style={st.title}>{title}</Text>
@@ -129,8 +131,6 @@ export function SystemAlert({
                 <Text
                   variant={b.on ? 'button' : 'body'}
                   numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.7}
                   color={IOS_BLUE}
                   style={st.action}
                 >

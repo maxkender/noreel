@@ -455,6 +455,7 @@ export const fr = {
     cta: 'Soutenir',
     later: 'Plus tard',
     title: 'Rejoins la communauté UnSwipe.',
+    body: 'Donne-nous une note pour aider plus de gens à retrouver leur temps.',
   },
 
   pay: {
@@ -620,6 +621,7 @@ export const fr = {
     switchNone: 'Aucun compte enregistré pour l’instant. Connecte-toi : il apparaîtra ici.',
     accounts: 'COMPTES',
     accountsNote: 'Tes comptes sont gardés sur ce téléphone, jamais envoyés ailleurs. Avec deux comptes, la barre gagne une touche pour passer de l’un à l’autre.',
+    wallExplore: 'Explorer est masqué. Cherche un compte, un hashtag ou un lieu.',
   },
 
   pass: {

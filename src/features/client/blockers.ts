@@ -44,7 +44,7 @@ export function buildScript(
    * en dur dans une chaine injectee echappe au typage, aux tests de parite
    * des langues, et se retrouve en francais dans une app en anglais.
    */
-  wall: { title: string; body: string; hint: string } | null = null
+  wall: { title: string; body: string; hint: string; explore?: string } | null = null
 ): string {
   return `window.__NR = ${JSON.stringify(settings)};\n`
     + `window.__nrTheme = ${JSON.stringify(theme)};\n`
@@ -710,7 +710,8 @@ export const INSTAGRAM_BLOCKER = `
     if (!css) {
       css = document.createElement('style');
       css.id = 'nr-wall-css';
-      css.textContent = 'article{display:none!important}';
+      css.textContent = 'article{display:none!important}'
+        + 'main [role="progressbar"],main svg[aria-label*="hargement" i],main svg[aria-label*="oading" i]{display:none!important}';
       (document.head || document.documentElement).appendChild(css);
     }
     const box = document.createElement('div');
@@ -917,6 +918,24 @@ export const INSTAGRAM_BLOCKER = `
     la vraie app un instant. Jamais sur une page de connexion : « Creer un
     compte » n'est pas une publication.
   */
+  /*
+    L'onglet recherche fait une VRAIE navigation.
+    En passant par la page unique d'Instagram, la premiere ouverture de
+    /explore restait vide — le morceau de code de la page arrivait apres, et
+    rien ne s'affichait avant qu'on y retourne. Un chargement complet rend
+    la page entiere du premier coup, champ compris.
+  */
+  addEventListener('click', (e) => {
+    try {
+      const a = e.target && e.target.closest ? e.target.closest('a[href="/explore/"], a[href="/explore"]') : null;
+      if (!a || location.pathname.startsWith('/explore')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      location.assign('/explore/');
+    } catch (err) { /* la page suit son chemin */ }
+  }, true);
+
   const CREATE = /new post|nouvelle publication|nouveau post|^cr.er$|^create$|cr.er une publication|create new post/i;
   addEventListener('click', (e) => {
     try {
@@ -1030,6 +1049,26 @@ export const INSTAGRAM_BLOCKER = `
       if (/[/]saved([/]|$)/.test(location.pathname)) { __go('/'); return; }
     }
 
+    /*
+      Les stories par une REGLE CSS, posee des la premiere passe : chaque
+      cercle est un bouton « Story par … » / « Story by … », et une regle
+      n'a pas besoin d'attendre que le carrousel soit entier pour agir. Le
+      carrousel lui-meme est masque en plus quand on le trouve, pour ne pas
+      laisser une bande vide. Au rechargement, la regle est la avant le
+      premier cercle — c'est ce qui manquait.
+    */
+    let sc = document.getElementById('nr-stories-css');
+    if (__on('stories') || __on('feed')) {
+      if (!sc) {
+        sc = document.createElement('style');
+        sc.id = 'nr-stories-css';
+        sc.textContent = '[role="button"][aria-label^="Story" i],[role="button"][aria-label^="Histoire" i],'
+          + '[role="button"][aria-label^="Stories" i],[role="button"][aria-label*="votre story" i],[role="button"][aria-label*="your story" i]{display:none!important}';
+        (document.head || document.documentElement).appendChild(sc);
+      }
+    } else if (sc) {
+      sc.remove();
+    }
     if (__on('stories')) __hide(__tray(), 'stories');
     else if (__on('feed')) __hide(__tray(), 'feed');
     if (__on('feed') && __home() && !__anon()) __wall(); else __unwall();
@@ -1041,11 +1080,34 @@ export const INSTAGRAM_BLOCKER = `
     // Le FIL des reels renvoie au fil ; un reel seul, avec son identifiant, se regarde.
     if (/^[/]reels([/]|$)|^[/]reel[/]?$/.test(location.pathname)) __go('/');
     /*
-      /explore est LA page de recherche : on n'y touche pas. Masquer sa
-      grille laissait une page vide sous un champ discret, et la recherche
-      passait pour cassee. Les reels qu'on y ouvre sont refuses comme
-      partout ailleurs.
+      /explore est LA page de recherche. Le reglage « masquer la grille » ne
+      cache que les tuiles (publications et reels) et pose un mot sous le
+      champ, pour qu'on ne prenne pas la page pour une page vide. Le champ et
+      ses resultats — comptes, hashtags, lieux — ne sont jamais touches.
     */
+    const onGrid = /^[/]explore[/]?$/.test(location.pathname);
+    let ex = document.getElementById('nr-explore-css');
+    let note = document.getElementById('nr-explore-note');
+    if (__on('explore') && onGrid) {
+      if (!ex) {
+        ex = document.createElement('style');
+        ex.id = 'nr-explore-css';
+        ex.textContent = 'main a[href^="/p/"],main a[href^="/reel/"]{display:none!important}';
+        (document.head || document.documentElement).appendChild(ex);
+      }
+      const w = window.__nrWall;
+      const main = document.querySelector('main');
+      if (!note && w && w.explore && main) {
+        note = document.createElement('div');
+        note.id = 'nr-explore-note';
+        note.textContent = w.explore;
+        note.setAttribute('style', 'padding:56px 28px;text-align:center;color:#9AA6C2;font-size:15px;line-height:22px;font-family:-apple-system,system-ui,sans-serif');
+        main.appendChild(note);
+      }
+    } else {
+      if (ex) ex.remove();
+      if (note) note.remove();
+    }
   });
 })();
 true;
@@ -1322,7 +1384,14 @@ export const CLIENTS = {
       etait annulee et la personne restait plantee sur le formulaire, sans
       jamais entrer. Le script, lui, renvoie la racine vers /following.
     */
-    blocked: (p: string) => p.startsWith('/foryou'),
+    /*
+      Et /foryou non plus : verifie dans le navigateur le 30 septembre 2026,
+      la page de connexion elle-meme renvoie vers /foryou?lang=fr. Refusee,
+      cette navigation-la laissait la personne sur le formulaire apres le
+      code a deux facteurs, sans jamais entrer. C'est le script qui, une fois
+      la page chargee, la mene a /following.
+    */
+    blocked: () => false,
     chrome: { dark: '#000000', light: '#FFFFFF' } as Chrome,
   },
   twitter: {

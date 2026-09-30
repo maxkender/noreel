@@ -22,6 +22,7 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
     { key: 'reels', label: 'Bloquer les Reels', locked: true },
     { key: 'stories', label: 'Bloquer les stories' },
+    { key: 'explore', label: 'Masquer la grille Explorer (la recherche reste)' },
     { key: 'saved', label: 'Bloquer les publications enregistrées' },
     { key: 'feed', label: 'Bloquer le fil' },
     { key: 'dmsOnly', label: 'Messages uniquement' },

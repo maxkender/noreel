@@ -13,6 +13,7 @@ import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { dict, useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
+import { CortiRig } from '@/components/CortiRig';
 
 const SIZE = 58;
 const MARGIN = 14;
@@ -140,11 +141,8 @@ export function NavBar({
           accessibilityRole="button"
           accessibilityLabel={open ? dict.misc.closeNav : dict.misc.openNav}
         >
-          <View style={styles.grip}>
-            <View style={styles.line} />
-            <View style={styles.line} />
-            <View style={styles.line} />
-          </View>
+          {/* Corti dans le rond : c'est lui qu'on touche, pas trois traits. */}
+          <CortiRig level={3} size={44} expression="auto" animated={false} />
         </Animated.View>
       </GestureDetector>
     </>
@@ -216,8 +214,6 @@ const sheet = (c: Palette) => StyleSheet.create({
     shadowOffset: { width: 0, height: 5 }, elevation: 16,
     zIndex: 100,
   },
-  grip: { gap: 4 },
-  line: { width: 18, height: 2, borderRadius: 1, backgroundColor: c.mist },
   hint: {
     position: 'absolute', bottom: 40, alignSelf: 'center',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
