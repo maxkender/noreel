@@ -30,7 +30,7 @@ const IOS_BLUE = '#0A84FF';   // couleur des actions en mode sombre
  * alerte s'ouvre, et elle s'ouvre exactement dessous.
  */
 export function SystemAlert({
-  title, body, good, bad, goodSide = 'left', onGood, onBad,
+  title, body, good, bad, goodSide = 'left', onGood, onBad, inline = false,
 }: {
   title: string;
   body: string;
@@ -39,6 +39,8 @@ export function SystemAlert({
   goodSide?: 'left' | 'right';
   onGood: () => void;
   onBad?: () => void;
+  /** Dans le flux de la page, sous un titre, sans voile : la fleche suit. */
+  inline?: boolean;
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -82,7 +84,7 @@ export function SystemAlert({
     : [{ label: bad, on: false }, { label: good, on: true }];
 
   return (
-    <View style={st.layer} pointerEvents="box-none">
+    <View style={inline ? st.inline : st.layer} pointerEvents="box-none">
       {/*
         Le fond s'assombrit d'abord, la boite arrive ensuite.
         Elle apparaissait en fondu, seule, sur une page restee nette : elle
@@ -91,10 +93,12 @@ export function SystemAlert({
         retrecissant depuis un peu plus grand — c'est ce raccourci de deux
         gestes qui fait qu'on la reconnait avant de l'avoir lue.
       */}
-      <Animated.View
-        style={[StyleSheet.absoluteFill, st.scrim, dim]}
-        pointerEvents="none"
-      />
+      {!inline && (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, st.scrim, dim]}
+          pointerEvents="none"
+        />
+      )}
       <Animated.View style={[st.alert, pop]}>
         <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={st.material} />
@@ -140,7 +144,7 @@ export function SystemAlert({
 
       <Animated.View
         entering={FadeIn.delay(1100).duration(600)}
-        style={[st.arrow, goodSide === 'right' && st.arrowRight]}
+        style={[inline ? st.arrowInline : st.arrow, goodSide === 'right' && st.arrowRight]}
         pointerEvents="none"
       >
         <Svg width={120} height={92} viewBox="0 0 120 92">
@@ -188,5 +192,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   // Sous l'alerte, pointant vers le bouton de gauche.
   arrow: { position: 'absolute', marginTop: 250, marginLeft: -110 },
+  inline: { alignItems: 'center', marginTop: 28 },
+  arrowInline: { marginTop: -4, marginLeft: -110 },
   arrowRight: { transform: [{ scaleX: -1 }], marginLeft: 110 },
 });

@@ -1,7 +1,10 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
-import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue,
+  withRepeat, withSequence, withTiming,
+} from 'react-native-reanimated';
 import {
   ChevronLeft, ChevronRight, House, Link, LogIn, RotateCw, Search, Send, Settings, User, UsersRound,
 } from 'lucide-react-native';
@@ -46,24 +49,60 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
   const top = Math.max(insets?.top ?? 0, initialWindowMetrics?.insets.top ?? 0, 20);
   const bottom = Math.max(insets?.bottom ?? 0, initialWindowMetrics?.insets.bottom ?? 0, 12);
   const [i, setI] = useState(0);
-  const [fill] = useState(() => new RNAnimated.Value(0));
+  const fill = useSharedValue(0);
   const last = i >= SLIDES - 1;
+  const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const paused = useRef(false);
 
   const go = (n: number) => {
     setI(Math.max(0, Math.min(SLIDES - 1, n)));
     haptics.tick();
   };
+  const advance = () => { setI((n) => (n < SLIDES - 1 ? n + 1 : n)); };
 
-  // La barre de la story en cours se remplit sur le fil natif ; a la fin,
-  // on passe a la suivante — sauf la derniere, qui attend le bouton.
-  useEffect(() => {
-    fill.setValue(0);
-    const anim = RNAnimated.timing(fill, {
-      toValue: 1, duration: SLIDE_MS, easing: Easing.linear, useNativeDriver: true,
+  /*
+    La barre de la story en cours se remplit sur le fil d'animation ; a la
+    fin, on passe a la suivante — sauf la derniere, qui attend le bouton.
+    On repart d'ou elle en etait quand on relache : c'est ce qui permet la
+    PAUSE, comme dans une vraie story.
+  */
+  const run = (from: number) => {
+    fill.value = from;
+    fill.value = withTiming(1, { duration: SLIDE_MS * (1 - from), easing: Easing.linear }, (finished) => {
+      if (finished) runOnJS(advance)();
     });
-    anim.start(({ finished }) => { if (finished && i < SLIDES - 1) setI(i + 1); });
-    return () => anim.stop();
-  }, [i, fill]);
+  };
+  useEffect(() => {
+    paused.current = false;
+    run(0);
+    return () => cancelAnimation(fill);
+  // La barre repart de zero a chaque planche, et seulement la.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i]);
+
+  /*
+    Le doigt qui RESTE pose met la story en pause ; un appui bref avance ou
+    recule. Les deux gestes partent du meme toucher : au bout de deux
+    dixiemes de seconde, ce n'est plus un tap.
+  */
+  const down = () => {
+    hold.current = setTimeout(() => {
+      hold.current = null;
+      paused.current = true;
+      cancelAnimation(fill);
+    }, 200);
+  };
+  const up = (dir: -1 | 1) => {
+    if (hold.current) {
+      clearTimeout(hold.current);
+      hold.current = null;
+      if (dir > 0 && last) { onDone(); return; }
+      go(i + dir);
+      return;
+    }
+    if (paused.current) { paused.current = false; run(fill.value); }
+  };
+  const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
 
   const slides = [
     [d.tuto.t1, d.tuto.b1], [d.tuto.t2, d.tuto.b2], [d.tuto.t3, d.tuto.b3],
@@ -77,7 +116,7 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
         {slides.map((_, k) => (
           <View key={k} style={st.track}>
             {k < i && <View style={[st.fill, { transform: [{ scaleX: 1 }] }]} />}
-            {k === i && <RNAnimated.View style={[st.fill, { transform: [{ scaleX: fill }] }]} />}
+            {k === i && <Animated.View style={[st.fill, barStyle]} />}
           </View>
         ))}
       </View>
@@ -105,8 +144,8 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
       {/* Les deux zones de tap, comme dans une story : un tiers a gauche pour
           revenir, le reste pour avancer. Elles s'arretent au-dessus du
           bouton, qui doit rester le sien. */}
-      <Pressable style={[st.zoneL, { top: top + 60 }]} onPress={() => go(i - 1)} testID="tuto-prev" accessibilityLabel={d.client.back} />
-      <Pressable style={[st.zoneR, { top: top + 60 }]} onPress={() => (last ? onDone() : go(i + 1))} testID="tuto-next" accessibilityLabel={d.client.forward} />
+      <Pressable style={[st.zoneL, { top: top + 60 }]} onPressIn={down} onPressOut={() => up(-1)} onPress={() => {}} testID="tuto-prev" accessibilityLabel={d.client.back} />
+      <Pressable style={[st.zoneR, { top: top + 60 }]} onPressIn={down} onPressOut={() => up(1)} onPress={() => {}} testID="tuto-next" accessibilityLabel={d.client.forward} />
 
       <View style={st.foot}>
         {last
@@ -158,22 +197,18 @@ function Art({ i }: { i: number }) {
       ] as const;
       return (
         <View style={[st.card, st.nav]}>
-          <View style={st.dotRow}>
-            <View style={[st.dot, { backgroundColor: c.accent, shadowColor: c.accent }]}>
-              <CortiRig level={3} size={34} expression="auto" animated={false} />
-            </View>
-          </View>
+          <DotOpening />
           <View style={st.keys}>
             {keys.map(([Icon, label], k) => {
               const I = Icon as typeof House;
               const last = k === keys.length - 1;
               return (
-                <View key={label} style={st.navKey}>
+                <Animated.View key={label} entering={FadeInDown.delay(1100 + k * 110).duration(420)} style={st.navKey}>
                   <View style={[st.navIcon, last && { backgroundColor: withAlpha(c.accent, 0.18) }]}>
                     <I size={18} strokeWidth={2.2} color={last ? c.accent : c.mist} />
                   </View>
                   <Text variant="label" tone="secondary" style={st.center}>{label}</Text>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
@@ -181,7 +216,9 @@ function Art({ i }: { i: number }) {
       );
     }
     case 4:
-      return <PhoneFrame width={168}><MockDM playing /></PhoneFrame>;
+      // Assez petit pour tenir dans son cadre : a 168 points il debordait
+      // sur le titre.
+      return <PhoneFrame width={122}><MockDM playing /></PhoneFrame>;
     default:
       return (
         <View style={st.ring}>
@@ -189,6 +226,37 @@ function Art({ i }: { i: number }) {
         </View>
       );
   }
+}
+
+/**
+ * Le rond d'UnSwipe, tel qu'on le verra : il arrive en grandissant, une onde
+ * en part deux fois — « c'est lui qu'on touche » — puis les touches sortent
+ * de dessous, une par une. Sans ca, on ne le VOYAIT pas.
+ */
+function DotOpening() {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const wave = useSharedValue(0);
+  useEffect(() => {
+    wave.value = withRepeat(withSequence(
+      withTiming(1, { duration: 900, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 0 }),
+      withTiming(0, { duration: 500 }),
+    ), -1, false);
+    return () => cancelAnimation(wave);
+  }, [wave]);
+  const ring = useAnimatedStyle(() => ({
+    opacity: (1 - wave.value) * 0.7,
+    transform: [{ scale: 1 + wave.value * 1.1 }],
+  }));
+  return (
+    <View style={st.dotRow}>
+      <Animated.View style={[st.wave, { borderColor: c.accent }, ring]} pointerEvents="none" />
+      <Animated.View entering={ZoomIn.springify().damping(12).stiffness(180)} style={[st.dot, { backgroundColor: c.accent, shadowColor: c.accent }]}>
+        <CortiRig level={3} size={38} expression="auto" animated={false} />
+      </Animated.View>
+    </View>
+  );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
@@ -212,10 +280,11 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   labelCol: { alignItems: 'center', gap: 4, width: 64 },
   nav: { paddingVertical: space.md, paddingHorizontal: space.sm, gap: space.md },
-  dotRow: { alignItems: 'center' },
+  dotRow: { alignItems: 'center', justifyContent: 'center', height: 84 },
+  wave: { position: 'absolute', width: 64, height: 64, borderRadius: 32, borderWidth: 2 },
   dot: {
-    width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center',
-    shadowOpacity: 0.55, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
+    width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center',
+    shadowOpacity: 0.6, shadowRadius: 16, shadowOffset: { width: 0, height: 4 },
   },
   keys: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.sm },
   navKey: { width: 66, alignItems: 'center', gap: 5 },

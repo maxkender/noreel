@@ -992,7 +992,15 @@ export const INSTAGRAM_BLOCKER = `
         el.style.removeProperty('display');
         el.removeAttribute('data-nr');
       });
-    } else {
+    } else if (/^[/]explore/.test(location.pathname)) {
+      /*
+        SEULEMENT sur les grilles d'explore. Cette regle tournait sur toute
+        page hors du fil : sur /notifications/, la liste dit « a aime ton
+        reel » — le mot suffisait a cacher toute la liste, et l'ecran
+        devenait noir. Sur une publication (/p/), la legende pouvait faire
+        pareil. Les reels qu'on ouvre ailleurs sont refuses par la porte, pas
+        par le texte.
+      */
       document.querySelectorAll('a[href*="/reel/"]').forEach((a) => {
         __hide(__safe(a.closest('article')) || a, 'short');
       });

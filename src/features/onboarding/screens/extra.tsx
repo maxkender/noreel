@@ -408,6 +408,14 @@ export function RateAsk({ onNext }: P) {
     }
     onNext();
   };
+  // La demande native d'Apple, d'elle-meme, une seconde apres l'arrivee :
+  // c'est elle qui compte, pas notre bouton.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void StoreReview.hasAction().then((ok) => { if (ok) return StoreReview.requestReview(); }).catch(() => {});
+    }, 900);
+    return () => clearTimeout(id);
+  }, []);
 
   return (
     <Screen
@@ -446,9 +454,6 @@ export function RateAsk({ onNext }: P) {
 
       <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
         {d.rate.title}
-      </Text>
-      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        {d.rate.body}
       </Text>
     </Screen>
   );

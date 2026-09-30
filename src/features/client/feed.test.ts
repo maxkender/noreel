@@ -21,7 +21,8 @@ describe('le fil qu’on ne touche plus', () => {
     // doit tomber du cote « pas le fil » de la garde.
     const i = src.indexOf('querySelectorAll(\'a[href*="/reel/"]\')');
     expect(i).toBeGreaterThan(0);
-    const branch = src.lastIndexOf('} else {', i);
+    // La branche « pas le fil » commence au profil ; l'explore vient apres.
+    const branch = src.lastIndexOf('} else if (__profile())', i);
     const guard = src.lastIndexOf('if (__home())', i);
     expect(branch).toBeGreaterThan(guard);
   });
@@ -39,7 +40,7 @@ describe('le fil qu’on ne touche plus', () => {
   */
   it('ne laisse AUCUNE regle par publication tourner sur le fil', () => {
     const inFeed = src.slice(src.indexOf('if (__home())'), src.indexOf("__on('dmsOnly')"));
-    const guard = inFeed.indexOf('} else {');
+    const guard = inFeed.indexOf('} else if (__profile())');
     expect(guard).toBeGreaterThan(0);
     const untouched = inFeed.slice(0, guard);
     for (const rule of ["__byLabel(AD", "__byLabel(SUGGEST", 'a[href*="/reel/"]']) {
@@ -51,7 +52,7 @@ describe('le fil qu’on ne touche plus', () => {
     // Instagram est une seule page : une carte cachee sur l'explore est
     // recyclee pour porter un post du fil, et reste cachee. C'est ce qui
     // vidait le fil poste par poste jusqu'au noir.
-    const inFeed = src.slice(src.indexOf('if (__home())'), src.indexOf('} else {'));
+    const inFeed = src.slice(src.indexOf('if (__home())'), src.indexOf('} else if (__profile())'));
     expect(inFeed).toContain("querySelectorAll('[data-nr]')");
     expect(inFeed).toContain("removeAttribute('data-nr')");
   });

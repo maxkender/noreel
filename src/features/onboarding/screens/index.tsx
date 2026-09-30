@@ -2,8 +2,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
-  Easing, Extrapolation, FadeIn, FadeInDown, cancelAnimation, interpolate, interpolateColor,
-  useAnimatedStyle, useSharedValue, withTiming, type SharedValue,
+  Easing, Extrapolation, FadeIn, FadeInDown, cancelAnimation, interpolate, interpolateColor, type SharedValue, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming,
 } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -15,6 +14,7 @@ import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { freeShare, lifeYears } from '../calculations';
+import { LOGOS } from '@/features/home/AppSlider';
 
 
 /*
@@ -41,7 +41,7 @@ export function S1({ onNext }: P) {
   // L'invite arrive des que la seconde ligne a fini de s'ecrire.
   const typed = typeDuration(d.s1.title1, 46, 0) + 900 + typeDuration(d.s1.title2, 46, 0) + 150;
   return (
-    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={typed} readyAfter={typed} hue="accent">
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={typed} readyAfter={typed} hue="accent" backdrop={<Drift />}>
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
@@ -49,6 +49,52 @@ export function S1({ onNext }: P) {
   );
 }
 
+
+/*
+ * Les icones des quatre apps, petites, qui derivent un peu partout.
+ *
+ * « La meme appli, sans algorithme » : on parle d'elles, elles sont la —
+ * en fond, discretes, chacune a son rythme, comme des bulles. Tout vit sur
+ * le fil d'animation.
+ */
+const DRIFT_APPS = ['instagram', 'tiktok', 'twitter', 'youtube', 'instagram', 'tiktok', 'twitter', 'youtube'] as const;
+
+function Drift() {
+  const { width, height } = useWindowDimensions();
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {DRIFT_APPS.map((id, i) => (
+        <DriftIcon key={i} id={id} i={i} width={width} height={height} />
+      ))}
+    </View>
+  );
+}
+
+function DriftIcon({ id, i, width, height }: { id: (typeof DRIFT_APPS)[number]; i: number; width: number; height: number }) {
+  // Des places fixes, semees pour ne pas se chevaucher : bords et coins,
+  // jamais le centre, ou le texte s'ecrit.
+  const spots = [[0.08, 0.14], [0.8, 0.1], [0.14, 0.4], [0.86, 0.36], [0.06, 0.66], [0.84, 0.62], [0.24, 0.84], [0.7, 0.86]];
+  const [fx, fy] = spots[i % spots.length];
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withDelay(i * 300, withRepeat(withTiming(1, { duration: 3800 + i * 500, easing: Easing.inOut(Easing.sin) }), -1, true));
+    return () => cancelAnimation(t);
+  }, [t, i]);
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.32 + t.value * 0.28,
+    transform: [
+      { translateY: -12 + t.value * 24 },
+      { translateX: (i % 2 === 0 ? -1 : 1) * (t.value * 10 - 5) },
+      { rotate: `${(i % 2 === 0 ? -1 : 1) * (6 - t.value * 12)}deg` },
+      { scale: 0.9 + t.value * 0.15 },
+    ],
+  }));
+  return (
+    <Animated.View style={[{ position: 'absolute', left: width * fx, top: height * fy, width: 30, height: 30, borderRadius: 8, overflow: 'hidden' }, style]}>
+      <Image source={LOGOS[id]} style={{ width: 30, height: 30 }} contentFit="contain" />
+    </Animated.View>
+  );
+}
 
 /* ---------- Les annees qu'il reste ---------- */
 
@@ -61,9 +107,11 @@ type Kind = 'sleep' | 'work' | 'eat' | 'free';
 
 /** Le tempo, en millisecondes. */
 const APPEAR = 16;   // une case de plus
-const TAKE = 30;     // une case prise de plus (sommeil, travail, repas)
-const BITE = 70;     // une case libre mordue de plus (le telephone)
-const BEAT = 700;    // le silence entre deux etapes
+const TAKE = 48;     // une case prise de plus (sommeil, travail, repas)
+const BITE = 95;     // une case libre mordue de plus (le telephone)
+const BEAT = 1000;   // le silence entre deux etapes
+/** Le temps de LIRE la ligne et de voir les cases colorees, avant qu'elles partent. */
+const READ = 1000;
 
 /**
  * Tes annees, une case chacune — et ce qu'il en reste vraiment.
@@ -104,13 +152,19 @@ export function LifeYears({ onNext }: P) {
     const free = kinds.filter((k) => k === 'free').length;
     const bites = Math.max(0, Math.min(free - 1, Math.round((free * pct) / 100)));
 
+    /*
+      Chaque groupe se lit en trois temps : la ligne tombe et TOUTES ses
+      cases prennent leur couleur d'un coup (on voit lesquelles), un temps
+      de lecture, puis elles se referment une par une. Trop vite, on ne
+      comprenait pas ce qui partait.
+    */
     const t0 = typeDuration(title, 32, 0) + 300;
-    const tSleep = t0 + L.remaining * APPEAR + 500;
-    const tWork = tSleep + L.sleep * TAKE + BEAT;
-    const tEat = tWork + L.work * TAKE + BEAT;
-    const tFree = tEat + L.eat * TAKE + BEAT;
-    const tPhone = tFree + 1100;
-    const tDone = tPhone + bites * BITE + 600;
+    const tSleep = t0 + L.remaining * APPEAR + 600;
+    const tWork = tSleep + READ + L.sleep * TAKE + BEAT;
+    const tEat = tWork + READ + L.work * TAKE + BEAT;
+    const tFree = tEat + READ + L.eat * TAKE + BEAT;
+    const tPhone = tFree + 1400;
+    const tDone = tPhone + bites * BITE + 700;
 
     let taken = 0;
     let freeIndex = 0;
@@ -118,10 +172,9 @@ export function LifeYears({ onNext }: P) {
       let paintAt = Number.MAX_SAFE_INTEGER;
       let goneAt = Number.MAX_SAFE_INTEGER;
       let biteAt = Number.MAX_SAFE_INTEGER;
-      if (kind === 'sleep') { paintAt = tSleep + taken * TAKE; taken += 1; }
-      if (kind === 'work') { paintAt = tWork + (taken - L.sleep) * TAKE; taken += 1; }
-      if (kind === 'eat') { paintAt = tEat + (taken - L.sleep - L.work) * TAKE; taken += 1; }
-      if (kind !== 'free') goneAt = paintAt + 140;
+      if (kind === 'sleep') { paintAt = tSleep; goneAt = tSleep + READ + taken * TAKE; taken += 1; }
+      if (kind === 'work') { paintAt = tWork; goneAt = tWork + READ + (taken - L.sleep) * TAKE; taken += 1; }
+      if (kind === 'eat') { paintAt = tEat; goneAt = tEat + READ + (taken - L.sleep - L.work) * TAKE; taken += 1; }
       if (kind === 'free') {
         // Les dernieres cases libres sont mordues, de la fin vers le debut.
         const fromEnd = free - 1 - freeIndex;
@@ -249,8 +302,8 @@ function Cell({
   const style = useAnimatedStyle(() => {
     const t = clock.value;
     const born = interpolate(t, [appearAt, appearAt + 260], [0, 1], Extrapolation.CLAMP);
-    const paint = interpolate(t, [paintAt, paintAt + 200], [0, 1], Extrapolation.CLAMP);
-    const gone = interpolate(t, [goneAt, goneAt + 340], [0, 1], Extrapolation.CLAMP);
+    const paint = interpolate(t, [paintAt, paintAt + 420], [0, 1], Extrapolation.CLAMP);
+    const gone = interpolate(t, [goneAt, goneAt + 520], [0, 1], Extrapolation.CLAMP);
     const lit = interpolate(t, [freeAt, freeAt + 500], [0, 1], Extrapolation.CLAMP);
     const bite = interpolate(t, [biteAt, biteAt + 220], [0, 1], Extrapolation.CLAMP);
     const k = 1 - gone;

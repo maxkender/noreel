@@ -11,9 +11,12 @@ it('avance d’une touche, revient, et se passe', () => {
   const onDone = jest.fn();
   const r = render(<ClientTutorial id="instagram" onDone={onDone} />);
   expect(screen.getByText(dict.tuto.t1)).toBeTruthy();
-  fireEvent.press(screen.getByTestId('tuto-next'));
+  // Un appui BREF avance : le geste part du toucher et se decide au
+  // relachement, parce qu'un doigt qui reste met la story en pause.
+  const tap = (id: string) => { fireEvent(screen.getByTestId(id), 'pressIn'); fireEvent(screen.getByTestId(id), 'pressOut'); };
+  tap('tuto-next');
   expect(screen.getByText(dict.tuto.t2)).toBeTruthy();
-  fireEvent.press(screen.getByTestId('tuto-prev'));
+  tap('tuto-prev');
   expect(screen.getByText(dict.tuto.t1)).toBeTruthy();
   fireEvent.press(screen.getByText(dict.tuto.skip));
   expect(onDone).toHaveBeenCalledTimes(1);

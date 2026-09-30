@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { Cake } from 'lucide-react-native';
 import { Emblem } from '../scenes/Emblem';
 import { space } from '@/theme/spacing';
@@ -45,15 +44,6 @@ export function Guess({ onNext }: P) {
   const { height: winH } = useWindowDimensions();
   const gaugeH = Math.max(150, Math.min(280, winH - 630));
   const showCorti = winH >= 720;
-  /*
-    La ligne sous la jauge REPOND, sans juger : en bas, elle rappelle que
-    presque tout le monde sous-estime ; en haut, elle dit que c'est beaucoup
-    et qu'on va s'en occuper. Elle change de phrase, jamais de place — une
-    hauteur fixe, sinon la jauge bougerait sous le doigt.
-  */
-  const tier = minutes >= 240 ? 'high' : minutes < 90 ? 'low' : 'mid';
-  const line = tier === 'high' ? d.s5.high : tier === 'low' ? d.s5.low : d.s5.noJudge;
-
   return (
     <Screen emblem={showCorti ? <Image source={THINKING} style={{ width: 96, height: 96 }} contentFit="contain" /> : undefined}
       cta={d.s5.ctaA}
@@ -72,11 +62,6 @@ export function Guess({ onNext }: P) {
       </Text>
       <View style={st.gaugeTight}>
         <VerticalGauge minutes={minutes} onChange={setDraft} onCommit={setMinutes} height={gaugeH} />
-      </View>
-      <View style={st.reassure}>
-        <Animated.View key={tier} entering={FadeIn.duration(320)}>
-          <Text variant="body" tone="tertiary" style={st.center}>{line}</Text>
-        </Animated.View>
       </View>
     </Screen>
   );
@@ -111,6 +96,5 @@ export function AgeAsk({ onNext }: P) {
 const sheet = () => StyleSheet.create({
   center: { textAlign: 'center' },
   gaugeTight: { alignItems: 'center', marginVertical: space.lg },
-  reassure: { height: 48, justifyContent: 'center' },
   age: { marginTop: space.xxl, alignItems: 'center' },
 });

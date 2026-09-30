@@ -61,9 +61,6 @@ export const fr = {
     titleA: `À ton avis, tu as combien de temps d’écran par jour${NNBSP}?`,
     unit: 'par jour',
     hint: 'Glisse pour ajuster',
-    noJudge: 'Aucun jugement. C’est juste ton point de départ.',
-    low: 'Sûr ? La plupart des gens sous-estiment.',
-    high: 'C’est beaucoup. On va s’en occuper.',
     helpIos: `Pas sûr${NNBSP}? Réglages > Temps d'écran`,
     helpAndroid: `Pas sûr${NNBSP}? Paramètres > Bien-être numérique`,
     ctaA: 'C’est mon estimation',
@@ -458,13 +455,12 @@ export const fr = {
     cta: 'Soutenir',
     later: 'Plus tard',
     title: 'Rejoins la communauté UnSwipe.',
-    body: `On essaie de rendre leur temps aux gens. Un avis, c'est ce qui nous met devant les yeux du suivant.`,
   },
 
   pay: {
     priceLine: '{n} j d’essai gratuit, puis {m}/mois — facturé {y}/an',
     priceWeek: '{p} par semaine, sans essai. Annulable à tout moment.',
-    storeDown: 'L’abonnement n’est pas encore ouvert. Réessaie dans un moment.',
+    storeDown: 'Le magasin n’a pas répondu. Vérifie ta connexion, puis réessaie.',
     storeSkip: 'Continuer sans abonnement',
     cta: 'Reprends le contrôle de ton temps',
     ctaPlain: 'Continuer',
@@ -486,6 +482,7 @@ export const fr = {
     beta: 'Gratuit pendant la bêta',
     promo: `J'ai un code`,
     renew: 'Renouvelé automatiquement. Annule quand tu veux.',
+    retry: 'Réessayer',
   },
 
   tune: {
@@ -506,8 +503,7 @@ export const fr = {
     soonAndroid: 'Le blocage Android arrive bientôt.',
     openSettings: 'Ouvrir Réglages',
     skip: `Continuer sans activer Temps d'écran`,
-    connect: 'Maintenant, découvrons ton vrai temps d’écran. Prêt ?',
-    connectBody: 'Autorise UnSwipe à lire Temps d’écran. Tes données restent sur ton téléphone : elles n’en sortent jamais.',
+    connect: 'Connecte ton temps d’écran à UnSwipe pour pouvoir bloquer les apps que tu veux.',
     alertTitle: `« UnSwipe » souhaite accéder à Temps d'écran`,
     alertBody: `Cela permet de voir tes données d'activité et de limiter l'utilisation d'Apps et de sites web.`,
     connected: `Temps d'écran connecté`,
@@ -517,7 +513,6 @@ export const fr = {
     path1: 'Ouvre Réglages → Temps d’écran.',
     path2: 'Descends jusqu’à « Applications autorisées ».',
     path3: 'Active UnSwipe, puis reviens ici.',
-    press: 'Appuie sur Continuer.',
   },
 
   help: {

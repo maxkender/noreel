@@ -56,9 +56,6 @@ export const en: Dict = {
     titleA: 'How much screen time a day, would you guess?',
     unit: 'a day',
     hint: 'Slide to adjust',
-    noJudge: 'No judgment. This is just your starting point.',
-    low: 'Sure? Most people underestimate.',
-    high: 'That’s a lot. We can work on this.',
     helpIos: 'Not sure? Settings > Screen Time',
     helpAndroid: 'Not sure? Settings > Digital Wellbeing',
     ctaA: 'That’s my guess',
@@ -438,13 +435,12 @@ export const en: Dict = {
     cta: 'Support us',
     later: 'Later',
     title: 'Join the UnSwipe community.',
-    body: `We're trying to give people their time back. A review is what puts us in front of the next person.`,
   },
 
   pay: {
     priceLine: '{n}-day free trial, then {m}/month — billed {y}/year',
     priceWeek: '{p} per week, no trial. Cancel any time.',
-    storeDown: 'The subscription is not open yet. Try again in a moment.',
+    storeDown: 'The store did not answer. Check your connection, then try again.',
     storeSkip: 'Continue without subscribing',
     cta: 'Take back control of your time',
     ctaPlain: 'Continue',
@@ -466,6 +462,7 @@ export const en: Dict = {
     beta: 'Free during the beta',
     promo: 'I have a code',
     renew: 'Renews automatically. Cancel anytime.',
+    retry: 'Try again',
   },
 
   tune: {
@@ -486,8 +483,7 @@ export const en: Dict = {
     soonAndroid: 'Android blocking is coming soon.',
     openSettings: 'Open Settings',
     skip: 'Continue without Screen Time',
-    connect: 'Now let’s uncover your actual screen time. Ready?',
-    connectBody: 'Allow UnSwipe to read Screen Time. Your data stays on your phone: it never leaves it.',
+    connect: 'Connect your Screen Time to UnSwipe so it can block the apps you choose.',
     alertTitle: '“UnSwipe” would like to access Screen Time',
     alertBody: 'This lets it see your activity data and limit the use of apps and websites.',
     connected: 'Screen Time connected',
@@ -497,7 +493,6 @@ export const en: Dict = {
     path1: 'Open Settings → Screen Time.',
     path2: 'Scroll down to “Always Allowed”.',
     path3: 'Turn UnSwipe on, then come back here.',
-    press: 'Tap Continue.',
   },
 
   help: {

@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } f
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { Check, Hourglass, LogOut, Lock } from 'lucide-react-native';
+import { Hourglass, LogOut, Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -15,7 +15,6 @@ import { Toggle } from '@/features/home/parts';
 import { LockedPill } from '@/features/home/LockedPill';
 import { useProStore } from '@/store/pro';
 import { LOGOS, APPS } from '@/features/home/AppSlider';
-import { TINTS } from '@/theme/tints';
 import { PASS_MINUTES } from './ReelsPass';
 import type { ClientId } from './blockers';
 import { ACCOUNT } from './accounts';
@@ -71,8 +70,6 @@ export function ClientSettings({
     setTimeout(() => { setClosing(false); onClose(); }, 220);
   }, [onClose]);
 
-  const colour = useAppsStore((s) => s.tints[id]);
-  const setColour = useAppsStore((s) => s.setTint);
 
   const name = APPS.find((a) => a.id === id)?.name ?? id;
 
@@ -181,32 +178,6 @@ export function ClientSettings({
               </>
             )}
 
-            <Text variant="label" tone="tertiary" style={st.section}>COULEUR</Text>
-
-            <View style={st.tints}>
-              {TINTS.map((t) => {
-                const on = (colour ?? 'default') === t.id;
-                return (
-                  <Pressable
-                    key={t.id}
-                    onPress={() => { haptics.tick(); setColour(id, t.id); }}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: on }}
-                    accessibilityLabel={t.label}
-                    style={[st.swatch, { backgroundColor: t.hex }, on && st.swatchOn]}
-                  >
-                    {on && <Check size={15} strokeWidth={3} color={t.ink} />}
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Text variant="label" tone="tertiary" style={st.note}>
-              {id === 'instagram'
-                ? 'Change les boutons, les liens et tes bulles de message.'
-                : 'Change le bandeau du haut. Les couleurs du site ne bougent que sur Instagram.'}
-            </Text>
-
             <Text variant="label" tone="tertiary" style={st.section}>{d.client.accounts}</Text>
 
             {/* Les comptes tenus par l'app : on en ajoute un ici, et la touche
@@ -256,15 +227,6 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   note: { marginTop: space.lg, lineHeight: 17 },
   section: { marginTop: space.xl, marginBottom: space.xs },
-  tints: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
-  swatch: {
-    width: 38, height: 38, borderRadius: 19,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.2),
-  },
-  // Le choix se voit a l'anneau, pas a la taille : une pastille qui grandit
-  // decale toutes les autres.
-  swatchOn: { borderWidth: 2.5, borderColor: c.mist },
   action: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),

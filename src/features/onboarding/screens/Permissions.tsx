@@ -92,18 +92,15 @@ export function Permissions({ onDone }: { onDone: () => void }) {
   // declenche la vraie alerte, posee au meme endroit. Le doigt est deja au
   // bon pixel quand elle apparait.
   return (
-    <View style={{ flex: 1 }}>
-      <Screen secondary={d.rate.later} onSecondary={onDone} hue="warm">
-        <Text variant="displayM">{d.perms.connect}</Text>
-        <Text variant="lead" tone="secondary" style={{ marginTop: space.md }}>
-          {d.perms.connectBody}
-        </Text>
-        <Text variant="label" tone="tertiary" style={{ marginTop: space.lg }}>
-          {d.perms.press}
-        </Text>
-      </Screen>
-
+    <Screen secondary={d.rate.later} onSecondary={onDone} hue="warm" center>
+      <Text variant="displayM" style={st.center}>{d.perms.connect}</Text>
+      {/*
+        La maquette de l'alerte, juste sous le titre, avec la fleche qui dit
+        ou appuyer. Son bouton declenche la VRAIE alerte, qui se pose alors
+        par-dessus : le doigt est deja au bon endroit.
+      */}
       <SystemAlert
+        inline
         goodSide="left"
         title={d.perms.alertTitle}
         body={d.perms.alertBody}
@@ -112,7 +109,7 @@ export function Permissions({ onDone }: { onDone: () => void }) {
         onGood={() => { void ask(); }}
         onBad={() => { void ask(); }}
       />
-    </View>
+    </Screen>
   );
 }
 

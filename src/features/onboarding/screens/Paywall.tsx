@@ -69,11 +69,11 @@ const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
  * recoit.
  */
 
-// La croix n'apparait qu'apres dix secondes : le temps de lire ce qu'on
+// La croix n'apparait qu'apres douze secondes : le temps de lire ce qu'on
 // propose. Elle finit TOUJOURS par venir — un paywall dont on ne sort pas
-// est un piege, et l'App Store le refuse.
-// Sept secondes : le temps de lire le titre et le prix, pas celui de douter.
-const EXIT_AFTER = 7000;
+// est un piege, et l'App Store le refuse. Sept secondes paraissaient encore
+// vite.
+const EXIT_AFTER = 12000;
 
 /*
  * Au-dela, on n'attend plus le magasin.
@@ -204,13 +204,41 @@ export function Paywall(
 
       La sortie reste ouverte — la croix est la, et le second appui passe.
     */
-    if (!PURCHASES_ENABLED || !chosen) {
+    if (!PURCHASES_ENABLED) {
       if (!storeDown) { setStoreDown(true); haptics.stop(); return; }
       onDone();
       return;
     }
+    /*
+      Pas de forfait sous la main : on REDEMANDE au magasin, en attendant
+      cette fois jusqu'a quinze secondes. Le premier appel etait borne a six
+      secondes, et sur un reseau lent le bouton disait « pas encore ouvert »
+      alors que le magasin n'avait simplement pas fini de repondre.
+    */
+    let pack = chosen;
+    if (!pack) {
+      setBusy(true);
+      const r = await Promise.race([
+        currentOffering(),
+        new Promise<{ offering: null; fail: string }>((res) => setTimeout(() => res({ offering: null, fail: 'timeout' }), 15000)),
+      ]);
+      setBusy(false);
+      if (r.offering?.availablePackages.length) {
+        setPacks(r.offering.availablePackages);
+        setStoreDown(false);
+        setFail(null);
+        pack = r.offering.availablePackages.find((x) => x.identifier === (plan === 'annual' ? '$rc_annual' : '$rc_weekly'));
+      } else {
+        setFail(r.fail);
+        void appUserId().then(setWho);
+        setStoreDown(true);
+        haptics.stop();
+        return;
+      }
+      if (!pack) { setStoreDown(true); return; }
+    }
     setBusy(true);
-    const r = await buy(chosen);
+    const r = await buy(pack);
     setBusy(false);
     if (r === 'bought') {
       setPro(true);
@@ -277,7 +305,7 @@ export function Paywall(
         busy || loading
           ? d.pay.wait
           : storeDown
-            ? d.pay.storeSkip
+            ? d.pay.retry
             : d.pay.cta
       }
       note={
@@ -308,6 +336,10 @@ export function Paywall(
             {who && (
               <Text variant="label" tone="tertiary" style={st.center}>{who}</Text>
             )}
+            {/* La sortie reste ouverte : un lien, sous le message, mene a l'app. */}
+            <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={8} style={{ marginTop: 6 }}>
+              <Text variant="label" color={c.accent} style={st.center}>{d.pay.storeSkip}</Text>
+            </Pressable>
           </Animated.View>
         )
       }
