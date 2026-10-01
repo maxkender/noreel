@@ -11,7 +11,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { dict } from '@/i18n';
 import { Paywall } from './Paywall';
-import { formatHours } from '@/lib/format';
 
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
@@ -46,33 +45,20 @@ it('ne referme pas l’ecran en silence quand il n’y a rien a vendre', async (
 });
 
 it('change le prix sous le bouton quand on change de forfait', () => {
-  /*
-    Le prix vit sous le bouton, en toutes lettres : c'est le seul endroit ou
-    l'essai est annonce. Choisir l'hebdomadaire doit le remplacer par le prix
-    a la semaine — et jamais montrer les deux.
-  */
+  // L'essai est ecrit dans la frise ET sous le bouton ; en hebdomadaire, le
+  // prix sous le bouton passe a la semaine.
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  expect(screen.getByText(/essai|trial/i)).toBeTruthy();
+  expect(screen.getAllByText(/essai|trial/i).length).toBeGreaterThanOrEqual(1);
   fireEvent.press(screen.getByText(dict.pay.weekly));
-  expect(screen.queryByText(/essai gratuit|free trial/i)).toBeNull();
   expect(screen.getAllByText(/par semaine|per week|\/ ?week/i).length).toBeGreaterThanOrEqual(1);
 });
 
-it('montre la destination, pas le point de depart', () => {
-  /*
-    Corti arrivait grille et se reparait sous les yeux : sur la page ou l'on
-    sort sa carte, la premiere image etait celle d'un cerveau mort. On vend ce
-    qu'on obtient : son temps d'aujourd'hui, et la moitie comme objectif —
-    sur SON chiffre, jamais une moyenne. L'estimation par defaut est de
-    2 h 30 ; la cible est donc 1 h 15.
-  */
+it('garde la frise de l’essai, quel que soit le forfait', () => {
   render(<Paywall onDone={() => {}} exitDelay={0} />);
-  // « Aujourd'hui » est aussi le premier jour de la frise : on compte, on ne cherche pas l'unique.
-  expect(screen.getAllByText(dict.pay.today).length).toBeGreaterThanOrEqual(1);
-  expect(screen.getByText(dict.pay.goal)).toBeTruthy();
-  expect(screen.getByText(formatHours(150))).toBeTruthy();
-  expect(screen.getByText(formatHours(75))).toBeTruthy();
-  expect(screen.queryByText('90 %')).toBeNull();
+  expect(screen.getByText(dict.pay.trialTodayBody)).toBeTruthy();
+  fireEvent.press(screen.getByText(dict.pay.weekly));
+  expect(screen.getByText(dict.pay.weekTodayBody)).toBeTruthy();
+  expect(screen.queryByText(dict.pay.trialTodayBody)).toBeNull();
 });
 
 it('la croix arrive apres le delai, jamais avant', () => {

@@ -51,7 +51,6 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
   const [i, setI] = useState(0);
   const fill = useSharedValue(0);
   const last = i >= SLIDES - 1;
-  const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
   const paused = useRef(false);
 
   const go = (n: number) => {
@@ -85,22 +84,14 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
     recule. Les deux gestes partent du meme toucher : au bout de deux
     dixiemes de seconde, ce n'est plus un tap.
   */
-  const down = () => {
-    hold.current = setTimeout(() => {
-      hold.current = null;
-      paused.current = true;
-      cancelAnimation(fill);
-    }, 200);
-  };
-  const up = (dir: -1 | 1) => {
-    if (hold.current) {
-      clearTimeout(hold.current);
-      hold.current = null;
-      if (dir > 0 && last) { onDone(); return; }
-      go(i + dir);
-      return;
-    }
-    if (paused.current) { paused.current = false; run(fill.value); }
+  // Un appui bref avance ou recule ; un doigt qui RESTE (trois dixiemes)
+  // met en pause, et la story repart quand on le leve. C'est Pressable qui
+  // tranche entre les deux : apres un appui long, il ne declenche pas le tap.
+  const pause = () => { paused.current = true; cancelAnimation(fill); };
+  const resume = () => { if (paused.current) { paused.current = false; run(fill.value); } };
+  const tap = (dir: -1 | 1) => {
+    if (dir > 0 && last) { onDone(); return; }
+    go(i + dir);
   };
   const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
 
@@ -144,8 +135,8 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
       {/* Les deux zones de tap, comme dans une story : un tiers a gauche pour
           revenir, le reste pour avancer. Elles s'arretent au-dessus du
           bouton, qui doit rester le sien. */}
-      <Pressable style={[st.zoneL, { top: top + 60 }]} onPressIn={down} onPressOut={() => up(-1)} onPress={() => {}} testID="tuto-prev" accessibilityLabel={d.client.back} />
-      <Pressable style={[st.zoneR, { top: top + 60 }]} onPressIn={down} onPressOut={() => up(1)} onPress={() => {}} testID="tuto-next" accessibilityLabel={d.client.forward} />
+      <Pressable style={[st.zoneL, { top: top + 60 }]} onPress={() => tap(-1)} onLongPress={pause} delayLongPress={300} onPressOut={resume} testID="tuto-prev" accessibilityLabel={d.client.back} />
+      <Pressable style={[st.zoneR, { top: top + 60 }]} onPress={() => tap(1)} onLongPress={pause} delayLongPress={300} onPressOut={resume} testID="tuto-next" accessibilityLabel={d.client.forward} />
 
       <View style={st.foot}>
         {last

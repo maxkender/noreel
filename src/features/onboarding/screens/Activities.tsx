@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -14,7 +14,7 @@ import { ACTIVITIES, activityCount } from '../calculations';
 type P = { onNext: () => void };
 
 const SHOW = 5;        // le nombre de pilules
-const STEP = 420;      // l'ecart entre deux pilules
+const STEP = 380;      // l'ecart entre deux pilules
 
 /**
  * Ce que l'annee ecoulee aurait pu contenir — une ligne a la fois.
@@ -76,7 +76,7 @@ export function Activities({ onNext }: P) {
         {rows.map((r, k) => (
           <Animated.View
             key={r.id}
-            entering={ZoomIn.delay(STEP * k).springify().damping(13).stiffness(260)}
+            entering={FadeIn.delay(STEP * k).duration(450)}
             style={[st.pill, { backgroundColor: withAlpha(c.ember, 0.14), borderColor: withAlpha(c.ember, 0.45) }]}
           >
             <Text variant="title" style={st.pillText}>{r.text}</Text>

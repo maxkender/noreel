@@ -3,16 +3,14 @@ import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ArrowRight, Check, X } from 'lucide-react-native';
+import { Bell, Check, CreditCard, Unlock, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
-import { formatHours } from '@/lib/format';
 import { useT } from '@/i18n';
-import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { useProStore } from '@/store/pro';
 import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
@@ -122,7 +120,6 @@ export function Paywall(
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const minutes = useOnboardingStore(effectiveMinutes);
   const [plan, setPlan] = useState<Plan>('annual');
   const [canExit, setCanExit] = useState(exitDelay === 0);
   const [winback, setWinback] = useState(false);
@@ -367,34 +364,29 @@ export function Paywall(
         <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>
         {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[1]}
       </Text>
-      <Text variant="lead" tone="secondary" style={[st.center, st.sub]}>
-        {d.pay.sub}
-      </Text>
 
-      {/* Son chiffre, et la cible : la moitie, sur SON temps a lui. */}
-      {minutes > 0 && <Goal minutes={minutes} />}
+      {/* Ce qui sera preleve, et quand — AVANT les prix : c'est la question
+          qui bloque la main au-dessus du bouton. */}
+      <Trial plan={plan} />
 
-      {/* Le choix, en premier et en grand : c'est la seule chose a decider ici. */}
+      {/* Deux lignes, l'une sous l'autre : le nom a gauche, le prix a droite. */}
       <View style={st.plans}>
-        <PlanCard
+        <PlanRow
           label={d.pay.annual}
-          // Par MOIS : c'est l'unite dans laquelle on compare un abonnement.
           price={t(d.pay.perMonth, { p: money(euros(annual, ANNUAL_EUR) / 12) })}
-          per={t(d.pay.billedYear, { y: price(annual, FALLBACK.annual) })}
+          sub={t(d.pay.billedYear, { y: price(annual, FALLBACK.annual) })}
           badge={`−${SAVING} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
-        <PlanCard
+        <PlanRow
           label={d.pay.weekly}
-          price={price(weekly, FALLBACK.weekly)}
-          per={d.pay.weeklyNote}
+          price={t(d.pay.perWeek, { p: price(weekly, FALLBACK.weekly) })}
+          sub={d.pay.weeklyNote}
           on={plan === 'weekly'}
           onPress={() => { haptics.tick(); setPlan('weekly'); }}
         />
       </View>
-
-      <Text variant="label" tone="tertiary" style={st.terms}>{d.pay.renew}</Text>
 
       <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
 
@@ -426,58 +418,92 @@ export function Paywall(
 }
 
 /**
- * Aujourd'hui, et l'objectif : deux barres, la seconde moitie moins haute.
+ * La frise de l'essai : ce qui sera preleve, et quand.
  *
- * Son temps d'aujourd'hui, et la moitie, en heures. La cible est la moitie
- * de SON chiffre, arrondie au quart d'heure, jamais une moyenne — un
- * objectif qu'on reconnait comme le sien se tient. Pas de phrase dessous :
- * les deux chiffres se lisent seuls.
+ * Elle est AVANT les prix, parce que « quand est-ce qu'on me prend de
+ * l'argent » est la question qui bloque la main au-dessus du bouton. La dire
+ * avant le prix desarme la question ; la dire apres, en petit, la laisse
+ * entiere.
+ *
+ * Elle sert aussi de banniere : son titre porte le « essai gratuit sur
+ * l'annuel », plutot qu'un bandeau de plus qui redirait la meme chose deux
+ * centimetres au-dessus.
  */
-function Goal({ minutes }: { minutes: number }) {
+function Trial({ plan }: { plan: Plan }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
-  const target = Math.max(15, Math.round(minutes / 2 / 15) * 15);
+  const { d, t } = useT();
+
+  /*
+    L'hebdomadaire garde la MEME frise.
+
+    Il avait droit a un pave a lui, plus court : changer de forfait faisait
+    donc sauter tout le bas de la page, et on perdait l'endroit ou l'on
+    regardait au moment precis ou l'on compare deux prix. Trois etapes des
+    deux cotes, meme hauteur, rien ne bouge — seul le contenu change.
+
+    Il n'a pas d'essai, et la frise le dit en toutes lettres : le taire
+    laisserait croire le contraire, et le prelevement se decouvrirait le jour
+    meme.
+  */
+  const weekly = plan === 'weekly';
+  const steps: [typeof Bell, string, string, boolean][] = weekly
+    ? [
+      [Unlock, d.pay.weekToday, d.pay.weekTodayBody, true],
+      [CreditCard, d.pay.weekEvery, d.pay.weekEveryBody, true],
+      [Bell, d.pay.weekStop, d.pay.weekStopBody, false],
+    ]
+    : [
+      [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
+      [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
+      [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
+    ];
+
   return (
-    <Animated.View entering={FadeIn.delay(100).duration(480)} style={st.goal}>
+    <View style={st.trial}>
       <LinearGradient
-        colors={[withAlpha(c.mist, 0.08), withAlpha(c.mist, 0.03)]}
+        colors={[withAlpha(c.accent, 0.14), withAlpha(c.accentWarm, 0.04)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={st.goalRow}>
-        <GoalBar label={d.pay.today} value={formatHours(minutes)} h={1} tone={c.danger} />
-        <ArrowRight size={20} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} style={{ marginBottom: 34 }} />
-        <GoalBar label={d.pay.goal} value={formatHours(target)} h={target / Math.max(minutes, 1)} tone={c.accent} />
-      </View>
-    </Animated.View>
-  );
-}
+      <Text variant="label" color={weekly ? c.ember : c.accent}>
+        {weekly ? d.pay.weekBanner : t(d.pay.trialBanner, { n: TRIAL_DAYS })}
+      </Text>
 
-function GoalBar({
-  label, value, h, tone,
-}: { label: string; value: string; h: number; tone: string }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  return (
-    <View style={st.goalCol}>
-      <Text variant="title" color={tone}>{value}</Text>
-      <View style={st.goalTrack}>
-        <View style={[st.goalFill, { height: Math.max(10, 88 * h), backgroundColor: withAlpha(tone, 0.35), borderTopColor: tone }]} />
+      <View style={st.steps}>
+        {steps.map(([Icon, when, what, lit], i) => (
+          <View key={when} style={st.step}>
+            {/* Le fil relie les pastilles : sans lui, trois lignes empilees ne
+                se lisent pas comme un calendrier. */}
+            <View style={st.rail}>
+              <View style={[st.bullet, lit && st.bulletOn]}>
+                <Icon
+                  size={12}
+                  strokeWidth={2.4}
+                  color={lit ? c.accent : withAlpha(c.mist, c.textTertiary)}
+                />
+              </View>
+              {i < steps.length - 1 && <View style={st.wire} />}
+            </View>
+            <View style={st.stepText}>
+              <Text variant="button">{when}</Text>
+              <Text variant="body" tone="secondary">{what}</Text>
+            </View>
+          </View>
+        ))}
       </View>
-      <Text variant="label" tone="tertiary" style={st.center}>{label}</Text>
     </View>
   );
 }
 
-/** Un forfait : le prix en grand, le choix a la couleur. */
-function PlanCard({
-  label, price, per, badge, on, onPress,
+/** Un forfait sur une ligne : le nom et sa remise a gauche, le prix a droite. */
+function PlanRow({
+  label, price, sub, badge, on, onPress,
 }: {
   label: string;
   price: string;
-  per: string;
+  sub: string;
   badge?: string;
   on: boolean;
   onPress: () => void;
@@ -487,30 +513,24 @@ function PlanCard({
   return (
     <Pressable
       onPress={onPress}
-      style={[st.plan, on && st.planOn]}
+      style={[st.plan, on ? st.planOn : st.planOff]}
       accessibilityRole="radio"
       accessibilityState={{ selected: on }}
     >
-      {on && (
-        <LinearGradient
-          colors={[withAlpha(c.accent, 0.28), withAlpha(c.accentWarm, 0.08)]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-      <View style={st.planTop}>
-        <Text variant="label" tone={on ? undefined : 'secondary'}>{label}</Text>
+      <View style={[st.tick, on && st.tickOn]}>
+        {on && <Check size={13} strokeWidth={3} color={c.night} />}
+      </View>
+      <View style={st.planLeft}>
+        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)}>{label}</Text>
         {badge && (
-          <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.18) }]}>
-            <Text variant="label" color={on ? c.night : c.mist}>{badge}</Text>
+          <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.16) }]}>
+            <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>{badge}</Text>
           </View>
         )}
       </View>
-      <Text variant="displayM" color={on ? c.mist : withAlpha(c.mist, 0.7)}>{price}</Text>
-      <Text variant="label" tone="tertiary">{per}</Text>
-      <View style={[st.tick, on && st.tickOn]}>
-        {on && <Check size={13} strokeWidth={3} color={c.night} />}
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)}>{price}</Text>
+        <Text variant="label" tone="tertiary">{sub}</Text>
       </View>
     </Pressable>
   );
@@ -525,41 +545,60 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.18),
   },
   center: { textAlign: 'center' },
-  sub: { marginTop: space.sm },
-  goal: {
-    alignSelf: 'stretch', alignItems: 'center', marginTop: space.xl,
-    paddingVertical: space.lg, paddingHorizontal: space.lg, borderRadius: 22, overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.14),
-  },
-  goalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.xl },
-  goalCol: { alignItems: 'center', gap: 8, width: 116 },
-  goalTrack: { height: 88, justifyContent: 'flex-end', alignSelf: 'stretch' },
-  goalFill: { borderRadius: 8, borderTopWidth: 3 },
-  /* Deux cartes cote a cote, le prix en grand : le choix se voit de loin. */
-  plans: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
+  plans: { marginTop: space.lg, gap: space.sm },
   plan: {
-    flex: 1, gap: 4, paddingHorizontal: space.md, paddingVertical: space.md, paddingBottom: space.lg,
-    borderRadius: 20, overflow: 'hidden',
-    borderWidth: 1, borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04),
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    paddingHorizontal: space.md, height: 64, borderRadius: 18, borderWidth: 1.5,
   },
   planOn: {
-    borderColor: withAlpha(c.accent, 0.9), borderWidth: 1.5,
-    shadowColor: c.accent, shadowOpacity: 0.45, shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    borderColor: withAlpha(c.accent, 0.9), backgroundColor: withAlpha(c.accent, 0.14),
+    shadowColor: c.accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
   },
-  planTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  planOff: { borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04) },
+  planLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tick: {
-    position: 'absolute', right: space.md, bottom: space.md,
     width: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.26),
   },
+  trial: {
+    /*
+      Hauteur FIXE.
+      Les deux forfaits n'ont pas le meme contenu — une frise de trois temps
+      pour l'annuel, deux lignes pour l'hebdomadaire — et le bloc changeait
+      donc de taille en changeant de choix. Tout ce qui suit sautait, y compris
+      les deux cartes de forfait, au moment precis ou le doigt les vise.
+    */
+    minHeight: 196, justifyContent: 'center',
+    marginTop: space.xl, borderRadius: 22, overflow: 'hidden',
+    paddingHorizontal: space.lg, paddingVertical: space.lg,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
+  },
+  trialFlat: { borderColor: withAlpha(c.ember, 0.4) },
+  trialInner: { alignSelf: 'stretch' },
+  steps: { marginTop: space.md },
+  step: { flexDirection: 'row', gap: space.md },
+  rail: { alignItems: 'center', width: 22 },
+  bullet: {
+    width: 22, height: 22, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.2),
+  },
+  bulletOn: { borderColor: withAlpha(c.accent, 0.65), backgroundColor: withAlpha(c.accent, 0.12) },
+  wire: { flex: 1, width: 1.5, backgroundColor: withAlpha(c.accent, 0.28) },
+  stepText: { flex: 1, paddingBottom: space.md, gap: 1 },
+  list: { marginTop: space.lg, gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 4 },
+  rowIcon: {
+    width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.accent, 0.12),
+  },
+  rowText: { flex: 1, lineHeight: 16 },
   tickOn: { backgroundColor: c.accent, borderColor: c.accent },
   badge: {
     paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7,
     backgroundColor: c.accent,
   },
-  terms: { textAlign: 'center', marginTop: space.lg, lineHeight: 17 },
   legal: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center',
     gap: space.sm, marginTop: space.md, paddingVertical: space.sm,

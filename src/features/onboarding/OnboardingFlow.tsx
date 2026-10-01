@@ -165,8 +165,8 @@ export function OnboardingFlow() {
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
-    <PromiseScreen key="pro" onNext={next} />,
     <Prep key="prep" onNext={next} />,
+    <PromiseScreen key="pro" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

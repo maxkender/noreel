@@ -963,7 +963,11 @@ export const INSTAGRAM_BLOCKER = `
       les regles du DOM retirent deja : y laisser cette sortie-la revenait a
       faire reculer la page pendant qu'on faisait simplement defiler.
     */
+    // Ni sur les notifications : la page precharge des apercus de reels, et
+    // la sortie « lecteur plein ecran » y faisait reculer la page — un ecran
+    // noir le temps du retour, trop souvent.
     window.__nrShorts = !location.pathname.startsWith('/stories/')
+      && !location.pathname.startsWith('/notifications')
       && location.pathname !== '/';
     if (window.__nrShorts) __shorts();
 
