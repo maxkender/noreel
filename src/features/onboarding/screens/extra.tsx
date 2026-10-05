@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import * as StoreReview from 'expo-store-review';
 import Animated, {
   Easing, FadeIn, FadeInDown, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming,
 } from 'react-native-reanimated';
-import { Apple, Check, Compass, Ellipsis, Star, Users } from 'lucide-react-native';
+import { Apple, Check, Compass, Ellipsis, Users } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Emblem } from '../scenes/Emblem';
 import { withAlpha } from '@/theme/colors';
@@ -15,7 +14,6 @@ import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CortiRig } from '@/components/CortiRig';
-import { FaceCloud } from '@/components/FaceCloud';
 import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
@@ -378,89 +376,6 @@ export function Attribution({ onNext }: P) {
 
 /* ---------- Les etoiles ---------- */
 
-/**
- * La demande de soutien.
- *
- * Elle ne demande pas un service, elle propose d'en rendre un : ce qu'on
- * soutient, c'est la communaute, pas le chiffre d'affaires d'une app. C'est
- * aussi pour ca que le bouton dit « Soutenir » et non « mettre cinq etoiles » —
- * personne n'aime qu'on lui dicte sa note.
- *
- * Elle ne bloque rien : la feuille d'Apple est plafonnee a trois apparitions
- * par an et ne dit jamais si elle s'est montree, donc on avance dans tous les
- * cas.
- *
- * A savoir : sur une version distribuee par TestFlight, iOS ne montre RIEN.
- * L'ecran reste, le bouton avance, et c'est normal — ca ne se verra qu'une
- * fois l'app publiee.
- */
-export function RateAsk({ onNext }: P) {
-  const c = useColors();
-  const st = useMemo(() => sheet(), []);
-  const { d } = useT();
-
-  const ask = async () => {
-    haptics.press();
-    try {
-      if (await StoreReview.hasAction()) await StoreReview.requestReview();
-    } catch {
-      /* rien a faire : un avis n'est pas une etape a franchir */
-    }
-    onNext();
-  };
-  // La demande native d'Apple, d'elle-meme, une seconde apres l'arrivee :
-  // c'est elle qui compte, pas notre bouton.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      void StoreReview.hasAction().then((ok) => { if (ok) return StoreReview.requestReview(); }).catch(() => {});
-    }, 900);
-    return () => clearTimeout(id);
-  }, []);
-
-  return (
-    <Screen
-      cta={d.rate.cta}
-      onPress={() => { void ask(); }}
-      secondary={d.rate.later}
-      onSecondary={onNext}
-      center
-      hue="accent"
-    >
-      {/*
-        Les visages derivent AUTOUR de Corti.
-        Une grille de portraits carres se lit comme une page d'equipe ; des
-        ronds qui flottent se lisent comme des gens, et c'est le seul point de
-        cet ecran. Corti au centre relie la communaute a ce qu'on y fait.
-      */}
-      <View style={st.cloud}>
-        <FaceCloud height={280} />
-        <View style={st.cloudMid} pointerEvents="box-none">
-          {/*
-            Niveau deux, pas trois : cet ecran precede la promesse, et la
-            montrer au sommet ici puis un cran plus bas juste apres ferait
-            reculer son etat. Le sommet est reserve au paywall, qui le propose.
-          */}
-          <CortiRig level={2} size={112} />
-        </View>
-      </View>
-
-      <Animated.View entering={FadeIn.delay(600).duration(520)} style={st.stars}>
-        {Array.from({ length: 5 }, (_, i) => (
-          <Animated.View key={i} entering={FadeIn.delay(700 + i * 110).duration(360)}>
-            <Star size={22} strokeWidth={1.6} color={c.accent} fill={c.accent} />
-          </Animated.View>
-        ))}
-      </Animated.View>
-
-      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
-        {d.rate.title}
-      </Text>
-      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        {d.rate.body}
-      </Text>
-    </Screen>
-  );
-}
 
 // Aucune couleur ici : les trois ecrans qui s'en servent prennent la leur
 // directement sur la palette, au rendu.

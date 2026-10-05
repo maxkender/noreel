@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { Check, Plus, Trash2 } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import * as StoreReview from 'expo-store-review';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -92,6 +93,17 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
     // Les badges gagnes depuis la derniere visite, fetes maintenant.
     const fresh = await claimBadges(x);
     if (fresh.length) setPops((p) => [...p, ...fresh.map((id) => ({ kind: 'badge', id } as Pop))]);
+    /*
+      La note, demandee UNE fois, apres une vraie semaine d'usage : au
+      badge des sept jours proteges. Jamais dans le parcours — Apple l'a
+      refuse en revue (5.6.3) : on ne demande un avis qu'a quelqu'un qui a
+      eu le temps de juger l'app.
+    */
+    if (fresh.includes('day7')) {
+      setTimeout(() => {
+        void StoreReview.hasAction().then((ok) => { if (ok) return StoreReview.requestReview(); }).catch(() => {});
+      }, 2500);
+    }
   }, []);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 

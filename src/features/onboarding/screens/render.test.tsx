@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
+import { Attribution, Meet, Prep, Proof } from './extra';
 import { Paywall } from './Paywall';
 import { AgeAsk, Guess } from './time';
 import { LifeYears, S6Years } from './index';
@@ -73,9 +73,6 @@ describe('les ecrans du parcours se montent', () => {
     render(<Attribution onNext={noop} />);
   });
 
-  it('les etoiles', () => {
-    render(<RateAsk onNext={noop} />);
-  });
 
   /*
     Le paywall dans ses deux etats.
