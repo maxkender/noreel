@@ -22,6 +22,8 @@ import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } fr
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { resetFirstRun } from '@/features/client/firstrun';
 import { resetTutorial } from '@/features/client/tutorial';
+import { TabTour } from './Tours';
+import { resetTours, type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle, type Scroll } from './parts';
 import { AppSlider } from './AppSlider';
@@ -48,6 +50,8 @@ export function HomeScreen() {
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   const [tab, setTab] = useState<Tab>('home');
+  // Rejouer la story d'un onglet : un compteur, pour que la meme demande deux fois passe.
+  const [replay, setReplay] = useState<{ id: TourId; n: number } | null>(null);
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
   const [today, setToday] = useState<Today>({
@@ -109,7 +113,7 @@ export function HomeScreen() {
         {tab === 'home' && (
           <HomeTab onScroll={onScroll} minutes={today.perApp} onBlock={() => setTab('block')} />
         )}
-        {tab === 'corti' && <CortiTab onScroll={onScroll} />}
+        {tab === 'corti' && <CortiTab onScroll={onScroll} onTour={() => setReplay((r) => ({ id: 'corti', n: (r?.n ?? 0) + 1 }))} />}
         {tab === 'block' && (
           <BlockTab
             onScroll={onScroll}
@@ -142,6 +146,9 @@ export function HomeScreen() {
 
       {/* La lame de verre passe a chaque changement d'onglet. */}
       <GlassSweep key={tab} />
+
+      {/* La story de l'onglet, la premiere fois — par-dessus tout. */}
+      <TabTour tab={tab} replay={replay} onDone={() => setReplay(null)} />
 
     </View>
   );
@@ -479,7 +486,7 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
       <Card>
         <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.account.restart} onPress={() => { reset(); void resetFirstRun(); void resetTutorial(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.account.restart} onPress={() => { reset(); void resetFirstRun(); void resetTutorial(); void resetTours(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
       </Card>
 

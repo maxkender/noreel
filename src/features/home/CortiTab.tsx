@@ -59,7 +59,7 @@ type Pop =
 /** Un objectif a cocher : fourni (icone du studio) ou cree (emoji). */
 type Item = { key: string; entry: string; title: string; points: number; care?: CareId; goal?: Goal };
 
-export function CortiTab({ onScroll }: { onScroll: Scroll }) {
+export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
@@ -349,7 +349,8 @@ export function CortiTab({ onScroll }: { onScroll: Scroll }) {
         })}
       </View>
 
-      <Pressable onPress={() => { haptics.tap(); setHelp(true); }} hitSlop={8} accessibilityRole="button" style={st.how}>
+      {/* « Comment ca marche ? » rejoue la story de l'onglet, celle de la premiere fois. */}
+      <Pressable onPress={() => { haptics.tap(); if (onTour) onTour(); else setHelp(true); }} hitSlop={8} accessibilityRole="button" style={st.how}>
         <Text variant="label" tone="tertiary">{d.cortiTab.how}</Text>
       </Pressable>
 

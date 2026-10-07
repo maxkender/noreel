@@ -1,9 +1,7 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
+import { useEffect, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue,
-  withRepeat, withSequence, withTiming,
+  Easing, FadeInDown, ZoomIn, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import {
   ChevronLeft, ChevronRight, House, Link, LogIn, RotateCw, Search, Send, Settings, User, UsersRound,
@@ -11,19 +9,15 @@ import {
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { radii, space } from '@/theme/spacing';
-import { Button } from '@/components/Button';
 import { Text } from '@/components/type/Text';
 import { CortiRig } from '@/components/CortiRig';
 import { MockTabBar } from '@/components/MockFeed';
 import { MockDM } from '@/components/MockDM';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
+import { Story, type Slide } from '@/components/Story';
 import type { ClientId } from './blockers';
 
-/** Le temps d'une story : une phrase, pas plus. */
-const SLIDE_MS = 4200;
-const SLIDES = 6;
 
 /*
  * La premiere fois qu'on ouvre Instagram ici : une story, pas un mode d'emploi.
@@ -40,111 +34,12 @@ const SLIDES = 6;
  * du bord, on ne les voyait pas.
  */
 export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => void }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
-  // Le contexte, pas le hook : sans fournisseur au-dessus, le hook leve, et
-  // la marge de l'appareil au lancement suffit alors.
-  const insets = useContext(SafeAreaInsetsContext);
-  const top = Math.max(insets?.top ?? 0, initialWindowMetrics?.insets.top ?? 0, 20);
-  const bottom = Math.max(insets?.bottom ?? 0, initialWindowMetrics?.insets.bottom ?? 0, 12);
-  const [i, setI] = useState(0);
-  const fill = useSharedValue(0);
-  const last = i >= SLIDES - 1;
-  const paused = useRef(false);
-
-  const go = (n: number) => {
-    setI(Math.max(0, Math.min(SLIDES - 1, n)));
-    haptics.tick();
-  };
-  const advance = () => { setI((n) => (n < SLIDES - 1 ? n + 1 : n)); };
-
-  /*
-    La barre de la story en cours se remplit sur le fil d'animation ; a la
-    fin, on passe a la suivante — sauf la derniere, qui attend le bouton.
-    On repart d'ou elle en etait quand on relache : c'est ce qui permet la
-    PAUSE, comme dans une vraie story.
-  */
-  const run = (from: number) => {
-    fill.value = from;
-    fill.value = withTiming(1, { duration: SLIDE_MS * (1 - from), easing: Easing.linear }, (finished) => {
-      if (finished) runOnJS(advance)();
-    });
-  };
-  useEffect(() => {
-    paused.current = false;
-    run(0);
-    return () => cancelAnimation(fill);
-  // La barre repart de zero a chaque planche, et seulement la.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i]);
-
-  /*
-    Le doigt qui RESTE pose met la story en pause ; un appui bref avance ou
-    recule. Les deux gestes partent du meme toucher : au bout de deux
-    dixiemes de seconde, ce n'est plus un tap.
-  */
-  // Un appui bref avance ou recule ; un doigt qui RESTE (trois dixiemes)
-  // met en pause, et la story repart quand on le leve. C'est Pressable qui
-  // tranche entre les deux : apres un appui long, il ne declenche pas le tap.
-  const pause = () => { paused.current = true; cancelAnimation(fill); };
-  const resume = () => { if (paused.current) { paused.current = false; run(fill.value); } };
-  const tap = (dir: -1 | 1) => {
-    if (dir > 0 && last) { onDone(); return; }
-    go(i + dir);
-  };
-  const barStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
-
-  const slides = [
+  const slides: Slide[] = [
     [d.tuto.t1, d.tuto.b1], [d.tuto.t2, d.tuto.b2], [d.tuto.t3, d.tuto.b3],
     [d.tuto.t4, d.tuto.b4], [d.tuto.t5, d.tuto.b5], [d.tuto.t6, d.tuto.b6],
-  ] as const;
-  const [title, body] = slides[i];
-
-  return (
-    <View style={[st.root, { paddingTop: top + 10, paddingBottom: bottom }]} testID={`tuto-${id}`}>
-      <View style={st.bars}>
-        {slides.map((_, k) => (
-          <View key={k} style={st.track}>
-            {k < i && <View style={[st.fill, { transform: [{ scaleX: 1 }] }]} />}
-            {k === i && <Animated.View style={[st.fill, barStyle]} />}
-          </View>
-        ))}
-      </View>
-
-      <View style={st.head}>
-        <Text variant="label" tone="tertiary">{`${i + 1} / ${SLIDES}`}</Text>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => { haptics.tap(); onDone(); }} hitSlop={12} accessibilityRole="button" style={st.skip}>
-          <Text variant="label" tone="secondary">{d.tuto.skip}</Text>
-        </Pressable>
-      </View>
-
-      {/* Chaque temps se fond dans le suivant : la cle change, l'ancien
-          s'efface pendant que le nouveau arrive. */}
-      <View style={st.stage}>
-        <Animated.View key={i} entering={FadeIn.duration(280)} exiting={FadeOut.duration(160)} style={st.slide}>
-          <View style={st.art}><Art i={i} /></View>
-          <Text variant="displayM" style={st.center}>{title}</Text>
-          {body ? (
-            <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>{body}</Text>
-          ) : null}
-        </Animated.View>
-      </View>
-
-      {/* Les deux zones de tap, comme dans une story : un tiers a gauche pour
-          revenir, le reste pour avancer. Elles s'arretent au-dessus du
-          bouton, qui doit rester le sien. */}
-      <Pressable style={[st.zoneL, { top: top + 60 }]} onPress={() => tap(-1)} onLongPress={pause} delayLongPress={300} onPressOut={resume} testID="tuto-prev" accessibilityLabel={d.client.back} />
-      <Pressable style={[st.zoneR, { top: top + 60 }]} onPress={() => tap(1)} onLongPress={pause} delayLongPress={300} onPressOut={resume} testID="tuto-next" accessibilityLabel={d.client.forward} />
-
-      <View style={st.foot}>
-        {last
-          ? <Button label={d.tuto.go} onPress={onDone} />
-          : <Text variant="label" tone="tertiary" style={st.center}>{d.tuto.hint}</Text>}
-      </View>
-    </View>
-  );
+  ].map(([title, body], i) => ({ title, body, art: <Art i={i} /> }));
+  return <Story slides={slides} onDone={onDone} testID={`tuto-${id}`} />;
 }
 
 /** L'image de chaque temps : Corti, ou une piece de l'ecran qu'on va voir. */
@@ -251,15 +146,6 @@ function DotOpening() {
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: c.night },
-  bars: { flexDirection: 'row', gap: 5, paddingHorizontal: space.lg },
-  track: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: withAlpha(c.mist, 0.28) },
-  fill: { height: 4, borderRadius: 2, width: '100%', backgroundColor: c.mist, transformOrigin: 'left' },
-  head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, paddingVertical: space.md },
-  skip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.1) },
-  stage: { flex: 1, justifyContent: 'center', paddingHorizontal: space.xl },
-  slide: { alignItems: 'center' },
-  art: { height: 280, alignItems: 'center', justifyContent: 'center', marginBottom: space.xl, alignSelf: 'stretch' },
   center: { textAlign: 'center' },
   card: {
     alignSelf: 'stretch', borderRadius: radii.tile, overflow: 'hidden',
@@ -287,7 +173,4 @@ const sheet = (c: Palette) => StyleSheet.create({
     width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.5), backgroundColor: withAlpha(c.accent, 0.1),
   },
-  zoneL: { position: 'absolute', left: 0, bottom: 140, width: '30%' },
-  zoneR: { position: 'absolute', right: 0, bottom: 140, width: '70%' },
-  foot: { paddingHorizontal: space.lg, paddingBottom: space.md, minHeight: 84, justifyContent: 'center' },
 });

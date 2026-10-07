@@ -13,9 +13,9 @@ it('avance d’une touche, revient, et se passe', () => {
   expect(screen.getByText(dict.tuto.t1)).toBeTruthy();
   // Un appui BREF avance ; un doigt qui reste met la story en pause.
   const tap = (id: string) => { fireEvent.press(screen.getByTestId(id)); };
-  tap('tuto-next');
+  tap('tuto-instagram-next');
   expect(screen.getByText(dict.tuto.t2)).toBeTruthy();
-  tap('tuto-prev');
+  tap('tuto-instagram-prev');
   expect(screen.getByText(dict.tuto.t1)).toBeTruthy();
   fireEvent.press(screen.getByText(dict.tuto.skip));
   expect(onDone).toHaveBeenCalledTimes(1);
