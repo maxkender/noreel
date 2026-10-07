@@ -30,6 +30,11 @@ const FACES = [
   require('@/assets/faces/face-6.webp'),
   require('@/assets/faces/face-7.webp'),
   require('@/assets/faces/face-8.webp'),
+  require('@/assets/faces/face-9.webp'),
+  require('@/assets/faces/face-10.webp'),
+  require('@/assets/faces/face-11.webp'),
+  require('@/assets/faces/face-12.webp'),
+  require('@/assets/faces/face-13.webp'),
 ];
 
 /**
@@ -46,6 +51,12 @@ const SPOTS: { x: number; y: number; d: number }[] = [
   { x: 0.16, y: 0.76, d: 48 },
   { x: 0.56, y: 0.80, d: 52 },
   { x: 0.86, y: 0.78, d: 38 },
+  // Les cinq suivants comblent les bords, jamais le centre ou Corti se pose.
+  { x: 0.02, y: 0.30, d: 38 },
+  { x: 0.88, y: 0.24, d: 38 },
+  { x: 0.30, y: 0.86, d: 40 },
+  { x: 0.68, y: 0.60, d: 34 },
+  { x: 0.56, y: 0.06, d: 34 },
 ];
 
 /** Le nuage. Il remplit la boite qu'on lui donne. */

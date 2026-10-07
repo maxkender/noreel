@@ -40,6 +40,7 @@ import { countBlocked, markDay, markRaw, reportRules, stats } from '@/services/p
 import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED } from '@/services/purchases';
 import { ProGate } from '@/features/home/ProGate';
+import { requestReviewOnce } from '@/services/review';
 
 /* Lu a l'appel, pas a l'import : la langue peut changer entre les deux. */
 const label = (id: ClientId): string => ({
@@ -443,7 +444,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
     haptics.tap();
     if (router.canGoBack()) router.back();
     else router.replace('/home');
-  }, [router]);
+    // La premiere fois qu'on ferme Instagram, la feuille de note d'Apple —
+    // une fois revenu a l'accueil, pas par-dessus la fermeture.
+    if (id === 'instagram') setTimeout(() => { void requestReviewOnce('first-close'); }, 900);
+  }, [router, id]);
 
   const onNav = useCallback((a: NavAction) => {
     switch (a) {

@@ -16,6 +16,7 @@ import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { useT } from '@/i18n';
 import type { Dict } from '@/i18n/fr';
+import { Rich } from '@/components/type/Rich';
 import { LIFE_YEARS, yearsOnScreen } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { SignaturePad } from '../scenes/SignaturePad';
@@ -299,9 +300,7 @@ export function PromiseScreen({ onNext }: P) {
           {t(d.ob.promiseKick, { y: years }).toUpperCase()}
         </Text>
       </Animated.View>
-      <Text variant="displayM" style={[st.center, { marginTop: space.sm }]}>
-        {name ? t(d.ob.promiseNamed, { name }) : d.ob.promiseSelf}
-      </Text>
+      <Rich variant="displayM" style={[st.center, { marginTop: space.sm }]} text={name ? t(d.ob.promiseNamed, { name }) : d.ob.promiseSelf} />
 
       <Animated.View entering={FadeInUp.delay(500).duration(520)} style={{ marginTop: space.xl }}>
         <Text variant="label" tone="tertiary" style={[st.center, { marginBottom: space.sm }]}>

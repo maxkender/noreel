@@ -28,6 +28,7 @@ import { resetTours, type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle } from './parts';
 import { useAnchor, useTourScroll } from './anchors';
+import { shareApp, shareOnWhatsApp } from '@/lib/share';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
@@ -56,6 +57,8 @@ export function HomeScreen() {
   const [replay, setReplay] = useState<{ id: TourId; n: number } | null>(null);
   const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
+  // L'en-tete : la visite guidee place ses cadres sous lui.
+  const aFrameTop = useAnchor('frame-top');
   const [today, setToday] = useState<Today>({
     total: 0,
     perApp: { instagram: 0, tiktok: 0, twitter: 0, youtube: 0 },
@@ -103,7 +106,7 @@ export function HomeScreen() {
           Trois effets ont ete essayes pour la faire flotter — degrade, flou,
           filet — et chacun laissait une bordure qui se voit. Ici il n'y a
           plus de bordure a rater : rien ne passe derriere. */}
-      <SafeAreaView edges={['top']} style={st.headWrap}>
+      <SafeAreaView ref={aFrameTop} collapsable={false} edges={['top']} style={st.headWrap}>
         <Header
           onSettings={() => setSettings(true)}
           onProfile={() => setTab('account')}
@@ -499,6 +502,12 @@ function AccountTab() {
       <Text variant="label" tone="secondary" style={st.section}>{d.account.data}</Text>
       <Card>
         <Text variant="body" tone="secondary">{d.account.dataBody}</Text>
+      </Card>
+
+      <Text variant="label" tone="secondary" style={st.section}>{d.ui.share}</Text>
+      <Card>
+        <Row title={d.ui.shareWhatsApp} onPress={() => { void shareOnWhatsApp(); }} right={<Text variant="body" tone="tertiary">›</Text>} />
+        <Row title={d.ui.shareLink} onPress={() => { void shareApp(); }} right={<Text variant="body" tone="tertiary">›</Text>} />
       </Card>
 
       <Text variant="label" tone="secondary" style={st.section}>{d.ui.assistance}</Text>

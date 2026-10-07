@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Meet, Prep, Proof } from './extra';
+import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 import { AgeAsk, Guess } from './time';
 import { LifeYears, S6Years } from './index';
@@ -53,6 +53,10 @@ describe('les ecrans du parcours se montent', () => {
     const r = render(<Prep onNext={noop} />);
     expect(r.toJSON()).toBeTruthy();
     r.unmount();
+  });
+
+  it('les etoiles', () => {
+    render(<RateAsk onNext={noop} />);
   });
 
   it('la bienvenue', () => {

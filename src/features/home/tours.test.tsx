@@ -29,11 +29,15 @@ it('se joue la premiere fois sur Applis, et se retient', async () => {
   const onDone = jest.fn();
   render(<TabTour tab="home" onDone={onDone} />);
   expect(await screen.findByText(dict.tour.h1, {}, { timeout: 3000 })).toBeTruthy();
+  // Un tap pendant la mesure ne compte pas : on attend que la carte soit posee.
+  await screen.findByTestId('story-home-ready', {}, { timeout: 3000 });
   fireEvent.press(screen.getByTestId('story-home-next'));
   expect(await screen.findByText(dict.tour.h2, {}, { timeout: 3000 })).toBeTruthy();
+  await screen.findByTestId('story-home-ready', {}, { timeout: 3000 });
   // L'etape du badge est en option : sans badge, on passe a la suivante.
   fireEvent.press(screen.getByTestId('story-home-next'));
   expect(await screen.findByText(dict.tour.h4, {}, { timeout: 3000 })).toBeTruthy();
+  await screen.findByTestId('story-home-ready', {}, { timeout: 3000 });
   fireEvent.press(screen.getByText(dict.tuto.skip));
   expect(onDone).toHaveBeenCalledTimes(1);
   await waitFor(async () => expect(await tourSeen('home')).toBe(true));

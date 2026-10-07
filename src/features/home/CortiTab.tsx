@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import Animated, { FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { Check, Plus, Trash2 } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import * as StoreReview from 'expo-store-review';
+import { requestReviewOnce } from '@/services/review';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -107,9 +107,7 @@ export function CortiTab({ onTour }: { onTour?: () => void }) {
       eu le temps de juger l'app.
     */
     if (fresh.includes('day7')) {
-      setTimeout(() => {
-        void StoreReview.hasAction().then((ok) => { if (ok) return StoreReview.requestReview(); }).catch(() => {});
-      }, 2500);
+      setTimeout(() => { void requestReviewOnce('day7'); }, 2500);
     }
   }, []);
   useFocusEffect(useCallback(() => { void load(); }, [load]));

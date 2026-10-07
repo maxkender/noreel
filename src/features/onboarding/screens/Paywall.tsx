@@ -520,17 +520,22 @@ function PlanRow({
       <View style={[st.tick, on && st.tickOn]}>
         {on && <Check size={13} strokeWidth={3} color={c.night} />}
       </View>
+      {/*
+        Deux colonnes qui se PARTAGENT la largeur : la gauche se replie, la
+        droite ne depasse jamais la moitie. En italien, « Fatturato … all'anno »
+        poussait le prix sur la pastille « −81 % » et les deux se couvraient.
+      */}
       <View style={st.planLeft}>
-        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)}>{label}</Text>
+        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)} numberOfLines={1}>{label}</Text>
         {badge && (
           <View style={[st.badge, !on && { backgroundColor: withAlpha(c.mist, 0.16) }]}>
-            <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>{badge}</Text>
+            <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)} numberOfLines={1}>{badge}</Text>
           </View>
         )}
       </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)}>{price}</Text>
-        <Text variant="label" tone="tertiary">{sub}</Text>
+      <View style={st.planRight}>
+        <Text variant="button" color={on ? c.mist : withAlpha(c.mist, 0.6)} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{price}</Text>
+        <Text variant="label" tone="tertiary" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ textAlign: 'right' }}>{sub}</Text>
       </View>
     </Pressable>
   );
@@ -555,7 +560,8 @@ const sheet = (c: Palette) => StyleSheet.create({
     shadowColor: c.accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
   },
   planOff: { borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04) },
-  planLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  planLeft: { flex: 1, flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
+  planRight: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '52%' },
   tick: {
     width: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',

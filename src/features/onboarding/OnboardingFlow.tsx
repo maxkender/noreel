@@ -15,8 +15,9 @@ import { StepBoundary } from '@/components/StepBoundary';
 import { LifeYears, S1, S6Years } from './screens';
 import { Constat, Name, NotificationsAsk, PromiseScreen, Welcome } from './screens/setup';
 import { Permissions } from './screens/Permissions';
+import { Language } from './screens/Language';
 import { Activities } from './screens/Activities';
-import { Attribution, Meet, Prep, Proof } from './screens/extra';
+import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { AgeAsk, Guess } from './screens/time';
@@ -128,9 +129,10 @@ export function OnboardingFlow() {
   /*
     L'ordre raconte quelque chose, et il a change.
 
-    Aucune demande de note dans le parcours : Apple l'a refuse en revue
-    (5.6.3, 5 octobre 2026) — on ne demande un avis qu'a quelqu'un qui a
-    deja utilise l'app.
+    La demande de note est de retour apres les notifications, a la demande
+    de Maximilien (7 octobre 2026) : Apple l'avait refusee en revue le 5
+    (5.6.3), le risque est connu. Elle se redemande aussi a la premiere
+    fermeture d'Instagram.
 
     On demandait le temps d'ecran, puis on enchainait sur ce qu'il coute.
     Le vrai chiffre, Apple ne le donne a aucune app, et le cadre ou il
@@ -147,6 +149,7 @@ export function OnboardingFlow() {
   const screens = [
     <S1 key="s1" onNext={next} />,
     <Welcome key="welcome" onNext={next} />,
+    <Language key="lang" onNext={next} />,
     <Name key="name" onNext={next} />,
     <Attribution key="src" onNext={next} />,
     <Meet key="meet" onNext={next} />,
@@ -168,6 +171,7 @@ export function OnboardingFlow() {
     <DmReel key="dm" onNext={next} />,
     <Permissions key="perm" onDone={next} />,
     <NotificationsAsk key="notif" onNext={next} />,
+    <RateAsk key="rate" onNext={next} />,
     <Prep key="prep" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,

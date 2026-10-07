@@ -12,7 +12,6 @@ import { Text } from '@/components/type/Text';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { LangPicker } from '@/components/LangPicker';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { freeShare, lifeYears } from '../calculations';
 import { LOGOS } from '@/features/home/AppSlider';
@@ -38,18 +37,11 @@ type P = { onNext: () => void };
 export function S1({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
-  const { d, lang } = useT();
+  const { d } = useT();
   // L'invite arrive des que la seconde ligne a fini de s'ecrire.
   const typed = typeDuration(d.s1.title1, 46, 0) + 900 + typeDuration(d.s1.title2, 46, 0) + 150;
-  /*
-    La langue se choisit ICI, avant tout le reste : c'est la seule page que
-    tout le monde voit, et la seule ou une phrase mal comprise n'a encore
-    rien coute. Changer de langue recommence l'ecran dans la nouvelle — les
-    pastilles, elles, repondent tout de suite, verrou ou pas.
-  */
   return (
-    <Screen key={lang} cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={typed} readyAfter={typed} hue="accent" backdrop={<Drift />}>
-      <LangPicker style={s.langs} />
+    <Screen cta={d.tapHint} onPress={onNext} center tapToContinue hintDelay={typed} readyAfter={typed} hue="accent" backdrop={<Drift />}>
       <Image source={MARK} style={s.mark} contentFit="contain" />
       <Typewriter text={d.s1.title1} variant="displayL" speed={46} style={s.center} />
       <Typewriter text={d.s1.title2} variant="displayL" speed={46} delay={900} style={s.center} />
@@ -80,8 +72,10 @@ function Drift() {
 
 function DriftIcon({ id, i, width, height }: { id: (typeof DRIFT_APPS)[number]; i: number; width: number; height: number }) {
   // Des places fixes, semees pour ne pas se chevaucher : bords et coins,
-  // jamais le centre, ou le texte s'ecrit.
-  const spots = [[0.08, 0.14], [0.8, 0.1], [0.14, 0.4], [0.86, 0.36], [0.06, 0.66], [0.84, 0.62], [0.24, 0.84], [0.7, 0.86]];
+  // jamais le centre, ou le texte s'ecrit — et jamais le bas, ou le contenu
+  // se fond dans le noir avant l'invite : une icone a cheval sur ce fondu
+  // avait l'air coupee en deux.
+  const spots = [[0.08, 0.12], [0.8, 0.09], [0.14, 0.36], [0.86, 0.32], [0.06, 0.58], [0.84, 0.55], [0.24, 0.7], [0.7, 0.68]];
   const [fx, fy] = spots[i % spots.length];
   const t = useSharedValue(0);
   useEffect(() => {
@@ -377,7 +371,6 @@ export function S6Years({ onNext }: P) {
 const sheet = (c: Palette) => StyleSheet.create({
   yearsBlock: { alignItems: 'center', gap: space.xs },
   mark: { width: 64, height: 64, alignSelf: 'center', marginBottom: space.xl },
-  langs: { marginBottom: space.xxl },
   center: { textAlign: 'center' },
   years: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', alignSelf: 'stretch', marginTop: space.xl },
   lines: { alignSelf: 'stretch', minHeight: 4 * 32, marginTop: space.lg, gap: 6 },

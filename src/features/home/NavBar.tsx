@@ -60,9 +60,11 @@ export function NavBar<T extends string>({
     ],
   }));
   const halo = useAnimatedStyle(() => ({ opacity: pop.value * 0.55 }));
+  // La barre entiere : la visite guidee s'arrete au-dessus d'elle.
+  const frame = useAnchor('frame-bottom');
 
   return (
-    <View style={st.wrap} pointerEvents="box-none">
+    <View ref={frame} collapsable={false} style={st.wrap} pointerEvents="box-none">
       <View style={st.bar}>
         <BlurView intensity={100} tint={tint} style={StyleSheet.absoluteFill} />
         <LinearGradient

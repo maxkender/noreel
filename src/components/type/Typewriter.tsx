@@ -7,7 +7,7 @@ import type { TypeName } from '@/theme/typography';
 /** Un morceau du texte : accentue ou non. Les accolades ne s'affichent pas. */
 type Seg = { text: string; accent: boolean };
 
-const parse = (s: string): Seg[] =>
+export const parseAccents = (s: string): Seg[] =>
   s.split(/(\{[^}]*\})/g)
     .filter(Boolean)
     .map((p) => (p.startsWith('{')
@@ -47,7 +47,7 @@ export function Typewriter({
   cursor?: boolean;
 }) {
   const c = useColors();
-  const segs = useMemo(() => parse(text), [text]);
+  const segs = useMemo(() => parseAccents(text), [text]);
   const total = useMemo(() => segs.reduce((n, s) => n + s.text.length, 0), [segs]);
   const [n, setN] = useState(0);
 
@@ -99,5 +99,5 @@ export function Typewriter({
 
 /** Duree totale, pour enchainer la suite sans deviner. */
 export function typeDuration(text: string, speed = 32, delay = 0): number {
-  return delay + parse(text).reduce((n, s) => n + s.text.length, 0) * speed;
+  return delay + parseAccents(text).reduce((n, s) => n + s.text.length, 0) * speed;
 }

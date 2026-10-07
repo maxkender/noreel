@@ -1,7 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  Easing, FadeIn, LinearTransition, useAnimatedProps, useSharedValue, withTiming, type SharedValue,
+} from 'react-native-reanimated';
 import Svg, { Defs, Mask, Rect } from 'react-native-svg';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -21,19 +23,32 @@ export type SpotStep = {
   optional?: boolean;
 };
 
-/** Le vide autour de l'element eclaire, et le temps de laisser l'onglet se poser. */
+/** Le vide autour de l'element eclaire, l'ecart avec la carte, et les temps. */
 const PAD = 8;
+const GAP = 16;
 const SETTLE_MS = 380;
+const SCROLL_MS = 460;
+const MOVE_MS = 420;
+const EASE = Easing.bezier(0.22, 1, 0.36, 1);
+
+const ARect = Animated.createAnimatedComponent(Rect);
+
+/** Fait glisser une valeur du fil d'animation vers sa cible. */
+function glide(sv: SharedValue<number>, to: number) {
+  sv.value = withTiming(to, { duration: MOVE_MS, easing: EASE });
+}
 
 /*
  * Le projecteur : la visite guidee par-dessus la vraie page.
  *
  * Tout l'ecran s'assombrit, sauf l'element dont on parle, decoupe dans le
- * voile et cercle d'un trait. La carte se pose sous lui, ou au-dessus quand
- * il est bas. Un tap n'importe ou avance ; « Passer » sort. Si l'element
- * est hors champ, la liste de l'onglet defile pour l'amener sous les yeux
- * avant qu'on le cercle. On ne montre pas une image de la fonction : on
- * montre la fonction.
+ * voile et cercle d'un trait. D'une etape a l'autre le trou GLISSE jusqu'au
+ * prochain element — il ne saute pas — et la carte se deplace avec lui :
+ * sous l'element quand il y a la place, au-dessus sinon. Si l'element est
+ * hors champ ou trop bas pour laisser la place a la carte, la liste de
+ * l'onglet defile d'abord pour l'amener juste sous l'en-tete. Un tap
+ * n'importe ou avance ; « Passer » sort. On ne montre pas une image de la
+ * fonction : on montre la fonction.
  */
 export function Spotlight({
   steps, tab, onDone, testID = 'spot',
@@ -53,19 +68,32 @@ export function Spotlight({
   const bottom = Math.max(insets?.bottom ?? 0, initialWindowMetrics?.insets.bottom ?? 0, 12);
 
   const [i, setI] = useState(0);
-  /** L'etape mesuree et son cadre — `null` quand rien n'est a eclairer. Une autre etape que `i` : on mesure encore. */
+  /** L'etape mesuree et son cadre — `null` quand rien n'est a eclairer. */
   const [found, setFound] = useState<{ step: number; rect: Box | null } | null>(null);
+  /** La hauteur de la carte, lue au rendu : elle decide ou la poser. */
+  const [cardH, setCardH] = useState(170);
   const alive = useRef(true);
+  const busy = useRef(false);
+  /** Le dernier cadre eclaire : quand le suivant manque, le trou se referme dessus. */
+  const prev = useRef<Box | null>(null);
   useEffect(() => () => { alive.current = false; }, []);
 
   const n = steps.length;
   const last = i >= n - 1;
-
   const finish = useCallback(() => { onDone(); }, [onDone]);
 
-  // L'element reste lisible entre l'en-tete et la barre du bas.
-  const bandTop = top + 64;
-  const bandBottom = H - bottom - 118;
+  // Le trou, sur le fil d'animation : il glisse d'un element au suivant.
+  const hx = useSharedValue(W / 2);
+  const hy = useSharedValue(H / 2);
+  const hw = useSharedValue(0);
+  const hh = useSharedValue(0);
+  const holeProps = useAnimatedProps(() => ({
+    x: hx.value, y: hy.value, width: hw.value, height: hh.value,
+  }));
+  const ringProps = useAnimatedProps(() => ({
+    x: hx.value, y: hy.value, width: hw.value, height: hh.value,
+    strokeOpacity: hw.value > 1 ? 1 : 0,
+  }));
 
   const find = useCallback(async (k: number): Promise<Box | null> => {
     const ids = Array.isArray(steps[k].target) ? steps[k].target : [steps[k].target];
@@ -78,9 +106,10 @@ export function Spotlight({
 
   useEffect(() => {
     let cancelled = false;
+    busy.current = true;
     const run = async () => {
       // L'onglet vient d'apparaitre : on le laisse se poser avant de mesurer.
-      await new Promise((r) => setTimeout(r, i === 0 ? SETTLE_MS : 60));
+      await new Promise((r) => setTimeout(r, i === 0 ? SETTLE_MS : 40));
       if (cancelled || !alive.current) return;
       let r = await find(i);
       if (cancelled || !alive.current) return;
@@ -90,94 +119,121 @@ export function Spotlight({
         return;
       }
       if (r) {
-        // Hors champ : on fait defiler, puis on remesure.
-        const dy = r.y + r.h > bandBottom ? r.y + r.h - bandBottom + 16
-          : r.y < bandTop ? r.y - bandTop - 16 : 0;
-        if (dy !== 0 && scrollTabBy(tab, dy)) {
-          await new Promise((res) => setTimeout(res, 420));
-          if (cancelled || !alive.current) return;
-          r = (await find(i)) ?? r;
+        /*
+          Le champ : entre l'en-tete et la barre du bas, mesures eux aussi.
+          L'element doit y tenir ENTIER, avec la place de la carte au-dessus
+          ou en dessous. Sinon la liste defile pour le poser juste sous
+          l'en-tete, et la carte vient dessous.
+        */
+        const head = await measureAnchor('frame-top');
+        const foot = await measureAnchor('frame-bottom');
+        if (cancelled || !alive.current) return;
+        const bt = head ? head.y + head.h : top + 64;
+        const bb = foot ? foot.y - 8 : H - bottom - 118;
+        const need = cardH + GAP * 2;
+        const inBand = r.y - PAD >= bt && r.y + r.h + PAD <= bb;
+        const room = r.y + r.h + PAD + need <= bb || r.y - PAD - need >= bt;
+        if (!inBand || !room) {
+          const dy = r.y - PAD - (bt + 8);
+          if (scrollTabBy(tab, dy)) {
+            await new Promise((res) => setTimeout(res, SCROLL_MS));
+            if (cancelled || !alive.current) return;
+            r = (await find(i)) ?? r;
+          }
         }
       }
-      if (!cancelled && alive.current) setFound({ step: i, rect: r });
+      if (cancelled || !alive.current) return;
+      setFound({ step: i, rect: r });
+      busy.current = false;
     };
     void run();
     return () => { cancelled = true; };
-  }, [i, find, steps, n, tab, bandTop, bandBottom, finish]);
+  // La hauteur de la carte sert au calcul mais ne doit pas relancer la mesure.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i, find, steps, n, tab, top, bottom, H, finish]);
+
+  // Le trou glisse vers le cadre trouve ; sans cadre, il se referme sur place.
+  useEffect(() => {
+    if (!found) return;
+    const r = found.rect;
+    const p = prev.current;
+    const cx = p ? p.x + p.w / 2 : W / 2;
+    const cy = p ? p.y + p.h / 2 : H / 2;
+    const to = r
+      ? { x: r.x - PAD, y: r.y - PAD, w: r.w + PAD * 2, h: r.h + PAD * 2 }
+      : { x: cx, y: cy, w: 0, h: 0 };
+    prev.current = r;
+    glide(hx, to.x); glide(hy, to.y); glide(hw, to.w); glide(hh, to.h);
+  }, [found, hx, hy, hw, hh, W, H]);
 
   const next = () => {
+    if (busy.current) return;
     if (last) { finish(); return; }
     haptics.tick();
     setI((k) => k + 1);
   };
 
-  if (!found || found.step !== i) {
-    // On mesure : un voile leger, sans carte, pour que rien ne saute.
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(c.night, 0.35) }]} testID={testID} />;
+  // La carte : sous l'element quand ca tient, au-dessus sinon, et jamais hors de l'ecran.
+  const r = found?.rect ?? null;
+  const minTop = top + GAP;
+  const maxTop = H - bottom - GAP - cardH;
+  let cardTop = H * 0.3;
+  if (r) {
+    const below = r.y + r.h + PAD + GAP;
+    const above = r.y - PAD - GAP - cardH;
+    cardTop = below + cardH <= H - bottom - GAP ? below : above >= minTop ? above : maxTop;
   }
-
-  const box = found.rect;
-  const hole = box
-    ? { x: box.x - PAD, y: box.y - PAD, w: box.w + PAD * 2, h: box.h + PAD * 2 }
-    : null;
-  // La carte va sous l'element quand il est haut, au-dessus quand il est bas.
-  const below = hole ? hole.y + hole.h < H * 0.55 : false;
-  const cardPos = hole
-    ? below
-      ? { top: hole.y + hole.h + space.lg }
-      : { bottom: H - hole.y + space.lg }
-    : { top: H * 0.3 };
+  cardTop = Math.max(minTop, Math.min(maxTop, cardTop));
 
   const { title, body } = steps[i];
+  // La carte ne se montre qu'une fois l'etape en cours mesuree.
+  const shown = found !== null && found.step === i;
 
   return (
     <Pressable style={StyleSheet.absoluteFill} onPress={next} testID={testID}>
-      <Animated.View key={`veil-${i}`} entering={FadeIn.duration(260)} exiting={FadeOut.duration(160)} style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
           <Defs>
             <Mask id="hole">
               <Rect x={0} y={0} width={W} height={H} fill="#fff" />
-              {hole && <Rect x={hole.x} y={hole.y} width={hole.w} height={hole.h} rx={radii.tile} ry={radii.tile} fill="#000" />}
+              <ARect animatedProps={holeProps} rx={radii.tile} ry={radii.tile} fill="#000" />
             </Mask>
           </Defs>
           <Rect x={0} y={0} width={W} height={H} fill={c.night} opacity={0.8} mask="url(#hole)" />
-          {hole && (
-            <Rect
-              x={hole.x} y={hole.y} width={hole.w} height={hole.h}
-              rx={radii.tile} ry={radii.tile}
-              fill="none" stroke={c.accent} strokeWidth={2}
-            />
-          )}
+          <ARect animatedProps={ringProps} rx={radii.tile} ry={radii.tile} fill="none" stroke={c.accent} strokeWidth={2} />
         </Svg>
       </Animated.View>
 
-      <View style={[st.head, { top: top + 10 }]} pointerEvents="box-none">
-        <Text variant="label" tone="tertiary">{`${i + 1} / ${n}`}</Text>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => { haptics.tap(); finish(); }} hitSlop={12} accessibilityRole="button" style={st.skip}>
-          <Text variant="label" tone="secondary">{d.tuto.skip}</Text>
-        </Pressable>
-      </View>
-
-      <Animated.View key={`card-${i}`} entering={FadeInDown.duration(300)} style={[st.cardWrap, cardPos]} pointerEvents="box-none">
+      {/* La carte suit le trou : sa place change en glissant, son texte en fondu. */}
+      <Animated.View
+        layout={LinearTransition.duration(MOVE_MS).easing(EASE)}
+        style={[st.cardWrap, { top: cardTop, opacity: shown ? 1 : 0 }]}
+        pointerEvents={shown ? 'box-none' : 'none'}
+        testID={shown ? `${testID}-ready` : undefined}
+        onLayout={(e) => { const h = Math.round(e.nativeEvent.layout.height); if (h && h !== cardH) setCardH(h); }}
+      >
         {/* La carte absorbe le tap : taper sur ce qu'on lit n'avance pas. */}
         <Pressable onPress={() => {}} style={st.card}>
-          <Text variant="title">{title}</Text>
-          {body ? <Text variant="body" tone="secondary" style={{ marginTop: space.xs }}>{body}</Text> : null}
-          <View style={st.dots}>
-            {steps.map((_, k) => (
-              <View key={k} style={[st.dot, k === i && { backgroundColor: c.accent, width: 18 }]} />
-            ))}
-          </View>
-          <View style={st.foot}>
-            {last
-              ? <Button label={d.tuto.go} onPress={finish} />
-              : (
-                <Pressable onPress={next} style={st.next} accessibilityRole="button" testID={`${testID}-next`}>
-                  <Text variant="button" color={c.night}>{d.tour.next}</Text>
-                </Pressable>
-              )}
-          </View>
+          <Animated.View key={i} entering={FadeIn.duration(240)}>
+            <View style={st.head}>
+              <Text variant="label" tone="tertiary">{`${i + 1} / ${n}`}</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={() => { haptics.tap(); finish(); }} hitSlop={12} accessibilityRole="button" style={st.skip}>
+                <Text variant="label" tone="secondary">{d.tuto.skip}</Text>
+              </Pressable>
+            </View>
+            <Text variant="title">{title}</Text>
+            {body ? <Text variant="body" tone="secondary" style={{ marginTop: space.xs }}>{body}</Text> : null}
+            <View style={st.foot}>
+              {last
+                ? <Button label={d.tuto.go} onPress={finish} />
+                : (
+                  <Pressable onPress={next} style={st.next} accessibilityRole="button" testID={`${testID}-next`}>
+                    <Text variant="button" color={c.night}>{d.tour.next}</Text>
+                  </Pressable>
+                )}
+            </View>
+          </Animated.View>
         </Pressable>
       </Animated.View>
     </Pressable>
@@ -185,16 +241,14 @@ export function Spotlight({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  head: { position: 'absolute', left: gutter, right: gutter, flexDirection: 'row', alignItems: 'center' },
-  skip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.14) },
   cardWrap: { position: 'absolute', left: gutter, right: gutter },
   card: {
     borderRadius: radii.tile, padding: space.lg,
     backgroundColor: c.night, borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 16,
   },
-  dots: { flexDirection: 'row', gap: 5, marginTop: space.md },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.25) },
+  head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.sm },
+  skip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.12) },
   foot: { marginTop: space.md },
   next: {
     alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',

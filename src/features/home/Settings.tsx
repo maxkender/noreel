@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  Linking, Modal, Pressable, ScrollView, Share, StyleSheet, View,
+  Linking, Modal, Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +18,7 @@ import { useAppsStore } from '@/store/apps';
 import { TINTS } from '@/theme/tints';
 import { Toggle } from './parts';
 import { LangPicker } from '@/components/LangPicker';
+import { STORE_URL, shareApp, shareOnWhatsApp } from '@/lib/share';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
 import {
@@ -40,8 +41,6 @@ const dayNames = (lang: string): [number, string][] => {
   });
 };
 
-/** La page de l'app sur l'App Store : ce qu'on partage. */
-const STORE_URL = 'https://apps.apple.com/app/id6814633088';
 
 // Le soir seulement : une fenetre le matin se prolonge sur la journee.
 const HOURS = [18, 19, 20, 21, 22];
@@ -154,6 +153,11 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               et personne ne l'y a trouvee. Un reglage qu'on ne decouvre qu'en
               sachant deja qu'il existe n'existe pas.
             */}
+            <Group title={d.ui.share} />
+            {/* Deux portes : WhatsApp directement, ou la feuille de partage d'iOS avec le lien. */}
+            <Line label={d.ui.shareWhatsApp} onPress={() => { void shareOnWhatsApp(); }} />
+            <Line label={d.ui.shareLink} sub={STORE_URL.replace('https://', '')} onPress={() => { void shareApp(); }} />
+
             <Group title={d.prefs.colour} />
             <View style={st.chips}>
               {TINTS.map((t) => {
@@ -306,29 +310,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               label={d.prefs.iosSettings}
               sub={d.prefs.iosSettingsBody}
               onPress={() => void Linking.openSettings()}
-            />
-
-            <Group title={d.ui.share} />
-            {/*
-              Deux portes : la feuille de partage d'iOS, avec le lien, et
-              WhatsApp directement — c'est la que ca se raconte. Sans WhatsApp
-              sur le telephone, on retombe sur la feuille.
-            */}
-            <Line
-              label={d.ui.shareLink}
-              sub={STORE_URL}
-              onPress={() => {
-                void Share.share({ message: `${d.ui.shareText} ${STORE_URL}`, url: STORE_URL });
-              }}
-            />
-            <Line
-              label={d.ui.shareWhatsApp}
-              onPress={() => {
-                const text = encodeURIComponent(`${d.ui.shareText} ${STORE_URL}`);
-                void Linking.openURL(`whatsapp://send?text=${text}`).catch(() => {
-                  void Share.share({ message: `${d.ui.shareText} ${STORE_URL}`, url: STORE_URL });
-                });
-              }}
             />
 
             <Group title={d.prefs.about} />
