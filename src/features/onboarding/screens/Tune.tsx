@@ -101,7 +101,7 @@ export function Tune({ onNext }: P) {
                       ? (
                         <View style={st.lockPill}>
                           <Lock size={11} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />
-                          <Text variant="label" tone="tertiary">Toujours</Text>
+                          <Text variant="label" tone="tertiary">{d.ui.always}</Text>
                         </View>
                       )
                       : <Switch on={idx < lit} />}

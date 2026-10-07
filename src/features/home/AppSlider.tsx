@@ -23,6 +23,8 @@ import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { dict } from '@/i18n';
+import { useAnchor } from './anchors';
+import type { Dict } from '@/i18n/fr';
 
 /**
  * Ce que la version gratuite ouvre.
@@ -40,11 +42,12 @@ export const LOGOS = {
   youtube: require('@/assets/apps/youtube.png'),
 } as const;
 
-export const APPS: { id: ClientId; name: string; sub: string }[] = [
-  { id: 'instagram', name: 'Instagram', sub: dict.ui.subIg },
-  { id: 'tiktok', name: 'TikTok', sub: dict.ui.subTt },
-  { id: 'twitter', name: 'X', sub: dict.ui.subX },
-  { id: 'youtube', name: 'YouTube', sub: dict.ui.subYt },
+/* Le sous-titre est une CLE du dictionnaire : lu a l'affichage, dans la langue du moment. */
+export const APPS: { id: ClientId; name: string; sub: keyof Dict['ui'] }[] = [
+  { id: 'instagram', name: 'Instagram', sub: 'subIg' },
+  { id: 'tiktok', name: 'TikTok', sub: 'subTt' },
+  { id: 'twitter', name: 'X', sub: 'subX' },
+  { id: 'youtube', name: 'YouTube', sub: 'subYt' },
 ];
 
 // L'icone occupe presque tout son emplacement : c'est ce qu'on vient
@@ -133,7 +136,7 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
 
       <Animated.View key={app.id} entering={FadeIn.duration(220)} style={st.legend}>
         <Text variant="displayM">{app.name}</Text>
-        <Text variant="label" tone="secondary">{app.sub}</Text>
+        <Text variant="label" tone="secondary">{dict.ui[app.sub]}</Text>
         <Open
           id={app.id}
           minutes={minutes[app.id] ?? 0}
@@ -236,9 +239,12 @@ function Open({
   const router = useRouter();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
+  const ref = useAnchor('home-open');
 
   return (
     <Pressable
+      ref={ref}
+      collapsable={false}
       style={st.open}
       accessibilityRole="button"
       onPress={() => {
@@ -277,7 +283,7 @@ function Toggles({
             tone={t.locked ? 'secondary' : 'primary'}
             style={{ flex: 1 }}
           >
-            {t.label}
+            {dict.toggles[t.label]}
           </Text>
           {t.locked
             ? <LockedPill />

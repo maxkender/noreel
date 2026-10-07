@@ -1,5 +1,7 @@
 /**
- * La story d'un onglet : une fois, puis plus jamais — sauf si on la redemande.
+ * La visite d'un onglet : une fois, puis plus jamais — sauf si on la redemande.
+ * Elle eclaire les vrais elements ; sans eux (ici, rien n'est monte), elle
+ * dit quand meme chaque etape, carte seule, et saute celles qui sont en option.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { dict } from '@/i18n';
@@ -26,9 +28,12 @@ it('se joue la premiere fois sur Applis, et se retient', async () => {
   await resetTours();
   const onDone = jest.fn();
   render(<TabTour tab="home" onDone={onDone} />);
-  expect(await screen.findByText(dict.tour.h1)).toBeTruthy();
+  expect(await screen.findByText(dict.tour.h1, {}, { timeout: 3000 })).toBeTruthy();
   fireEvent.press(screen.getByTestId('story-home-next'));
-  expect(screen.getByText(dict.tour.h2)).toBeTruthy();
+  expect(await screen.findByText(dict.tour.h2, {}, { timeout: 3000 })).toBeTruthy();
+  // L'etape du badge est en option : sans badge, on passe a la suivante.
+  fireEvent.press(screen.getByTestId('story-home-next'));
+  expect(await screen.findByText(dict.tour.h4, {}, { timeout: 3000 })).toBeTruthy();
   fireEvent.press(screen.getByText(dict.tuto.skip));
   expect(onDone).toHaveBeenCalledTimes(1);
   await waitFor(async () => expect(await tourSeen('home')).toBe(true));
@@ -47,5 +52,5 @@ it('ne revient pas une fois vue, et rien sur le compte', async () => {
 it('se rejoue quand on le demande', async () => {
   await markTourSeen('corti');
   render(<TabTour tab="corti" replay={{ id: 'corti', n: 1 }} onDone={() => {}} />);
-  expect(await screen.findByText(dict.tour.c1)).toBeTruthy();
+  expect(await screen.findByText(dict.tour.c1, {}, { timeout: 3000 })).toBeTruthy();
 });

@@ -1,4 +1,4 @@
-import { dict } from '@/i18n';
+import type { Dict } from '@/i18n/fr';
 import type { ClientId } from '@/features/client/blockers';
 
 /**
@@ -12,7 +12,8 @@ import type { ClientId } from '@/features/client/blockers';
 /** Reglages par app. Les entrees `locked` sont toujours actives. */
 export type AppToggle = {
   key: string;
-  label: string;
+  /** La cle du libelle dans `dict.toggles` : lue a l'affichage, dans la langue du moment. */
+  label: keyof Dict['toggles'];
   /** Toujours actif, non debrayable. */
   locked?: boolean;
   /** Actif tant que l'utilisateur n'a rien touche. */
@@ -21,33 +22,33 @@ export type AppToggle = {
 
 export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
-    { key: 'reels', label: dict.toggles.igReels, locked: true },
-    { key: 'stories', label: dict.toggles.igStories },
-    { key: 'explore', label: dict.toggles.igExplore },
-    { key: 'saved', label: dict.toggles.igSaved },
-    { key: 'feed', label: dict.toggles.igFeed },
-    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
-    { key: 'grayscale', label: dict.toggles.gray },
+    { key: 'reels', label: 'igReels', locked: true },
+    { key: 'stories', label: 'igStories' },
+    { key: 'explore', label: 'igExplore' },
+    { key: 'saved', label: 'igSaved' },
+    { key: 'feed', label: 'igFeed' },
+    { key: 'dmsOnly', label: 'dmsOnly' },
+    { key: 'grayscale', label: 'gray' },
   ],
   tiktok: [
-    { key: 'foryou', label: dict.toggles.ttForyou, locked: true },
-    { key: 'explore', label: dict.toggles.ttExplore },
-    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
-    { key: 'grayscale', label: dict.toggles.gray },
+    { key: 'foryou', label: 'ttForyou', locked: true },
+    { key: 'explore', label: 'ttExplore' },
+    { key: 'dmsOnly', label: 'dmsOnly' },
+    { key: 'grayscale', label: 'gray' },
   ],
   twitter: [
-    { key: 'foryou', label: dict.toggles.xForyou, locked: true },
-    { key: 'trends', label: dict.toggles.xTrends, locked: true },
-    { key: 'explore', label: dict.toggles.xExplore },
-    { key: 'dmsOnly', label: dict.toggles.dmsOnly },
-    { key: 'grayscale', label: dict.toggles.gray },
+    { key: 'foryou', label: 'xForyou', locked: true },
+    { key: 'trends', label: 'xTrends', locked: true },
+    { key: 'explore', label: 'xExplore' },
+    { key: 'dmsOnly', label: 'dmsOnly' },
+    { key: 'grayscale', label: 'gray' },
   ],
   youtube: [
-    { key: 'shorts', label: dict.toggles.ytShorts, locked: true },
-    { key: 'searchOnly', label: dict.toggles.ytSearchOnly },
-    { key: 'ads', label: dict.toggles.ytAds, on: true },
-    { key: 'comments', label: dict.toggles.ytComments },
-    { key: 'recommended', label: dict.toggles.ytRecommended },
-    { key: 'grayscale', label: dict.toggles.gray },
+    { key: 'shorts', label: 'ytShorts', locked: true },
+    { key: 'searchOnly', label: 'ytSearchOnly' },
+    { key: 'ads', label: 'ytAds', on: true },
+    { key: 'comments', label: 'ytComments' },
+    { key: 'recommended', label: 'ytRecommended' },
+    { key: 'grayscale', label: 'gray' },
   ],
 };

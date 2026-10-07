@@ -1,5 +1,5 @@
 import type { ClientId } from './blockers';
-import { dict } from '@/i18n';
+import type { Dict } from '@/i18n/fr';
 
 /**
  * Changer de compte, par la porte du site lui-meme.
@@ -10,7 +10,7 @@ import { dict } from '@/i18n';
  * se connecter depuis leur page ajoute le compte a LEUR selecteur sans
  * chasser le premier. On y mene, plutot que d'imiter mal.
  */
-export const ACCOUNT: Record<ClientId, { add: string; out: string; note?: string }> = {
+export const ACCOUNT: Record<ClientId, { add: string; out: string; note?: keyof Dict['ui'] }> = {
   instagram: {
     add: 'https://www.instagram.com/accounts/login/',
     out: 'https://www.instagram.com/accounts/logout/',
@@ -29,6 +29,6 @@ export const ACCOUNT: Record<ClientId, { add: string; out: string; note?: string
     // Google refuse souvent la connexion depuis un navigateur integre. On
     // le dit ici plutot que de laisser son message d'erreur passer pour une
     // panne de notre cote.
-    note: dict.ui.googleNote,
+    note: 'googleNote',
   },
 };

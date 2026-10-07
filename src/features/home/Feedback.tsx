@@ -9,7 +9,8 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { dict } from '@/i18n';
+import Constants from 'expo-constants';
+import { dict, interpolate } from '@/i18n';
 
 export const SUPPORT_EMAIL = 'maximilien@vikstudios.com';
 
@@ -33,7 +34,7 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
 
   const send = () => {
     haptics.press();
-    const text = `${body.trim()}\n\n—\nRépondre à : ${email.trim()}\nUnSwipe 1.0.0`;
+    const text = `${body.trim()}\n\n—\n${dict.ui.fbReply} ${email.trim()}\nUnSwipe ${Constants.expoConfig?.version ?? ''}`;
     const url = `mailto:${SUPPORT_EMAIL}`
       + `?subject=${encodeURIComponent(`[UnSwipe] ${subject.trim()}`)}`
       + `&body=${encodeURIComponent(text)}`;
@@ -68,19 +69,19 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
               placeholderTextColor={withAlpha(c.mist, 0.3)}
             />
 
-            <Text variant="label" tone="tertiary" style={st.label}>TON ADRESSE</Text>
+            <Text variant="label" tone="tertiary" style={st.label}>{dict.ui.fbEmail}</Text>
             <TextInput
               style={st.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="toi@exemple.com"
+              placeholder={dict.ui.fbEmailPh}
               placeholderTextColor={withAlpha(c.mist, 0.3)}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
 
-            <Text variant="label" tone="tertiary" style={st.label}>TON MESSAGE</Text>
+            <Text variant="label" tone="tertiary" style={st.label}>{dict.ui.fbMessage}</Text>
             <TextInput
               style={[st.input, st.area]}
               value={body}
@@ -91,8 +92,7 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
             />
 
             <Text variant="label" tone="tertiary" style={st.note}>
-              Le message s’ouvrira dans ta messagerie, à destination de{' '}
-              {SUPPORT_EMAIL}. C’est toi qui l’envoies.
+              {interpolate(dict.ui.fbNote, { email: SUPPORT_EMAIL })}
             </Text>
           </View>
 

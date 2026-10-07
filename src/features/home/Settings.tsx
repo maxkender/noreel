@@ -17,6 +17,7 @@ import { useSettings } from '@/store/settings';
 import { useAppsStore } from '@/store/apps';
 import { TINTS } from '@/theme/tints';
 import { Toggle } from './parts';
+import { LangPicker } from '@/components/LangPicker';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
 import {
@@ -26,13 +27,21 @@ import {
 
 /*
  * Les jours, dans l'ordre ou on les lit — et numerotes comme Date.getDay les
- * numerote : dimanche vaut 0. Ecrire la liste dans l'ordre francais et se
- * servir de l'indice aurait decale toute la semaine d'un cran.
+ * numerote : dimanche vaut 0. Leur nom vient du systeme, dans la langue
+ * choisie : une liste ecrite ici n'existerait qu'en francais.
  */
-const DAYS: [number, string][] = [
-  [1, 'Lundi'], [2, 'Mardi'], [3, 'Mercredi'], [4, 'Jeudi'],
-  [5, 'Vendredi'], [6, 'Samedi'], [0, 'Dimanche'],
-];
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const dayNames = (lang: string): [number, string][] => {
+  const f = new Intl.DateTimeFormat(lang, { weekday: 'long' });
+  // Le 7 janvier 2024 est un dimanche : jour 0.
+  return DAY_ORDER.map((k) => {
+    const name = f.format(new Date(2024, 0, 7 + k));
+    return [k, name.charAt(0).toUpperCase() + name.slice(1)];
+  });
+};
+
+/** La page de l'app sur l'App Store : ce qu'on partage. */
+const STORE_URL = 'https://apps.apple.com/app/id6814633088';
 
 // Le soir seulement : une fenetre le matin se prolonge sur la journee.
 const HOURS = [18, 19, 20, 21, 22];
@@ -49,7 +58,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
+  const { d, t, lang } = useT();
   /*
     La feuille SORT, elle ne disparait pas.
 
@@ -66,6 +75,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   }, [onClose]);
 
   const s = useSettings();
+  const DAYS = useMemo(() => dayNames(lang), [lang]);
   const instaTint = useAppsStore((x) => x.tints.instagram);
   const setTint = useAppsStore((x) => x.setTint);
   const [cleared, setCleared] = useState(false);
@@ -111,13 +121,13 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
-            <Group title="Blocage" />
+            <Group title={d.block.title} />
             <Line
               label={d.prefs.screenTime}
               sub={auth === 'approved' ? d.prefs.screenTimeOk : d.prefs.screenTimeNeed}
               right={
                 <Text variant="label" color={auth === 'approved' ? c.accent : c.mist}>
-                  {auth === 'approved' ? 'OK' : 'Activer'}
+                  {auth === 'approved' ? 'OK' : d.block.activate}
                 </Text>
               }
               onPress={auth === 'approved' || !FAMILY_CONTROLS_ENABLED
@@ -224,6 +234,9 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               </>
             )}
 
+            <Group title={d.ui.language} />
+            <LangPicker style={{ marginVertical: space.sm, justifyContent: 'flex-start' }} />
+
             <Group title={d.prefs.look} />
             <View style={st.chips}>
               {THEMES.map(([k, key]) => {
@@ -295,15 +308,30 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               onPress={() => void Linking.openSettings()}
             />
 
-            <Group title={d.prefs.about} />
+            <Group title={d.ui.share} />
+            {/*
+              Deux portes : la feuille de partage d'iOS, avec le lien, et
+              WhatsApp directement — c'est la que ca se raconte. Sans WhatsApp
+              sur le telephone, on retombe sur la feuille.
+            */}
             <Line
-              label={d.ui.share}
+              label={d.ui.shareLink}
+              sub={STORE_URL}
               onPress={() => {
-                void Share.share({
-                  message: d.ui.shareText,
+                void Share.share({ message: `${d.ui.shareText} ${STORE_URL}`, url: STORE_URL });
+              }}
+            />
+            <Line
+              label={d.ui.shareWhatsApp}
+              onPress={() => {
+                const text = encodeURIComponent(`${d.ui.shareText} ${STORE_URL}`);
+                void Linking.openURL(`whatsapp://send?text=${text}`).catch(() => {
+                  void Share.share({ message: `${d.ui.shareText} ${STORE_URL}`, url: STORE_URL });
                 });
               }}
             />
+
+            <Group title={d.prefs.about} />
             <Line
               label={d.prefs.medical}
               sub={d.prefs.medicalBody}
@@ -322,7 +350,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             */}
             <Line label="Version" right={
               <Text variant="body" tone="secondary">
-                1.0.0 ({Constants.nativeBuildVersion ?? '—'})
+                {Constants.expoConfig?.version ?? ''} ({Constants.nativeBuildVersion ?? '—'})
               </Text>
             } />
             <Line

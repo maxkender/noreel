@@ -109,7 +109,7 @@ function Wait({ onDone }: { onDone: () => void }) {
       </Text>
 
       <Text variant="displayL" style={st.count}>{left}</Text>
-      <Text variant="label" tone="tertiary">secondes</Text>
+      <Text variant="label" tone="tertiary">{dict.ui.seconds}</Text>
 
       <View style={st.foot}>
         <Button
@@ -258,7 +258,7 @@ export function HardModeIntro({
           <View style={{ flex: 1 }} />
           <Button label={dict.misc.hardOn} onPress={onConfirm} />
           <Pressable onPress={() => { haptics.tap(); onCancel(); }} style={st.later}>
-            <Text variant="label" color={withAlpha(c.mist, 0.8)}>Pas maintenant</Text>
+            <Text variant="label" color={withAlpha(c.mist, 0.8)}>{dict.ui.notNow}</Text>
           </Pressable>
         </SafeAreaView>
       </View>

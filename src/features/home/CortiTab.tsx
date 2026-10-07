@@ -25,10 +25,10 @@ import { BADGES, badgeGap, claimBadges, unlockedBadges, type Badge } from '@/ser
 import { claimCheer } from '@/services/cheer';
 import { useGoals, type Goal } from '@/store/goals';
 import { useT } from '@/i18n';
+import { useAnchor, useTourScroll } from './anchors';
 import { Celebrate } from './Celebrate';
 import { BadgeArt } from './BadgeArt';
 import { GoalSheet } from './GoalSheet';
-import type { Scroll } from './parts';
 
 /*
  * L'onglet de Corti : ses points de dopamine, ses objectifs, ses badges.
@@ -59,11 +59,18 @@ type Pop =
 /** Un objectif a cocher : fourni (icone du studio) ou cree (emoji). */
 type Item = { key: string; entry: string; title: string; points: number; care?: CareId; goal?: Goal };
 
-export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () => void }) {
+export function CortiTab({ onTour }: { onTour?: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const list = useRef<Animated.ScrollView>(null);
+  // Les ancres de la visite guidee : elle eclaire ces elements-la.
+  // La meme liste sert au retour en haut et a la visite guidee.
+  const [list, onListScroll] = useTourScroll('corti');
+  const aStage = useAnchor('corti-stage');
+  const aPath = useAnchor('corti-path');
+  const aPoints = useAnchor('corti-points');
+  const aGoal = useAnchor('corti-goal');
+  const aBadges = useAnchor('corti-badges');
   const [s, setS] = useState<Stats | null>(null);
   /** Les entrees deja declarees aujourd'hui. */
   const [done, setDone] = useState<string[]>([]);
@@ -210,11 +217,11 @@ export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () =
       ref={list}
       contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
-      onScroll={onScroll}
+      onScroll={onListScroll}
       scrollEventThrottle={16}
     >
       {/* Lui d'abord, sur sa soucoupe : c'est son etat qu'on vient voir. */}
-      <View style={st.stage}>
+      <View ref={aStage} collapsable={false} style={st.stage}>
         {cheer ? (
           <CortiRecovery
             size={268}
@@ -238,14 +245,14 @@ export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () =
           </View>
         </View>
 
-        <View style={st.pointsRow}>
+        <View ref={aPoints} collapsable={false} style={st.pointsRow}>
           <Text variant="hero" color={tone}>{String(shown)}</Text>
           <Text variant="body" tone="secondary" style={{ marginBottom: 10 }}>
             {next ? t(d.cortiTab.toNext, { n: missing, level: names[level + 1] }) : d.cortiTab.maxState}
           </Text>
         </View>
 
-        <View style={st.path}>
+        <View ref={aPath} collapsable={false} style={st.path}>
           <View style={st.track}>
             <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
           </View>
@@ -286,7 +293,7 @@ export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () =
         <View style={st.figures}>
           <Count v={String(s.blocked)} label={d.stats.reelsAvoided} c={c.accent} />
           <Count v={formatHours(s.minutes)} label={d.stats.timeBack} c={c.accent} />
-          <Count v={`${s.days} j`} label={d.stats.daysKept} c={c.accent} />
+          <Count v={t(d.duration.daysShort, { n: s.days })} label={d.stats.daysKept} c={c.accent} />
         </View>
       )}
 
@@ -299,7 +306,9 @@ export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () =
         </Text>
       </View>
       {featured && (
-        <GoalRow item={featured} done={done.includes(featured.entry)} featured onPress={() => { void tick(featured); }} />
+        <View ref={aGoal} collapsable={false}>
+          <GoalRow item={featured} done={done.includes(featured.entry)} featured onPress={() => { void tick(featured); }} />
+        </View>
       )}
       <Pressable onPress={() => { haptics.tap(); setAll((x) => !x); }} hitSlop={8} accessibilityRole="button" style={st.more}>
         <Text variant="label" color={c.accent}>{all ? d.cortiTab.goalsLess : t(d.cortiTab.goalsAll, { n: items.length })}</Text>
@@ -328,7 +337,7 @@ export function CortiTab({ onScroll, onTour }: { onScroll: Scroll; onTour?: () =
         <Text variant="button" style={st.h}>{d.cortiTab.badges}</Text>
         <Text variant="label" tone="tertiary" style={st.h}>{`${have.length} / ${BADGES.length}`}</Text>
       </View>
-      <View style={st.badges}>
+      <View ref={aBadges} collapsable={false} style={st.badges}>
         {BADGES.map((b, i) => {
           const on = have.includes(b.id);
           return (

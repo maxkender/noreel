@@ -11,6 +11,7 @@ import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
+import { useAnchor } from './anchors';
 
 const PAD = 6;
 // Sortie douce, sans depassement : rien ne rebondit.
@@ -95,6 +96,7 @@ export function NavBar<T extends string>({
         {tabs.map(([key, label, Icon]) => (
           <Tab
             key={key}
+            anchor={`nav-${key}`}
             label={label}
             Icon={Icon}
             active={key === value}
@@ -107,8 +109,9 @@ export function NavBar<T extends string>({
 }
 
 function Tab({
-  label, Icon, active, onPress,
-}: { label: string; Icon: LucideIcon; active: boolean; onPress: () => void }) {
+  anchor, label, Icon, active, onPress,
+}: { anchor: string; label: string; Icon: LucideIcon; active: boolean; onPress: () => void }) {
+  const ref = useAnchor(anchor);
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const press = useSharedValue(0);
@@ -124,6 +127,8 @@ function Tab({
 
   return (
     <Pressable
+      ref={ref}
+      collapsable={false}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       onPressIn={() => { press.value = withTiming(1, { duration: 90 }); }}

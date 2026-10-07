@@ -7,17 +7,18 @@ import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
-import { dict, useT } from '@/i18n';
+import { useT } from '@/i18n';
+import type { Dict } from '@/i18n/fr';
 import { LIFE_YEARS, WAKING_HOURS } from '@/features/onboarding/calculations';
 
 /* La CITATION ne se traduit pas — auteurs, revue, annee, pages sont la
    reference elle-meme. Seuls le titre et le resume passent au dictionnaire. */
-const REFS = [
-  { t: dict.refs.r1t, d: dict.refs.r1d,
+const refs = (d: Dict) => [
+  { t: d.refs.r1t, d: d.refs.r1d,
     a: 'Fisher, Aron & Brown — Journal of Comparative Neurology, 2005, 493(1), 58-62' },
-  { t: dict.refs.r2t, d: dict.refs.r2d,
+  { t: d.refs.r2t, d: d.refs.r2d,
     a: 'Volkow, Fowler, Wang, Swanson & Telang — Archives of Neurology, 2007, 64(11), 1575-1579' },
-  { t: dict.refs.r3t, d: dict.refs.r3d,
+  { t: d.refs.r3t, d: d.refs.r3d,
     a: 'Volkow et coll. — Neuropharmacology, 2009, 56 (suppl. 1), 3-8' },
 ];
 
@@ -30,7 +31,6 @@ const REFS = [
  * quelqu'un lui doit cette distinction : sans elle, on emprunte l'autorite
  * d'une science sans en accepter les limites.
  */
-const CAVEAT = dict.refs.caveat;
 
 /**
  * Sources et methode.
@@ -43,6 +43,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
+  const REFS = useMemo(() => refs(d), [d]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
@@ -71,7 +72,7 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
             ))}
 
             <Text variant="label" tone="tertiary" style={[st.group, { lineHeight: 17 }]}>
-              {CAVEAT}
+              {d.refs.caveat}
             </Text>
           </ScrollView>
         </Animated.View>

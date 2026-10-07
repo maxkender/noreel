@@ -18,7 +18,7 @@ jest.mock('@/services/cheer', () => ({ claimCheer: (n: number) => mockClaim(n) }
 const noop = (() => {}) as never;
 
 it('montre le niveau et ce qu’il manque pour le suivant', async () => {
-  render(<CortiTab onScroll={noop} />);
+  render(<CortiTab />);
   expect(await screen.findByText(dict.stats.reelsAvoided)).toBeTruthy();
   // Jour zero : eteint — dans la pastille d'etat ET sur le chemin — et la
   // phrase dit l'etat suivant (« en veilleuse »).
@@ -27,7 +27,7 @@ it('montre le niveau et ce qu’il manque pour le suivant', async () => {
 });
 
 it('montre les dix badges, verrouilles au depart, et dit comment les avoir', async () => {
-  render(<CortiTab onScroll={noop} />);
+  render(<CortiTab />);
   await screen.findByText(dict.stats.reelsAvoided);
   expect(screen.getByText(`0 / ${BADGES.length}`)).toBeTruthy();
   fireEvent.press(screen.getByLabelText(dict.cortiTab.bDay7));
@@ -36,7 +36,7 @@ it('montre les dix badges, verrouilles au depart, et dit comment les avoir', asy
 });
 
 it('un geste rapporte des points de dopamine sous les yeux, puis le premier badge', async () => {
-  render(<CortiTab onScroll={noop} />);
+  render(<CortiTab />);
   await screen.findByText(dict.stats.reelsAvoided);
   fireEvent.press(screen.getAllByRole('checkbox')[0]);
   // Les points d'abord, sans fenetre : le gain se pose sous la jauge, avec
@@ -49,12 +49,12 @@ it('un geste rapporte des points de dopamine sous les yeux, puis le premier badg
 });
 
 it('demande encore la celebration des paliers', async () => {
-  render(<CortiTab onScroll={noop} />);
+  render(<CortiTab />);
   await waitFor(() => expect(mockClaim).toHaveBeenCalled());
 });
 
 it('garde les chiffres qui justifient l’abonnement', async () => {
-  render(<CortiTab onScroll={noop} />);
+  render(<CortiTab />);
   expect(await screen.findByText(dict.stats.reelsAvoided)).toBeTruthy();
   expect(screen.getByText(dict.stats.timeBack)).toBeTruthy();
   expect(screen.getByText(dict.stats.daysKept)).toBeTruthy();

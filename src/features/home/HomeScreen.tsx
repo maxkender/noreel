@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import Animated, { FadeIn, useAnimatedScrollHandler } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Brain, ChevronRight, Home as HomeIcon, Lock, Shield, Smartphone, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -25,7 +26,8 @@ import { resetTutorial } from '@/features/client/tutorial';
 import { TabTour } from './Tours';
 import { resetTours, type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Toggle, type Scroll } from './parts';
+import { Card, Row, Toggle } from './parts';
+import { useAnchor, useTourScroll } from './anchors';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { ScreenTime } from './ScreenTime';
@@ -58,7 +60,6 @@ export function HomeScreen() {
     total: 0,
     perApp: { instagram: 0, tiktok: 0, twitter: 0, youtube: 0 },
   });
-  const onScroll = useAnimatedScrollHandler(() => {});
 
   /*
     Les chiffres sont RELUS a chaque retour sur l'ecran.
@@ -111,19 +112,18 @@ export function HomeScreen() {
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
         {tab === 'home' && (
-          <HomeTab onScroll={onScroll} minutes={today.perApp} onBlock={() => setTab('block')} />
+          <HomeTab minutes={today.perApp} onBlock={() => setTab('block')} />
         )}
-        {tab === 'corti' && <CortiTab onScroll={onScroll} onTour={() => setReplay((r) => ({ id: 'corti', n: (r?.n ?? 0) + 1 }))} />}
+        {tab === 'corti' && <CortiTab onTour={() => setReplay((r) => ({ id: 'corti', n: (r?.n ?? 0) + 1 }))} />}
         {tab === 'block' && (
           <BlockTab
-            onScroll={onScroll}
             minutes={today.perApp}
             total={today.total}
             streak={streak}
             realFloor={realFloor}
           />
         )}
-        {tab === 'account' && <AccountTab onScroll={onScroll} />}
+        {tab === 'account' && <AccountTab />}
       </Animated.View>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -165,9 +165,8 @@ export function HomeScreen() {
  * l'icone est parti dans Blocage, et l'icone a pris la place.
  */
 function HomeTab({
-  onScroll, minutes, onBlock,
+  minutes, onBlock,
 }: {
-  onScroll: Scroll;
   minutes: Record<string, number>;
   /** Mene a l'onglet Blocage : c'est la que le vrai Instagram se ferme. */
   onBlock: () => void;
@@ -181,12 +180,18 @@ function HomeTab({
   const selection = useSettings((x) => x.selection);
   // Tant que l'app d'origine n'est pas fermee, on le rappelle ici.
   const realOpen = !(blocking && selection);
+  // Les ancres de la visite guidee : elle eclaire ces elements-la.
+  const [listRef, onListScroll] = useTourScroll('home');
+  const aAdd = useAnchor('home-addHome');
+  const aBlock = useAnchor('home-blockReal');
+  const aApps = useAnchor('home-apps');
 
   return (
     <Animated.ScrollView
+      ref={listRef}
       contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
-      onScroll={onScroll}
+      onScroll={onListScroll}
       scrollEventThrottle={16}
     >
       {/*
@@ -197,6 +202,8 @@ function HomeTab({
       */}
       {!homeDone && (
         <Pressable
+          ref={aAdd}
+          collapsable={false}
           onPress={() => { haptics.tap(); router.push('/widgets'); }}
           style={[st.addHome, { borderColor: withAlpha(c.accent, 0.45), backgroundColor: withAlpha(c.accent, 0.12) }]}
           accessibilityRole="button"
@@ -212,6 +219,8 @@ function HomeTab({
           s'en va une fois le blocage arme sur une selection. */}
       {realOpen && (
         <Pressable
+          ref={aBlock}
+          collapsable={false}
           onPress={() => { haptics.tap(); onBlock(); }}
           style={[st.addHome, { borderColor: withAlpha(c.ember, 0.5), backgroundColor: withAlpha(c.ember, 0.12) }]}
           accessibilityRole="button"
@@ -225,7 +234,9 @@ function HomeTab({
         </Pressable>
       )}
 
-      <AppSlider minutes={minutes} />
+      <View ref={aApps} collapsable={false}>
+        <AppSlider minutes={minutes} />
+      </View>
     </Animated.ScrollView>
   );
 }
@@ -244,9 +255,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 /* ---------------- Blocage ---------------- */
 
 function BlockTab({
-  onScroll, minutes, total, streak, realFloor,
+  minutes, total, streak, realFloor,
 }: {
-  onScroll: Scroll;
   minutes: Record<string, number>;
   total: number;
   streak: number;
@@ -255,7 +265,7 @@ function BlockTab({
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d } = useT();
+  const { d, t } = useT();
   const router = useRouter();
   const [on, setOn] = useState(false);
   const [auth, setAuth] = useState<string>('notDetermined');
@@ -316,12 +326,18 @@ function BlockTab({
   };
 
   const pct = Math.min(100, Math.round((total / Math.max(goal, 1)) * 100));
+  // Les ancres de la visite guidee.
+  const [listRef, onListScroll] = useTourScroll('block');
+  const aStatus = useAnchor('block-status');
+  const aBtn = useAnchor('block-btn');
+  const aStrict = useAnchor('block-strict');
 
   return (
     <Animated.ScrollView
+      ref={listRef}
       contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
-      onScroll={onScroll}
+      onScroll={onListScroll}
       scrollEventThrottle={16}
     >
       <Text variant="displayM">{d.block.title}</Text>
@@ -354,12 +370,12 @@ function BlockTab({
       <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
         <Stat label={d.blockTab.today} value={formatHours(total)} />
         <View style={st.stripLine} />
-        <Stat label={d.blockTab.streak} value={`${streak} j`} />
+        <Stat label={d.blockTab.streak} value={t(d.duration.daysShort, { n: streak })} />
         <View style={st.stripLine} />
         <Stat label={d.blockTab.ofCap} value={`${pct} %`} />
       </Glass>
 
-      <View style={[st.status, on ? st.statusOn : st.statusOff, !pro && st.dimmed]}>
+      <View ref={aStatus} collapsable={false} style={[st.status, on ? st.statusOn : st.statusOff, !pro && st.dimmed]}>
         <View style={[st.statusRing, on && st.statusRingOn]}>
           <Shield size={26} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.5)} />
         </View>
@@ -373,6 +389,8 @@ function BlockTab({
           </Text>
         )}
         <Pressable
+          ref={aBtn}
+          collapsable={false}
           onPress={() => {
             if (!on) { void arm(); return; }
             haptics.press();
@@ -405,8 +423,9 @@ function BlockTab({
             ? <Text variant="body" tone="tertiary">›</Text>
             : <LockedPill label="Pro" onPress={() => setPaywall(true)} />}
         />
+        <View ref={aStrict} collapsable={false}>
         <Row
-          title="Mode strict"
+          title={d.ui.hardTitle}
           right={!pro ? <LockedPill label="Pro" onPress={() => setPaywall(true)} /> : (
             <Toggle
               on={hard}
@@ -419,6 +438,7 @@ function BlockTab({
             />
           )}
         />
+        </View>
       </Card>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
@@ -449,7 +469,7 @@ function BlockTab({
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab({ onScroll }: { onScroll: Scroll }) {
+function AccountTab() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [sources, setSources] = useState(false);
@@ -463,12 +483,11 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
     <Animated.ScrollView
       contentContainerStyle={st.scroll}
       showsVerticalScrollIndicator={false}
-      onScroll={onScroll}
       scrollEventThrottle={16}
     >
       <Text variant="displayM">{d.account.title}</Text>
 
-      <Text variant="label" tone="secondary" style={st.section}>Ton abonnement</Text>
+      <Text variant="label" tone="secondary" style={st.section}>{d.ui.subscription}</Text>
       <Card><AppleSignIn /></Card>
 
       <Text variant="label" tone="secondary" style={st.section}>{d.account.profile}</Text>
@@ -482,12 +501,12 @@ function AccountTab({ onScroll }: { onScroll: Scroll }) {
         <Text variant="body" tone="secondary">{d.account.dataBody}</Text>
       </Card>
 
-      <Text variant="label" tone="secondary" style={st.section}>Assistance</Text>
+      <Text variant="label" tone="secondary" style={st.section}>{d.ui.assistance}</Text>
       <Card>
         <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.restart} onPress={() => { reset(); void resetFirstRun(); void resetTutorial(); void resetTours(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.account.version} right={<Text variant="body" tone="secondary">1.0.0 · {Platform.OS}</Text>} />
+        <Row title={d.account.version} right={<Text variant="body" tone="secondary">{Constants.expoConfig?.version ?? ''} · {Platform.OS}</Text>} />
       </Card>
 
       <Sources visible={sources} onClose={() => setSources(false)} />

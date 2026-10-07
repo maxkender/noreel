@@ -41,12 +41,13 @@ import { useProStore } from '@/store/pro';
 import { PURCHASES_ENABLED } from '@/services/purchases';
 import { ProGate } from '@/features/home/ProGate';
 
-const LABELS: Record<ClientId, string> = {
+/* Lu a l'appel, pas a l'import : la langue peut changer entre les deux. */
+const label = (id: ClientId): string => ({
   instagram: dict.ui.labelIg,
   tiktok: dict.ui.labelTt,
   twitter: dict.ui.labelX,
   youtube: dict.ui.labelYt,
-};
+})[id];
 
 /*
  * Quinze minutes par jour en gratuit.
@@ -556,7 +557,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       <LinkSheet
         id={id}
-        app={LABELS[id].split(' ·')[0]}
+        app={label(id).split(' ·')[0]}
         visible={linkOpen}
         onClose={() => setLinkOpen(false)}
         onGo={(url) => web.current?.injectJavaScript(`location.assign(${JSON.stringify(url)}); true;`)}
@@ -802,7 +803,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
               onPress={() => { haptics.press(); setGate(true); }}
             />
             <Button
-              label={t(d.client.capClose, { app: LABELS[id].split(' ·')[0] })}
+              label={t(d.client.capClose, { app: label(id).split(' ·')[0] })}
               onPress={exit}
               variant="ghost"
             />

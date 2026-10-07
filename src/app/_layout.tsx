@@ -15,6 +15,7 @@ import { colors } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
+import { useLang } from '@/store/lang';
 import { watchReal } from '@/services/realtime';
 import { shield } from '@/services';
 import { startNotifications } from '@/services/trial';
@@ -74,7 +75,10 @@ export default function RootLayout() {
     if (loaded || error) void SplashScreen.hideAsync();
   }, [loaded, error]);
 
-  if (!loaded && !error) return null;
+  // La langue vient du disque : dessiner avant, c'est dessiner dans la
+  // mauvaise langue le temps d'une image, puis tout redessiner.
+  const langReady = useLang((s) => s.hydrated);
+  if ((!loaded && !error) || !langReady) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: c.night }}>

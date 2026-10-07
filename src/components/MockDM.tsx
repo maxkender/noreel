@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChevronLeft, Phone, Play, Video } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
+import { dict } from '@/i18n';
 import { useColors, type Palette } from '@/theme/useColors';
 import { Text } from '@/components/type/Text';
 
@@ -47,7 +48,7 @@ export function MockDM({ playing, onDone }: { playing: boolean; onDone?: () => v
         <Image source={FRIEND} style={st.avatar} contentFit="cover" />
         <View style={{ flex: 1 }}>
           <Text variant="label" style={{ color: c.mist }}>thomas_b</Text>
-          <Text variant="label" tone="tertiary" style={{ fontSize: 9 }}>en ligne</Text>
+          <Text variant="label" tone="tertiary" style={{ fontSize: 9 }}>{dict.ui.online}</Text>
         </View>
         <Phone size={14} strokeWidth={2.2} color={c.mist} />
         <Video size={15} strokeWidth={2.2} color={c.mist} />

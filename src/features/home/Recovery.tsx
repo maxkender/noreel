@@ -12,7 +12,7 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
-import { dict, useT } from '@/i18n';
+import { dict, interpolate, useT } from '@/i18n';
 import {
   MINUTES_PER_SESSION, claimMilestone, stats, type Stats,
 } from '@/services/protect';
@@ -167,7 +167,7 @@ export function Milestone({
             <Text variant="displayM" style={st.mid}>{title}</Text>
             <Text variant="body" tone="secondary" style={st.mid}>{body}</Text>
             <View style={st.prizeRow}>
-              <Figure label={dict.stats.daysKept} value={`${days} j`} />
+              <Figure label={dict.stats.daysKept} value={interpolate(dict.duration.daysShort, { n: days })} />
               <Figure label={dict.stats.reelsAvoided} value={String(blocked)} />
             </View>
             <Text variant="label" tone="tertiary">UNSWIPE</Text>

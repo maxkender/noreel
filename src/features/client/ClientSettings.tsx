@@ -119,7 +119,7 @@ export function ClientSettings({
             {APP_TOGGLES[id].map((t) => (
               <View key={t.key} style={st.line}>
                 {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
-                <Text variant="body" style={{ flex: 1 }}>{t.label}</Text>
+                <Text variant="body" style={{ flex: 1 }}>{d.toggles[t.label]}</Text>
                 {t.locked
                   ? <LockedPill />
                   : pro
@@ -165,7 +165,7 @@ export function ClientSettings({
 
             {id === 'instagram' && (
               <>
-                <Text variant="label" tone="tertiary" style={st.section}>PUBLICATION</Text>
+                <Text variant="label" tone="tertiary" style={st.section}>{d.ui.publication}</Text>
                 <Pressable
                   style={st.action}
                   onPress={() => { haptics.press(); close(); onPost(); }}
@@ -192,7 +192,7 @@ export function ClientSettings({
             </Pressable>
 
             <Text variant="label" tone="tertiary" style={st.note}>
-              {ACCOUNT[id].note ?? d.client.accountsNote}
+              {ACCOUNT[id].note ? d.ui[ACCOUNT[id].note] : d.client.accountsNote}
             </Text>
           </ScrollView>
         </Animated.View>

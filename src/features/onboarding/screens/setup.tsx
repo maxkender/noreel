@@ -14,7 +14,8 @@ import { Typewriter, typeDuration } from '@/components/type/Typewriter';
 import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
-import { dict, useT } from '@/i18n';
+import { useT } from '@/i18n';
+import type { Dict } from '@/i18n/fr';
 import { LIFE_YEARS, yearsOnScreen } from '../calculations';
 import { SystemAlert } from '../scenes/SystemAlert';
 import { SignaturePad } from '../scenes/SignaturePad';
@@ -52,14 +53,14 @@ type Step =
   langues que le typage impose au dictionnaire — c'est la seule facon d'en
   laisser passer une.
 */
-const CONSTAT: Step[] = [
+const constat = (d: Dict): Step[] => [
   // Un curseur, de un a vingt : comme pour le temps d'ecran, on donne SON
   // chiffre au doigt au lieu de choisir une case.
-  { kind: 'slide', q: dict.ob.q1, honest: true, min: 1, max: 20 },
+  { kind: 'slide', q: d.ob.q1, honest: true, min: 1, max: 20 },
   {
     kind: 'ask',
-    q: dict.ob.q2,
-    options: [dict.ob.q2a, dict.ob.q2b, dict.ob.q2c],
+    q: d.ob.q2,
+    options: [d.ob.q2a, d.ob.q2b, d.ob.q2c],
   },
 ];
 
@@ -76,8 +77,9 @@ export function Constat({ onNext }: P) {
   const [answer, setAnswer] = useState<number | null>(null);
   const [reels, setReels] = useState(8);
 
-  const step = CONSTAT[i];
-  const last = i >= CONSTAT.length - 1;
+  const steps = useMemo(() => constat(d), [d]);
+  const step = steps[i];
+  const last = i >= steps.length - 1;
   const answered = step.kind === 'say' || step.kind === 'slide' || answer !== null;
 
   const advance = () => {
