@@ -922,6 +922,13 @@ export const fr = {
     always: 'Toujours',
     online: 'en ligne',
     language: 'Langue',
+    threeSums: 'Trois calculs.',
+    sumOf: '{i} sur {n} · de tête',
+    yearsUnit: 'ANS',
+    passSection: 'LAISSEZ-PASSER',
+    following: 'Suivi(e)',
+    dm1: 't’es où ce soir ?',
+    dm2: 'regarde ça 😭',
   },
   toggles: {
     igReels: 'Bloquer les Reels',
@@ -985,6 +992,7 @@ export const fr = {
     years: '{y} an{s} et {m} mois',
     yearsOnly: '{y} an{s}',
   },
+  tints: { default: 'D’origine', green: 'Vert', red: 'Rouge', orange: 'Orange', purple: 'Violet', pink: 'Rose', teal: 'Turquoise', gold: 'Or' },
   trial: {
     giftTitle: 'On veut que tu essaies UnSwipe gratuitement.',
     giftBody: `{n}${NBSP}jours pour tout tester. Tu ne paies rien aujourd’hui.`,

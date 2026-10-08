@@ -75,7 +75,7 @@ export function HardMode({
             <Pressable onPress={() => { haptics.tap(); onCancel(); }} hitSlop={12}>
               <Text variant="label" color={c.accent}>{dict.misc.cancel}</Text>
             </Pressable>
-            <Text variant="label" tone="tertiary">Étape {step + 1} sur {steps.length}</Text>
+            <Text variant="label" tone="tertiary">{interpolate(dict.pass.step, { i: step + 1, n: steps.length })}</Text>
             <View style={{ width: 54 }} />
           </View>
 
@@ -204,9 +204,9 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text variant="displayM">Trois calculs.</Text>
+      <Text variant="displayM">{dict.ui.threeSums}</Text>
       <Text variant="label" tone="tertiary" style={{ marginTop: space.xs }}>
-        {i + 1} sur {quiz.length} · de tête
+        {interpolate(dict.ui.sumOf, { i: i + 1, n: quiz.length })}
       </Text>
 
       <Text variant="displayL" style={st.sum}>{q.a} × {q.b}</Text>

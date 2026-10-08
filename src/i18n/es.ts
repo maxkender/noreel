@@ -902,6 +902,13 @@ export const es: Dict = {
     always: 'Siempre',
     online: 'en línea',
     language: 'Idioma',
+    threeSums: 'Tres cálculos.',
+    sumOf: '{i} de {n} · de cabeza',
+    yearsUnit: 'AÑOS',
+    passSection: 'PASE',
+    following: 'Siguiendo',
+    dm1: '¿dónde estás esta noche?',
+    dm2: 'mira esto 😭',
   },
   toggles: {
     igReels: 'Bloquear los Reels',
@@ -965,6 +972,7 @@ export const es: Dict = {
     years: '{y} año{s} y {m} meses',
     yearsOnly: '{y} año{s}',
   },
+  tints: { default: 'Original', green: 'Verde', red: 'Rojo', orange: 'Naranja', purple: 'Morado', pink: 'Rosa', teal: 'Turquesa', gold: 'Dorado' },
   trial: {
     giftTitle: 'Queremos que pruebes UnSwipe gratis.',
     giftBody: '{n} días para probarlo todo. Hoy no pagas nada.',

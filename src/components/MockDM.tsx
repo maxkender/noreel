@@ -56,13 +56,13 @@ export function MockDM({ playing, onDone }: { playing: boolean; onDone?: () => v
 
       <View style={st.thread}>
         <Animated.View entering={FadeIn.duration(360)} style={[st.bubble, st.mine]}>
-          <Text variant="label" style={{ color: c.mist }}>t’es où ce soir ?</Text>
+          <Text variant="label" style={{ color: c.mist }}>{dict.ui.dm1}</Text>
         </Animated.View>
 
         <Animated.View entering={FadeIn.delay(500).duration(360)} style={st.row}>
           <Image source={FRIEND} style={st.small} contentFit="cover" />
           <View style={[st.bubble, st.theirs]}>
-            <Text variant="label" style={{ color: c.mist }}>regarde ça 😭</Text>
+            <Text variant="label" style={{ color: c.mist }}>{dict.ui.dm2}</Text>
           </View>
         </Animated.View>
 

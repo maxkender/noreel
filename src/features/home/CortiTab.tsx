@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated as RNAnimated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import Animated, { FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, {
+  Easing as REasing, FadeInDown, FadeOut, ZoomIn, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue,
+} from 'react-native-reanimated';
 import { Check, Plus, Trash2 } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { requestReviewOnce } from '@/services/review';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -15,7 +18,7 @@ import { haptics } from '@/lib/haptics';
 import { formatHours } from '@/lib/format';
 import { CortiDock } from '@/components/CortiDock';
 import { CortiRecovery } from '@/components/CortiRecovery';
-import { cortiReact, type CortiReaction } from '@/components/CortiRig';
+import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { cortiLine } from '@/components/Corti';
 import {
   CARE_PER_DAY, CARE_POINTS, XP_LEVELS, customEntry, logCare, pointsOf, stats, type CareId, type Stats,
@@ -250,17 +253,40 @@ export function CortiTab({ onTour }: { onTour?: () => void }) {
           </Text>
         </View>
 
+        {/*
+          La frise : les quatre etats de Corti, EN VISAGE, poses sur un rail
+          qui se remplit en degrade jusqu'ou on en est. L'etat du moment est
+          plus grand et respire dans un halo ; ceux qui restent sont eteints.
+          Sous chacun, son nom et le seuil de points : on voit d'un coup d'oeil
+          ou l'on est, et ce qu'il faut pour le suivant.
+        */}
         <View ref={aPath} collapsable={false} style={st.path}>
           <View style={st.track}>
-            <RNAnimated.View style={[st.fill, { backgroundColor: tone, transform: [{ scaleX: bar }] }]} />
+            <RNAnimated.View style={[st.fill, { transform: [{ scaleX: bar }] }]}>
+              <LinearGradient
+                colors={[withAlpha(tone, 0.45), tone]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </RNAnimated.View>
           </View>
           <View style={st.nodes}>
             {names.map((name, i) => {
               const on = i <= level;
+              const now = i === level;
               return (
                 <View key={name} style={st.node}>
-                  <View style={[st.dot, on && { backgroundColor: tone, borderColor: tone }, i === level && st.dotNow]} />
-                  <Text variant="label" tone={on ? 'secondary' : 'tertiary'} style={st.nodeName} numberOfLines={1}>{name}</Text>
+                  <View style={st.faceBox}>
+                    {now && <Halo tone={tone} />}
+                    <View style={[st.face, on && { borderColor: withAlpha(tone, 0.7), backgroundColor: withAlpha(tone, 0.14) }, now && { borderColor: tone, shadowColor: tone, shadowOpacity: 0.6, shadowRadius: 12 }]}>
+                      <View style={{ opacity: on ? 1 : 0.35 }}>
+                        <CortiRig level={i as 0 | 1 | 2 | 3} size={now ? 36 : 28} animated={false} />
+                      </View>
+                    </View>
+                  </View>
+                  <Text variant="label" color={now ? tone : undefined} tone={now ? undefined : on ? 'secondary' : 'tertiary'} style={st.nodeName} numberOfLines={1}>{name}</Text>
+                  <Text variant="label" tone="tertiary" style={st.nodePts}>{String(XP_LEVELS[i])}</Text>
                 </View>
               );
             })}
@@ -391,6 +417,27 @@ export function CortiTab({ onTour }: { onTour?: () => void }) {
   );
 }
 
+/** L'anneau qui respire autour de l'etat du moment. */
+function Halo({ tone }: { tone: string }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const p = useSharedValue(0);
+  useEffect(() => {
+    breathe(p);
+    return () => cancelAnimation(p);
+  }, [p]);
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.55 - p.value * 0.5,
+    transform: [{ scale: 1 + p.value * 0.35 }],
+  }));
+  return <Animated.View pointerEvents="none" style={[st.halo, { borderColor: tone }, style]} />;
+}
+
+/** Lance la respiration sur le fil d'animation, hors du rendu. */
+function breathe(p: SharedValue<number>) {
+  p.value = withRepeat(withTiming(1, { duration: 1800, easing: REasing.out(REasing.quad) }), -1, false);
+}
+
 /*
  * Une icone illustree par geste fourni, dans le style de Corti : le meme
  * verre bleu glace et la meme lueur que la mascotte, dessinees par le studio.
@@ -472,20 +519,24 @@ const sheet = (c: Palette) => StyleSheet.create({
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   state: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, marginTop: space.xs },
-  path: { marginTop: space.sm },
+  path: { marginTop: space.md },
+  // Le rail court d'un centre de visage a l'autre, derriere eux.
   track: {
-    height: 8, borderRadius: 4, overflow: 'hidden',
-    backgroundColor: withAlpha(c.mist, 0.1), marginHorizontal: 6,
+    position: 'absolute', left: 32, right: 32, top: 22, height: 6, borderRadius: 3, overflow: 'hidden',
+    backgroundColor: withAlpha(c.mist, 0.12),
   },
-  fill: { height: 8, borderRadius: 4, width: '100%', transformOrigin: 'left' },
-  nodes: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -10 },
+  fill: { height: 6, borderRadius: 3, width: '100%', transformOrigin: 'left', overflow: 'hidden' },
+  nodes: { flexDirection: 'row', justifyContent: 'space-between' },
   node: { alignItems: 'center', width: 64 },
-  dot: {
-    width: 12, height: 12, borderRadius: 6, borderWidth: 2,
-    borderColor: withAlpha(c.mist, 0.3), backgroundColor: c.night,
+  faceBox: { height: 50, width: 50, alignItems: 'center', justifyContent: 'center' },
+  face: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.18), backgroundColor: c.night,
+    shadowOffset: { width: 0, height: 0 },
   },
-  dotNow: { width: 16, height: 16, borderRadius: 8, marginTop: -2 },
-  nodeName: { marginTop: 6, fontSize: 10, textTransform: 'capitalize' },
+  halo: { position: 'absolute', width: 50, height: 50, borderRadius: 25, borderWidth: 1.5 },
+  nodeName: { marginTop: 4, fontSize: 10, textTransform: 'capitalize' },
+  nodePts: { fontSize: 9, marginTop: 1 },
   gainCard: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     marginTop: space.md, padding: space.md, borderRadius: 16, borderWidth: 1,

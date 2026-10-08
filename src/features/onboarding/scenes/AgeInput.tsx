@@ -4,6 +4,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
+import { dict } from '@/i18n';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { springs } from '@/theme/motion';
@@ -73,7 +74,7 @@ export function AgeInput({
           />
         ))}
       </View>
-      <Text variant="label" tone="tertiary" style={st.hint}>ANS</Text>
+      <Text variant="label" tone="tertiary" style={st.hint}>{dict.ui.yearsUnit}</Text>
     </View>
   );
 }

@@ -168,7 +168,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                     onPress={() => { haptics.tick(); setTint('instagram', t.id); }}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}
-                    accessibilityLabel={t.label}
+                    accessibilityLabel={d.tints[t.id as keyof typeof d.tints] ?? t.label}
                     style={[st.swatch, { backgroundColor: t.hex }, on && st.swatchOn]}
                   />
                 );
@@ -329,7 +329,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               comprendre que le telephone etait reste sur un build anterieur.
               TestFlight ne met pas a jour tout seul.
             */}
-            <Line label="Version" right={
+            <Line label={d.prefs.version} right={
               <Text variant="body" tone="secondary">
                 {Constants.expoConfig?.version ?? ''} ({Constants.nativeBuildVersion ?? '—'})
               </Text>

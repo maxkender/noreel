@@ -56,7 +56,7 @@ export function Header({
         onPress={() => { haptics.tap(); onProfile(); }}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel="Compte"
+        accessibilityLabel={dict.nav.account}
       >
         <Image source={PROFILE} style={st.profile} contentFit="contain" />
       </Pressable>

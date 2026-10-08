@@ -902,6 +902,13 @@ export const tr: Dict = {
     always: 'Her zaman',
     online: 'çevrimiçi',
     language: 'Dil',
+    threeSums: 'Üç hesap.',
+    sumOf: '{i} / {n} · akıldan',
+    yearsUnit: 'YAŞ',
+    passSection: 'GEÇİŞ İZNİ',
+    following: 'Takip edilenler',
+    dm1: 'bu akşam neredesin?',
+    dm2: 'şuna bak 😭',
   },
   toggles: {
     igReels: 'Reels’i engelle',
@@ -965,6 +972,7 @@ export const tr: Dict = {
     years: '{y} yıl {m} ay',
     yearsOnly: '{y} yıl',
   },
+  tints: { default: 'Orijinal', green: 'Yeşil', red: 'Kırmızı', orange: 'Turuncu', purple: 'Mor', pink: 'Pembe', teal: 'Turkuaz', gold: 'Altın' },
   trial: {
     giftTitle: 'UnSwipe’ı ücretsiz denemeni istiyoruz.',
     giftBody: 'Her şeyi denemek için {n} gün. Bugün hiçbir şey ödemezsin.',

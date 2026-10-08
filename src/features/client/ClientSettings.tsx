@@ -141,7 +141,7 @@ export function ClientSettings({
               bougent pas : un fil sur vert sature ne se lit plus, et ce n'est
               pas ce qu'on demande en demandant un Instagram vert.
             */}
-            <Text variant="label" tone="tertiary" style={st.section}>LAISSEZ-PASSER</Text>
+            <Text variant="label" tone="tertiary" style={st.section}>{d.ui.passSection}</Text>
 
             {/*
               Cinq minutes de reels, gagnees.

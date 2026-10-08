@@ -10,6 +10,7 @@ import {
   MoreHorizontal, Plus, Search, Send, User,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
+import { dict } from '@/i18n';
 import { useColors, type Palette } from '@/theme/useColors';
 import { Text } from '@/components/type/Text';
 
@@ -165,7 +166,7 @@ function TopBar({ u }: { u: number }) {
   return (
     <View style={st.top}>
       <ChevronLeft size={15 * u} strokeWidth={2.6} color={c.mist} />
-      <Text style={[st.feedTitle, { fontSize: 15 * u }]}>Suivi(e)</Text>
+      <Text style={[st.feedTitle, { fontSize: 15 * u }]}>{dict.ui.following}</Text>
       <View style={{ flex: 1 }} />
       <Plus size={14 * u} strokeWidth={2.6} color={c.mist} />
       <View>

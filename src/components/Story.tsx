@@ -105,9 +105,9 @@ export function Story({
       <Pressable style={[st.zoneR, { top: top + 60 }]} onPress={() => tap(1)} onLongPress={pause} delayLongPress={300} onPressOut={resume} testID={`${testID}-next`} accessibilityLabel={d.client.forward} />
 
       <View style={st.foot}>
-        {last
-          ? <Button label={d.tuto.go} onPress={onDone} />
-          : <Text variant="label" tone="tertiary" style={st.center}>{d.tuto.hint}</Text>}
+        {/* Pas d'invite « touche l'ecran » : elle faisait taper n'importe ou, et la
+            gauche revient en arriere. Le milieu et la droite avancent, c'est tout. */}
+        {last && <Button label={d.tuto.go} onPress={onDone} />}
       </View>
     </View>
   );
@@ -124,7 +124,8 @@ const sheet = (c: Palette) => StyleSheet.create({
   slide: { alignItems: 'center' },
   art: { height: 280, alignItems: 'center', justifyContent: 'center', marginBottom: space.xl, alignSelf: 'stretch' },
   center: { textAlign: 'center' },
-  zoneL: { position: 'absolute', left: 0, bottom: 140, width: '30%' },
-  zoneR: { position: 'absolute', right: 0, bottom: 140, width: '70%' },
+  // La gauche, etroite, revient ; tout le reste — milieu compris — avance.
+  zoneL: { position: 'absolute', left: 0, bottom: 96, width: '22%' },
+  zoneR: { position: 'absolute', right: 0, bottom: 96, width: '78%' },
   foot: { paddingHorizontal: space.lg, paddingBottom: space.md, minHeight: 84, justifyContent: 'center' },
 });

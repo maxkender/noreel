@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
+import { dict } from '@/i18n';
 import { useColors, type Palette } from '@/theme/useColors';
 import { Text } from '@/components/type/Text';
 
@@ -14,7 +15,7 @@ import { Text } from '@/components/type/Text';
  * promettait un choix qui n'existait pas. Un cadenas ne promet rien.
  */
 export function LockedPill(
-  { onPress, label = 'Toujours' }: { onPress?: () => void; label?: string } = {}
+  { onPress, label = dict.ui.always }: { onPress?: () => void; label?: string } = {}
 ) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -26,7 +27,7 @@ export function LockedPill(
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       style={st.pill}
-      accessibilityLabel="Toujours actif, non modifiable"
+      accessibilityLabel={dict.ui.always}
     >
       <Lock size={11} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />
       <Text variant="label" tone="tertiary">{label}</Text>
