@@ -902,6 +902,8 @@ export const tr: Dict = {
     always: 'Her zaman',
     online: 'çevrimiçi',
     language: 'Dil',
+    like: 'Beğen',
+    appSettings: '{name} ayarları',
     threeSums: 'Üç hesap.',
     sumOf: '{i} / {n} · akıldan',
     yearsUnit: 'YAŞ',

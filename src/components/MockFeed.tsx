@@ -347,7 +347,7 @@ function Row({
         <Bookmark size={11 * u} strokeWidth={2} color={c.mist} />
       </View>
 
-      <Text style={[st.likes, { fontSize: 5.6 * u }]}>{post.likes} J’aime</Text>
+      <Text style={[st.likes, { fontSize: 5.6 * u }]}>{post.likes} {dict.ui.like}</Text>
     </>
   );
 

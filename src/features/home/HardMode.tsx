@@ -222,7 +222,7 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
 
       {wrong && (
         <Text variant="label" color={c.danger} style={{ marginTop: space.sm }}>
-          Non. Recompte.
+          {dict.pass.wrong}
         </Text>
       )}
 

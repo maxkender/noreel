@@ -922,6 +922,8 @@ export const fr = {
     always: 'Toujours',
     online: 'en ligne',
     language: 'Langue',
+    like: 'J’aime',
+    appSettings: 'Réglages {name}',
     threeSums: 'Trois calculs.',
     sumOf: '{i} sur {n} · de tête',
     yearsUnit: 'ANS',

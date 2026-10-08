@@ -4,7 +4,7 @@ import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-a
 import Animated, {
   Easing, FadeIn, LinearTransition, useAnimatedProps, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Defs, Mask, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, radii, space } from '@/theme/spacing';
@@ -31,7 +31,14 @@ const SCROLL_MS = 460;
 const MOVE_MS = 420;
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 
-const ARect = Animated.createAnimatedComponent(Rect);
+const APath = Animated.createAnimatedComponent(Path);
+
+/** Un rectangle arrondi, en trace SVG. Ecrit sur le fil d'animation. */
+function roundedRect(x: number, y: number, w: number, h: number, r: number): string {
+  'worklet';
+  const rr = Math.min(r, w / 2, h / 2);
+  return `M${x + rr} ${y}H${x + w - rr}A${rr} ${rr} 0 0 1 ${x + w} ${y + rr}V${y + h - rr}A${rr} ${rr} 0 0 1 ${x + w - rr} ${y + h}H${x + rr}A${rr} ${rr} 0 0 1 ${x} ${y + h - rr}V${y + rr}A${rr} ${rr} 0 0 1 ${x + rr} ${y}Z`;
+}
 
 /** Fait glisser une valeur du fil d'animation vers sa cible. */
 function glide(sv: SharedValue<number>, to: number) {
@@ -87,11 +94,16 @@ export function Spotlight({
   const hy = useSharedValue(H / 2);
   const hw = useSharedValue(0);
   const hh = useSharedValue(0);
-  const holeProps = useAnimatedProps(() => ({
-    x: hx.value, y: hy.value, width: hw.value, height: hh.value,
+  /*
+    Le voile est UN trace a deux contours — l'ecran, moins le trou — rempli en
+    « evenodd » : pas de masque a recalculer a chaque image, le natif ne fait
+    que redessiner une forme. C'est ce qui rend le glissement fluide.
+  */
+  const veilProps = useAnimatedProps(() => ({
+    d: `M0 0H${W}V${H}H0Z ${roundedRect(hx.value, hy.value, hw.value, hh.value, radii.tile)}`,
   }));
   const ringProps = useAnimatedProps(() => ({
-    x: hx.value, y: hy.value, width: hw.value, height: hh.value,
+    d: roundedRect(hx.value, hy.value, hw.value, hh.value, radii.tile),
     strokeOpacity: hw.value > 1 ? 1 : 0,
   }));
 
@@ -193,14 +205,8 @@ export function Spotlight({
     <Pressable style={StyleSheet.absoluteFill} onPress={next} testID={testID}>
       <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
-          <Defs>
-            <Mask id="hole">
-              <Rect x={0} y={0} width={W} height={H} fill="#fff" />
-              <ARect animatedProps={holeProps} rx={radii.tile} ry={radii.tile} fill="#000" />
-            </Mask>
-          </Defs>
-          <Rect x={0} y={0} width={W} height={H} fill={c.night} opacity={0.8} mask="url(#hole)" />
-          <ARect animatedProps={ringProps} rx={radii.tile} ry={radii.tile} fill="none" stroke={c.accent} strokeWidth={2} />
+          <APath animatedProps={veilProps} fill={c.night} fillOpacity={0.8} fillRule="evenodd" />
+          <APath animatedProps={ringProps} fill="none" stroke={c.accent} strokeWidth={2} />
         </Svg>
       </Animated.View>
 
@@ -244,8 +250,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   cardWrap: { position: 'absolute', left: gutter, right: gutter },
   card: {
     borderRadius: radii.tile, padding: space.lg,
-    backgroundColor: c.night, borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
-    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 16,
+    backgroundColor: c.night, borderWidth: 1, borderColor: withAlpha(c.mist, 0.22),
   },
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.sm },
   skip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.12) },

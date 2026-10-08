@@ -22,7 +22,7 @@ import { Toggle } from './parts';
 import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
-import { dict } from '@/i18n';
+import { dict, interpolate as fillIn } from '@/i18n';
 import { useAnchor } from './anchors';
 import type { Dict } from '@/i18n/fr';
 
@@ -161,7 +161,7 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
             accessibilityState={{ expanded: open }}
           >
             <Text variant="label" tone="tertiary" style={{ flex: 1 }}>
-              RÉGLAGES {app.name.toUpperCase()}
+              {fillIn(dict.ui.appSettings, { name: app.name })}
             </Text>
             <Animated.View style={chevron}>
               <ChevronDown size={16} strokeWidth={2.2} color={withAlpha(c.mist, 0.5)} />

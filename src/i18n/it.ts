@@ -902,6 +902,8 @@ export const it: Dict = {
     always: 'Sempre',
     online: 'online',
     language: 'Lingua',
+    like: 'Mi piace',
+    appSettings: 'Impostazioni {name}',
     threeSums: 'Tre calcoli.',
     sumOf: '{i} di {n} · a mente',
     yearsUnit: 'ANNI',

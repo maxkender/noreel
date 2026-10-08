@@ -21,10 +21,8 @@ import { shield } from '@/services';
 import { today as usageToday, streak as usageStreak, type Today } from '@/services/usage';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
-import { resetFirstRun } from '@/features/client/firstrun';
-import { resetTutorial } from '@/features/client/tutorial';
 import { TabTour } from './Tours';
-import { resetTours, type TourId } from './tourSeen';
+import { type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
 import { Card, Row, Toggle } from './parts';
 import { useAnchor, useTourScroll } from './anchors';
@@ -480,7 +478,6 @@ function AccountTab() {
   const router = useRouter();
   const minutes = useOnboardingStore(effectiveMinutes);
   const age = useOnboardingStore((x) => x.age);
-  const reset = useOnboardingStore((x) => x.reset);
 
   return (
     <Animated.ScrollView
@@ -514,7 +511,6 @@ function AccountTab() {
       <Card>
         <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.account.restart} onPress={() => { reset(); void resetFirstRun(); void resetTutorial(); void resetTours(); router.replace('/onboarding'); }} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">{Constants.expoConfig?.version ?? ''} · {Platform.OS}</Text>} />
       </Card>
 
