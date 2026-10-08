@@ -12,6 +12,7 @@ import { useLang } from '@/store/lang';
 import { dictOf, interpolate } from '@/i18n';
 import { Language } from '@/features/onboarding/screens/Language';
 import { Paywall } from '@/features/onboarding/screens/Paywall';
+import { TrialBell, TrialGift } from '@/features/onboarding/screens/Trial';
 import { RateAsk } from '@/features/onboarding/screens/extra';
 import { PromiseScreen } from '@/features/onboarding/screens/setup';
 import { LifeYears } from '@/features/onboarding/screens/index';
@@ -45,6 +46,13 @@ describe.each(LANGS)('en %s', (lang) => {
   it('le choix de la langue, avec le titre dans la langue', () => {
     render(<Language onNext={noop} />);
     expect(screen.getByText(d.ob.langTitle)).toBeTruthy();
+  });
+
+  it('le cadeau et la cloche', () => {
+    render(<TrialGift onNext={noop} />);
+    expect(screen.getByText(d.trial.giftTitle)).toBeTruthy();
+    render(<TrialBell onNext={noop} />);
+    expect(screen.getByText(d.trial.bellTitle)).toBeTruthy();
   });
 
   it('le paywall', () => {

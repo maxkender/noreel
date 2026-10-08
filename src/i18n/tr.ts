@@ -965,4 +965,10 @@ export const tr: Dict = {
     years: '{y} yıl {m} ay',
     yearsOnly: '{y} yıl',
   },
+  trial: {
+    giftTitle: 'UnSwipe’ı ücretsiz denemeni istiyoruz.',
+    giftBody: 'Her şeyi denemek için {n} gün. Bugün hiçbir şey ödemezsin.',
+    bellTitle: 'Denemen bitmeden 1 gün önce sana bir hatırlatma göndereceğiz.',
+    bellBody: 'Sürpriz yok: ödeme alınmadan önce sen karar verirsin.',
+  },
 };

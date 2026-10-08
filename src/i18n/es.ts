@@ -965,4 +965,10 @@ export const es: Dict = {
     years: '{y} año{s} y {m} meses',
     yearsOnly: '{y} año{s}',
   },
+  trial: {
+    giftTitle: 'Queremos que pruebes UnSwipe gratis.',
+    giftBody: '{n} días para probarlo todo. Hoy no pagas nada.',
+    bellTitle: 'Te enviaremos un recordatorio 1 día antes de que termine tu prueba.',
+    bellBody: 'Sin sorpresas: decides antes de que se te cobre.',
+  },
 };

@@ -30,7 +30,7 @@ const FALLBACK = { annual: '49,99 €', weekly: '4,99 €' };
 // L'essai n'existe que sur l'annuel, et il est porte par App Store Connect :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
-const TRIAL_DAYS = 3;
+export const TRIAL_DAYS = 3;
 // Le prix reel du magasin, releve au tableau de bord : la valeur de
 // secours servait 44,99 alors que la fiche dit 49,99, et c'est elle qu'on
 // affiche tant que le magasin ne repond pas.

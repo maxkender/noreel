@@ -20,6 +20,7 @@ import { Activities } from './screens/Activities';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
+import { TrialBell, TrialGift } from './screens/Trial';
 import { AgeAsk, Guess } from './screens/time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './screens/science';
 import { Ready } from './screens/ready';
@@ -174,6 +175,9 @@ export function OnboardingFlow() {
     <RateAsk key="rate" onNext={next} />,
     <Prep key="prep" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
+    // Avant les prix : l'essai est offert, et on previent avant sa fin.
+    <TrialGift key="try" onNext={next} />,
+    <TrialBell key="bell" onNext={next} />,
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 

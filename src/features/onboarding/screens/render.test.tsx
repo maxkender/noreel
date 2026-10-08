@@ -18,6 +18,7 @@
 import { render } from '@testing-library/react-native';
 import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
+import { TrialBell, TrialGift } from './Trial';
 import { AgeAsk, Guess } from './time';
 import { LifeYears, S6Years } from './index';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './science';
@@ -57,6 +58,11 @@ describe('les ecrans du parcours se montent', () => {
 
   it('les etoiles', () => {
     render(<RateAsk onNext={noop} />);
+  });
+
+  it('le cadeau et la cloche, avant le paywall', () => {
+    render(<TrialGift onNext={noop} />);
+    render(<TrialBell onNext={noop} />);
   });
 
   it('la bienvenue', () => {

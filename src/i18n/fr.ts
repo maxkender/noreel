@@ -985,6 +985,12 @@ export const fr = {
     years: '{y} an{s} et {m} mois',
     yearsOnly: '{y} an{s}',
   },
+  trial: {
+    giftTitle: 'On veut que tu essaies UnSwipe gratuitement.',
+    giftBody: `{n}${NBSP}jours pour tout tester. Tu ne paies rien aujourd’hui.`,
+    bellTitle: `On t’enverra un rappel 1${NBSP}jour avant la fin de ton essai.`,
+    bellBody: `Pas de surprise${NNBSP}: tu décides avant d’être prélevé.`,
+  },
 } as const;
 
 /**
