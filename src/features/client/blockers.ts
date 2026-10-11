@@ -613,6 +613,63 @@ const COMMON = `
       try { __shorts(); } catch (err) { /* la passe repassera */ }
     }, true);
   }
+
+  /*
+    LE DOIGT VERS LE HAUT NE PASSE PLUS.
+
+    Sortir APRES coup ne suffisait pas : trois sorties au plus, une toutes
+    les secondes et demie, et un doigt qui insiste trois ou quatre fois
+    arrivait au reel suivant — le fil infini, par la porte de derriere. On
+    ne sort plus apres le geste : on le refuse PENDANT qu'il se fait. Tant
+    qu'un lecteur plein ecran est a l'ecran, un glissement vertical qui
+    commence sur lui est avale en capture, avant la page : Instagram ne le
+    voit pas, et rien ne defile. Un tap, un glissement horizontal, la croix
+    restent intacts — on regarde le reel qu'on a recu, et seulement lui.
+  */
+  const __player = () => {
+    if (!window.__nrShorts || __open()) return null;
+    const vids = Array.from(document.querySelectorAll('video')).filter(__tall);
+    for (const v of vids) {
+      const r = v.getBoundingClientRect();
+      if (r.height > innerHeight * 0.85 && r.top < innerHeight * 0.15) return r;
+    }
+    return null;
+  };
+  const __pt = (e) => (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+  let __swipe = null;
+  const __swipeStart = (e) => {
+    if (__swipe) return;
+    const p = __pt(e);
+    const r = p && typeof p.clientY === 'number' ? __player() : null;
+    __swipe = r && p.clientX >= r.left && p.clientX <= r.right && p.clientY >= r.top && p.clientY <= r.bottom
+      ? { x: p.clientX, y: p.clientY, hold: false }
+      : null;
+  };
+  const __swipeMove = (e) => {
+    if (!__swipe) return;
+    const p = __pt(e);
+    if (!p || typeof p.clientY !== 'number') return;
+    if (!__swipe.hold) {
+      const dx = Math.abs(p.clientX - __swipe.x);
+      const dy = Math.abs(p.clientY - __swipe.y);
+      if (dy < 6) return;
+      // Horizontal : ce n'est pas le geste qu'on refuse.
+      if (dx > dy) { __swipe = null; return; }
+      __swipe.hold = true;
+    }
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  };
+  const __swipeEnd = () => { __swipe = null; };
+  // Le toucher ET le pointeur : WebKit envoie les deux, et la page peut ecouter l'un ou l'autre.
+  addEventListener('pointerdown', __swipeStart, { capture: true, passive: true });
+  addEventListener('touchstart', __swipeStart, { capture: true, passive: true });
+  addEventListener('pointermove', __swipeMove, { capture: true, passive: false });
+  addEventListener('touchmove', __swipeMove, { capture: true, passive: false });
+  for (const ev of ['pointerup', 'pointercancel', 'touchend', 'touchcancel']) {
+    addEventListener(ev, __swipeEnd, { capture: true, passive: true });
+  }
 `;
 
 export const INSTAGRAM_BLOCKER = `
