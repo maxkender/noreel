@@ -44,9 +44,9 @@ export function ClientSettings({
   /** Les comptes gardes par l'app, et celui en cours. */
   accounts: Session[];
   current: string | null;
-  onPick: (user: string) => void;
+  onPick: (uid: string) => void;
   onAdd: () => void;
-  onRemove: (user: string) => void;
+  onRemove: (uid: string) => void;
 }) {
   const c = useColors();
   const { height: winH } = useWindowDimensions();

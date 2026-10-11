@@ -962,7 +962,7 @@ export const INSTAGRAM_BLOCKER = `
         const score = (fixed ? 4 : 0) + (own ? 2 : 0) + (a.closest('nav') ? 1 : 0);
         if (score > 0 && (!best || score > best.score)) best = { score, u: m[1], pic: own && img ? img.currentSrc || img.src || '' : '' };
       }
-      if (best) __post({ t: 'who', u: best.u, pic: best.pic });
+      if (best) __post({ t: 'who', u: best.u, pic: best.pic, sure: best.score >= 4 });
       else __post({ t: 'who', u: '' });
     } catch (e) {
       __post({ t: 'who', u: '' });

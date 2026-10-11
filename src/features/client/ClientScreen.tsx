@@ -17,7 +17,7 @@ import { useT, dict } from '@/i18n';
 import { CLIENTS, buildScript, valveOpen, type ClientId } from './blockers';
 import { HelpSheet } from '@/components/HelpSheet';
 import { SwitchSheet } from './SwitchSheet';
-import { useSessions } from '@/store/sessions';
+import { uidOf, useSessions } from '@/store/sessions';
 import { forget, looksLoggedIn, restore, snapshot } from '@/services/sessions';
 import { LinkSheet } from './LinkSheet';
 import { PostAsk, PostModeSheet } from './PostSheet';
@@ -294,32 +294,76 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const upsert = useSessions((x) => x.upsert);
   const setCurrent = useSessions((x) => x.setCurrent);
   const removeAccount = useSessions((x) => x.remove);
-  const keep = useCallback(async (user: string, pic: string) => {
+  const currentUid = current ?? accounts.find((a) => a.user === who)?.uid ?? null;
+  /** Le compte qu'on vient de demander, a verifier au prochain chargement. */
+  const wanted = useRef<string | null>(null);
+  /*
+    Le compte se range sous son IDENTIFIANT, lu dans la session : le pseudo
+    lu sur la page n'est qu'une etiquette, et on ne la change que quand la
+    lecture est sure (le lien de profil de la barre fixe). Une lecture qui
+    se trompait rangeait la session en cours sous un autre nom — deux
+    « comptes » pour une seule session, et changer de l'un a l'autre
+    ramenait au meme.
+  */
+  const keep = useCallback(async (user: string, pic: string, sure: boolean) => {
     const cookies = await snapshot(id);
     if (!looksLoggedIn(id, cookies)) return;
-    upsert(id, { user, avatar: pic || undefined, cookies, savedAt: Date.now() });
+    const uid = uidOf(cookies);
+    if (!uid) return;
+    const known = useSessions.getState().sessions[id]?.find((a) => a.uid === uid);
+    const name = sure || !known ? user : known.user;
+    upsert(id, { uid, user: name, avatar: pic || undefined, cookies, savedAt: Date.now() });
   }, [id, upsert]);
-  const pick = useCallback(async (user: string) => {
-    const acc = accounts.find((a) => a.user === user);
-    if (!acc) return;
-    setSwitchOpen(false);
-    setSwitching(true);
-    const ok = await restore(id, acc.cookies);
-    setCurrent(id, user);
-    setSwitching(false);
-    if (!ok) { setSwitchFailed(true); setTimeout(() => setSwitchFailed(false), 5000); }
-    // La page part avec les nouveaux cookies : on recharge l'accueil, on ne
-    // reste pas sur une page qui appartenait a l'autre compte.
-    web.current?.injectJavaScript(`location.replace(${JSON.stringify(client.url)}); true;`);
-  }, [accounts, id, setCurrent]);
-  const addAccount = useCallback(async () => {
-    setSwitchOpen(false);
-    setPanel(false);
+  /*
+    Changer de compte : on remet sa session, on recharge, et on VERIFIE au
+    chargement suivant que c'est bien lui. Si la page revient sur l'autre,
+    on ne reste pas la : on vide la session du site et on mene a la
+    connexion — on y entre dans le bon compte, et il est garde a nouveau.
+  */
+  const toLogin = useCallback(async () => {
     await forget(id);
     setCurrent(id, null);
     setWho(null);
     web.current?.injectJavaScript(`location.assign(${JSON.stringify(ACCOUNT[id].add)}); true;`);
   }, [id, setCurrent]);
+  const pick = useCallback(async (uid: string) => {
+    const acc = accounts.find((a) => a.uid === uid);
+    if (!acc) return;
+    setSwitchOpen(false);
+    setPanel(false);
+    setSwitching(true);
+    const ok = await restore(id, acc.cookies);
+    const now = uidOf(await snapshot(id));
+    if (!ok || now !== uid) {
+      setSwitching(false);
+      setSwitchFailed(true);
+      setTimeout(() => setSwitchFailed(false), 5000);
+      await toLogin();
+      return;
+    }
+    setCurrent(id, uid);
+    wanted.current = uid;
+    // La page part avec la session remise : on recharge l'accueil, on ne
+    // reste pas sur une page qui appartenait a l'autre compte.
+    web.current?.injectJavaScript(`location.replace(${JSON.stringify(client.url)}); true;`);
+  }, [accounts, id, setCurrent, toLogin, client.url]);
+  const addAccount = useCallback(async () => {
+    setSwitchOpen(false);
+    setPanel(false);
+    await toLogin();
+  }, [toLogin]);
+  /** Au chargement qui suit un changement : est-on bien sur le compte demande ? */
+  const verifySwitch = useCallback(async () => {
+    const uid = wanted.current;
+    if (!uid) return;
+    wanted.current = null;
+    const now = uidOf(await snapshot(id));
+    setSwitching(false);
+    if (now === uid) return;
+    setSwitchFailed(true);
+    setTimeout(() => setSwitchFailed(false), 5000);
+    await toLogin();
+  }, [id, toLogin]);
   useEffect(() => {
     let alive = true;
     void stats().then((x) => { if (alive) setDays(x.days); });
@@ -552,7 +596,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         visible={switchOpen}
         onClose={() => setSwitchOpen(false)}
         accounts={accounts}
-        current={current ?? who}
+        current={currentUid}
         failed={switchFailed}
         onPick={(u) => { void pick(u); }}
         onAdd={() => { void addAccount(); }}
@@ -668,7 +712,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
               if (m && m.t === 'who') {
                 const u = typeof m.u === 'string' && m.u ? m.u : null;
                 setWho(u);
-                if (u) void keep(u, typeof m.pic === 'string' ? m.pic : '');
+                if (u) void keep(u, typeof m.pic === 'string' ? m.pic : '', m.sure === true);
               }
               if (m && m.t === 'switch') {
                 setSwitching(false);
@@ -687,6 +731,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
             setReady(true);
             // Qui est connecte, a chaque page : la barre du bas met un instant a se dessiner.
             if (id === 'instagram') setTimeout(() => web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;'), 1500);
+            // Et, apres un changement de compte, si c'est bien lui.
+            if (wanted.current) setTimeout(() => { void verifySwitch(); }, 600);
           }}
           onError={(e) => setError(e.nativeEvent.description || d.ui.noConnection)}
           // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
@@ -834,7 +880,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         onPost={() => setPostSettings(true)}
         onClose={() => setPanel(false)}
         accounts={accounts}
-        current={current ?? who}
+        current={currentUid}
         onPick={(u) => { void pick(u); }}
         onAdd={() => { void addAccount(); }}
         onRemove={(u) => removeAccount(id, u)}

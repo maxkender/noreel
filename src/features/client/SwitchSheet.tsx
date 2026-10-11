@@ -27,11 +27,11 @@ export function SwitchSheet({
   visible: boolean;
   onClose: () => void;
   accounts: Session[];
-  /** Le pseudo en cours, ou nul tant qu'on ne l'a pas. */
+  /** L'identifiant du compte en cours, ou nul tant qu'on ne l'a pas. */
   current: string | null;
-  onPick: (user: string) => void;
+  onPick: (uid: string) => void;
   onAdd: () => void;
-  onRemove: (user: string) => void;
+  onRemove: (uid: string) => void;
   /** La session n'a pas pu etre remise au dernier essai. */
   failed?: boolean;
 }) {
@@ -72,9 +72,9 @@ export function AccountList({
 }: {
   accounts: Session[];
   current: string | null;
-  onPick: (user: string) => void;
+  onPick: (uid: string) => void;
   onAdd: () => void;
-  onRemove: (user: string) => void;
+  onRemove: (uid: string) => void;
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -82,11 +82,11 @@ export function AccountList({
   return (
     <View style={st.list}>
       {accounts.map((a) => {
-        const on = a.user === current;
+        const on = a.uid === current;
         return (
           <Pressable
-            key={a.user}
-            onPress={() => { if (!on) { haptics.tap(); onPick(a.user); } }}
+            key={a.uid}
+            onPress={() => { if (!on) { haptics.tap(); onPick(a.uid); } }}
             style={[st.row, on && st.rowOn]}
             accessibilityRole="radio"
             accessibilityState={{ selected: on }}
@@ -96,7 +96,7 @@ export function AccountList({
             {on
               ? <Check size={18} strokeWidth={2.6} color={c.accent} />
               : (
-                <Pressable onPress={() => { haptics.tap(); onRemove(a.user); }} hitSlop={10} accessibilityLabel={d.client.switchRemove}>
+                <Pressable onPress={() => { haptics.tap(); onRemove(a.uid); }} hitSlop={10} accessibilityLabel={d.client.switchRemove}>
                   <Trash2 size={16} strokeWidth={2} color={withAlpha(c.mist, 0.45)} />
                 </Pressable>
               )}
