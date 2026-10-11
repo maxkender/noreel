@@ -1123,8 +1123,17 @@ export const INSTAGRAM_BLOCKER = `
       if (!sc) {
         sc = document.createElement('style');
         sc.id = 'nr-stories-css';
-        sc.textContent = '[role="button"][aria-label^="Story" i],[role="button"][aria-label^="Histoire" i],'
-          + '[role="button"][aria-label^="Stories" i],[role="button"][aria-label*="votre story" i],[role="button"][aria-label*="your story" i]{display:none!important}';
+        /*
+          JAMAIS dans l'en-tete d'un profil.
+          La photo de profil est elle aussi un bouton « Story de … » quand la
+          personne en a une, et « Ajouter a votre story » sur son propre
+          profil : la regle l'effacait, et le haut du profil se cassait.
+          Le carrousel du fil n'est pas dans un <header> ; l'en-tete du
+          profil, si.
+        */
+        sc.textContent = '[role="button"][aria-label^="Story" i]:not(header *),[role="button"][aria-label^="Histoire" i]:not(header *),'
+          + '[role="button"][aria-label^="Stories" i]:not(header *),[role="button"][aria-label*="votre story" i]:not(header *),'
+          + '[role="button"][aria-label*="your story" i]:not(header *){display:none!important}';
         (document.head || document.documentElement).appendChild(sc);
       }
     } else if (sc) {
