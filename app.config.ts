@@ -15,7 +15,7 @@ const config: ExpoConfig = {
   name: 'UnSwipe',
   slug: 'noreel',
   scheme: ['unswipe', 'noreel'],
-  version: '1.0.1',
+  version: '1.1.2',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
   backgroundColor: NIGHT,
