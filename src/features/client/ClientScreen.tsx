@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useContext } from 'react';
 import {
   Platform, Pressable, StyleSheet, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import { Hourglass, Info, RotateCw, Timer } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
-import { space } from '@/theme/spacing';
+import { space, gutter } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
@@ -221,6 +221,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
     return () => clearInterval(h);
   }, []);
   const elapsed = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  // La marge de l'encoche : celle du moment, sinon celle connue au demarrage, jamais zero.
+  // Le contexte, et non le hook qui exige un fournisseur : un ecran monte seul (un test) ne doit pas tomber.
+  const insets = useContext(SafeAreaInsetsContext);
+  const topInset = Math.max(insets?.top ?? 0, initialWindowMetrics?.insets.top ?? 0, 20);
 
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -646,27 +650,25 @@ export function ClientScreen({ id }: { id: ClientId }) {
         ]}
       />
 
-      <SafeAreaView edges={['top']} style={[styles.bar, { backgroundColor: barColour }]}>
-        {/*
-          Le CHRONO, pas le nom de l'app.
+      {/*
+        L'EN-TETE NE BOUGE JAMAIS.
 
-          « Instagram » ecrit au-dessus d'Instagram n'apprend rien a personne :
-          le bandeau prenait de la hauteur pour redire ce qu'on avait sous les
-          yeux. Le temps passe depuis l'ouverture, lui, est la seule chose que
-          le site ne dira jamais — et c'est celle qui fait reposer le telephone.
-
-          « Sans filtre » garde sa place : quand la protection est levee, le
-          dire prime sur toute autre information.
-        */}
+        Il etait une SafeAreaView native : sa marge haute arrivait apres le
+        premier rendu, et le chrono se posait tantot sous l'encoche, tantot
+        plus bas, selon l'image ou l'on regardait. La marge est lue d'avance
+        — celle de l'ecran au demarrage, puis celle du moment — et la rangee
+        fait quarante-quatre points, quoi qu'elle montre. Le chrono est
+        TOUJOURS la ; « sans filtre » vient a cote, il ne le remplace pas.
+      */}
+      <View style={[styles.bar, { backgroundColor: barColour, paddingTop: topInset }]}>
         <View style={styles.barRow}>
-          {raw ? (
-            <Text variant="label" color={withAlpha(barInk, 0.65)}>{d.client.noFilter}</Text>
-          ) : (
-            <>
-              <Timer size={12} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
-              <Text variant="label" color={withAlpha(barInk, 0.65)}>{elapsed}</Text>
-            </>
+          {raw && (
+            <View style={[styles.rawPill, { borderColor: withAlpha(barInk, 0.35) }]}>
+              <Text variant="label" color={withAlpha(barInk, 0.75)} style={{ fontSize: 10 }}>{d.client.noFilter}</Text>
+            </View>
           )}
+          <Timer size={12} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
+          <Text variant="label" color={withAlpha(barInk, 0.65)} style={{ fontVariant: ['tabular-nums'] }}>{elapsed}</Text>
           {/*
             Le « i » se tient LA, au bord du doute.
             Les trois moments qui font fermer l'app sont ici : la page de
@@ -685,7 +687,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
             <Info size={14} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
           </Pressable>
         </View>
-      </SafeAreaView>
+      </View>
 
       {/* Rien tant qu'on ne sait pas OU aller. Montee sur le fil puis
           redirigee vers la connexion, elle chargerait deux pages et on
@@ -987,8 +989,12 @@ const sheet = (c: Palette) => StyleSheet.create({
     « sans filtre », la page commence toujours au meme endroit.
   */
   barRow: {
-    height: 56, flexDirection: 'row', alignItems: 'center',
+    height: 44, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
+  },
+  rawPill: {
+    position: 'absolute', left: gutter, paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 999, borderWidth: StyleSheet.hairlineWidth,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
   // paraissait de travers des que la minute passait a deux chiffres.

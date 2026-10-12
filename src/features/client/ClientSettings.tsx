@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
@@ -50,6 +51,7 @@ export function ClientSettings({
 }) {
   const c = useColors();
   const { height: winH } = useWindowDimensions();
+  const insets = useContext(SafeAreaInsetsContext);
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
@@ -94,15 +96,17 @@ export function ClientSettings({
         {/* Le voile est DERRIERE la feuille, pas autour : il ne recoit que ce qui tombe a cote. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" />
       </Animated.View>
-      <View style={st.scrim} pointerEvents="box-none">
+      <View style={[st.scrim, { paddingBottom: Math.max(insets?.bottom ?? 0, 10) + 4 }]} pointerEvents="box-none">
         {!closing && (
         <Animated.View
           entering={SlideInDown.duration(280)}
           exiting={SlideOutDown.duration(220)}
           style={[st.sheet, { maxHeight: winH * 0.6 }]}
         >
-          <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
+          <BlurView intensity={80} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
+          {/* Le reflet haut : c'est lui qui donne l'epaisseur du verre. */}
+          <View style={st.sheen} pointerEvents="none" />
 
           <View style={st.grab} />
           <View style={st.head}>
@@ -213,17 +217,24 @@ export function ClientSettings({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end' },
+  scrim: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 10 },
+  /*
+    Une carte de verre qui FLOTTE : arrondie de tous cotes, decollee des
+    bords, bordee d'un filet clair. Et d'une autre couleur que le fond
+    d'Instagram — un bleu nuit — pour qu'on la lise comme la notre, posee
+    sur leur page, et non comme un panneau de leur site.
+  */
   sheet: {
-    borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
-    paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xxl,
+    borderRadius: 28, overflow: 'hidden',
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
+    paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.lg,
+    shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 24, shadowOffset: { width: 0, height: 10 },
   },
-  // Fige sur la palette sombre, ce voile faisait un panneau noir en mode
-  // clair, avec du texte sombre dessus.
   tint: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(c.night, 0.94),
+    backgroundColor: withAlpha(c.glassTint, 0.84),
   },
+  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: withAlpha(c.mist, 0.35) },
   grab: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.25), marginTop: -8, marginBottom: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.sm },
   group: { marginTop: space.md, marginBottom: 2 },

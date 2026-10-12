@@ -42,6 +42,7 @@ export const light: Palette = {
   glassEdge: '#00000014',   // noir 8 % : un bord se pose, il ne cerne pas
   glassSpec: '#FFFFFFF2',   // un reflet reste plus clair que sa surface
   glassWarm: '#C98A3C59',   // le lisere de la marque, chaud sur les deux fonds
+  glassTint: '#F3F1EA',     // creme : la meme feuille, sur fond clair
   control: '#FFFFFF',
   // Une ombre noire sur du creme fait une tache grise ; celle-ci est du
   // brun chaud, tres legere, comme une vraie ombre sur du papier.

@@ -40,6 +40,7 @@ export const colors = {
   glassEdge: '#FAFAFA2E',   // son bord
   glassSpec: '#FAFAFA73',   // le reflet du ciel, 1 pt en haut
   glassWarm: '#FFFFFF8C',   // le lisere chaud, du cote du soleil
+  glassTint: '#141B2E',     // bleu nuit : la feuille de verre posee sur une page etrangere
   control: '#FAFAFA',       // le pouce des interrupteurs
   shadowTint: '#000000',
   shadowAlpha: 0.35,
