@@ -681,7 +681,7 @@ export const fr = {
     namePrompt: 'Comment devrait-on t’appeler ?',
     welcome1: 'Bienvenue sur UnSwipe. Tu vas pouvoir accéder aux réseaux sociaux sans contenus courts.',
     namePlaceholder: 'Ton prénom',
-    q1: 'Tu te souviens de combien de Reels vus cette {semaine} ?',
+    q1: 'Tu te souviens de combien de Reels, TikTok ou Shorts vus cette {semaine} ?',
     q1a: 'Aucun',
     q1b: 'Un ou deux',
     q1c: 'Quelques-uns',
@@ -719,7 +719,7 @@ export const fr = {
     signHint: 'Signe ici, du doigt. C’est entre toi et toi.',
     signClear: 'Effacer',
     commit: 'Je m’engage',
-    reelsUnit: 'Reels cette semaine',
+    reelsUnit: 'vidéos cette semaine',
     reelsMax: '20+',
   },
 

@@ -661,7 +661,7 @@ export const tr: Dict = {
     namePrompt: 'Sana nasıl hitap edelim?',
     welcome1: 'UnSwipe’a hoş geldin. Artık sosyal uygulamaları kısa video olmadan kullanıyorsun.',
     namePlaceholder: 'Adın',
-    q1: 'Bu {hafta} kaç Reels izlediğini hatırlıyor musun?',
+    q1: 'Bu {hafta} kaç Reels, TikTok veya Shorts izlediğini hatırlıyor musun?',
     q1a: 'Hiç',
     q1b: 'Bir ya da iki',
     q1c: 'Birkaç',
@@ -699,7 +699,7 @@ export const tr: Dict = {
     signHint: 'Buraya parmağınla imza at. Bu, seninle senin aranda.',
     signClear: 'Sil',
     commit: 'Söz veriyorum',
-    reelsUnit: 'bu hafta Reels',
+    reelsUnit: 'bu hafta video',
     reelsMax: '20+',
   },
 

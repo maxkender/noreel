@@ -661,7 +661,7 @@ export const it: Dict = {
     namePrompt: 'Come dobbiamo chiamarti?',
     welcome1: 'Benvenuto su UnSwipe. Ora puoi usare i social senza contenuti brevi.',
     namePlaceholder: 'Il tuo nome',
-    q1: 'Ti ricordi quanti Reels hai visto questa {settimana}?',
+    q1: 'Ti ricordi quanti Reels, TikTok o Shorts hai visto questa {settimana}?',
     q1a: 'Nessuno',
     q1b: 'Uno o due',
     q1c: 'Qualcuno',
@@ -699,7 +699,7 @@ export const it: Dict = {
     signHint: 'Firma qui, con il dito. Questa è tra te e te.',
     signClear: 'Cancella',
     commit: 'Mi impegno',
-    reelsUnit: 'Reels questa settimana',
+    reelsUnit: 'video questa settimana',
     reelsMax: '20+',
   },
 
