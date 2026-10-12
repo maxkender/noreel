@@ -28,7 +28,15 @@ export function Language({ onNext }: { onNext: () => void }) {
   const set = useLang((s) => s.set);
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
-      <Text variant="displayM" style={st.center}>{d.ob.langTitle}</Text>
+      {/*
+        Le titre a une HAUTEUR FIXE, quelle que soit la langue.
+        Il change de longueur a chaque choix — une ligne en allemand, deux en
+        francais — et la liste descendait ou remontait sous le doigt. Trois
+        lignes lui sont reservees, et la liste ne bouge plus.
+      */}
+      <View style={st.titleBox}>
+        <Text variant="displayM" style={st.center}>{d.ob.langTitle}</Text>
+      </View>
       <View style={st.list} testID="lang-list">
         {LANGS.map((l) => {
           const on = l === lang;
@@ -57,7 +65,8 @@ export function Language({ onNext }: { onNext: () => void }) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
-  list: { marginTop: space.xl, gap: space.sm },
+  titleBox: { height: 112, justifyContent: 'center' },
+  list: { marginTop: space.md, gap: space.sm },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, height: 58, borderRadius: radii.chip + 4,
