@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
@@ -16,7 +16,7 @@ import { countPass, stats } from '@/services/protect';
 /** Cinq minutes, et pas une de plus. */
 export const PASS_MINUTES = 5;
 
-const WAIT = 90;        // secondes d'attente, avant tout effort
+const WAIT = 60;        // secondes d'attente, avant tout effort
 const SUMS = 3;         // operations
 const DIGITS = 6;       // longueur de la suite a retenir
 const SHOW_MS = 4000;   // duree d'affichage de la suite
@@ -75,9 +75,19 @@ export function ReelsPass({
             <View style={{ width: 62 }} />
           </View>
 
-          <Animated.View key={step} entering={FadeIn.duration(320)} style={st.page}>
-            {steps[step]}
-          </Animated.View>
+          {/*
+            Le clavier POUSSE la page au lieu de la couvrir : le bouton
+            « Valider » restait cache dessous, et rien ne permettait de le
+            ranger — on etait coince devant un calcul juste. Toucher a cote du
+            champ le range aussi.
+          */}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+            <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
+              <Animated.View key={step} entering={FadeIn.duration(320)} style={st.page}>
+                {steps[step]}
+              </Animated.View>
+            </Pressable>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
     </Modal>
@@ -127,20 +137,21 @@ function Wait({ onDone }: { onDone: () => void }) {
 type Sum = { q: string; r: number };
 
 /**
- * Trois operations a deux temps.
+ * Trois produits de la table de multiplication.
  *
- * Tirees depuis un GESTE, jamais pendant un rendu : un tirage pendant le
+ * Tires depuis un GESTE, jamais pendant un rendu : un tirage pendant le
  * rendu change l'operation sous les doigts des que l'ecran se redessine.
  *
- * Plus dures que celles du mode strict, qui sont de simples produits : ici il
- * faut multiplier PUIS retrancher, ce qu'on ne fait pas de tete en marchant.
+ * Ils etaient a deux temps — multiplier puis retrancher — et personne ne les
+ * faisait : on renoncait, ou on sortait la calculette. Le but n'est pas
+ * d'etre impossible, c'est de demander une seconde d'attention ; trois
+ * produits de deux chiffres entre trois et neuf la demandent.
  */
 function makeQuiz(): Sum[] {
   return Array.from({ length: SUMS }, () => {
-    const a = 13 + Math.floor(Math.random() * 74);
-    const b = 14 + Math.floor(Math.random() * 45);
-    const d = 17 + Math.floor(Math.random() * 180);
-    return { q: `${a} × ${b} − ${d}`, r: a * b - d };
+    const a = 3 + Math.floor(Math.random() * 7);
+    const b = 3 + Math.floor(Math.random() * 7);
+    return { q: `${a} × ${b}`, r: a * b };
   });
 }
 
@@ -178,6 +189,9 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
         {sum.q}
       </Text>
 
+      {/* Le clavier numerique n'a pas de touche « OK » : la reponse se
+          valide au bouton, qui reste visible au-dessus du clavier, ou en
+          touchant a cote pour le ranger. */}
       <TextInput
         value={val}
         onChangeText={(t) => { setVal(t); setWrong(false); }}
@@ -185,7 +199,10 @@ function Sums({ quiz, onDone }: { quiz: Sum[]; onDone: () => void }) {
         placeholder="?"
         placeholderTextColor={withAlpha(c.mist, 0.25)}
         style={[st.input, wrong && st.inputWrong]}
-        maxLength={7}
+        maxLength={4}
+        autoFocus
+        returnKeyType="done"
+        onSubmitEditing={() => { if (val.trim().length) submit(); }}
       />
 
       {/* La place du message est RESERVEE : sans elle, l'erreur pousse le
@@ -277,6 +294,8 @@ function Sequence({ code, onDone }: { code: string; onDone: () => void }) {
             style={[st.input, wrong && st.inputWrong]}
             maxLength={DIGITS}
             autoFocus
+            returnKeyType="done"
+            onSubmitEditing={() => { if (val.trim().length >= DIGITS) submit(); }}
           />
         )}
       </View>

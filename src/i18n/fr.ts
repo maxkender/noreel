@@ -637,7 +637,7 @@ export const fr = {
   },
 
   pass: {
-    waitTitle: 'Une minute et demie, d’abord.',
+    waitTitle: 'Une minute, d’abord.',
     waitBody: `Si l'envie tient encore après ça, tu passeras. Sinon, elle sera passée toute seule — et c'est exactement le but.`,
     waitLeft: 'Encore {n} s',
     sum: 'CALCUL {i} SUR {n}',

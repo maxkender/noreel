@@ -617,7 +617,7 @@ export const tr: Dict = {
   },
 
   pass: {
-    waitTitle: 'Önce doksan saniye.',
+    waitTitle: 'Önce bir dakika.',
     waitBody: 'Sonra hâlâ istiyorsan geçersin. İstemiyorsan kendiliğinden geçmiştir — mesele de tam olarak bu.',
     waitLeft: '{n} sn kaldı',
     sum: 'HESAP {i} / {n}',

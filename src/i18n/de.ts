@@ -617,7 +617,7 @@ export const de: Dict = {
   },
 
   pass: {
-    waitTitle: 'Erst neunzig Sekunden.',
+    waitTitle: 'Erst eine Minute.',
     waitBody: 'Wenn du es danach immer noch willst, kommst du durch. Wenn nicht, ist es von selbst vergangen — und genau darum geht es.',
     waitLeft: 'noch {n} s',
     sum: 'RECHNUNG {i} VON {n}',

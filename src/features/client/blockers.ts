@@ -985,6 +985,7 @@ export const INSTAGRAM_BLOCKER = `
     }
     return false;
   };
+  let __adLast = 0;
   const __adMark = () => {
     const H = innerHeight;
     for (const art of document.querySelectorAll('article')) {
@@ -1041,12 +1042,16 @@ export const INSTAGRAM_BLOCKER = `
         Le coeur est un lien vers /notifications/, ou un lien qui porte
         l'icone « Notifications » : on attrape les deux.
       */
-      const a = e.target && e.target.closest
-        ? e.target.closest('a[href="/explore/"], a[href="/explore"], a[href^="/notifications"], a:has(svg[aria-label^="Notification" i])')
-        : null;
-      if (!a) return;
-      const href = a.getAttribute('href') || '';
-      const to = href.indexOf('/explore') === 0 ? '/explore/' : '/notifications/';
+      const el = e.target && e.target.closest ? e.target.closest('a, [role="link"], [role="button"], button') : null;
+      if (!el) return;
+      const href = el.getAttribute('href') || '';
+      const icon = el.querySelector('svg[aria-label], img[alt]');
+      const lab = icon ? (icon.getAttribute('aria-label') || icon.getAttribute('alt') || '') : '';
+      // Le coeur, quelle que soit sa balise et sa langue : Notifications, Benachrichtigungen, Notifiche, Bildirimler…
+      const toNotif = href.indexOf('/notifications') === 0 || /notif|benachricht|bildirim/i.test(lab);
+      const toExplore = href === '/explore/' || href === '/explore';
+      if (!toNotif && !toExplore) return;
+      const to = toExplore ? '/explore/' : '/notifications/';
       if (location.pathname.startsWith(to.slice(0, -1))) return;
       e.preventDefault();
       e.stopPropagation();
@@ -1085,6 +1090,30 @@ export const INSTAGRAM_BLOCKER = `
     // Ni sur les notifications : la page precharge des apercus de reels, et
     // la sortie « lecteur plein ecran » y faisait reculer la page — un ecran
     // noir le temps du retour, trop souvent.
+    /*
+      Les notifications qui restent NOIRES se rechargent, une fois.
+      Arrivees par la page unique, elles peuvent rester vides ; un
+      chargement complet les rend toujours. On attend deux secondes, on
+      regarde si la page a du texte, et sinon on recharge — pas plus d'une
+      fois la minute, pour ne jamais tourner en rond.
+    */
+    if (location.pathname.indexOf('/notifications') === 0) {
+      if (!window.__nrNotifAt) {
+        window.__nrNotifAt = Date.now();
+      } else if (Date.now() - window.__nrNotifAt > 2000) {
+        const main = document.querySelector('main') || document.body;
+        const text = (main && main.innerText ? main.innerText : '').trim();
+        let last = 0;
+        try { last = Number(sessionStorage.getItem('nr.notifReload') || 0); } catch (e) { /* prive */ }
+        if (text.length < 20 && Date.now() - last > 60000) {
+          try { sessionStorage.setItem('nr.notifReload', String(Date.now())); } catch (e) { /* prive */ }
+          location.reload();
+        }
+        window.__nrNotifAt = Number.MAX_SAFE_INTEGER;
+      }
+    } else {
+      window.__nrNotifAt = 0;
+    }
     window.__nrShorts = !location.pathname.startsWith('/stories/')
       && !location.pathname.startsWith('/notifications')
       && location.pathname !== '/';
@@ -1218,10 +1247,18 @@ export const INSTAGRAM_BLOCKER = `
       if (!adc) {
         adc = document.createElement('style');
         adc.id = 'nr-ads-css';
-        adc.textContent = 'article[data-nr-ad],article:has(a[href*="l.instagram.com"]),article:has(a[href^="/ads/"]),article:has(a[href*="/ads/about"]){display:none!important}';
+        /*
+          INVISIBLE, mais a sa hauteur. Cacher la carte (display:none)
+          refaisait le bug d'origine : le fil se vidait en defilant, puis
+          ramait — Instagram positionne ses cartes sur des hauteurs mesurees,
+          et une carte qui disparait fausse toutes celles d'apres. La pub
+          devient un espace vide de sa taille ; rien ne bouge autour.
+        */
+        adc.textContent = 'article[data-nr-ad] > *,article:has(a[href*="l.instagram.com"]) > *,article:has(a[href^="/ads/"]) > *{visibility:hidden!important}';
         (document.head || document.documentElement).appendChild(adc);
       }
-      __adMark();
+      // Une lecture par seconde suffit, et elle ne coute rien au defilement.
+      if (Date.now() - __adLast > 1000) { __adLast = Date.now(); __adMark(); }
     } else if (adc) {
       adc.remove();
       document.querySelectorAll('[data-nr-ad]').forEach((el) => el.removeAttribute('data-nr-ad'));

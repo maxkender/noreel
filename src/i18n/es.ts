@@ -617,7 +617,7 @@ export const es: Dict = {
   },
 
   pass: {
-    waitTitle: 'Primero, noventa segundos.',
+    waitTitle: 'Primero, un minuto.',
     waitBody: 'Si después sigues queriendo, pasas. Si no, se ha pasado solo — y esa es justo la idea.',
     waitLeft: '{n} s más',
     sum: 'CÁLCULO {i} DE {n}',

@@ -225,6 +225,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // Le contexte, et non le hook qui exige un fournisseur : un ecran monte seul (un test) ne doit pas tomber.
   const insets = useContext(SafeAreaInsetsContext);
   const topInset = Math.max(insets?.top ?? 0, initialWindowMetrics?.insets.top ?? 0, 20);
+  // Les notes passageres se posent SOUS la barre, jamais dessus.
+  const noteTop = topInset + 44 + 6;
 
   const web = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -662,11 +664,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
       */}
       <View style={[styles.bar, { backgroundColor: barColour, paddingTop: topInset }]}>
         <View style={styles.barRow}>
-          {raw && (
-            <View style={[styles.rawPill, { borderColor: withAlpha(barInk, 0.35) }]}>
-              <Text variant="label" color={withAlpha(barInk, 0.75)} style={{ fontSize: 10 }}>{d.client.noFilter}</Text>
-            </View>
-          )}
+          {/* A gauche, ce qui change l'etat du filtre : « sans filtre », ou les reels ouverts. */}
+          <View style={styles.barLeft} pointerEvents="none">
+            {raw && (
+              <View style={[styles.rawPill, { borderColor: withAlpha(barInk, 0.35) }]}>
+                <Text variant="label" color={withAlpha(barInk, 0.75)} style={{ fontSize: 10 }}>{d.client.noFilter}</Text>
+              </View>
+            )}
+            {(inValve || passLeft > 0) && !capped && (
+              <View style={[styles.rawPill, { borderColor: withAlpha(c.ember, 0.6), backgroundColor: withAlpha(c.ember, 0.14) }]}>
+                <Text variant="label" color={c.ember} style={{ fontSize: 10 }} numberOfLines={1}>
+                  {passLeft > 0 ? t(d.client.passLeft, { n: passLeft }) : t(d.client.valveOpen, { h: valve.to })}
+                </Text>
+              </View>
+            )}
+          </View>
           <Timer size={12} strokeWidth={2.2} color={withAlpha(barInk, 0.5)} />
           <Text variant="label" color={withAlpha(barInk, 0.65)} style={{ fontVariant: ['tabular-nums'] }}>{elapsed}</Text>
           {/*
@@ -813,29 +825,17 @@ export function ClientScreen({ id }: { id: ClientId }) {
       {/* Le selecteur de comptes met un instant a s'ouvrir, et il peut ne pas
           s'ouvrir du tout : dans les deux cas on le dit. */}
       {postNote && (
-        <View style={styles.valve} pointerEvents="none">
+        <View style={[styles.valve, { top: noteTop }]} pointerEvents="none">
           <Text variant="label" color={c.accent}>{postNote}</Text>
         </View>
       )}
 
       {(switching || switchFailed) && (
-        <View style={styles.valve} pointerEvents="none">
+        <View style={[styles.valve, { top: noteTop }]} pointerEvents="none">
           <Text variant="label" color={switchFailed ? c.danger : c.accent}>
             {switchFailed
               ? d.client.switchFailed
               : d.client.switchOpening}
-          </Text>
-        </View>
-      )}
-
-      {/* La fenetre ouverte se dit. Une permission qu'on ne voit pas ne
-          rassure personne, et on croit le filtre casse. */}
-      {(inValve || passLeft > 0) && !capped && (
-        <View style={styles.valve} pointerEvents="none">
-          <Text variant="label" color={c.ember}>
-            {passLeft > 0
-              ? t(d.client.passLeft, { n: passLeft })
-              : t(d.client.valveOpen, { h: valve.to })}
           </Text>
         </View>
       )}
@@ -992,8 +992,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     height: 44, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 6,
   },
+  barLeft: { position: 'absolute', left: gutter, flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '42%' },
   rawPill: {
-    position: 'absolute', left: gutter, paddingHorizontal: 8, paddingVertical: 3,
+    paddingHorizontal: 8, paddingVertical: 3, flexShrink: 1,
     borderRadius: 999, borderWidth: StyleSheet.hairlineWidth,
   },
   // Pose a DROITE sans deplacer le chrono : centre avec lui, l'ensemble
