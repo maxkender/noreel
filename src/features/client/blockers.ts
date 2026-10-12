@@ -964,6 +964,37 @@ export const INSTAGRAM_BLOCKER = `
     }
     return false;
   };
+
+  /*
+    UNE PUB SE RECONNAIT A SON MOT.
+    Les liens sortants ne suffisaient pas : la plupart des pubs du fil n'en
+    portent aucun. Elles portent en revanche, dans leur en-tete, un petit
+    mot seul — « Sponsorisé », « Sponsored », « Commandité ». On le cherche
+    dans les textes courts de chaque publication a portee d'ecran, et on
+    MARQUE la publication ; la regle CSS fait le reste. La marque est
+    relue a chaque passe et retiree des que le mot n'y est plus : une carte
+    recyclee pour un vrai post redevient visible en moins d'une seconde —
+    c'est ce qui manquait a l'ancien masquage, qui laissait le fil noir.
+  */
+  const AD_WORD = /^(sponsoris[ée]e?s?|sponsored|publicit[ée]|commandit[ée]e?|paid partnership|partenariat r[ée]mun[ée]r[ée])$/i;
+  const __isAd = (art) => {
+    for (const sp of art.querySelectorAll('span')) {
+      const tx = sp.textContent || '';
+      if (tx.length > 24) continue;
+      if (AD_WORD.test(tx.trim())) return true;
+    }
+    return false;
+  };
+  const __adMark = () => {
+    const H = innerHeight;
+    for (const art of document.querySelectorAll('article')) {
+      const r = art.getBoundingClientRect();
+      // Seulement ce qui est a portee d'ecran : le reste sera lu en arrivant.
+      if (r.bottom < -H * 2 || r.top > H * 3) continue;
+      if (__isAd(art)) art.setAttribute('data-nr-ad', '1');
+      else if (art.hasAttribute('data-nr-ad')) art.removeAttribute('data-nr-ad');
+    }
+  };
   window.__nrWho = () => {
     try {
       const skip = ['explore', 'reels', 'direct', 'accounts', 'popular', 'stories', 'p', 'reel'];
@@ -1187,11 +1218,13 @@ export const INSTAGRAM_BLOCKER = `
       if (!adc) {
         adc = document.createElement('style');
         adc.id = 'nr-ads-css';
-        adc.textContent = 'article:has(a[href*="l.instagram.com"]),article:has(a[href^="/ads/"]),article:has(a[href*="/ads/about"]){display:none!important}';
+        adc.textContent = 'article[data-nr-ad],article:has(a[href*="l.instagram.com"]),article:has(a[href^="/ads/"]),article:has(a[href*="/ads/about"]){display:none!important}';
         (document.head || document.documentElement).appendChild(adc);
       }
+      __adMark();
     } else if (adc) {
       adc.remove();
+      document.querySelectorAll('[data-nr-ad]').forEach((el) => el.removeAttribute('data-nr-ad'));
     }
     if (__on('feed') && __home() && !__anon()) __wall(); else __unwall();
 

@@ -26,12 +26,12 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
   instagram: [
     { key: 'reels', label: 'igReels', locked: true },
     { key: 'stories', label: 'igStories' },
-    { key: 'explore', label: 'igExplore' },
-    { key: 'saved', label: 'igSaved' },
-    { key: 'feed', label: 'igFeed' },
     { key: 'ads', label: 'igAds', beta: true },
+    { key: 'feed', label: 'igFeed' },
     { key: 'dmsOnly', label: 'dmsOnly' },
     { key: 'grayscale', label: 'gray' },
+    { key: 'saved', label: 'igSaved' },
+    { key: 'explore', label: 'igExplore' },
   ],
   tiktok: [
     { key: 'foryou', label: 'ttForyou', locked: true },
