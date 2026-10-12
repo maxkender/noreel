@@ -1003,12 +1003,24 @@ export const INSTAGRAM_BLOCKER = `
   */
   addEventListener('click', (e) => {
     try {
-      const a = e.target && e.target.closest ? e.target.closest('a[href="/explore/"], a[href="/explore"]') : null;
-      if (!a || location.pathname.startsWith('/explore')) return;
+      /*
+        Les notifications font la meme vraie navigation que la recherche :
+        ouvertes par la page unique, la premiere fois, elles restaient
+        noires — le morceau de code de la page arrivait apres le clic.
+        Le coeur est un lien vers /notifications/, ou un lien qui porte
+        l'icone « Notifications » : on attrape les deux.
+      */
+      const a = e.target && e.target.closest
+        ? e.target.closest('a[href="/explore/"], a[href="/explore"], a[href^="/notifications"], a:has(svg[aria-label^="Notification" i])')
+        : null;
+      if (!a) return;
+      const href = a.getAttribute('href') || '';
+      const to = href.indexOf('/explore') === 0 ? '/explore/' : '/notifications/';
+      if (location.pathname.startsWith(to.slice(0, -1))) return;
       e.preventDefault();
       e.stopPropagation();
       if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-      location.assign('/explore/');
+      location.assign(to);
     } catch (err) { /* la page suit son chemin */ }
   }, true);
 
