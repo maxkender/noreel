@@ -80,51 +80,61 @@ export function ClientSettings({
       animationType="none"
       onRequestClose={close}
     >
-      {/* La page se floute derriere la feuille : sans ca, le verre se detache
-          d'une image nette et ressemble a un calque colle dessus. */}
-      <Animated.View
-        entering={FadeIn.duration(220)}
-        exiting={FadeOut.duration(200)}
-        style={StyleSheet.absoluteFill}
-      >
-        <BlurView intensity={24} tint={tint} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-
       {/*
-        Le voile est DERRIERE la feuille, pas autour.
-        Il l'enveloppait : chaque appui dans la feuille remontait jusqu'a lui
-        et la fermait, et le defilement de la liste se battait avec son
-        geste. En frere cadet, il ne recoit que ce qui tombe a cote.
+        La page reste VISIBLE derriere, a peine assombrie.
+        Un reglage agit tout de suite : on doit voir le carrousel partir, la
+        grille se vider, pendant qu'on touche l'interrupteur. Un voile flou
+        cachait justement ce qu'on venait verifier.
       */}
-      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: '#00000088' }]} onPress={close} accessibilityRole="button" />
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(180)}
+        style={[StyleSheet.absoluteFill, { backgroundColor: '#00000055' }]}
+      >
+        {/* Le voile est DERRIERE la feuille, pas autour : il ne recoit que ce qui tombe a cote. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" />
+      </Animated.View>
       <View style={st.scrim} pointerEvents="box-none">
         {!closing && (
         <Animated.View
           entering={SlideInDown.duration(280)}
           exiting={SlideOutDown.duration(220)}
-          style={[st.sheet, { maxHeight: winH * 0.86 }]}
+          style={[st.sheet, { maxHeight: winH * 0.6 }]}
         >
           <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 
+          <View style={st.grab} />
           <View style={st.head}>
             <Image source={LOGOS[id]} style={st.logo} contentFit="contain" />
             <Text variant="title" style={{ flex: 1 }}>{name}</Text>
-            <Pressable onPress={() => { haptics.tap(); onClose(); }} style={st.done} hitSlop={10}>
+            <Pressable onPress={() => { haptics.tap(); close(); }} style={st.done} hitSlop={10}>
               <Text variant="label" color={c.night}>OK</Text>
             </Pressable>
           </View>
 
           <ScrollView style={{ flexGrow: 0 }} showsVerticalScrollIndicator={false} bounces>
-            {APP_TOGGLES[id].map((t) => (
+            {/* Ce qui ne se discute pas, d'abord : allume, et cadenasse. */}
+            <Text variant="label" tone="tertiary" style={st.group}>{d.ui.alwaysActive}</Text>
+            {APP_TOGGLES[id].filter((t) => t.locked).map((t) => (
               <View key={t.key} style={st.line}>
-                {t.locked && <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />}
+                <Lock size={12} strokeWidth={2} color={withAlpha(c.mist, 0.3)} />
                 <Text variant="body" style={{ flex: 1 }}>{d.toggles[t.label]}</Text>
-                {t.locked
-                  ? <LockedPill />
-                  : pro
-                    ? <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />
-                    : <LockedPill label="Pro" />}
+                <View pointerEvents="none" style={{ opacity: 0.75 }}><Toggle on onChange={() => {}} /></View>
+              </View>
+            ))}
+
+            <Text variant="label" tone="tertiary" style={st.group}>{d.ui.proSettings}</Text>
+            {APP_TOGGLES[id].filter((t) => !t.locked).map((t) => (
+              <View key={t.key} style={st.line}>
+                <Text variant="body" style={{ flexShrink: 1 }}>{d.toggles[t.label]}</Text>
+                {t.beta && (
+                  <View style={st.beta}><Text variant="label" tone="tertiary" style={{ fontSize: 9 }}>Beta</Text></View>
+                )}
+                <View style={{ flex: 1 }} />
+                {pro
+                  ? <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />
+                  : <LockedPill label="Pro" />}
               </View>
             ))}
 
@@ -214,7 +224,13 @@ const sheet = (c: Palette) => StyleSheet.create({
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: withAlpha(c.night, 0.94),
   },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.md },
+  grab: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.25), marginTop: -8, marginBottom: space.sm },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.sm },
+  group: { marginTop: space.md, marginBottom: 2 },
+  beta: {
+    marginLeft: space.sm, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+    backgroundColor: withAlpha(c.mist, 0.1), borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.mist, 0.2),
+  },
   logo: { width: 34, height: 34 },
   done: {
     width: 44, height: 32, borderRadius: 16,

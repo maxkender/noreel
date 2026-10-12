@@ -902,6 +902,8 @@ export const it: Dict = {
     always: 'Sempre',
     online: 'online',
     language: 'Lingua',
+    alwaysActive: 'Sempre attivo',
+    proSettings: 'Impostazioni',
     like: 'Mi piace',
     appSettings: 'Impostazioni {name}',
     threeSums: 'Tre calcoli.',
@@ -914,6 +916,7 @@ export const it: Dict = {
   },
   toggles: {
     igReels: 'Blocca i Reels',
+    igAds: 'Nascondi le pubblicità',
     igStories: 'Blocca le storie',
     igExplore: 'Nascondi la griglia Esplora (la ricerca resta)',
     igSaved: 'Blocca i post salvati',

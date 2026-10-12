@@ -922,6 +922,8 @@ export const fr = {
     always: 'Toujours',
     online: 'en ligne',
     language: 'Langue',
+    alwaysActive: 'Toujours actif',
+    proSettings: 'Réglages',
     like: 'J’aime',
     appSettings: 'Réglages {name}',
     threeSums: 'Trois calculs.',
@@ -934,6 +936,7 @@ export const fr = {
   },
   toggles: {
     igReels: 'Bloquer les Reels',
+    igAds: 'Masquer les pubs',
     igStories: 'Bloquer les stories',
     igExplore: 'Masquer la grille Explorer (la recherche reste)',
     igSaved: 'Bloquer les publications enregistrées',

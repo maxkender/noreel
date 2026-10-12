@@ -18,6 +18,8 @@ export type AppToggle = {
   locked?: boolean;
   /** Actif tant que l'utilisateur n'a rien touche. */
   on?: boolean;
+  /** Encore en essai : on le dit a cote de l'interrupteur. */
+  beta?: boolean;
 };
 
 export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
@@ -27,6 +29,7 @@ export const APP_TOGGLES: Record<ClientId, AppToggle[]> = {
     { key: 'explore', label: 'igExplore' },
     { key: 'saved', label: 'igSaved' },
     { key: 'feed', label: 'igFeed' },
+    { key: 'ads', label: 'igAds', beta: true },
     { key: 'dmsOnly', label: 'dmsOnly' },
     { key: 'grayscale', label: 'gray' },
   ],

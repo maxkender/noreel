@@ -280,6 +280,24 @@ const COMMON = `
     if (el.style.display !== 'none') __hits += 1;
     el.style.setProperty('display', 'none', 'important');
   };
+  /*
+    Le carrousel des stories se cache SANS display:none.
+    Cache ainsi, il perdait sa largeur ; Instagram y recalculait ses cases
+    sur zero, et au retour les stories s'empilaient a la verticale. Hauteur
+    nulle et invisible, il garde sa largeur : au retour, tout est en place.
+  */
+  const TRAY_PROPS = ['height', 'overflow', 'visibility', 'margin', 'padding', 'min-height'];
+  const __hideTray = (el, key) => {
+    if (!el) return;
+    if (key) el.setAttribute('data-nr', key);
+    if (el.style.visibility !== 'hidden') __hits += 1;
+    el.style.setProperty('height', '0px', 'important');
+    el.style.setProperty('min-height', '0px', 'important');
+    el.style.setProperty('overflow', 'hidden', 'important');
+    el.style.setProperty('visibility', 'hidden', 'important');
+    el.style.setProperty('margin', '0px', 'important');
+    el.style.setProperty('padding', '0px', 'important');
+  };
   const __on = (k) => !!(window.__NR && window.__NR[k]);
 
   /*
@@ -356,6 +374,7 @@ const COMMON = `
       const check = __still[k];
       if (on && (!check || check(el))) return;
       el.style.removeProperty('display');
+      for (const pr of TRAY_PROPS) el.style.removeProperty(pr);
       el.removeAttribute('data-nr');
     });
   };
@@ -1139,8 +1158,29 @@ export const INSTAGRAM_BLOCKER = `
     } else if (sc) {
       sc.remove();
     }
-    if (__on('stories')) __hide(__tray(), 'stories');
-    else if (__on('feed')) __hide(__tray(), 'feed');
+    if (__on('stories')) __hideTray(__tray(), 'stories');
+    else if (__on('feed')) __hideTray(__tray(), 'feed');
+
+    /*
+      LES PUBS, PAR UNE REGLE CSS ET RIEN D'AUTRE — en essai.
+      Cacher une publication en la marquant cassait le fil : Instagram
+      recycle ses cartes, et une carte marquee « pub » portait ensuite un
+      vrai post, toujours cachee. Une regle CSS, elle, se reevalue a chaque
+      changement du DOM : la carte redevient visible des qu'elle ne porte
+      plus de pub. On reconnait une pub a son lien sortant (l.instagram.com)
+      ou a son lien vers les pages publicitaires.
+    */
+    let adc = document.getElementById('nr-ads-css');
+    if (__on('ads')) {
+      if (!adc) {
+        adc = document.createElement('style');
+        adc.id = 'nr-ads-css';
+        adc.textContent = 'article:has(a[href*="l.instagram.com"]),article:has(a[href^="/ads/"]),article:has(a[href*="/ads/about"]){display:none!important}';
+        (document.head || document.documentElement).appendChild(adc);
+      }
+    } else if (adc) {
+      adc.remove();
+    }
     if (__on('feed') && __home() && !__anon()) __wall(); else __unwall();
 
     if (__on('dmsOnly') && !location.pathname.startsWith('/direct')) {
@@ -1162,7 +1202,8 @@ export const INSTAGRAM_BLOCKER = `
       if (!ex) {
         ex = document.createElement('style');
         ex.id = 'nr-explore-css';
-        ex.textContent = 'main a[href^="/p/"],main a[href^="/reel/"]{display:none!important}';
+        // Les reels de la grille vivent a /reels/{id}/, au pluriel : sans lui, ils revenaient au fil du chargement.
+        ex.textContent = 'main a[href^="/p/"],main a[href^="/reel/"],main a[href^="/reels/"]{display:none!important}';
         (document.head || document.documentElement).appendChild(ex);
       }
       const w = window.__nrWall;

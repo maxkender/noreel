@@ -902,6 +902,8 @@ export const tr: Dict = {
     always: 'Her zaman',
     online: 'çevrimiçi',
     language: 'Dil',
+    alwaysActive: 'Her zaman açık',
+    proSettings: 'Ayarlar',
     like: 'Beğen',
     appSettings: '{name} ayarları',
     threeSums: 'Üç hesap.',
@@ -914,6 +916,7 @@ export const tr: Dict = {
   },
   toggles: {
     igReels: 'Reels’i engelle',
+    igAds: 'Reklamları gizle',
     igStories: 'Hikâyeleri engelle',
     igExplore: 'Keşfet ızgarasını gizle (arama kalır)',
     igSaved: 'Kaydedilen gönderileri engelle',

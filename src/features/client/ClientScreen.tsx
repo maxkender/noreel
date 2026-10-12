@@ -158,16 +158,23 @@ export function ClientScreen({ id }: { id: ClientId }) {
     return m;
   }, [id, settingsMap]);
 
-  // Le script lui-meme est fige au premier rendu : il est injecte AVANT le
-  // chargement de la page, changer la propriete ensuite ne change rien.
-  // Seuls ses REGLAGES bougent, et ils voyagent par le canal ci-dessous.
+  /*
+    Le script SUIT les reglages.
+
+    Il etait fige au premier rendu, sur l'idee qu'une fois la page chargee
+    rien ne pouvait plus le remplacer. C'est faux : la WebView reenregistre
+    le script a chaque changement de la propriete, et c'est lui qui part au
+    prochain chargement. Fige, un rechargement repartait avec les reglages
+    du premier jour — le fil bloque revenait, « messages uniquement » se
+    perdait. Les reglages voyagent aussi en direct, par le canal plus bas,
+    pour la page deja chargee.
+  */
   const script = useMemo(
     () => buildScript(
       client.script, active, theme, valve, tinted ? tint.rgb : null, openUntil,
       { title: d.client.wallTitle, body: d.client.wallBody, hint: d.client.wallHint, explore: d.client.wallExplore }
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [client.script]
+    [client.script, active, theme, valve, tinted, tint.rgb, openUntil, d.client.wallTitle, d.client.wallBody, d.client.wallHint, d.client.wallExplore]
   );
   /*
     L'adresse d'arrivee. Nulle tant qu'on n'a pas interroge le disque : partir
@@ -237,6 +244,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [raw, setRaw] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [panel, setPanel] = useState(false);
+  /** Un reglage a bouge pendant que la feuille etait ouverte : on recharge a sa fermeture. */
+  const touched = useRef(false);
   // Blocage strict : un reel touche affiche un mur au lieu de ne rien
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
@@ -407,10 +416,14 @@ export function ClientScreen({ id }: { id: ClientId }) {
    * ne rien faire du tout. On pousse maintenant la table de reglages dans
    * la page, qui repasse aussitot et rend ce qu'elle ne doit plus cacher.
    */
+  const firstActive = useRef(true);
   useEffect(() => {
     web.current?.injectJavaScript(
       `window.__nrApply && window.__nrApply(${JSON.stringify(active)}); true;`
     );
+    // Le premier passage est l'arrivee des reglages, pas un geste.
+    if (firstActive.current) { firstActive.current = false; return; }
+    touched.current = true;
   }, [active]);
   /*
     « Messages uniquement » qu'on eteint doit RENDRE l'accueil.
@@ -529,7 +542,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         }
         break;
       case 'link': setLinkOpen(true); break;
-      case 'settings': setPanel(true); break;
+      case 'settings': touched.current = false; setPanel(true); break;
       case 'exit': exit(); break;
     }
   }, [exit, id, reload]);
@@ -876,9 +889,21 @@ export function ClientScreen({ id }: { id: ClientId }) {
       <ClientSettings
         id={id}
         visible={panel}
-        onPass={() => setPass(true)}
-        onPost={() => setPostSettings(true)}
-        onClose={() => setPanel(false)}
+        // Une fenetre ne s'ouvre pas par-dessus une autre : iOS refuse en
+        // silence. On laisse la feuille finir de partir, puis on ouvre.
+        onPass={() => setTimeout(() => setPass(true), 320)}
+        onPost={() => setTimeout(() => setPostSettings(true), 320)}
+        onClose={() => {
+          setPanel(false);
+          /*
+            On REPART DE ZERO apres un reglage.
+            Rendre en direct ce qu'on vient de cacher laisse des traces — un
+            carrousel aux cases recalculees, une grille a moitie revenue. La
+            page rechargee repart avec le script a jour, et rien de ce qui
+            etait cache ne garde la trace de l'avoir ete.
+          */
+          if (touched.current) { touched.current = false; web.current?.reload(); }
+        }}
         accounts={accounts}
         current={currentUid}
         onPick={(u) => { void pick(u); }}
