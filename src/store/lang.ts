@@ -1,7 +1,9 @@
+import { I18nManager } from 'react-native';
+import * as Updates from 'expo-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { deviceLang, setLang, type Lang } from '@/lib/format';
+import { deviceLang, isRtl, setLang, type Lang } from '@/lib/format';
 
 /*
  * La langue choisie, gardee sur le disque.
@@ -24,7 +26,7 @@ export const useLang = create<State>()(
     (set) => ({
       lang: deviceLang(),
       hydrated: false,
-      set: (lang) => { setLang(lang); set({ lang }); },
+      set: (lang) => { setLang(lang); set({ lang }); void applyDirection(lang); },
     }),
     {
       name: 'unswipe.lang.v1',
@@ -35,7 +37,28 @@ export const useLang = create<State>()(
         const chosen = state?.lang ?? deviceLang();
         setLang(chosen);
         useLang.setState({ lang: chosen, hydrated: true });
+        void applyDirection(chosen);
       },
     }
   )
 );
+
+/*
+ * De droite a gauche, quand la langue l'ecrit.
+ *
+ * React Native retourne la mise en page — rangees, marges, positions — mais
+ * seulement au demarrage : le sens se lit une fois, et la page en cours ne
+ * change pas. Quand le sens voulu n'est pas celui en place, on l'enregistre
+ * et on relance l'app : une seconde de noir, et tout est du bon cote. Le
+ * reglage est garde par le natif, donc le prochain lancement a froid part
+ * deja dans le bon sens, avant meme que ce code tourne.
+ */
+async function applyDirection(lang: Lang): Promise<void> {
+  const rtl = isRtl(lang);
+  if (I18nManager.isRTL === rtl) return;
+  try {
+    I18nManager.allowRTL(rtl);
+    I18nManager.forceRTL(rtl);
+    await Updates.reloadAsync();
+  } catch { /* en developpement, sans expo-updates : au prochain lancement */ }
+}

@@ -9,14 +9,11 @@
  * ceux qui ont leur telephone dans une autre langue, et personne chez nous
  * ne le voit jamais.
  */
-import { setLang } from '@/lib/format';
+import { LANGS, setLang } from '@/lib/format';
 import { de } from './de';
 import { en } from './en';
-import { es } from './es';
 import { fr } from './fr';
-import { it as itDict } from './it';
-import { tr } from './tr';
-import { dict, interpolate, plural } from './index';
+import { dict, dictOf, interpolate, plural } from './index';
 
 type Tree = Record<string, unknown>;
 
@@ -29,12 +26,12 @@ function paths(node: unknown, prefix = ''): string[] {
   );
 }
 
-const ALL = { fr, en, de, tr, it: itDict, es } as const;
+const ALL = Object.fromEntries(LANGS.map((l) => [l, dictOf(l)])) as Record<string, unknown>;
 const inFr = paths(fr).sort();
 
 describe('les dictionnaires', () => {
   it.each(Object.keys(ALL).filter((k) => k !== 'fr'))('%s a les mêmes clés que le français', (code) => {
-    const other = paths(ALL[code as keyof typeof ALL]).sort();
+    const other = paths(ALL[code]).sort();
     expect(inFr.filter((k) => !other.includes(k))).toEqual([]);
     expect(other.filter((k) => !inFr.includes(k))).toEqual([]);
   });
@@ -49,7 +46,7 @@ describe('les dictionnaires', () => {
       if (d === null || typeof d !== 'object' || Array.isArray(d)) return [];
       return Object.entries(d as Tree).flatMap(([k, v]) => empty(v, p ? `${p}.${k}` : k));
     };
-    expect(empty(ALL[code as keyof typeof ALL])).toEqual([]);
+    expect(empty(ALL[code])).toEqual([]);
   });
 
   /*
@@ -65,7 +62,7 @@ describe('les dictionnaires', () => {
       return Object.entries(d as Tree).flatMap(([k, v]) => flat(v, p ? `${p}.${k}` : k));
     };
     const ref = new Map(flat(fr));
-    const bad = flat(ALL[code as keyof typeof ALL])
+    const bad = flat(ALL[code])
       .filter(([k, v]) => ref.has(k) && vars(ref.get(k)!) !== vars(v))
       .map(([k]) => k);
     expect(bad).toEqual([]);

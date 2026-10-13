@@ -13,7 +13,11 @@ import { LANGS, type Lang } from '@/lib/format';
 import { useLang } from '@/store/lang';
 
 /* Le drapeau du pays qu'on associe d'abord a la langue. */
-const FLAGS: Record<Lang, string> = { en: '🇬🇧', fr: '🇫🇷', de: '🇩🇪', tr: '🇹🇷', it: '🇮🇹', es: '🇪🇸' };
+const FLAGS: Record<Lang, string> = {
+  en: '🇬🇧', fr: '🇫🇷', de: '🇩🇪', tr: '🇹🇷', it: '🇮🇹', es: '🇪🇸', pt: '🇵🇹', nl: '🇳🇱', pl: '🇵🇱', ru: '🇷🇺',
+  sv: '🇸🇪', no: '🇳🇴', fi: '🇫🇮', cs: '🇨🇿', sk: '🇸🇰', hu: '🇭🇺', ro: '🇷🇴', el: '🇬🇷', hr: '🇭🇷', sl: '🇸🇮',
+  sr: '🇷🇸', bg: '🇧🇬', et: '🇪🇪', he: '🇮🇱', ar: '🇸🇦',
+};
 
 /**
  * Le choix de la langue, juste apres la bienvenue : une liste, un drapeau
@@ -26,6 +30,8 @@ export function Language({ onNext }: { onNext: () => void }) {
   const { d } = useT();
   const lang = useLang((s) => s.lang);
   const set = useLang((s) => s.set);
+  // La langue du telephone en tete, puis les autres : on n'a pas a la chercher dans vingt-trois.
+  const ordered = useMemo(() => [lang, ...LANGS.filter((l) => l !== lang)], [lang]);
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
       {/*
@@ -38,7 +44,7 @@ export function Language({ onNext }: { onNext: () => void }) {
         <Text variant="displayM" style={st.center}>{d.ob.langTitle}</Text>
       </View>
       <View style={st.list} testID="lang-list">
-        {LANGS.map((l) => {
+        {ordered.map((l) => {
           const on = l === lang;
           return (
             <Pressable

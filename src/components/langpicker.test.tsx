@@ -29,9 +29,9 @@ it('bascule la langue partout, tout de suite', () => {
   expect(formatHours(195)).toBe('3 Std. 15 Min.');
 });
 
-it('propose les six langues, dans leur propre langue', () => {
+it('propose toutes les langues, chacune dans sa propre langue', () => {
   render(<LangPicker />);
-  for (const name of ['English', 'Français', 'Deutsch', 'Türkçe', 'Italiano', 'Español']) {
+  for (const name of ['English', 'Français', 'Deutsch', 'Türkçe', 'Italiano', 'Español', 'Português', 'Polski', 'Русский', 'Ελληνικά', 'Suomi']) {
     expect(screen.getByText(name)).toBeTruthy();
   }
 });

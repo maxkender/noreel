@@ -11,6 +11,9 @@ import { useLang } from '@/store/lang';
 /* Chaque langue dans sa propre langue : c'est la seule etiquette qu'on est sur de lire. */
 export const LANG_NAMES: Record<Lang, string> = {
   en: 'English', fr: 'Français', de: 'Deutsch', tr: 'Türkçe', it: 'Italiano', es: 'Español',
+  pt: 'Português', nl: 'Nederlands', pl: 'Polski', ru: 'Русский', sv: 'Svenska', no: 'Norsk', fi: 'Suomi',
+  cs: 'Čeština', sk: 'Slovenčina', hu: 'Magyar', ro: 'Română', el: 'Ελληνικά', hr: 'Hrvatski', sl: 'Slovenščina',
+  sr: 'Srpski', bg: 'Български', et: 'Eesti', he: 'עברית', ar: 'العربية',
 };
 
 /**

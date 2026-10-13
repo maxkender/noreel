@@ -30,6 +30,13 @@ const config: ExpoConfig = {
       // Débloque le 120 Hz sur ProMotion (§3).
       CADisableMinimumFrameDurationOnPhone: true,
       ITSAppUsesNonExemptEncryption: false,
+      // Les langues de l'app, déclarées à iOS : c'est ce qui fait que le
+      // réglage « Langue préférée » de l'app apparaît, et que l'App Store les liste.
+      CFBundleDevelopmentRegion: 'en',
+      CFBundleLocalizations: [
+        'en', 'fr', 'de', 'tr', 'it', 'es', 'pt', 'nl', 'pl', 'ru', 'sv', 'nb', 'fi',
+        'cs', 'sk', 'hu', 'ro', 'el', 'hr', 'sl', 'sr', 'bg', 'et', 'he', 'ar',
+      ],
     },
   },
   android: {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { I18nManager, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -54,7 +54,8 @@ export function NavBar<T extends string>({
   const pill = useAnimatedStyle(() => ({
     width: cell,
     transform: [
-      { translateX: x.value },
+      // De droite a gauche, la pastille part de la droite : le glissement s'inverse.
+      { translateX: x.value * (I18nManager.isRTL ? -1 : 1) },
       { scaleX: 1 + pop.value * 0.06 },
       { scaleY: 1 + pop.value * 0.12 },
     ],

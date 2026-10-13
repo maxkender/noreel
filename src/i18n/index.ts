@@ -1,15 +1,36 @@
 import { useMemo } from 'react';
 import { lang as current, type Lang } from '@/lib/format';
 import { useLang } from '@/store/lang';
-import { de } from './de';
 import { en } from './en';
-import { es } from './es';
-import { fr } from './fr';
-import { it } from './it';
+import { de } from './de';
 import { tr } from './tr';
+import { it } from './it';
+import { es } from './es';
+import { pt } from './pt';
+import { nl } from './nl';
+import { pl } from './pl';
+import { ru } from './ru';
+import { sv } from './sv';
+import { no } from './no';
+import { fi } from './fi';
+import { cs } from './cs';
+import { sk } from './sk';
+import { hu } from './hu';
+import { ro } from './ro';
+import { el } from './el';
+import { hr } from './hr';
+import { sl } from './sl';
+import { sr } from './sr';
+import { bg } from './bg';
+import { et } from './et';
+import { he } from './he';
+import { ar } from './ar';
+import { fr } from './fr';
 import type { Dict } from './fr';
 
-const dicts: Record<Lang, Dict> = { fr: fr as unknown as Dict, en, de, tr, it, es };
+const dicts: Record<Lang, Dict> = {
+  fr: fr as unknown as Dict, en, de, tr, it, es, pt, nl, pl, ru, sv, no, fi, cs, sk, hu, ro, el, hr, sl, sr, bg, et, he, ar,
+};
 
 /** Le dictionnaire d'une langue donnee, pour les tests et les apercus. */
 export const dictOf = (l: Lang): Dict => dicts[l];
