@@ -9,6 +9,9 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
@@ -19,9 +22,13 @@
       "env": {
         "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF",
-        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1"
+        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1",
+        "EXPO_PUBLIC_RC_ANDROID_KEY": ""
       },
-      "channel": "production"
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -32,7 +39,11 @@
       "env": {
         "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF",
-        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1"
+        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1",
+        "EXPO_PUBLIC_RC_ANDROID_KEY": ""
+      },
+      "android": {
+        "buildType": "apk"
       }
     }
   },
@@ -47,6 +58,10 @@
         "ascApiKeyPath": "/Users/maximilienkender/.appstoreconnect/private_keys/AuthKey_P8G4THGFGZ.p8",
         "ascApiKeyId": "P8G4THGFGZ",
         "ascApiKeyIssuerId": "3ecb59f2-287c-494e-b451-a288cb57158d"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
       }
     }
   }

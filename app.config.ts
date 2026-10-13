@@ -9,7 +9,8 @@ const NIGHT = '#08090B';
  * On l'active avec EXPO_PUBLIC_FAMILY_CONTROLS=1, une fois l'accord recu.
  *   https://developer.apple.com/contact/request/family-controls-distribution
  */
-const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1';
+// Jamais sur un build Android : ces plugins n'ecrivent que dans le projet Xcode.
+const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1' && process.env.EAS_BUILD_PLATFORM !== 'android';
 
 const config: ExpoConfig = {
   name: 'UnSwipe',
@@ -41,6 +42,8 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'com.vikstudios.noreel',
+    // Rien de plus que ce qu'Expo demande : la WebView, les notifications locales et le reseau.
+    permissions: [],
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: NIGHT,

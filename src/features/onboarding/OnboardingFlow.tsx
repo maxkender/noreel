@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import Animated, { FadeOut, LinearTransition, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -170,7 +170,8 @@ export function OnboardingFlow() {
     <NotBlocker key="nb" onNext={next} />,
     <Proof key="proof" onNext={next} />,
     <DmReel key="dm" onNext={next} />,
-    <Permissions key="perm" onDone={next} />,
+    // Temps d'ecran n'existe que chez Apple : sur Android, on n'en parle pas.
+    ...(Platform.OS === 'ios' ? [<Permissions key="perm" onDone={next} />] : []),
     <NotificationsAsk key="notif" onNext={next} />,
     <RateAsk key="rate" onNext={next} />,
     <Prep key="prep" onNext={next} />,

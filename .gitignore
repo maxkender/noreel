@@ -44,3 +44,6 @@ example
 
 # Cibles natives copiees a l'evaluation de la config (voir plugins/withScreenTimeReport.js)
 targets/
+
+# La cle du compte de service Google Play : jamais dans le depot.
+google-play-key.json

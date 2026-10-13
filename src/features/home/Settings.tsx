@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  Linking, Modal, Pressable, ScrollView, StyleSheet, View,
+  Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -120,6 +120,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+            {Platform.OS === 'ios' && (
+              <>
             <Group title={d.block.title} />
             <Line
               label={d.prefs.screenTime}
@@ -133,6 +135,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 ? () => void Linking.openSettings()
                 : () => { void requestAuthorization().then(setAuth); }}
             />
+              </>
+            )}
             <Line
               label={d.prefs.strictReels}
               sub={d.prefs.strictReelsBody}
@@ -306,11 +310,13 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                   encodeURIComponent('[UnSwipe] Support')}`).catch(() => {});
               }}
             />
+            {Platform.OS === 'ios' && (
             <Line
               label={d.prefs.iosSettings}
               sub={d.prefs.iosSettingsBody}
               onPress={() => void Linking.openSettings()}
             />
+            )}
 
             <Group title={d.prefs.about} />
             <Line

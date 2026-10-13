@@ -34,12 +34,10 @@ it('se joue la premiere fois sur Applis, et se retient', async () => {
   fireEvent.press(screen.getByTestId('story-home-next'));
   expect(await screen.findByText(dict.tour.h2, {}, { timeout: 3000 })).toBeTruthy();
   await screen.findByTestId('story-home-ready', {}, { timeout: 3000 });
-  // L'etape du badge est en option : sans badge, on passe a la suivante.
+  // Les deux dernieres etapes sont en option — le badge, le blocage — et
+  // sans leurs elements (rien n'est monte ici), la visite se termine seule.
   fireEvent.press(screen.getByTestId('story-home-next'));
-  expect(await screen.findByText(dict.tour.h4, {}, { timeout: 3000 })).toBeTruthy();
-  await screen.findByTestId('story-home-ready', {}, { timeout: 3000 });
-  fireEvent.press(screen.getByText(dict.tuto.skip));
-  expect(onDone).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1), { timeout: 3000 });
   await waitFor(async () => expect(await tourSeen('home')).toBe(true));
 });
 

@@ -45,7 +45,7 @@ export function TabTour({
       { target: ['home-open', 'home-apps'], title: d.tour.h2, body: d.tour.h2b },
       // Le badge s'en va une fois les apps posees : l'etape avec lui.
       { target: 'home-addHome', title: d.tour.h3, body: d.tour.h3b, optional: true },
-      { target: ['home-blockReal', 'nav-block'], title: d.tour.h4, body: d.tour.h4b },
+      { target: ['home-blockReal', 'nav-block'], title: d.tour.h4, body: d.tour.h4b, optional: true },
     ],
     corti: [
       { target: 'corti-stage', title: d.tour.c1, body: d.tour.c1b },

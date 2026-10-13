@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { dict } from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +28,12 @@ const WARN_AFTER_H = 48;
  * se demander si elle garde l'abonnement.
  */
 export function startNotifications(): void {
+  // Android range chaque notification dans un canal : sans lui, rien ne s'affiche.
+  if (Platform.OS === 'android') {
+    void Notifications.setNotificationChannelAsync('default', {
+      name: 'UnSwipe', importance: Notifications.AndroidImportance.DEFAULT,
+    }).catch(() => {});
+  }
   Notifications.setNotificationHandler({
     // Les noms ont change : `shouldShowAlert` n'existe plus, il se remplace
     // par la banniere et la liste. L'ancien nom ne provoque aucune erreur,

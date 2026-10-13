@@ -89,12 +89,24 @@ export function HomeScreen() {
     comme une decoration — et dans les deux cas on cesse de le regarder. Il a
     donc sa page, avec la regle entiere, malus compris.
   */
-  const tabs: [Tab, string, typeof HomeIcon][] = [
-    ['home', d.nav.home, HomeIcon],
-    ['corti', d.nav.corti, Brain],
-    ['block', d.nav.block, Shield],
-    ['account', d.nav.account, User],
-  ];
+  /*
+    Sur Android, pas d'onglet Blocage : le blocage des vraies apps repose
+    sur Temps d'ecran, qui n'existe que chez Apple. L'app y est plus simple
+    — les apps filtrees, Corti, le compte — et ne promet rien qu'elle ne
+    tient pas.
+  */
+  const tabs: [Tab, string, typeof HomeIcon][] = Platform.OS === 'ios'
+    ? [
+      ['home', d.nav.home, HomeIcon],
+      ['corti', d.nav.corti, Brain],
+      ['block', d.nav.block, Shield],
+      ['account', d.nav.account, User],
+    ]
+    : [
+      ['home', d.nav.home, HomeIcon],
+      ['corti', d.nav.corti, Brain],
+      ['account', d.nav.account, User],
+    ];
 
   return (
     <View style={st.root}>
@@ -201,7 +213,7 @@ function HomeTab({
         l'original, et il ne se fait qu'une fois — une fois fait, le badge
         s'en va. Corti, lui, a son onglet.
       */}
-      {!homeDone && (
+      {!homeDone && Platform.OS === 'ios' && (
         <Pressable
           ref={aAdd}
           collapsable={false}
@@ -218,7 +230,7 @@ function HomeTab({
       {/* « Bloquer le vrai Instagram ? » : filtrer ici ne sert a rien si
           l'app d'origine reste a un tap. Le badge mene a l'onglet Blocage et
           s'en va une fois le blocage arme sur une selection. */}
-      {realOpen && (
+      {realOpen && Platform.OS === 'ios' && (
         <Pressable
           ref={aBlock}
           collapsable={false}
@@ -487,8 +499,13 @@ function AccountTab() {
     >
       <Text variant="displayM">{d.account.title}</Text>
 
-      <Text variant="label" tone="secondary" style={st.section}>{d.ui.subscription}</Text>
-      <Card><AppleSignIn /></Card>
+      {/* La connexion Apple n'existe que chez Apple. */}
+      {Platform.OS === 'ios' && (
+        <>
+          <Text variant="label" tone="secondary" style={st.section}>{d.ui.subscription}</Text>
+          <Card><AppleSignIn /></Card>
+        </>
+      )}
 
       <Text variant="label" tone="secondary" style={st.section}>{d.account.profile}</Text>
       <Card>
@@ -509,7 +526,9 @@ function AccountTab() {
 
       <Text variant="label" tone="secondary" style={st.section}>{d.ui.assistance}</Text>
       <Card>
-        <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
+        {Platform.OS === 'ios' && (
+          <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
+        )}
         <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
         <Row title={d.account.version} right={<Text variant="body" tone="secondary">{Constants.expoConfig?.version ?? ''} · {Platform.OS}</Text>} />
       </Card>
