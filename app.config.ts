@@ -66,7 +66,13 @@ const config: ExpoConfig = {
     // Pas d'image : l'icone apparaissait une fraction de seconde avant
     // l'animation d'ouverture, ce qui faisait un a-coup. Noir plein, et
     // l'animation enchaine sans couture.
-    ['expo-splash-screen', { backgroundColor: NIGHT }],
+    // Android exige une image sur l'ecran de lancement — son theme la
+    // reference, et sans elle les ressources ne se lient pas. La marque,
+    // petite, sur le meme noir. iOS reste sans image.
+    ['expo-splash-screen', {
+      backgroundColor: NIGHT,
+      android: { image: './assets/brand/mark.png', imageWidth: 140, backgroundColor: NIGHT },
+    }],
     /*
       Le rapport Temps d'ecran : une extension de plus, derriere son propre
       flag. Ce plugin copie la cible dans targets/ quand
