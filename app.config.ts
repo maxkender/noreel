@@ -9,8 +9,13 @@ const NIGHT = '#08090B';
  * On l'active avec EXPO_PUBLIC_FAMILY_CONTROLS=1, une fois l'accord recu.
  *   https://developer.apple.com/contact/request/family-controls-distribution
  */
-// Jamais sur un build Android : ces plugins n'ecrivent que dans le projet Xcode.
-const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1' && process.env.EAS_BUILD_PLATFORM !== 'android';
+/*
+  Le meme jeu de plugins des deux cotes, Android compris : ils n'ecrivent
+  que dans le projet Xcode, et un build Android les ignore. Les exclure
+  selon la plateforme changeait l'empreinte calculee ici de celle calculee
+  chez EAS — et expo-updates refuse un build dont l'empreinte ne correspond pas.
+*/
+const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1';
 
 const config: ExpoConfig = {
   name: 'UnSwipe',
