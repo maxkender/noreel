@@ -22,7 +22,8 @@
       "env": {
         "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF",
-        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1"
+        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1",
+        "EXPO_PUBLIC_RC_ANDROID_KEY": "goog_TwJvzxvTYUBkCdLHQaNBVqsvMcH"
       },
       "channel": "production",
       "android": {
@@ -38,7 +39,8 @@
       "env": {
         "EXPO_PUBLIC_FAMILY_CONTROLS": "1",
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_mihXlMMZaWZBzvMPHGZXQovCCuF",
-        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1"
+        "EXPO_PUBLIC_SCREEN_TIME_REPORT": "1",
+        "EXPO_PUBLIC_RC_ANDROID_KEY": "goog_TwJvzxvTYUBkCdLHQaNBVqsvMcH"
       },
       "android": {
         "buildType": "apk"
