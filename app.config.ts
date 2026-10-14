@@ -73,7 +73,6 @@ const config: ExpoConfig = {
     // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
     './plugins/withoutPushEntitlement',
     // JCenter a ferme : la bibliotheque de cookies ne compile plus sur Android sans ca.
-    './plugins/withCookiesGradleFix',
     // Pas d'image : l'icone apparaissait une fraction de seconde avant
     // l'animation d'ouverture, ce qui faisait un a-coup. Noir plein, et
     // l'animation enchaine sans couture.
