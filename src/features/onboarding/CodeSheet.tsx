@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { font } from '@/theme/typography';
 import {
   KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View,
 } from 'react-native';
@@ -92,7 +93,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   body: { flex: 1, paddingHorizontal: gutter, paddingTop: space.md },
   input: {
     marginTop: space.lg, padding: space.md, borderRadius: 14,
-    color: c.mist, fontFamily: 'Sans', fontSize: 18, letterSpacing: 1,
+    color: c.mist, ...font('Sans'), fontSize: 18, letterSpacing: 1,
     backgroundColor: c.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },

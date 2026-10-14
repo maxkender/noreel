@@ -1,10 +1,7 @@
-import { type ReactNode, useMemo } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
+import { type ReactNode } from 'react';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { useColors } from '@/theme/useColors';
 import { radii } from '@/theme/spacing';
-import { useReduceTransparency } from '@/lib/useReducedMotion';
 
 type Props = {
   children?: ReactNode;
@@ -19,65 +16,21 @@ type Props = {
 export function Glass({
   children,
   radius = radii.panel,
-  intensity = Platform.OS === 'ios' ? 50 : 40,
-  warmEdge = 'bottom',
   style,
-  blur = true,
 }: Props) {
+  /*
+    UNE CARTE PLEINE, comme chez Opal.
+    Plus de flou, de reflet ni de lisere : un aplat un cran plus clair que
+    le fond, un filet fin, des coins genereux. Le nom reste pour ne pas
+    toucher a chaque ecran qui pose une carte.
+  */
   const c = useColors();
-  const tint = useBlurTint();
-  const styles = useMemo(() => sheet(c), [c]);
-  const opaque =
-    useReduceTransparency() || (Platform.OS === 'android' && Platform.Version < 31);
   const shell: ViewStyle = {
     borderRadius: radius,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: c.glassEdge,
-    backgroundColor: opaque ? c.glassSolid : c.glassFill,
+    backgroundColor: c.glassSolid,
   };
-  return (
-    <View style={[styles.shadow, shell, style]}>
-      {!opaque && blur && (
-        <BlurView
-          intensity={intensity}
-          tint={tint}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-      )}
-      {/* Lumière du ciel : un reflet froid d'1 pt en haut. Il est toujours
-          PLUS CLAIR que la vitre — un reflet plus sombre qu'elle n'est plus
-          un reflet, c'est une rayure. */}
-      <LinearGradient
-        colors={['transparent', c.glassSpec, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.topLight}
-        pointerEvents="none"
-      />
-      {/* Signature UnSwipe : le liseré chaud du côté du soleil, donc en bas. */}
-      {warmEdge !== 'none' && (
-        <LinearGradient
-          colors={['transparent', c.glassWarm, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.warm, warmEdge === 'bottom' ? { bottom: 0 } : { top: 0 }]}
-          pointerEvents="none"
-        />
-      )}
-      {children}
-    </View>
-  );
+  return <View style={[shell, style]}>{children}</View>;
 }
-const sheet = (c: Palette) => StyleSheet.create({
-  shadow: {
-    shadowColor: c.shadowTint,
-    shadowOpacity: c.shadowAlpha,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
-  },
-  topLight: { position: 'absolute', top: 0, left: 0, right: 0, height: 1 },
-  warm: { position: 'absolute', left: 0, right: 0, height: 1.5 },
-});

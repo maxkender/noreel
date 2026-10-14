@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -12,9 +10,9 @@ import { Text } from './type/Text';
 const A = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Verre epais : flou, teinte violette, reflet haut, liseré bas, et une ombre
- * coloree qui deborde. Le libelle ne peut plus etre coupe — il se reduit
- * plutot que de deborder.
+ * Une pilule PLEINE, claire sur fond noir, comme chez Opal : pas de verre,
+ * pas de degrade, pas d'ombre coloree. Le libelle ne peut pas etre coupe —
+ * il se reduit plutot que de deborder.
  */
 export function Button({
   label, onPress, disabled, variant = 'primary',
@@ -48,33 +46,12 @@ export function Button({
         onPress={onPress}
         style={[styles.pill, anim, disabled && styles.off]}
       >
-        <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
-
-        {/* Teinte violette diagonale : c'est elle qui fait le verre colore. */}
-        <LinearGradient
-          colors={disabled
-            ? [withAlpha(c.mist, 0.05), withAlpha(c.mist, 0.02)]
-            : [withAlpha(c.accent, 0.38), withAlpha(c.accentDeep, 0.3), withAlpha(c.accentWarm, 0.22)]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        {/* Reflet : une lueur d'1,5 pt en haut, comme sur une vitre. */}
-        <LinearGradient
-          colors={['transparent', withAlpha(c.mist, 0.75), 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.sheen}
-          pointerEvents="none"
-        />
-
         <Text
           variant="button"
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
-          color={disabled ? withAlpha(c.mist, 0.3) : c.mist}
+          color={disabled ? withAlpha(c.mist, 0.35) : c.night}
           style={styles.label}
         >
           {label}
@@ -84,26 +61,17 @@ export function Button({
   );
 }
 
-const H = 58;
+const H = 56;
 const sheet = (c: Palette) => StyleSheet.create({
   wrap: { height: H, borderRadius: H / 2 },
-  // L'ombre coloree remplace la barre : elle deborde sans jamais dessiner de ligne.
-  lift: {
-    shadowColor: c.accentDeep,
-    shadowOpacity: 0.55,
-    shadowRadius: 26,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 14,
-  },
+  lift: {},
   pill: {
     height: H, borderRadius: H / 2, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
-    // Le libelle respire : sans ces marges il touchait le bord arrondi.
     paddingHorizontal: 26,
-    borderWidth: 1, borderColor: withAlpha(c.mist, 0.4),
+    backgroundColor: c.mist,
   },
-  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
   label: { textAlign: 'center', width: '100%' },
-  off: { borderColor: withAlpha(c.mist, 0.12) },
+  off: { backgroundColor: withAlpha(c.mist, 0.1) },
   ghost: { alignSelf: 'center', paddingVertical: 14 },
 });

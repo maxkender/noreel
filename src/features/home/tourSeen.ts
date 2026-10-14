@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type TourId = 'home' | 'corti' | 'block';
+export type TourId = 'home' | 'block';
 const KEY = 'unswipe.tours.v1';
 
 /*

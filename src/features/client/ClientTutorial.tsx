@@ -3,20 +3,20 @@ import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing, FadeInDown, ZoomIn, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
-import {
-  ChevronLeft, ChevronRight, House, Link, LogIn, RotateCw, Search, Send, Settings, User, UsersRound,
-} from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, House, Link, LogIn, Menu, RotateCw, Search, Send, Settings, User, UsersRound } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { radii, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
-import { CortiRig } from '@/components/CortiRig';
+import { Image } from 'expo-image';
 import { MockTabBar } from '@/components/MockFeed';
 import { MockDM } from '@/components/MockDM';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { useT } from '@/i18n';
 import { Story, type Slide } from '@/components/Story';
 import type { ClientId } from './blockers';
+
+const INSTAGRAM = require('@/assets/apps/instagram.png');
 
 
 /*
@@ -42,14 +42,14 @@ export function ClientTutorial({ id, onDone }: { id: ClientId; onDone: () => voi
   return <Story slides={slides} onDone={onDone} testID={`tuto-${id}`} />;
 }
 
-/** L'image de chaque temps : Corti, ou une piece de l'ecran qu'on va voir. */
+/** L'image de chaque temps : le logo, ou une piece de l'ecran qu'on va voir. */
 function Art({ i }: { i: number }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
   switch (i) {
     case 0:
-      return <CortiRig level={3} size={210} expression="ravi" />;
+      return <Image source={INSTAGRAM} style={{ width: 120, height: 120 }} contentFit="contain" />;
     case 1:
       // La barre du bas, grossie, et l'onglet Reels qui s'en va sous les yeux.
       return (
@@ -68,7 +68,7 @@ function Art({ i }: { i: number }) {
               return (
                 <View key={String(label)} style={st.labelCol}>
                   <I size={16} strokeWidth={2.2} color={c.accent} />
-                  <Text variant="label" tone="secondary" style={st.center}>{String(label)}</Text>
+                  <Text variant="label" tone="secondary" style={st.center} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{String(label)}</Text>
                 </View>
               );
             })}
@@ -93,7 +93,7 @@ function Art({ i }: { i: number }) {
                   <View style={[st.navIcon, last && { backgroundColor: withAlpha(c.accent, 0.18) }]}>
                     <I size={18} strokeWidth={2.2} color={last ? c.accent : c.mist} />
                   </View>
-                  <Text variant="label" tone="secondary" style={st.center}>{label}</Text>
+                  <Text variant="label" tone="secondary" style={st.center} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
                 </Animated.View>
               );
             })}
@@ -139,7 +139,7 @@ function DotOpening() {
     <View style={st.dotRow}>
       <Animated.View style={[st.wave, { borderColor: c.accent }, ring]} pointerEvents="none" />
       <Animated.View entering={ZoomIn.springify().damping(12).stiffness(180)} style={[st.dot, { backgroundColor: c.accent, shadowColor: c.accent }]}>
-        <CortiRig level={3} size={38} expression="auto" animated={false} />
+        <Menu size={22} strokeWidth={2.4} color={c.night} />
       </Animated.View>
     </View>
   );

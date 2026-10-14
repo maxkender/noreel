@@ -150,7 +150,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   card: {
     marginTop: space.xl, padding: space.lg, borderRadius: radii.panel, gap: space.md,
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
-    backgroundColor: withAlpha(c.mist, 0.04),
+    backgroundColor: c.glassSolid,
   },
   center: { textAlign: 'center' },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },

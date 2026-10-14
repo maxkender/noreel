@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -7,14 +7,26 @@ export const scale = Math.min(Math.max(width / 390, 0.88), 1.1);
 
 const s = (n: number) => Math.round(n * scale * 10) / 10;
 
-/**
- * Pas de `fontWeight` ici, volontairement : chaque graisse est une police
- * chargee a part (Sans, SansMedium, SansSemi, SansBold). Poser les deux fait
- * resoudre iOS vers une fonte systeme — c'est ce qui faisait reapparaitre
- * du San Francisco au milieu du Poppins.
+/*
+ * LA POLICE DU SYSTEME, comme Opal.
+ *
+ * Poppins faisait « app de demo » : ronde, large, partout la meme voix.
+ * San Francisco (Roboto sur Android) est ce que lit l'oeil toute la journee
+ * sur son telephone, donc ce qui parait serieux. La hierarchie vient des
+ * graisses et d'un approche legerement resserre sur les grands titres.
  */
+export type Weight = '400' | '500' | '600' | '700';
+const FAMILY = Platform.OS === 'ios' ? 'System' : undefined;
+
+/** Les anciens noms de police, devenus des graisses du systeme. */
+export const font = (name: 'Sans' | 'SansMedium' | 'SansSemi' | 'SansBold') => ({
+  fontFamily: FAMILY,
+  fontWeight: ({ Sans: '400', SansMedium: '500', SansSemi: '600', SansBold: '700' } as const)[name],
+});
+
 export type TypeStyle = {
-  fontFamily: string;
+  fontFamily?: string;
+  fontWeight: Weight;
   fontSize: number;
   lineHeight: number;
   letterSpacing: number;
@@ -25,17 +37,15 @@ export type TypeStyle = {
 const track = (size: number, pct: number) => (size * pct) / 100;
 
 export const type = {
-  hero:     { fontFamily: 'SansBold',   fontSize: s(52), lineHeight: s(52) * 1.14, letterSpacing: track(s(52), -2) },
-  displayL: { fontFamily: 'SansBold',   fontSize: s(32), lineHeight: s(32) * 1.28, letterSpacing: track(s(32), -1.5) },
-  displayM: { fontFamily: 'SansBold',   fontSize: s(26), lineHeight: s(26) * 1.32, letterSpacing: track(s(26), -1) },
-  title:    { fontFamily: 'SansSemi',   fontSize: s(18), lineHeight: s(18) * 1.38, letterSpacing: 0 },
-  quote:    { fontFamily: 'Sans',       fontSize: s(18), lineHeight: s(18) * 1.45, letterSpacing: 0 },
-  lead:     { fontFamily: 'Sans',       fontSize: s(16), lineHeight: s(16) * 1.5,  letterSpacing: 0 },
-  body:     { fontFamily: 'Sans',       fontSize: s(15), lineHeight: s(15) * 1.55, letterSpacing: 0 },
-  label:    { fontFamily: 'SansMedium', fontSize: s(12), lineHeight: s(12) * 1.45, letterSpacing: track(s(12), 1.5) },
-  // 1,3 et pas 1,0 : a hauteur de ligne egale a la taille, Poppins perd ses
-  // jambages et le libelle paraissait rogne en bas.
-  button:   { fontFamily: 'SansSemi',   fontSize: s(16), lineHeight: s(16) * 1.3,  letterSpacing: 0 },
+  hero:     { fontFamily: FAMILY, fontWeight: '700', fontSize: s(44), lineHeight: s(44) * 1.12, letterSpacing: track(s(44), -2) },
+  displayL: { fontFamily: FAMILY, fontWeight: '700', fontSize: s(30), lineHeight: s(30) * 1.2,  letterSpacing: track(s(30), -1.2) },
+  displayM: { fontFamily: FAMILY, fontWeight: '600', fontSize: s(24), lineHeight: s(24) * 1.25, letterSpacing: track(s(24), -0.8) },
+  title:    { fontFamily: FAMILY, fontWeight: '600', fontSize: s(18), lineHeight: s(18) * 1.3,  letterSpacing: track(s(18), -0.3) },
+  quote:    { fontFamily: FAMILY, fontWeight: '400', fontSize: s(18), lineHeight: s(18) * 1.4,  letterSpacing: 0 },
+  lead:     { fontFamily: FAMILY, fontWeight: '400', fontSize: s(17), lineHeight: s(17) * 1.4,  letterSpacing: 0 },
+  body:     { fontFamily: FAMILY, fontWeight: '400', fontSize: s(16), lineHeight: s(16) * 1.4,  letterSpacing: 0 },
+  label:    { fontFamily: FAMILY, fontWeight: '500', fontSize: s(13), lineHeight: s(13) * 1.35, letterSpacing: 0 },
+  button:   { fontFamily: FAMILY, fontWeight: '600', fontSize: s(17), lineHeight: s(17) * 1.25, letterSpacing: 0 },
 } satisfies Record<string, TypeStyle>;
 
 export type TypeName = keyof typeof type;

@@ -11,7 +11,7 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter } from '@/components/type/Typewriter';
-import { CortiRig } from '@/components/CortiRig';
+import { Check, Fingerprint } from 'lucide-react-native';
 import { HoldRing } from '../scenes/HoldRing';
 import { LOGOS } from '@/features/home/AppSlider';
 import { haptics } from '@/lib/haptics';
@@ -158,7 +158,9 @@ export function Ready({ onNext }: P) {
         {Array.from({ length: SPARKS }, (_, i) => <Spark key={i} i={i} burst={burst} colour={i % 3 === 0 ? c.accentWarm : c.accent} />)}
         <Animated.View style={hero}>
           <HoldRing progress={fill} size={RING} stroke={5}>
-            <CortiRig level={3} size={150} expression={done ? 'ravi' : 'auto'} />
+            {done
+              ? <Check size={64} strokeWidth={2.4} color={c.accent} />
+              : <Fingerprint size={64} strokeWidth={1.6} color={withAlpha(c.mist, 0.8)} />}
           </HoldRing>
         </Animated.View>
         {APPS.map((id, i) => (

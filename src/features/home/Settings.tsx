@@ -12,12 +12,15 @@ import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { formatHours } from '@/lib/format';
+import { LANGS, formatHours } from '@/lib/format';
 import { useSettings } from '@/store/settings';
 import { useAppsStore } from '@/store/apps';
 import { TINTS } from '@/theme/tints';
 import { Toggle } from './parts';
-import { LangPicker } from '@/components/LangPicker';
+import { LANG_NAMES } from '@/components/LangPicker';
+import { FLAGS } from '@/features/onboarding/screens/Language';
+import { useLang } from '@/store/lang';
+import { Check } from 'lucide-react-native';
 import { STORE_URL, shareApp, shareOnWhatsApp } from '@/lib/share';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
@@ -97,6 +100,8 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
     notification. Rien ne s'affiche sans abonnement du magasin (le code
     d'acces des examinateurs n'en a pas).
   */
+  const [langOpen, setLangOpen] = useState(false);
+  const setLang = useLang((x) => x.set);
   const [sub, setSub] = useState<SubStatus | null>(null);
   useEffect(() => { if (visible) void customerInfo().then((i) => setSub(subStatus(i))); }, [visible]);
   const subLabel = (() => {
@@ -144,6 +149,27 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+            {/*
+              La langue, EN HAUT et en clair : une ligne, la langue du moment,
+              et la liste qui se deplie sur place. Elle vivait en bas, en
+              nuage de pastilles, et on ne la trouvait pas. Pas de seconde
+              fenetre : iOS refuse d'en ouvrir une par-dessus celle-ci.
+            */}
+            <Group title={d.ui.language} />
+            <Line
+              label={`${FLAGS[lang]}  ${LANG_NAMES[lang]}`}
+              right={<Text variant="body" tone="tertiary">{langOpen ? '⌃' : '›'}</Text>}
+              onPress={() => setLangOpen((o) => !o)}
+            />
+            {langOpen && LANGS.map((l) => (
+              <Line
+                key={l}
+                label={`${FLAGS[l]}  ${LANG_NAMES[l]}`}
+                right={l === lang ? <Check size={18} strokeWidth={2.6} color={c.accent} /> : <View />}
+                onPress={() => { if (l !== lang) { haptics.tick(); setLang(l); } }}
+              />
+            ))}
+
             {subLabel && (
               <>
                 <Group title={d.prefs.subscription} />
@@ -275,9 +301,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 </View>
               </>
             )}
-
-            <Group title={d.ui.language} />
-            <LangPicker style={{ marginVertical: space.sm, justifyContent: 'flex-start' }} />
 
             <Group title={d.prefs.look} />
             <View style={st.chips}>

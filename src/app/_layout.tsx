@@ -5,13 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
-import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Poppins_400Regular } from '@expo-google-fonts/poppins/400Regular';
-import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
-import { Poppins_600SemiBold } from '@expo-google-fonts/poppins/600SemiBold';
-import { Poppins_700Bold } from '@expo-google-fonts/poppins/700Bold';
 import { colors } from '@/theme/colors';
 import { useColors } from '@/theme/useColors';
 import { useProStore } from '@/store/pro';
@@ -49,13 +44,6 @@ function AboveSystemButtons({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const c = useColors();
-  // Les alias sans suffixe de graisse sont ceux qu'attend `typography.ts`.
-  const [loaded, error] = useFonts({
-    Sans: Poppins_400Regular,
-    SansMedium: Poppins_500Medium,
-    SansSemi: Poppins_600SemiBold,
-    SansBold: Poppins_700Bold,
-  });
 
   // RevenueCat se configure au demarrage, une seule fois.
   useEffect(() => { void useProStore.getState().start(); }, []);
@@ -92,16 +80,16 @@ export default function RootLayout() {
     return unsub;
   }, []);
 
+  // Plus de police a charger (celle du systeme) : le splash part des que la langue est lue.
+  const langLoaded = useLang((x) => x.hydrated);
   useEffect(() => {
-    // On masque le splash aussi en cas d'échec : mieux vaut du texte système
-    // qu'un splash bloqué pour toujours.
-    if (loaded || error) void SplashScreen.hideAsync();
-  }, [loaded, error]);
+    if (langLoaded) void SplashScreen.hideAsync();
+  }, [langLoaded]);
 
   // La langue vient du disque : dessiner avant, c'est dessiner dans la
   // mauvaise langue le temps d'une image, puis tout redessiner.
   const langReady = useLang((s) => s.hydrated);
-  if ((!loaded && !error) || !langReady) return null;
+  if (!langReady) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: c.night }}>

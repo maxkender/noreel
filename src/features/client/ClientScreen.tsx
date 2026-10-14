@@ -6,7 +6,7 @@ import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-a
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import { Hourglass, Info, RotateCw, Timer } from 'lucide-react-native';
+import { Hand, Hourglass, Info, RotateCw, Timer } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, useResolvedTheme, type Palette } from '@/theme/useColors';
 import { space, gutter } from '@/theme/spacing';
@@ -26,8 +26,6 @@ import { firstRunUrl, markFirstRunDone } from './firstrun';
 import { ClientTutorial } from './ClientTutorial';
 import { markTutorialSeen, tutorialSeen } from './tutorial';
 import { ACCOUNT } from './accounts';
-import { cortiLevel } from '@/components/Corti';
-import { CortiRig, cortiReact, type CortiReaction } from '@/components/CortiRig';
 import { PASS_MINUTES, ReelsPass } from './ReelsPass';
 import { APP_TOGGLES, useAppsStore } from '@/store/apps';
 import { tintById } from '@/theme/tints';
@@ -260,14 +258,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
   const [wall, setWall] = useState(false);
-  /*
-    Corti REFUSE, il ne se contente pas d'etre la.
-    Le mur montrait une mascotte immobile pendant que le reel disparaissait :
-    on lisait une panne. Il se campe, prend son air decide et fait non de la
-    tete — le meme evenement devient quelqu'un qui tient la porte pour vous.
-  */
-  const [refuse, setRefuse] = useState<CortiReaction | undefined>();
-  const raise = () => { setWall(true); setRefuse(cortiReact('no')); };
+  const raise = () => { setWall(true); };
   // Le numero du reel referme. Un compteur qui monte se lit comme un score ;
   // « Bloque » tout seul se lit comme un reproche.
   const [nth, setNth] = useState(0);
@@ -808,13 +799,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {wall && (
         <View style={styles.wall} pointerEvents="none">
-          {/*
-            Corti tient la porte, a la place d'un panneau d'interdiction.
-            Un rond barre reproche ; une tete qui va bien felicite. C'est le
-            meme evenement, et ce n'est pas le meme souvenir — or c'est
-            l'ecran qu'on voit le plus souvent dans cette app.
-          */}
-          <CortiRig level={cortiLevel(days)} size={120} reaction={refuse} />
+          <Hand size={44} strokeWidth={1.8} color={c.accent} />
           {/*
             Le mur porte un NUMERO.
             « Bloque. » tout seul est un reproche, et on finit par en vouloir a

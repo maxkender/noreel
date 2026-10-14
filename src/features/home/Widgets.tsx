@@ -12,7 +12,6 @@ import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
 import { Glow } from '@/components/Glow';
-import { Stars } from '@/components/Stars';
 import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { APPS, LOGOS } from './AppSlider';
@@ -60,7 +59,6 @@ export function Widgets() {
   return (
     <View style={st.root}>
       <Glow />
-      <Stars />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <View style={st.head}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={st.back}>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
@@ -13,7 +13,7 @@ import { LANGS, type Lang } from '@/lib/format';
 import { useLang } from '@/store/lang';
 
 /* Le drapeau du pays qu'on associe d'abord a la langue. */
-const FLAGS: Record<Lang, string> = {
+export const FLAGS: Record<Lang, string> = {
   en: '🇬🇧', fr: '🇫🇷', de: '🇩🇪', tr: '🇹🇷', it: '🇮🇹', es: '🇪🇸', pt: '🇵🇹', nl: '🇳🇱', pl: '🇵🇱', ru: '🇷🇺',
   sv: '🇸🇪', no: '🇳🇴', fi: '🇫🇮', cs: '🇨🇿', sk: '🇸🇰', hu: '🇭🇺', ro: '🇷🇴', el: '🇬🇷', hr: '🇭🇷', sl: '🇸🇮',
   sr: '🇷🇸', bg: '🇧🇬', et: '🇪🇪', he: '🇮🇱', ar: '🇸🇦',
@@ -31,7 +31,8 @@ export function Language({ onNext }: { onNext: () => void }) {
   const lang = useLang((s) => s.lang);
   const set = useLang((s) => s.set);
   // La langue du telephone en tete, puis les autres : on n'a pas a la chercher dans vingt-trois.
-  const ordered = useMemo(() => [lang, ...LANGS.filter((l) => l !== lang)], [lang]);
+  // L'ordre est fige a l'arrivee : la langue touchee reste A SA PLACE, elle ne remonte pas.
+  const [ordered] = useState(() => [lang, ...LANGS.filter((l) => l !== lang)]);
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
       {/*
@@ -76,9 +77,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, height: 58, borderRadius: radii.chip + 4,
-    borderWidth: 1.5, borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04),
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
   },
-  rowOn: { borderColor: withAlpha(c.accent, 0.9), backgroundColor: withAlpha(c.accent, 0.14) },
+  rowOn: { borderColor: withAlpha(c.accent, 0.8), backgroundColor: withAlpha(c.accent, 0.12) },
   flag: { width: 34, textAlign: 'center' },
   tick: {
     width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',

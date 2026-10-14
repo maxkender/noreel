@@ -16,7 +16,6 @@ import {
   Milestone, ProtectionStatus, ReclaimedNote,
 } from './Recovery';
 import { MockFeed } from '@/components/MockFeed';
-import { CortiDock } from '@/components/CortiDock';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import type { Stats } from '@/services/protect';
 import { Settings } from './Settings';
@@ -49,27 +48,6 @@ const EMPTY: Stats = {
 };
 
 const BROKEN: Stats = { ...FRESH, shaky: 'instagram' };
-
-/*
-  La carte de recuperation a disparu : Corti a son onglet, et elle y faisait
-  double emploi. Ce qu'elle portait n'a PAS disparu avec elle — la soucoupe,
-  la jauge, sa phrase, la celebration des paliers et les trois chiffres qui
-  justifient l'abonnement sont tous sur l'onglet de Corti, et sa suite de
-  tests les verifie. C'est la seule chose qui rendait cette suppression sure.
-*/
-
-/*
- * La soucoupe : neuf calques empiles et sept mouvements. Une image manquante
- * ou un calque mal nomme ne se verrait qu'a l'ecran.
- */
-describe('la soucoupe', () => {
-  for (const level of [0, 1, 2, 3] as const) {
-    it(`niveau ${level}`, () => {
-      const r = render(<CortiDock level={level} tint="#5B9DFF" />);
-      expect(r.toJSON()).toBeTruthy();
-    });
-  }
-});
 
 describe('la note d’estimation', () => {
   it('se monte', () => { render(<ReclaimedNote s={FRESH} />); });
@@ -151,9 +129,9 @@ describe('les ecrans modifies', () => {
     n'apparaisse. Un onglet qu'on n'ouvre jamais en test est un onglet qu'on
     casse sans le savoir.
   */
-  it('les quatre onglets s’ouvrent', () => {
+  it('les onglets s’ouvrent', () => {
     render(<HomeScreen />);
-    for (const label of [dict.nav.corti, dict.nav.block, dict.nav.account, dict.nav.home]) {
+    for (const label of [dict.nav.block, dict.nav.account, dict.nav.home]) {
       fireEvent.press(screen.getByText(label));
       expect(screen.toJSON()).toBeTruthy();
     }

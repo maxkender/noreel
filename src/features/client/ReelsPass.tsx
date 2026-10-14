@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { font } from '@/theme/typography';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -9,8 +10,6 @@ import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { cortiLevel } from '@/components/Corti';
-import { CortiRig } from '@/components/CortiRig';
 import { countPass, stats } from '@/services/protect';
 
 /** Cinq minutes, et pas une de plus. */
@@ -331,7 +330,6 @@ function Cost({ onDone }: { onDone: () => void }) {
   const st = useMemo(() => sheet(c), [c]);
   const [before, setBefore] = useState<number | null>(null);
   const [after, setAfter] = useState<number | null>(null);
-  const [days, setDays] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -340,7 +338,6 @@ function Cost({ onDone }: { onDone: () => void }) {
     void stats().then((s) => {
       if (!alive) return;
       setBefore(s.brain);
-      setDays(s.days);
       void countPass().then((next) => { if (alive) setAfter(next); });
     });
     return () => { alive = false; };
@@ -350,9 +347,7 @@ function Cost({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={st.center}>
-      <CortiRig level={cortiLevel(days)} size={150} />
-
-      <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
+      <Text variant="displayM" style={st.mid}>
         {t(d.pass.openTitle, { n: PASS_MINUTES })}
       </Text>
 
@@ -390,7 +385,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   input: {
     minWidth: 200, height: 68, borderRadius: 20, textAlign: 'center',
     marginTop: space.lg, paddingHorizontal: space.lg,
-    color: c.mist, fontSize: 30, fontFamily: 'SansSemi',
+    color: c.mist, fontSize: 30, ...font('SansSemi'),
     backgroundColor: c.surface,
     borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },

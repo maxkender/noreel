@@ -35,6 +35,12 @@ export const parseAccents = (s: string): Seg[] =>
  * longueur de la ligne il devait remplacer le caractere suivant, dont la
  * largeur n'est jamais la sienne. Un texte qui apparait, sans rien devant.
  */
+/*
+ * La frappe va presque deux fois plus vite qu'avant : on attendait la fin
+ * des phrases pour pouvoir passer l'ecran, et le parcours trainait.
+ */
+const PACE = 0.55;
+
 export function Typewriter({
   text, variant = 'displayM', speed = 32, delay = 0, style,
 }: {
@@ -63,9 +69,9 @@ export function Typewriter({
   useEffect(() => {
     setN(0);
     let raf = 0;
-    const t0 = Date.now() + delay;
+    const t0 = Date.now() + delay * PACE;
     const step = () => {
-      const due = Math.max(0, Math.floor((Date.now() - t0) / speed));
+      const due = Math.max(0, Math.floor((Date.now() - t0) / (speed * PACE)));
       let k = Math.min(total, due);
       // On termine le mot en cours quand la lettre suivante est un blanc.
       const flat = segs.map((s) => s.text).join('');
@@ -99,5 +105,5 @@ export function Typewriter({
 
 /** Duree totale, pour enchainer la suite sans deviner. */
 export function typeDuration(text: string, speed = 32, delay = 0): number {
-  return delay + parseAccents(text).reduce((n, s) => n + s.text.length, 0) * speed;
+  return (delay + parseAccents(text).reduce((n, s) => n + s.text.length, 0) * speed) * PACE;
 }

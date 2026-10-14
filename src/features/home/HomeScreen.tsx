@@ -5,15 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Brain, ChevronRight, Home as HomeIcon, Lock, Shield, Smartphone, User } from 'lucide-react-native';
+import { ChevronRight, Home as HomeIcon, Lock, Shield, Smartphone, User } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
-import { Glow } from '@/components/Glow';
 import { Glass } from '@/components/glass/Glass';
 import { GlassSweep } from '@/components/GlassSweep';
-import { Stars } from '@/components/Stars';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { formatHours } from '@/lib/format';
@@ -39,12 +37,11 @@ import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
 import { ProtectionStatus, useProtect } from './Recovery';
-import { CortiTab } from './CortiTab';
 import { realFloorToday, stopWatching, watchReal } from '@/services/realtime';
 import { pullAndRestart } from '@/services/refresh';
 import { usePostModeReconcile } from '@/services/postmode';
 
-type Tab = 'home' | 'corti' | 'block' | 'account';
+type Tab = 'home' | 'block' | 'account';
 
 export function HomeScreen() {
   const c = useColors();
@@ -98,20 +95,16 @@ export function HomeScreen() {
   const tabs: [Tab, string, typeof HomeIcon][] = Platform.OS === 'ios'
     ? [
       ['home', d.nav.home, HomeIcon],
-      ['corti', d.nav.corti, Brain],
       ['block', d.nav.block, Shield],
       ['account', d.nav.account, User],
     ]
     : [
       ['home', d.nav.home, HomeIcon],
-      ['corti', d.nav.corti, Brain],
       ['account', d.nav.account, User],
     ];
 
   return (
     <View style={st.root}>
-      <Glow />
-      <Stars />
       {/* L'en-tete est DANS le flux, opaque, et le contenu commence dessous.
           Trois effets ont ete essayes pour la faire flotter — degrade, flou,
           filet — et chacun laissait une bordure qui se voit. Ici il n'y a
@@ -127,7 +120,6 @@ export function HomeScreen() {
         {tab === 'home' && (
           <HomeTab minutes={today.perApp} onBlock={() => setTab('block')} />
         )}
-        {tab === 'corti' && <CortiTab onTour={() => setReplay((r) => ({ id: 'corti', n: (r?.n ?? 0) + 1 }))} />}
         {tab === 'block' && (
           <BlockTab
             minutes={today.perApp}

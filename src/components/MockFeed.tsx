@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { font } from '@/theme/typography';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -362,7 +363,7 @@ const sheet = (c: Palette, u: number) => StyleSheet.create({
     paddingHorizontal: 8 * u, paddingBottom: 8 * u,
   },
   // Le titre du fil est GROS et gras : c'est lui qui donne l'echelle de l'app.
-  feedTitle: { color: c.mist, fontFamily: 'SansBold', letterSpacing: -0.3 },
+  feedTitle: { color: c.mist, ...font('SansBold'), letterSpacing: -0.3 },
   dot: {
     position: 'absolute', top: -1, right: -1,
     width: 4 * u, height: 4 * u, borderRadius: 2 * u, backgroundColor: '#FF3B30',
@@ -385,13 +386,13 @@ const sheet = (c: Palette, u: number) => StyleSheet.create({
     paddingHorizontal: 8 * u, paddingVertical: 5 * u,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 2.5 * u },
-  who: { color: c.mist, fontFamily: 'SansSemi' },
+  who: { color: c.mist, ...font('SansSemi') },
   avatar: { width: 20 * u, height: 20 * u, borderRadius: 10 * u, overflow: 'hidden' },
   actions: {
     flexDirection: 'row', alignItems: 'center', gap: 9 * u,
     paddingHorizontal: 8 * u, paddingVertical: 5 * u,
   },
-  likes: { color: c.mist, fontFamily: 'SansSemi', paddingHorizontal: 8 * u },
+  likes: { color: c.mist, ...font('SansSemi'), paddingHorizontal: 8 * u },
   tabs: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
     paddingVertical: 8 * u, paddingHorizontal: 8 * u,

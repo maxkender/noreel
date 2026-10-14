@@ -48,7 +48,8 @@ it('rend le texte ENTIER a chaque instant de la frappe', () => {
 it('ne compte pas les accolades du balisage', () => {
   // « {temps éveillé} » se lit « temps éveillé » : la duree et la frappe
   // portent sur ce qui s'affiche, pas sur les accolades.
-  expect(typeDuration('a {bc} d', 10, 0)).toBe(60);
+  // 6 lettres a 10 ms, a l'allure actuelle de la frappe (0,55).
+  expect(typeDuration('a {bc} d', 10, 0)).toBeCloseTo(33);
   const r = render(<Typewriter text="a {bc} d" speed={10} cursor={false} />);
   act(() => { jest.advanceTimersByTime(1000); });
   expect(rendered(r.toJSON())).toBe('a bc d');

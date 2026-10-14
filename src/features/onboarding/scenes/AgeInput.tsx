@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
+import { font } from '@/theme/typography';
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
@@ -133,7 +134,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   input: {
     width: '100%', height: '100%', textAlign: 'center',
-    fontFamily: 'SansBold', fontSize: 38, color: c.mist,
+    ...font('SansBold'), fontSize: 38, color: c.mist,
   },
   hint: { letterSpacing: 3 },
 });

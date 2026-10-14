@@ -5,7 +5,7 @@ import Animated, {
   FadeIn, FadeOut, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import {
-  ChevronLeft, ChevronRight, House, Link, RotateCw, Settings as Gear, UsersRound, X,
+  ChevronLeft, ChevronRight, House, Link, Menu, RotateCw, Settings as Gear, UsersRound, X,
 } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -13,7 +13,6 @@ import { springs } from '@/theme/motion';
 import { haptics } from '@/lib/haptics';
 import { dict, useT } from '@/i18n';
 import { Text } from '@/components/type/Text';
-import { CortiRig } from '@/components/CortiRig';
 
 const SIZE = 58;
 const MARGIN = 14;
@@ -141,8 +140,8 @@ export function NavBar({
           accessibilityRole="button"
           accessibilityLabel={open ? dict.misc.closeNav : dict.misc.openNav}
         >
-          {/* Corti dans le rond : c'est lui qu'on touche, pas trois traits. */}
-          <CortiRig level={3} size={44} expression="auto" animated={false} />
+          {/* Trois traits : le menu, sans mascotte. */}
+          <Menu size={24} strokeWidth={2.2} color={c.mist} />
         </Animated.View>
       </GestureDetector>
     </>
@@ -209,7 +208,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     position: 'absolute', top: 0, left: 0,
     width: SIZE, height: SIZE, borderRadius: SIZE / 2, overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center', backgroundColor: c.night,
-    borderWidth: 1, borderColor: withAlpha(c.mist, 0.45),
+    borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
     shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 }, elevation: 16,
     zIndex: 100,

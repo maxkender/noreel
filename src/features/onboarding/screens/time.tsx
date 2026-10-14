@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Image } from 'expo-image';
 import { Cake } from 'lucide-react-native';
 import { Emblem } from '../scenes/Emblem';
 import { space } from '@/theme/spacing';
@@ -26,7 +25,6 @@ type P = { onNext: () => void };
  * de chercher son propre chiffre. Une question, une jauge, une phrase pour
  * dire qu'on ne juge pas.
  */
-const THINKING = require('@/assets/rig/corti-pose-pense.png');
 
 export function Guess({ onNext }: P) {
   const st = useMemo(() => sheet(), []);
@@ -43,9 +41,8 @@ export function Guess({ onNext }: P) {
   */
   const { height: winH } = useWindowDimensions();
   const gaugeH = Math.max(150, Math.min(280, winH - 630));
-  const showCorti = winH >= 720;
   return (
-    <Screen emblem={showCorti ? <Image source={THINKING} style={{ width: 96, height: 96 }} contentFit="contain" /> : undefined}
+    <Screen
       cta={d.s5.ctaA}
       onPress={() => {
         setMinutes(minutes);

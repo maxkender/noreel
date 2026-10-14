@@ -43,16 +43,16 @@ it('se joue la premiere fois sur Applis, et se retient', async () => {
 
 it('ne revient pas une fois vue, et rien sur le compte', async () => {
   await resetTours();
-  await markTourSeen('corti');
-  const r = render(<TabTour tab="corti" onDone={() => {}} />);
-  await waitFor(() => expect(screen.queryByText(dict.tour.c1)).toBeNull());
+  await markTourSeen('block');
+  const r = render(<TabTour tab="block" onDone={() => {}} />);
+  await waitFor(() => expect(screen.queryByText(dict.tour.b1)).toBeNull());
   r.unmount();
   render(<TabTour tab="account" onDone={() => {}} />);
   expect(screen.queryByTestId(/tour-/)).toBeNull();
 });
 
 it('se rejoue quand on le demande', async () => {
-  await markTourSeen('corti');
-  render(<TabTour tab="corti" replay={{ id: 'corti', n: 1 }} onDone={() => {}} />);
-  expect(await screen.findByText(dict.tour.c1, {}, { timeout: 3000 })).toBeTruthy();
+  await markTourSeen('block');
+  render(<TabTour tab="block" replay={{ id: 'block', n: 1 }} onDone={() => {}} />);
+  expect(await screen.findByText(dict.tour.b1, {}, { timeout: 3000 })).toBeTruthy();
 });

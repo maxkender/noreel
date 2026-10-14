@@ -8,8 +8,6 @@ import { useColors } from '@/theme/useColors';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/type/Text';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
-import { CortiRig, type CortiExpression } from '@/components/CortiRig';
-import type { CortiLevel } from '@/components/Corti';
 import { useT } from '@/i18n';
 import { Receptors } from '../scenes/Receptors';
 import { Spikes } from '../scenes/Spikes';
@@ -36,10 +34,8 @@ type IconProps = { size?: number; color?: string; strokeWidth?: number };
  * poser.
  */
 function SciencePage({
-  level, expression, icon, tone, kicker, title, body, cite, harm, children, onNext, big = true,
+  icon, tone, kicker, title, body, cite, harm, children, onNext, big = true,
 }: P & {
-  level: CortiLevel;
-  expression?: CortiExpression;
   icon: ComponentType<IconProps>;
   tone?: string;
   /** « Effet 2 sur 4 » : le fil qui relie les quatre pages a l'annonce. */
@@ -63,11 +59,8 @@ function SciencePage({
   const ready = typeDuration(title, 42, 0) + 150;
   return (
     <Screen cta={d.tapHint} onPress={onNext} tapToContinue hintDelay={ready} readyAfter={ready} center hue="ember" hueLevel={harm}>
-      <Animated.View entering={FadeInDown.duration(520)} style={st.face}>
-        <CortiRig level={level} size={116} expression={expression ?? 'auto'} />
-        {/* L'embleme se pose sur son epaule : un signe a cote de lui, pas un
-            second sujet a regarder. */}
-        <Emblem icon={icon} tone={tone ?? c.ember} size={46} style={st.badge} />
+      <Animated.View entering={FadeInDown.duration(360)} style={{ alignItems: 'center', marginBottom: space.lg }}>
+        <Emblem icon={icon} tone={tone ?? c.ember} size={64} />
       </Animated.View>
 
       {kicker ? (
@@ -111,7 +104,7 @@ export function Exploited({ onNext }: P) {
   const { d } = useT();
   const chips = [d.brain.hookChip1, d.brain.hookChip2, d.brain.hookChip3];
   return (
-    <SciencePage level={2} expression="surpris" icon={BellRing} harm={0.15} title={d.brain.hookTitle} body={d.brain.hookBody} onNext={onNext} big={false}>
+    <SciencePage icon={BellRing} harm={0.15} title={d.brain.hookTitle} body={d.brain.hookBody} onNext={onNext} big={false}>
       <View style={st.chips}>
         {chips.map((label, i) => (
           <Animated.View
@@ -141,8 +134,8 @@ export function ScienceIntro({ onNext }: P) {
   const c = useColors();
   return (
     <SciencePage
-      level={3}
-      expression="auto"
+     
+     
       icon={FlaskConical}
       tone={c.accent}
       harm={0.05}
@@ -156,7 +149,7 @@ export function ScienceIntro({ onNext }: P) {
 export function Dopamine({ onNext }: P) {
   const { d, t } = useT();
   return (
-    <SciencePage level={2} expression="surpris" icon={Zap} harm={0.25} kicker={t(d.brain.effect, { n: 1 })} title={d.brain.step1} body={d.brain.step1b} onNext={onNext}>
+    <SciencePage icon={Zap} harm={0.25} kicker={t(d.brain.effect, { n: 1 })} title={d.brain.step1} body={d.brain.step1b} onNext={onNext}>
       <Spikes />
     </SciencePage>
   );
@@ -165,7 +158,7 @@ export function Dopamine({ onNext }: P) {
 export function ReceptorsPage({ onNext }: P) {
   const { d, t } = useT();
   return (
-    <SciencePage level={1} expression="somnolent" icon={TrendingDown} harm={0.5} kicker={t(d.brain.effect, { n: 2 })} title={d.brain.step2} body={d.brain.step2b} onNext={onNext}>
+    <SciencePage icon={TrendingDown} harm={0.5} kicker={t(d.brain.effect, { n: 2 })} title={d.brain.step2} body={d.brain.step2b} onNext={onNext}>
       <Receptors />
     </SciencePage>
   );
@@ -174,7 +167,7 @@ export function ReceptorsPage({ onNext }: P) {
 export function NothingLands({ onNext }: P) {
   const { d, t } = useT();
   return (
-    <SciencePage level={0} icon={CloudOff} harm={0.75} kicker={t(d.brain.effect, { n: 3 })} title={d.brain.step3} body={d.brain.step3b} onNext={onNext}>
+    <SciencePage icon={CloudOff} harm={0.75} kicker={t(d.brain.effect, { n: 3 })} title={d.brain.step3} body={d.brain.step3b} onNext={onNext}>
       <Dulled />
     </SciencePage>
   );
@@ -185,7 +178,7 @@ export function LovePage({ onNext }: P) {
   const c = useColors();
   return (
     <SciencePage
-      level={0}
+     
       icon={HeartCrack}
       tone={c.danger}
       harm={1}
@@ -207,6 +200,4 @@ const sheet = () => StyleSheet.create({
   },
   chipDot: { width: 7, height: 7, borderRadius: 4 },
   center: { textAlign: 'center' },
-  face: { alignSelf: 'center', marginBottom: space.lg },
-  badge: { position: 'absolute', right: -14, bottom: -4 },
 });

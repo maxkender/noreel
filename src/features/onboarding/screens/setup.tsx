@@ -1,8 +1,9 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
+import { font } from '@/theme/typography';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as Notifications from 'expo-notifications';
-import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -11,7 +12,6 @@ import { Text } from '@/components/type/Text';
 import { SelectCard } from '@/components/SelectCard';
 import { HSlider } from '../scenes/HSlider';
 import { Typewriter, typeDuration } from '@/components/type/Typewriter';
-import { CortiRig, cortiReact } from '@/components/CortiRig';
 import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { track } from '@/services';
 import { useT } from '@/i18n';
@@ -22,6 +22,8 @@ import { SystemAlert } from '../scenes/SystemAlert';
 import { SignaturePad } from '../scenes/SignaturePad';
 import { Emblem } from '../scenes/Emblem';
 import { Bell } from 'lucide-react-native';
+
+const MARK = require('@/assets/brand/mark.png');
 
 type P = { onNext: () => void };
 
@@ -168,12 +170,11 @@ export function Welcome({ onNext }: P) {
   const { d } = useT();
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const [hello] = useState(() => cortiReact('wave'));
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} readyAfter={typeDuration(d.ob.welcome1, 30, 0) + 500} center hue="accent">
-      <Animated.View entering={FadeIn.duration(600)} style={{ alignItems: 'center', marginBottom: space.lg }}>
-        <CortiRig level={3} size={150} expression="ravi" reaction={hello} arrive />
+      <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center', marginBottom: space.lg }}>
+        <Image source={MARK} style={{ width: 72, height: 72 }} contentFit="contain" />
       </Animated.View>
       {/* Une phrase, et rien dessous : la ligne « on a cree cette app… » et
           l'annonce des questions redisaient ce que la suite montre. */}
@@ -263,7 +264,6 @@ export function NotificationsAsk({ onNext }: P) {
 }
 
 /* ---------- La promesse ---------- */
-const SIGNING = require('@/assets/rig/corti-pose-signe.png');
 
 export function PromiseScreen({ onNext }: P) {
   const { d, t } = useT();
@@ -281,11 +281,6 @@ export function PromiseScreen({ onNext }: P) {
 
   return (
     <Screen cta={d.ob.commit} onPress={onNext} disabled={!signed} hue="accent">
-      <Animated.View entering={FadeInDown.duration(620)} style={st.mascot}>
-        {/* Corti signe, lui aussi. La pose du studio, faite pour cet ecran :
-            on ne demande pas un geste qu'on ne fait pas soi-meme. */}
-        <Image source={SIGNING} style={{ width: 150, height: 150 }} contentFit="contain" />
-      </Animated.View>
 
       {/*
         Une promesse a celui qu'on sera dans cinq ans — et une signature.
@@ -321,7 +316,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   faded: { textAlign: 'center', opacity: 0.55 },
   input: {
     marginTop: space.xl, height: 62, borderRadius: 20, textAlign: 'center',
-    color: c.mist, fontFamily: 'SansSemi', fontSize: 22,
+    color: c.mist, ...font('SansSemi'), fontSize: 22,
     backgroundColor: withAlpha(c.mist, 0.06),
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.18),
   },

@@ -17,7 +17,7 @@ import { Constat, Name, NotificationsAsk, PromiseScreen, Welcome } from './scree
 import { Permissions } from './screens/Permissions';
 import { Language } from './screens/Language';
 import { Activities } from './screens/Activities';
-import { Attribution, Meet, Prep, Proof, RateAsk } from './screens/extra';
+import { Attribution, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
 import { Paywall } from './screens/Paywall';
 import { TrialBell, TrialGift } from './screens/Trial';
@@ -153,7 +153,6 @@ export function OnboardingFlow() {
     <Language key="lang" onNext={next} />,
     <Name key="name" onNext={next} />,
     <Attribution key="src" onNext={next} />,
-    <Meet key="meet" onNext={next} />,
     <Constat key="con" onNext={next} />,
     <Guess key="guess" onNext={next} />,
     <AgeAsk key="age" onNext={next} />,
@@ -237,7 +236,7 @@ export function OnboardingFlow() {
           <Animated.View
             key={step}
             entering={screens[step]?.key === 'pw' ? unveil : REVEAL.has(String(screens[step]?.key)) ? reveal : rise}
-            exiting={FadeOut.duration(460)}
+            exiting={FadeOut.duration(240)}
             style={StyleSheet.absoluteFill}
           >
             {/* Une etape qui plante ne doit pas emporter tout le parcours. */}
@@ -284,8 +283,8 @@ function reveal() {
   return {
     initialValues: { opacity: 0, transform: [{ scale: 0.94 }] },
     animations: {
-      opacity: withTiming(1, { duration: 320, easing: easings.out }),
-      transform: [{ scale: withTiming(1, { duration: 560, easing: easings.out }) }],
+      opacity: withTiming(1, { duration: 240, easing: easings.out }),
+      transform: [{ scale: withTiming(1, { duration: 340, easing: easings.out }) }],
     },
   };
 }
@@ -300,8 +299,8 @@ function unveil() {
   return {
     initialValues: { opacity: 0, transform: [{ scale: 0.95 }] },
     animations: {
-      opacity: withTiming(1, { duration: 640, easing: easings.out }),
-      transform: [{ scale: withTiming(1, { duration: 900, easing: easings.out }) }],
+      opacity: withTiming(1, { duration: 360, easing: easings.out }),
+      transform: [{ scale: withTiming(1, { duration: 480, easing: easings.out }) }],
     },
   };
 }
@@ -311,8 +310,8 @@ function rise() {
   return {
     initialValues: { opacity: 0, transform: [{ translateY: 14 }] },
     animations: {
-      opacity: withTiming(1, { duration: 300, easing: easings.out }),
-      transform: [{ translateY: withTiming(0, { duration: 460, easing: easings.out }) }],
+      opacity: withTiming(1, { duration: 220, easing: easings.out }),
+      transform: [{ translateY: withTiming(0, { duration: 300, easing: easings.out }) }],
     },
   };
 }

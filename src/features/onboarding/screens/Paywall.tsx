@@ -1,7 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Bell, Check, CreditCard, Unlock, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
@@ -288,15 +287,6 @@ export function Paywall(
         Les points qui flottent en fond, eux, passaient DERRIERE les cartes de
         forfait et on ne savait plus ce qu'on regardait.
       */
-      backdrop={
-        <LinearGradient
-          colors={['#2A1E63', '#151A46', '#0A0C1C']}
-          locations={[0, 0.45, 1]}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.85, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      }
       stars={false}
       // Le libelle ne parle pas de prix : il nomme ce qu'on vient chercher.
       cta={
@@ -460,12 +450,6 @@ function Trial({ plan }: { plan: Plan }) {
 
   return (
     <View style={st.trial}>
-      <LinearGradient
-        colors={[withAlpha(c.accent, 0.14), withAlpha(c.accentWarm, 0.04)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
       <Text variant="label" color={c.accent}>
         {t(plan === 'monthly' ? d.pay.trialBannerMonthly : d.pay.trialBanner, { n: TRIAL_DAYS })}
       </Text>
@@ -555,10 +539,9 @@ const sheet = (c: Palette) => StyleSheet.create({
     paddingHorizontal: space.md, height: 64, borderRadius: 18, borderWidth: 1.5,
   },
   planOn: {
-    borderColor: withAlpha(c.accent, 0.9), backgroundColor: withAlpha(c.accent, 0.14),
-    shadowColor: c.accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 4 },
+    borderColor: withAlpha(c.accent, 0.9), backgroundColor: withAlpha(c.accent, 0.12),
   },
-  planOff: { borderColor: withAlpha(c.mist, 0.14), backgroundColor: withAlpha(c.mist, 0.04) },
+  planOff: { borderColor: c.glassEdge, backgroundColor: c.glassSolid },
   planLeft: { flex: 1, flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   planRight: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '52%' },
   tick: {
@@ -577,7 +560,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     minHeight: 196, justifyContent: 'center',
     marginTop: space.xl, borderRadius: 22, overflow: 'hidden',
     paddingHorizontal: space.lg, paddingVertical: space.lg,
-    borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
   },
   trialFlat: { borderColor: withAlpha(c.ember, 0.4) },
   trialInner: { alignSelf: 'stretch' },

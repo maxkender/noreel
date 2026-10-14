@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
@@ -62,22 +61,8 @@ export function SelectCard({
       style={[st.shell, shell]}
     >
       <View style={st.base} />
-      {/* Reflet haut : l'epaisseur du verre, sans flou a calculer. */}
-      <LinearGradient
-        colors={[withAlpha(c.mist, 0.1), 'transparent']}
-        style={st.sheen}
-        pointerEvents="none"
-      />
-
-      {/* Les deux calques d'etat : teinte puis liseré, allumes ensemble. */}
-      <Animated.View style={[StyleSheet.absoluteFill, lit]} pointerEvents="none">
-        <LinearGradient
-          colors={[withAlpha(c.accent, 0.22), withAlpha(c.accentWarm, 0.1)]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+      {/* Selectionnee : un voile d'accent a plat, sans degrade. */}
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(c.accent, 0.12) }, lit]} pointerEvents="none" />
       <Animated.View style={[st.ring, lit]} pointerEvents="none" />
 
       {/* Le logo reste tel quel : agrandi a la selection, un PNG de vingt-six
@@ -106,13 +91,12 @@ const sheet = (c: Palette) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space.md,
     paddingHorizontal: space.lg, paddingVertical: 17,
     borderRadius: 20, overflow: 'hidden',
-    borderWidth: 1, borderColor: withAlpha(c.mist, 0.12),
+    borderWidth: 1, borderColor: c.glassEdge,
   },
   base: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: withAlpha(c.mist, 0.06),
+    backgroundColor: c.glassSolid,
   },
-  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 22 },
   ring: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     borderRadius: 20, borderWidth: 1.5, borderColor: withAlpha(c.accent, 0.65),

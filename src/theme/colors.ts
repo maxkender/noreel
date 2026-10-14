@@ -5,7 +5,7 @@
  * chose.
  */
 export const colors = {
-  night: '#08090B',        // fond, presque noir
+  night: '#050506',        // fond, noir
   surface: '#101216',      // cartes
   surfaceHi: '#16191F',    // cartes en relief
   line: '#FFFFFF14',       // filet 8 %
@@ -36,8 +36,8 @@ export const colors = {
    * de la marque virait au trait noir.
    */
   glassFill: '#FAFAFA12',   // la vitre elle-meme
-  glassSolid: '#16191FF5',  // sa version opaque, sans flou
-  glassEdge: '#FAFAFA2E',   // son bord
+  glassSolid: '#141618',    // la carte : un aplat un cran au-dessus du fond (Opal)
+  glassEdge: '#FFFFFF14',   // un filet fin, pas un cerne
   glassSpec: '#FAFAFA73',   // le reflet du ciel, 1 pt en haut
   glassWarm: '#FFFFFF8C',   // le lisere chaud, du cote du soleil
   glassTint: '#141B2E',     // bleu nuit : la feuille de verre posee sur une page etrangere

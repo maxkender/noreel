@@ -2,10 +2,11 @@
  * La fin de l'essai se lit dans les reglages, sans notification : le texte
  * doit dire juste a chaque moment des 3 jours.
  */
-jest.mock('expo-notifications', () => ({}));
-jest.mock('react-native-purchases', () => ({ __esModule: true, default: {}, LOG_LEVEL: {} }));
 import { trialLeft } from './trial';
 import { subStatus } from './purchases';
+
+jest.mock('expo-notifications', () => ({}));
+jest.mock('react-native-purchases', () => ({ __esModule: true, default: {}, LOG_LEVEL: {} }));
 
 const H = 3600 * 1000;
 const now = new Date('2026-10-14T12:00:00Z');

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { font } from '@/theme/typography';
 import {
   Modal, Pressable, StyleSheet, TextInput, View,
 } from 'react-native';
@@ -283,7 +284,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   input: {
     marginTop: space.lg, minHeight: 96, padding: space.md, borderRadius: 16,
-    color: c.mist, fontFamily: 'Sans', fontSize: 16, lineHeight: 22,
+    color: c.mist, ...font('Sans'), fontSize: 16, lineHeight: 22,
     backgroundColor: c.surfaceHi,
     borderWidth: StyleSheet.hairlineWidth, borderColor: c.lineStrong,
   },

@@ -14,7 +14,6 @@ import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { CortiRig } from '@/components/CortiRig';
 import { FaceCloud } from '@/components/FaceCloud';
 import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
@@ -32,44 +31,6 @@ type P = { onNext: () => void };
 
 /* ---------- Corti ---------- */
 
-/**
- * La rencontre.
- *
- * Elle arrive juste apres le prenom, pour que Corti puisse dire bonjour par
- * son nom : une mascotte qui se presente a quelqu'un d'anonyme n'est qu'un
- * dessin de plus. Et elle arrive AVANT les ecrans qui pesent, pour qu'on ait
- * quelqu'un a cote de soi pendant qu'on regarde ses propres chiffres.
- */
-export function Meet({ onNext }: P) {
-  const st = useMemo(() => sheet(), []);
-  const { d, t } = useT();
-  const name = useOnboardingStore((x) => x.firstName);
-
-  return (
-    <Screen cta={d.corti.meetCta} onPress={onNext} readyAfter={2400} center hue="accent">
-      <Animated.View entering={FadeIn.duration(700)} style={st.mid}>
-        {/*
-          Il ACCUEILLE : grands yeux ouverts, sourire franc.
-
-          Il se presentait en veilleuse — paupieres tombantes, bouche plate —
-          pour tenir l'arc « il va mal, puis mieux ». Sauf que c'est l'ecran ou
-          on le rencontre, et on ne s'attache pas a quelqu'un qui a l'air de
-          s'ennuyer de nous voir. L'arc n'y perd rien : il va bien quand on le
-          rencontre, il s'eteint pendant le constat, il se retablit apres. La
-          chute est meme plus nette, puisqu'on l'a connu en forme.
-        */}
-        <CortiRig level={2} size={220} expression="ravi" arrive />
-      </Animated.View>
-
-      <Text variant="displayM" style={[st.mid, { marginTop: space.xl }]}>
-        {name ? t(d.corti.meetTitleNamed, { name }) : d.corti.meetTitle}
-      </Text>
-      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
-        {d.corti.meetBody}
-      </Text>
-    </Screen>
-  );
-}
 
 /* ---------- La preparation du programme ---------- */
 
@@ -133,7 +94,7 @@ export function Prep({ onNext }: P) {
       <View style={st.mid}>
         <Animated.View style={[st.prepHalo, { backgroundColor: withAlpha(c.accent, 0.4) }, halo]} pointerEvents="none" />
         <HoldRing progress={ring} size={176} stroke={4}>
-          <CortiRig level={3} size={120} expression={ready ? 'ravi' : 'auto'} />
+          {ready && <Check size={56} strokeWidth={2.4} color={c.accent} />}
         </HoldRing>
       </View>
       <View style={st.prepTitle}>
@@ -425,17 +386,9 @@ export function RateAsk({ onNext }: P) {
       center
       hue="accent"
     >
-      {/*
-        Les visages derivent AUTOUR de Corti.
-        Une grille de portraits carres se lit comme une page d'equipe ; des
-        ronds qui flottent se lisent comme des gens, et c'est le seul point de
-        cet ecran. Corti au centre relie la communaute a ce qu'on y fait.
-      */}
+      {/* Des ronds qui flottent se lisent comme des gens : c'est le seul point de cet ecran. */}
       <View style={st.cloud}>
         <FaceCloud height={280} />
-        <View style={st.cloudMid} pointerEvents="box-none">
-          <CortiRig level={2} size={112} />
-        </View>
       </View>
 
       <Animated.View entering={FadeIn.delay(600).duration(520)} style={st.stars}>

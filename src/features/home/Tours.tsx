@@ -47,14 +47,6 @@ export function TabTour({
       { target: 'home-addHome', title: d.tour.h3, body: d.tour.h3b, optional: true },
       { target: ['home-blockReal', 'nav-block'], title: d.tour.h4, body: d.tour.h4b, optional: true },
     ],
-    corti: [
-      { target: 'corti-stage', title: d.tour.c1, body: d.tour.c1b },
-      { target: 'corti-path', title: d.tour.c2, body: d.tour.c2b },
-      { target: 'corti-points', title: d.tour.c3, body: d.tour.c3b },
-      { target: 'corti-goal', title: d.tour.c4, body: d.tour.c4b },
-      { target: 'corti-points', title: d.tour.c5, body: d.tour.c5b },
-      { target: 'corti-badges', title: d.tour.c6, body: d.tour.c6b },
-    ],
     block: [
       { target: 'block-status', title: d.tour.b1, body: d.tour.b1b },
       { target: 'block-btn', title: d.tour.b2, body: d.tour.b2b },

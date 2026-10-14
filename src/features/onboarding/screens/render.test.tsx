@@ -16,7 +16,7 @@
  * groupes en haut.
  */
 import { render } from '@testing-library/react-native';
-import { Attribution, Meet, Prep, Proof, RateAsk } from './extra';
+import { Attribution, Prep, Proof, RateAsk } from './extra';
 import { Paywall } from './Paywall';
 import { TrialBell, TrialGift } from './Trial';
 import { AgeAsk, Guess } from './time';
@@ -46,10 +46,6 @@ jest.mock('react-native-device-activity', () => ({}));
 const noop = () => {};
 
 describe('les ecrans du parcours se montent', () => {
-  it('la rencontre avec Corti', () => {
-    render(<Meet onNext={noop} />);
-  });
-
   it('la preparation du programme', () => {
     const r = render(<Prep onNext={noop} />);
     expect(r.toJSON()).toBeTruthy();

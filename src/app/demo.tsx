@@ -9,7 +9,6 @@ import Animated, {
   Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated';
 import { ShieldCheck } from 'lucide-react-native';
-import { CortiRig } from '@/components/CortiRig';
 import { haptics } from '@/lib/haptics';
 import { withAlpha } from '@/theme/colors';
 import { ForcedTheme, useColors, type Palette } from '@/theme/useColors';
@@ -192,7 +191,6 @@ export default function Demo() {
               entering={FadeIn.delay(360).duration(520)}
               pointerEvents="none"
             >
-              <CortiRig level={3} size={148} />
               <View style={[st.pill, st.pillOn]}>
                 <ShieldCheck size={13} strokeWidth={2.4} color={c.accent} />
                 <Text variant="label" color={c.accent}>Aucun accès aux Reels</Text>

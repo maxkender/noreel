@@ -30,8 +30,6 @@ export function Text({
       maxFontSizeMultiplier={maxFontSizeMultiplier[variant]}
       style={[
         base,
-        // Les labels en capitales espacees : c'est ce qui donne le ton technique.
-        variant === 'label' && { textTransform: 'uppercase' as const },
         { color: color ?? withAlpha(c.mist, alpha(c, tone)) },
         style,
       ]}
