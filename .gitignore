@@ -47,3 +47,4 @@ targets/
 
 # La cle du compte de service Google Play : jamais dans le depot.
 google-play-key.json
+/.play-upload
