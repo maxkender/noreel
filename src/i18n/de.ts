@@ -595,6 +595,7 @@ export const de: Dict = {
     capUnlock: 'Meine 3 Gratistage freischalten',
     capClose: '{app} schließen',
     stalling: 'Die Seite ist langsam. Lade neu, oder nimm den Filter weg, um zu sehen, woran es liegt.',
+    crashTitle: "Auf dieser Seite ist ein Fehler aufgetreten.",
     retry: 'Erneut versuchen',
     reload: 'Neu laden',
     raw: 'Ohne Filter',

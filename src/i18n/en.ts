@@ -595,6 +595,7 @@ export const en: Dict = {
     capUnlock: 'Unlock my 3 free days',
     capClose: 'Close {app}',
     stalling: 'The page is slow. Reload, or drop the filter to find out where it comes from.',
+    crashTitle: "Something went wrong on this page.",
     retry: 'Try again',
     reload: 'Reload',
     raw: 'No filter',

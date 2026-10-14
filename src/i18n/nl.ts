@@ -595,6 +595,7 @@ export const nl: Dict = {
     capUnlock: 'Mijn 3 gratis dagen vrijspelen',
     capClose: '{app} sluiten',
     stalling: 'De pagina is traag. Herlaad, of zet het filter uit om te zien waar het vandaan komt.',
+    crashTitle: "Er ging iets mis op deze pagina.",
     retry: 'Opnieuw proberen',
     reload: 'Herladen',
     raw: 'Zonder filter',

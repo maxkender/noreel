@@ -595,6 +595,7 @@ export const tr: Dict = {
     capUnlock: '3 ücretsiz günümü aç',
     capClose: '{app} uygulamasını kapat',
     stalling: 'Sayfa yavaş. Yenile ya da nereden kaynaklandığını görmek için filtreyi kaldır.',
+    crashTitle: "Bu sayfada bir sorun oluştu.",
     retry: 'Tekrar dene',
     reload: 'Yenile',
     raw: 'Filtresiz',

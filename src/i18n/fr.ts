@@ -615,6 +615,7 @@ export const fr = {
     capUnlock: 'Débloquer mes 3 jours gratuits',
     capClose: 'Fermer {app}',
     stalling: `La page tarde. Recharge, ou passe sans filtre pour savoir d'où ça vient.`,
+    crashTitle: "Cette page a rencontré un problème.",
     retry: 'Réessayer',
     reload: 'Recharger',
     raw: 'Sans filtre',

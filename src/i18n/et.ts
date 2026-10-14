@@ -595,6 +595,7 @@ export const et: Dict = {
     capUnlock: 'Ava mu 3 tasuta päeva',
     capClose: 'Sule {app}',
     stalling: 'Leht on aeglane. Laadi uuesti või võta filter maha, et näha, kust see tuleb.',
+    crashTitle: "Sellel lehel tekkis viga.",
     retry: 'Proovi uuesti',
     reload: 'Laadi uuesti',
     raw: 'Ilma filtrita',

@@ -595,6 +595,7 @@ export const pl: Dict = {
     capUnlock: 'Odblokuj moje 3 darmowe dni',
     capClose: 'Zamknij {app}',
     stalling: 'Strona się ociąga. Odśwież albo wyłącz filtr, żeby sprawdzić, skąd to się bierze.',
+    crashTitle: "Na tej stronie wystąpił problem.",
     retry: 'Spróbuj ponownie',
     reload: 'Odśwież',
     raw: 'Bez filtra',

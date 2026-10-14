@@ -595,6 +595,7 @@ export const fi: Dict = {
     capUnlock: 'Avaa 3 ilmaista päivääni',
     capClose: 'Sulje {app}',
     stalling: 'Sivu on hidas. Lataa uudelleen tai poista suodatin nähdäksesi, mistä se johtuu.',
+    crashTitle: "Tällä sivulla tapahtui virhe.",
     retry: 'Yritä uudelleen',
     reload: 'Lataa uudelleen',
     raw: 'Ei suodatinta',

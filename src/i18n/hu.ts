@@ -595,6 +595,7 @@ export const hu: Dict = {
     capUnlock: '3 ingyenes napom feloldása',
     capClose: '{app} bezárása',
     stalling: 'Az oldal lassú. Töltsd újra, vagy vedd le a szűrőt, hogy kiderüljön, honnan jön.',
+    crashTitle: "Hiba történt ezen az oldalon.",
     retry: 'Újra',
     reload: 'Újratöltés',
     raw: 'Szűrő nélkül',

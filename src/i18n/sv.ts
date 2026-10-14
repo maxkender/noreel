@@ -594,6 +594,7 @@ export const sv: Dict = {
     capUnlock: 'Lås upp mina 3 gratisdagar',
     capClose: 'Stäng {app}',
     stalling: 'Sidan är seg. Ladda om, eller släpp filtret för att se var det kommer ifrån.',
+    crashTitle: "Något gick fel på den här sidan.",
     retry: 'Försök igen',
     reload: 'Ladda om',
     raw: 'Inget filter',

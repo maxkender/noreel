@@ -594,6 +594,7 @@ export const no: Dict = {
     capUnlock: 'Lås opp mine 3 gratisdager',
     capClose: 'Lukk {app}',
     stalling: 'Siden er treg. Last på nytt, eller dropp filteret for å finne ut hvor det kommer fra.',
+    crashTitle: "Noe gikk galt på denne siden.",
     retry: 'Prøv igjen',
     reload: 'Last på nytt',
     raw: 'Uten filter',

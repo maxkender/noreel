@@ -595,6 +595,7 @@ export const hr: Dict = {
     capUnlock: 'Otključaj moja 3 besplatna dana',
     capClose: 'Zatvori {app}',
     stalling: 'Stranica je spora. Osvježi, ili makni filtar da vidiš odakle dolazi.',
+    crashTitle: "Na ovoj stranici došlo je do pogreške.",
     retry: 'Pokušaj ponovno',
     reload: 'Osvježi',
     raw: 'Bez filtra',

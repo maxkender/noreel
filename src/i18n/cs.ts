@@ -595,6 +595,7 @@ export const cs: Dict = {
     capUnlock: 'Odemknout moje 3 dny zdarma',
     capClose: 'Zavřít {app}',
     stalling: 'Stránka je pomalá. Obnov ji, nebo vypni filtr, abys zjistil, odkud to je.',
+    crashTitle: "Na této stránce došlo k chybě.",
     retry: 'Zkusit znovu',
     reload: 'Obnovit',
     raw: 'Bez filtru',

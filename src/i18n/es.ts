@@ -595,6 +595,7 @@ export const es: Dict = {
     capUnlock: 'Desbloquear mis 3 días gratis',
     capClose: 'Cerrar {app}',
     stalling: 'La página va lenta. Recarga, o quita el filtro para ver de dónde viene.',
+    crashTitle: "Esta página ha tenido un problema.",
     retry: 'Reintentar',
     reload: 'Recargar',
     raw: 'Sin filtro',

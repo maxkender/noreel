@@ -248,6 +248,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
   // sortie quand le filtre casse le site, et le test qui dit lequel des deux
   // est en cause.
   const [raw, setRaw] = useState(false);
+  /** Monte une WebView neuve quand celle d'Android a perdu son moteur. */
+  const [generation, setGeneration] = useState(0);
   const [pageError, setPageError] = useState<string | null>(null);
   const [panel, setPanel] = useState(false);
   /** Un reglage a bouge pendant que la feuille etait ouverte : on recharge a sa fermeture. */
@@ -707,7 +709,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
           Le disque repond en une image : personne ne voit l'attente. */}
       {entry && (
         <WebView
-          key={raw ? 'raw' : 'filtered'}
+          key={`${raw ? 'raw' : 'filtered'}-${generation}`}
           ref={web}
           source={{ uri: entry }}
           userAgent={UA}
@@ -764,7 +766,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
           onError={(e) => setError(e.nativeEvent.description || d.ui.noConnection)}
           // iOS tue la webview en arriere-plan : sans ca, on revient sur du blanc fige.
           onContentProcessDidTerminate={() => web.current?.reload()}
-          onRenderProcessGone={() => web.current?.reload()}
+          // Android : le moteur de la page est mort, la vue avec lui. Lui
+          // demander de recharger fermait l'app ; on en monte une neuve.
+          onRenderProcessGone={() => setGeneration((n) => n + 1)}
           sharedCookiesEnabled
           // Le champ de recherche prend le clavier tout seul en arrivant sur
           // l'onglet recherche : iOS l'interdit sans cette permission.
