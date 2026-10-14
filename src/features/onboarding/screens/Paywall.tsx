@@ -25,7 +25,9 @@ type Plan = 'annual' | 'monthly';
 // Prix de secours, affiches tant que le magasin n'a pas repondu. Ils
 // doivent coller a ceux d'App Store Connect, sinon l'ecran ment pendant la
 // seconde de chargement.
-const FALLBACK = { annual: '29,99 €', monthly: '7,99 €' };
+// L'annuel n'a pas le meme prix partout : 24,99 sur l'App Store, 29,99 sur
+// Google Play (le fondateur a baisse Apple seul, le 14 octobre 2026).
+const FALLBACK = { annual: Platform.OS === 'ios' ? '24,99 €' : '29,99 €', monthly: '7,99 €' };
 // L'essai existe sur les DEUX forfaits, et il est porte par les magasins :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
@@ -33,7 +35,7 @@ export const TRIAL_DAYS = 3;
 // Le prix reel du magasin, releve au tableau de bord : la valeur de
 // secours servait 44,99 alors que la fiche dit 49,99, et c'est elle qu'on
 // affiche tant que le magasin ne repond pas.
-const ANNUAL_EUR = 29.99;
+const ANNUAL_EUR = Platform.OS === 'ios' ? 24.99 : 29.99;
 
 /**
  * Le montant d'un forfait, en nombre.
@@ -54,8 +56,11 @@ function money(n: number, symbol = '€'): string {
 }
 const MONTHLY_EUR = 7.99;
 // Douze mensualites face a un an : la comparaison honnete, et c'est elle qui
-// rend l'annuel evident.
-const SAVING = Math.round((1 - ANNUAL_EUR / (MONTHLY_EUR * 12)) * 100);
+// rend l'annuel evident. Calculee sur les prix DU MAGASIN : une constante
+// afficherait une remise fausse des que l'un des deux prix change.
+function saving(annual: PurchasesPackage | undefined, monthly: PurchasesPackage | undefined): number {
+  return Math.round((1 - euros(annual, ANNUAL_EUR) / (euros(monthly, MONTHLY_EUR) * 12)) * 100);
+}
 
 /**
  * Ce qu'on obtient — et rien sur ce qu'on n'a pas.
@@ -366,7 +371,7 @@ export function Paywall(
           label={d.pay.annual}
           price={t(d.pay.perMonth, { p: money(euros(annual, ANNUAL_EUR) / 12) })}
           sub={t(d.pay.billedYear, { y: price(annual, FALLBACK.annual) })}
-          badge={`−${SAVING} %`}
+          badge={`−${saving(annual, monthly)} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
