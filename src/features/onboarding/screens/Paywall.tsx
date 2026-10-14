@@ -12,6 +12,7 @@ import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { useProStore } from '@/store/pro';
+import { CodeSheet } from '@/features/onboarding/CodeSheet';
 import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
 } from '@/services/purchases';
@@ -267,8 +268,11 @@ export function Paywall(
     le prix, c'est un lien pour ceux qui en ont un — et un ecran de moins
     entre la promesse et la decision.
   */
+  const [codeOpen, setCodeOpen] = useState(false);
   const promo = async () => {
     haptics.tap();
+    // Android : pas de feuille de code comme chez Apple, on ouvre la notre.
+    if (Platform.OS !== 'ios') { setCodeOpen(true); return; }
     await redeemCode();
     // La feuille d'Apple ne dit pas ce qu'elle a fait : c'est le statut
     // d'abonnement qui tranche, et il arrive par son propre canal.
@@ -389,6 +393,11 @@ export function Paywall(
       </View>
 
       <WinBack visible={winback} onClose={() => { setWinback(false); onDone(); }} />
+      <CodeSheet
+        visible={codeOpen}
+        onClose={() => setCodeOpen(false)}
+        onUnlocked={() => { setCodeOpen(false); onDone(); }}
+      />
 
       {/* Le pied de page : une seule ligne fine, ses quatre liens separes
           par des points. Il vivait sur trois rangees de tailles differentes. */}
@@ -404,7 +413,7 @@ export function Paywall(
         <Pressable onPress={() => { haptics.tap(); void restorePro(); }} hitSlop={8}>
           <Text variant="label" tone="tertiary">{PURCHASES_ENABLED ? d.pay.restore : d.pay.beta}</Text>
         </Pressable>
-        {PURCHASES_ENABLED && Platform.OS === 'ios' && (
+        {(Platform.OS !== 'ios' || PURCHASES_ENABLED) && (
           <>
             <Text variant="label" tone="tertiary">·</Text>
             <Pressable onPress={() => { void promo(); }} hitSlop={8}>
