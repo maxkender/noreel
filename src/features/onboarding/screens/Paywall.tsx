@@ -22,20 +22,20 @@ import type { PurchasesPackage } from 'react-native-purchases';
 
 const LOCKUP = require('@/assets/brand/lockup.png');
 
-type Plan = 'annual' | 'weekly';
+type Plan = 'annual' | 'monthly';
 
 // Prix de secours, affiches tant que le magasin n'a pas repondu. Ils
 // doivent coller a ceux d'App Store Connect, sinon l'ecran ment pendant la
 // seconde de chargement.
-const FALLBACK = { annual: '49,99 €', weekly: '4,99 €' };
-// L'essai n'existe que sur l'annuel, et il est porte par App Store Connect :
+const FALLBACK = { annual: '29,99 €', monthly: '7,99 €' };
+// L'essai existe sur les DEUX forfaits, et il est porte par les magasins :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
 export const TRIAL_DAYS = 3;
 // Le prix reel du magasin, releve au tableau de bord : la valeur de
 // secours servait 44,99 alors que la fiche dit 49,99, et c'est elle qu'on
 // affiche tant que le magasin ne repond pas.
-const ANNUAL_EUR = 49.99;
+const ANNUAL_EUR = 29.99;
 
 /**
  * Le montant d'un forfait, en nombre.
@@ -54,10 +54,10 @@ function euros(p: PurchasesPackage | undefined, fallback: number): number {
 function money(n: number, symbol = '€'): string {
   return `${n.toFixed(2).replace('.', ',')} ${symbol}`;
 }
-const WEEKLY_EUR = 4.99;
-// 52 semaines, pas 12 mois : c'est la comparaison honnete face a un
-// hebdomadaire, et c'est elle qui rend l'annuel evident.
-const SAVING = Math.round((1 - ANNUAL_EUR / (WEEKLY_EUR * 52)) * 100);
+const MONTHLY_EUR = 7.99;
+// Douze mensualites face a un an : la comparaison honnete, et c'est elle qui
+// rend l'annuel evident.
+const SAVING = Math.round((1 - ANNUAL_EUR / (MONTHLY_EUR * 12)) * 100);
 
 /**
  * Ce qu'on obtient — et rien sur ce qu'on n'a pas.
@@ -172,8 +172,8 @@ export function Paywall(
   // l'ordre se change au tableau de bord sans prevenir.
   const find = (k: string) => packs.find((x) => x.identifier === k);
   const annual = find('$rc_annual');
-  const weekly = find('$rc_weekly');
-  const chosen = plan === 'annual' ? annual : weekly;
+  const monthly = find('$rc_monthly');
+  const chosen = plan === 'annual' ? annual : monthly;
   const price = (p?: PurchasesPackage, f?: string) => p?.product.priceString ?? f ?? '';
 
 
@@ -225,7 +225,7 @@ export function Paywall(
         setPacks(r.offering.availablePackages);
         setStoreDown(false);
         setFail(null);
-        pack = r.offering.availablePackages.find((x) => x.identifier === (plan === 'annual' ? '$rc_annual' : '$rc_weekly'));
+        pack = r.offering.availablePackages.find((x) => x.identifier === (plan === 'annual' ? '$rc_annual' : '$rc_monthly'));
       } else {
         setFail(r.fail);
         void appUserId().then(setWho);
@@ -242,7 +242,7 @@ export function Paywall(
       setPro(true);
       // La frise promet « jour 2 : on te previent ». C'est ici qu'on tient la
       // promesse, et seulement sur le forfait qui a un essai.
-      if (plan === 'annual') void scheduleTrialReminder();
+      void scheduleTrialReminder();
       onDone();
       return;
     }
@@ -324,7 +324,7 @@ export function Paywall(
                 m: money(euros(annual, ANNUAL_EUR) / 12),
                 y: price(annual, FALLBACK.annual),
               })
-              : t(d.pay.priceWeek, { p: price(weekly, FALLBACK.weekly) })}
+              : t(d.pay.priceMonthly, { n: TRIAL_DAYS, p: price(monthly, FALLBACK.monthly) })}
           </Text>
         ) : (
           <Animated.View entering={FadeIn.duration(320)}>
@@ -384,11 +384,11 @@ export function Paywall(
           onPress={() => { haptics.tick(); setPlan('annual'); }}
         />
         <PlanRow
-          label={d.pay.weekly}
-          price={t(d.pay.perWeek, { p: price(weekly, FALLBACK.weekly) })}
+          label={d.pay.monthly}
+          price={t(d.pay.perMonth, { p: price(monthly, FALLBACK.monthly) })}
           sub={d.pay.weeklyNote}
-          on={plan === 'weekly'}
-          onPress={() => { haptics.tick(); setPlan('weekly'); }}
+          on={plan === 'monthly'}
+          onPress={() => { haptics.tick(); setPlan('monthly'); }}
         />
       </View>
 
@@ -455,18 +455,11 @@ function Trial({ plan }: { plan: Plan }) {
     laisserait croire le contraire, et le prelevement se decouvrirait le jour
     meme.
   */
-  const weekly = plan === 'weekly';
-  const steps: [typeof Bell, string, string, boolean][] = weekly
-    ? [
-      [Unlock, d.pay.weekToday, d.pay.weekTodayBody, true],
-      [CreditCard, d.pay.weekEvery, d.pay.weekEveryBody, true],
-      [Bell, d.pay.weekStop, d.pay.weekStopBody, false],
-    ]
-    : [
-      [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
-      [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
-      [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
-    ];
+  const steps: [typeof Bell, string, string, boolean][] = [
+    [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
+    [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
+    [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
+  ];
 
   return (
     <View style={st.trial}>
@@ -476,8 +469,8 @@ function Trial({ plan }: { plan: Plan }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <Text variant="label" color={weekly ? c.ember : c.accent}>
-        {weekly ? d.pay.weekBanner : t(d.pay.trialBanner, { n: TRIAL_DAYS })}
+      <Text variant="label" color={c.accent}>
+        {t(plan === 'monthly' ? d.pay.trialBannerMonthly : d.pay.trialBanner, { n: TRIAL_DAYS })}
       </Text>
 
       <View style={st.steps}>

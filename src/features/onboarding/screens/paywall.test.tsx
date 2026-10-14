@@ -45,20 +45,23 @@ it('ne referme pas l’ecran en silence quand il n’y a rien a vendre', async (
 });
 
 it('change le prix sous le bouton quand on change de forfait', () => {
-  // L'essai est ecrit dans la frise ET sous le bouton ; en hebdomadaire, le
-  // prix sous le bouton passe a la semaine.
+  // L'essai est ecrit dans la frise ET sous le bouton ; en mensuel, le prix
+  // sous le bouton passe au mois, et l'essai y est toujours annonce.
   render(<Paywall onDone={() => {}} exitDelay={0} />);
   expect(screen.getAllByText(/essai|trial/i).length).toBeGreaterThanOrEqual(1);
-  fireEvent.press(screen.getByText(dict.pay.weekly));
-  expect(screen.getAllByText(/par semaine|per week|\/ ?week/i).length).toBeGreaterThanOrEqual(1);
+  fireEvent.press(screen.getByText(dict.pay.monthly));
+  expect(screen.getAllByText(/\/mois|\/month/i).length).toBeGreaterThanOrEqual(1);
+  expect(screen.getByText(/essai gratuit, puis|free trial, then/i)).toBeTruthy();
 });
 
 it('garde la frise de l’essai, quel que soit le forfait', () => {
+  // Les deux forfaits ont un essai : la frise reste la meme, seul son titre
+  // dit sur quel forfait il porte.
   render(<Paywall onDone={() => {}} exitDelay={0} />);
   expect(screen.getByText(dict.pay.trialTodayBody)).toBeTruthy();
-  fireEvent.press(screen.getByText(dict.pay.weekly));
-  expect(screen.getByText(dict.pay.weekTodayBody)).toBeTruthy();
-  expect(screen.queryByText(dict.pay.trialTodayBody)).toBeNull();
+  fireEvent.press(screen.getByText(dict.pay.monthly));
+  expect(screen.getByText(dict.pay.trialTodayBody)).toBeTruthy();
+  expect(screen.queryByText(dict.pay.weekTodayBody)).toBeNull();
 });
 
 it('la croix arrive apres le delai, jamais avant', () => {

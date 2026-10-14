@@ -86,7 +86,7 @@ export function WinBack({ visible, onClose }: { visible: boolean; onClose: () =>
               {dict.ui.wbTitle}
             </Text>
             <View style={st.priceRow}>
-              <Text variant="hero" color={INK}>{pack?.product.priceString ?? '24,99 €'}</Text>
+              <Text variant="hero" color={INK}>{pack?.product.priceString ?? '14,99 €'}</Text>
               <Text variant="lead" color={withAlpha(INK, 0.7)}>{dict.ui.wbPerYear}</Text>
             </View>
             <Text variant="lead" color={withAlpha(INK, 0.75)} style={st.body}>
