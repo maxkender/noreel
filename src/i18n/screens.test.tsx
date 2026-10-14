@@ -75,7 +75,8 @@ describe.each(LANGS)('en %s', (lang) => {
 
   it('la visite guidee, dans la langue', async () => {
     await resetTours();
-    render(<TabTour tab="block" onDone={noop} />);
+    // Seul l'accueil lance sa visite de lui-meme : celle du blocage se rejoue.
+    render(<TabTour tab="block" replay={{ id: 'block', n: 1 }} onDone={noop} />);
     expect(await screen.findByText(d.tour.b1, {}, { timeout: 3000 })).toBeTruthy();
   });
 

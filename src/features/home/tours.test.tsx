@@ -56,3 +56,10 @@ it('se rejoue quand on le demande', async () => {
   render(<TabTour tab="block" replay={{ id: 'block', n: 1 }} onDone={() => {}} />);
   expect(await screen.findByText(dict.tour.b1, {}, { timeout: 3000 })).toBeTruthy();
 });
+
+it("ne se lance d'elle-meme que sur l'accueil", async () => {
+  await resetTours();
+  render(<TabTour tab="block" onDone={() => {}} />);
+  await new Promise((r) => setTimeout(r, 300));
+  expect(screen.queryByTestId(/tour-/)).toBeNull();
+});
