@@ -472,7 +472,7 @@ export const hu: Dict = {
     trialToday: 'Ma',
     trialTodayBody: 'Minden feloldódik. Nem fizetsz semmit.',
     trialWarn: '2. nap',
-    trialWarnBody: 'Szólunk: 24 óra van hátra.',
+    trialWarnBody: "A beállítások mutatják a hátralévő időt.",
     trialCharge: '{n}. nap',
     trialChargeBody: 'Elindul az előfizetésed, hacsak le nem mondtad.',
     weekToday: 'Ma',
@@ -734,6 +734,12 @@ export const hu: Dict = {
   },
 
   prefs: {
+    subscription: "Előfizetés",
+    trialDays: "Az ingyenes próbaidőszakod {n} nap múlva lejár",
+    trialOneDay: "Az ingyenes próbaidőszakod 1 nap múlva lejár",
+    trialHours: "Az ingyenes próbaidőszakod {h} óra múlva lejár",
+    proActive: "Az UnSwipe Pro aktív",
+    manageSub: "Előfizetés kezelése vagy lemondása",
     title: 'Beállítások',
     system: 'Rendszer',
     screenTime: 'Képernyőidő',
@@ -990,7 +996,7 @@ export const hu: Dict = {
   trial: {
     giftTitle: 'Szeretnénk, ha ingyen kipróbálnád az UnSwipe-ot.',
     giftBody: '{n} nap, hogy mindent kipróbálj. Ma nem fizetsz semmit.',
-    bellTitle: 'Emlékeztetőt küldünk 1 nappal a próbaidő lejárta előtt.',
+    bellTitle: "A beállítások mindig mutatják, mennyi van hátra a próbaidőszakból.",
     bellBody: 'Nincs meglepetés: te döntesz, mielőtt terhelnénk.',
   },
 };

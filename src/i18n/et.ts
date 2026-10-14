@@ -472,7 +472,7 @@ export const et: Dict = {
     trialToday: 'Täna',
     trialTodayBody: 'Kõik avaneb. Sa ei maksa midagi.',
     trialWarn: '2. päev',
-    trialWarnBody: 'Anname sulle teada: 24 tundi jäänud.',
+    trialWarnBody: "Seadetes on näha järelejäänud aeg.",
     trialCharge: '{n}. päev',
     trialChargeBody: 'Su tellimus algab, kui sa pole tühistanud.',
     weekToday: 'Täna',
@@ -734,6 +734,12 @@ export const et: Dict = {
   },
 
   prefs: {
+    subscription: "Tellimus",
+    trialDays: "Sinu tasuta prooviperiood lõpeb {n} päeva pärast",
+    trialOneDay: "Sinu tasuta prooviperiood lõpeb 1 päeva pärast",
+    trialHours: "Sinu tasuta prooviperiood lõpeb {h} h pärast",
+    proActive: "UnSwipe Pro on aktiivne",
+    manageSub: "Halda või tühista tellimus",
     title: 'Seaded',
     system: 'Süsteem',
     screenTime: 'Ekraaniaeg',
@@ -990,7 +996,7 @@ export const et: Dict = {
   trial: {
     giftTitle: 'Tahame, et prooviksid UnSwipe’i tasuta.',
     giftBody: '{n} päeva, et kõike proovida. Täna ei maksa sa midagi.',
-    bellTitle: 'Saadame sulle meeldetuletuse 1 päev enne proovi lõppu.',
+    bellTitle: "Seadetes on alati näha, kui palju prooviperioodist on jäänud.",
     bellBody: 'Ei mingeid üllatusi: sina otsustad, enne kui raha võetakse.',
   },
 };

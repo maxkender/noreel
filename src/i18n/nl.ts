@@ -472,7 +472,7 @@ export const nl: Dict = {
     trialToday: 'Vandaag',
     trialTodayBody: 'Alles gaat open. Je betaalt niets.',
     trialWarn: 'Dag 2',
-    trialWarnBody: 'We waarschuwen je: nog 24 uur.',
+    trialWarnBody: "Je instellingen tonen de resterende tijd.",
     trialCharge: 'Dag {n}',
     trialChargeBody: 'Je abonnement start, tenzij je hebt opgezegd.',
     weekToday: 'Vandaag',
@@ -734,6 +734,12 @@ export const nl: Dict = {
   },
 
   prefs: {
+    subscription: "Abonnement",
+    trialDays: "Je gratis proefperiode eindigt over {n} dagen",
+    trialOneDay: "Je gratis proefperiode eindigt over 1 dag",
+    trialHours: "Je gratis proefperiode eindigt over {h} u",
+    proActive: "UnSwipe Pro is actief",
+    manageSub: "Abonnement beheren of opzeggen",
     title: 'Instellingen',
     system: 'Systeem',
     screenTime: 'Schermtijd',
@@ -990,7 +996,7 @@ export const nl: Dict = {
   trial: {
     giftTitle: 'We willen dat je UnSwipe gratis probeert.',
     giftBody: '{n} dagen om alles uit te proberen. Je betaalt vandaag niets.',
-    bellTitle: 'We sturen je 1 dag voor het einde van je proefperiode een herinnering.',
+    bellTitle: "Je instellingen tonen altijd hoeveel tijd je proefperiode nog heeft.",
     bellBody: 'Geen verrassingen: jij beslist voordat er iets wordt afgeschreven.',
   },
 };

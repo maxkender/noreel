@@ -472,7 +472,7 @@ export const sk: Dict = {
     trialToday: 'Dnes',
     trialTodayBody: 'Všetko sa odomkne. Neplatíš nič.',
     trialWarn: 'Deň 2',
-    trialWarnBody: 'Dáme ti vedieť: ostáva 24 hodín.',
+    trialWarnBody: "Nastavenia ukazujú zostávajúci čas.",
     trialCharge: 'Deň {n}',
     trialChargeBody: 'Začína predplatné, ak nebolo medzitým zrušené.',
     weekToday: 'Dnes',
@@ -734,6 +734,12 @@ export const sk: Dict = {
   },
 
   prefs: {
+    subscription: "Predplatné",
+    trialDays: "Tvoja skúšobná verzia zadarmo končí o {n} dní",
+    trialOneDay: "Tvoja skúšobná verzia zadarmo končí o 1 deň",
+    trialHours: "Tvoja skúšobná verzia zadarmo končí o {h} h",
+    proActive: "UnSwipe Pro je aktívne",
+    manageSub: "Spravovať alebo zrušiť predplatné",
     title: 'Nastavenia',
     system: 'Systém',
     screenTime: 'Čas pred obrazovkou',
@@ -990,7 +996,7 @@ export const sk: Dict = {
   trial: {
     giftTitle: 'Chceme ti dať UnSwipe na vyskúšanie zadarmo.',
     giftBody: 'Počas {n} dní si vyskúšaš všetko. Dnes neplatíš nič.',
-    bellTitle: 'Pripomienku ti pošleme 1 deň pred koncom skúšky.',
+    bellTitle: "Nastavenia vždy ukazujú, koľko času zo skúšobnej verzie zostáva.",
     bellBody: 'Žiadne prekvapenia: rozhodneš sa skôr, než ti niečo strhneme.',
   },
 };

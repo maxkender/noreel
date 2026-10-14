@@ -472,7 +472,7 @@ export const ro: Dict = {
     trialToday: 'Azi',
     trialTodayBody: 'Totul se deblochează. Nu plătești nimic.',
     trialWarn: 'Ziua 2',
-    trialWarnBody: 'Te anunțăm: mai ai 24 de ore.',
+    trialWarnBody: "Setările arată timpul rămas.",
     trialCharge: 'Ziua {n}',
     trialChargeBody: 'Abonamentul începe, dacă nu ai anulat.',
     weekToday: 'Azi',
@@ -734,6 +734,12 @@ export const ro: Dict = {
   },
 
   prefs: {
+    subscription: "Abonament",
+    trialDays: "Perioada ta de probă gratuită se încheie în {n} zile",
+    trialOneDay: "Perioada ta de probă gratuită se încheie în 1 zi",
+    trialHours: "Perioada ta de probă gratuită se încheie în {h} h",
+    proActive: "UnSwipe Pro este activ",
+    manageSub: "Gestionează sau anulează abonamentul",
     title: 'Configurări',
     system: 'Sistem',
     screenTime: 'Timp de utilizare',
@@ -990,7 +996,7 @@ export const ro: Dict = {
   trial: {
     giftTitle: 'Vrem să încerci UnSwipe gratuit.',
     giftBody: '{n} zile ca să testezi tot. Azi nu plătești nimic.',
-    bellTitle: 'Îți trimitem un memento cu 1 zi înainte să se termine proba.',
+    bellTitle: "Setările arată mereu cât timp a mai rămas din perioada de probă.",
     bellBody: 'Fără surprize: decizi înainte să fii taxat.',
   },
 };

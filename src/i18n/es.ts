@@ -472,7 +472,7 @@ export const es: Dict = {
     trialToday: 'Hoy',
     trialTodayBody: 'Se desbloquea todo. No pagas nada.',
     trialWarn: 'Día 2',
-    trialWarnBody: 'Te avisamos: te quedan 24 horas.',
+    trialWarnBody: "Tus ajustes muestran el tiempo restante.",
     trialCharge: 'Día {n}',
     trialChargeBody: 'Empieza tu suscripción, salvo que hayas cancelado.',
     weekToday: 'Hoy',
@@ -734,6 +734,12 @@ export const es: Dict = {
   },
 
   prefs: {
+    subscription: "Suscripción",
+    trialDays: "Tu prueba gratuita termina en {n} días",
+    trialOneDay: "Tu prueba gratuita termina en 1 día",
+    trialHours: "Tu prueba gratuita termina en {h} h",
+    proActive: "UnSwipe Pro está activo",
+    manageSub: "Gestionar o cancelar la suscripción",
     title: 'Ajustes',
     system: 'Sistema',
     screenTime: 'Tiempo de uso',
@@ -990,7 +996,7 @@ export const es: Dict = {
   trial: {
     giftTitle: 'Queremos que pruebes UnSwipe gratis.',
     giftBody: '{n} días para probarlo todo. Hoy no pagas nada.',
-    bellTitle: 'Te enviaremos un recordatorio 1 día antes de que termine tu prueba.',
+    bellTitle: "Tus ajustes siempre muestran cuánto tiempo le queda a tu prueba.",
     bellBody: 'Sin sorpresas: decides antes de que se te cobre.',
   },
 };

@@ -472,7 +472,7 @@ export const ar: Dict = {
     trialToday: 'اليوم',
     trialTodayBody: 'كل شيء يُفتح. لا تدفع شيئًا.',
     trialWarn: 'اليوم 2',
-    trialWarnBody: 'ننبهك: بقيت 24 ساعة.',
+    trialWarnBody: "تعرض إعداداتك الوقت المتبقي.",
     trialCharge: 'اليوم {n}',
     trialChargeBody: 'يبدأ اشتراكك، إلا إذا ألغيت.',
     weekToday: 'اليوم',
@@ -734,6 +734,12 @@ export const ar: Dict = {
   },
 
   prefs: {
+    subscription: "الاشتراك",
+    trialDays: "تنتهي تجربتك المجانية خلال {n} أيام",
+    trialOneDay: "تنتهي تجربتك المجانية خلال يوم واحد",
+    trialHours: "تنتهي تجربتك المجانية خلال {h} ساعة",
+    proActive: "UnSwipe Pro مفعّل",
+    manageSub: "إدارة الاشتراك أو إلغاؤه",
     title: 'الإعدادات',
     system: 'النظام',
     screenTime: 'مدة استخدام الجهاز',
@@ -990,7 +996,7 @@ export const ar: Dict = {
   trial: {
     giftTitle: 'نريدك أن تجرب UnSwipe مجانًا.',
     giftBody: '{n} أيام لتجربة كل شيء. لا تدفع شيئًا اليوم.',
-    bellTitle: 'سنرسل لك تذكيرًا قبل 1 يوم من انتهاء تجربتك.',
+    bellTitle: "تعرض إعداداتك دائمًا الوقت المتبقي من تجربتك.",
     bellBody: 'لا مفاجآت: أنت تقرر قبل أن يُحصّل منك أي مبلغ.',
   },
 };

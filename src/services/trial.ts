@@ -1,24 +1,17 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { dict } from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /*
- * Le rappel avant la fin de l'essai.
+ * La fin de l'essai : une MENTION dans les reglages, jamais une notification.
  *
- * Le paywall annonce « jour 2 : on te previent, il reste 24 h ». Cette
- * phrase est la raison d'etre de ce fichier : une promesse ecrite sur un
- * ecran de vente doit avoir du code derriere elle, sinon c'est une phrase
- * qui vend et qui mente. Un essai dont on decouvre la fin par le
- * prelevement, c'est un remboursement demande et un avis a une etoile.
- *
- * Apple envoie parfois son propre courriel, parfois non, et jamais a une
- * heure qu'on choisit. On programme donc le notre.
+ * Le fondateur ne veut pas de push pour l'essai. Les reglages affichent le
+ * temps qui reste (« se termine dans 1 jour »), lu sur l'abonnement lui-meme.
+ * Les versions precedentes programmaient une notification a 48 h : on
+ * l'annule au demarrage chez ceux qui l'ont encore.
  */
 
 const KEY = 'trial.reminder';
-/** L'essai dure 3 jours ; on previent 24 h avant la fin. */
-const WARN_AFTER_H = 48;
 
 /**
  * Le gestionnaire d'affichage, a poser une fois au demarrage.
@@ -45,43 +38,11 @@ export function startNotifications(): void {
       shouldSetBadge: false,
     }),
   });
+  // Plus de push pour l'essai : on retire celui qu'une ancienne version a pu poser.
+  void cancelTrialReminder().catch(() => {});
 }
 
-/**
- * Programme le rappel, au moment ou l'essai demarre.
- *
- * Idempotent : deux achats, ou un achat puis une restauration, ne doivent
- * pas empiler deux rappels. On garde l'identifiant sur le disque et on
- * annule l'ancien avant d'en poser un nouveau.
- */
-export async function scheduleTrialReminder(): Promise<void> {
-  try {
-    await cancelTrialReminder();
-
-    // Si la personne a refuse les notifications en s'inscrivant, iOS repond
-    // « refuse » sans rien afficher : on n'insiste pas, et on ne casse rien.
-    const { granted, canAskAgain } = await Notifications.getPermissionsAsync();
-    if (!granted) {
-      if (!canAskAgain) return;
-      const ask = await Notifications.requestPermissionsAsync();
-      if (!ask.granted) return;
-    }
-
-    const date = new Date(Date.now() + WARN_AFTER_H * 3600 * 1000);
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: dict.ui.trialTitle,
-        body: dict.ui.trialBody,
-      },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
-    });
-    await AsyncStorage.setItem(KEY, id);
-  } catch {
-    /* Un rappel qu'on n'a pas pu poser ne doit pas faire echouer un achat. */
-  }
-}
-
-/** Annule le rappel : l'abonnement a ete rendu, ou un nouveau va le remplacer. */
+/** Annule le rappel pose par une ancienne version, s'il est encore la. */
 export async function cancelTrialReminder(): Promise<void> {
   const id = await AsyncStorage.getItem(KEY);
   if (!id) return;
@@ -91,4 +52,22 @@ export async function cancelTrialReminder(): Promise<void> {
   } catch {
     /* deja parti, ou jamais pose */
   }
+}
+
+/** Le temps qui reste, sous la forme qu'on affiche. */
+export type TrialLeft = { kind: 'days'; n: number } | { kind: 'day' } | { kind: 'hours'; h: number };
+
+/**
+ * « dans 3 jours », « dans 1 jour », « dans 5 h ».
+ *
+ * Arrondi au plus proche au-dela de 36 h, pour qu'un essai tout neuf de
+ * 3 jours moins une minute dise 3 et non 2. Sous 20 h, on compte en heures :
+ * « dans 1 jour » a 3 h de la fin serait un mensonge par arrondi.
+ */
+export function trialLeft(expires: Date, now: Date = new Date()): TrialLeft {
+  const ms = Math.max(0, expires.getTime() - now.getTime());
+  const H = 3600 * 1000;
+  if (ms >= 36 * H) return { kind: 'days', n: Math.max(2, Math.round(ms / (24 * H))) };
+  if (ms >= 20 * H) return { kind: 'day' };
+  return { kind: 'hours', h: Math.max(1, Math.ceil(ms / H)) };
 }

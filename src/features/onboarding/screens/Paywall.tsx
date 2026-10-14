@@ -16,7 +16,6 @@ import { CodeSheet } from '@/features/onboarding/CodeSheet';
 import {
   PURCHASES_ENABLED, appUserId, buy, currentOffering, redeemCode,
 } from '@/services/purchases';
-import { scheduleTrialReminder } from '@/services/trial';
 import { WinBack, markWinbackSeen, winbackSeen } from './WinBack';
 import type { PurchasesPackage } from 'react-native-purchases';
 
@@ -240,9 +239,7 @@ export function Paywall(
     setBusy(false);
     if (r === 'bought') {
       setPro(true);
-      // La frise promet « jour 2 : on te previent ». C'est ici qu'on tient la
-      // promesse, et seulement sur le forfait qui a un essai.
-      void scheduleTrialReminder();
+      // Pas de notification pour l'essai : le temps qui reste s'affiche dans les reglages.
       onDone();
       return;
     }

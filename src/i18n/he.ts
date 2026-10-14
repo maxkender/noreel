@@ -472,7 +472,7 @@ export const he: Dict = {
     trialToday: 'היום',
     trialTodayBody: 'הכול נפתח. לא משלמים כלום.',
     trialWarn: 'יום 2',
-    trialWarnBody: 'אנחנו מזכירים: נשארו 24 שעות.',
+    trialWarnBody: "ההגדרות מציגות את הזמן שנותר.",
     trialCharge: 'יום {n}',
     trialChargeBody: 'המנוי מתחיל, אלא אם ביטלת.',
     weekToday: 'היום',
@@ -734,6 +734,12 @@ export const he: Dict = {
   },
 
   prefs: {
+    subscription: "מינוי",
+    trialDays: "תקופת הניסיון החינמית שלך מסתיימת בעוד {n} ימים",
+    trialOneDay: "תקופת הניסיון החינמית שלך מסתיימת בעוד יום אחד",
+    trialHours: "תקופת הניסיון החינמית שלך מסתיימת בעוד {h} שעות",
+    proActive: "UnSwipe Pro פעיל",
+    manageSub: "ניהול או ביטול המינוי",
     title: 'הגדרות',
     system: 'מערכת',
     screenTime: 'זמן מסך',
@@ -990,7 +996,7 @@ export const he: Dict = {
   trial: {
     giftTitle: 'אנחנו רוצים לתת לך לנסות את UnSwipe בחינם.',
     giftBody: '{n} ימים לנסות הכול. היום לא משלמים כלום.',
-    bellTitle: 'נשלח לך תזכורת 1 יום לפני סוף תקופת הניסיון.',
+    bellTitle: "ההגדרות תמיד מציגות כמה זמן נותר לתקופת הניסיון.",
     bellBody: 'בלי הפתעות: ההחלטה שלך, לפני כל חיוב.',
   },
 };

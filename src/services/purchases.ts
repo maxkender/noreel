@@ -157,6 +157,27 @@ export async function customerInfo(): Promise<CustomerInfo | null> {
   }
 }
 
+/** Ce que les reglages disent de l'abonnement. */
+export type SubStatus = {
+  /** En essai gratuit, sur ce droit d'acces. */
+  trial: boolean;
+  /** Fin de la periode en cours (de l'essai, s'il y en a un), ou null pour un achat a vie. */
+  expires: Date | null;
+  /** La page du magasin pour gerer ou annuler. */
+  manageUrl: string | null;
+};
+
+/** Lit l'abonnement actif tel que le magasin le decrit ; null sans abonnement. */
+export function subStatus(info: CustomerInfo | null): SubStatus | null {
+  const e = info?.entitlements.active[ENTITLEMENT];
+  if (!e) return null;
+  return {
+    trial: e.periodType === 'TRIAL',
+    expires: e.expirationDate ? new Date(e.expirationDate) : null,
+    manageUrl: info?.managementURL ?? null,
+  };
+}
+
 export type BuyResult = 'bought' | 'cancelled' | 'failed' | 'unavailable';
 
 export async function buy(pack: PurchasesPackage): Promise<BuyResult> {

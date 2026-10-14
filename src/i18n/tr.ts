@@ -472,7 +472,7 @@ export const tr: Dict = {
     trialToday: 'Bugün',
     trialTodayBody: 'Her şey açılır. Hiçbir şey ödemezsin.',
     trialWarn: '2. gün',
-    trialWarnBody: 'Seni uyarırız: 24 saatin kaldı.',
+    trialWarnBody: "Ayarların kalan süreyi gösterir.",
     trialCharge: '{n}. gün',
     trialChargeBody: 'İptal etmediysen aboneliğin başlar.',
     weekToday: 'Bugün',
@@ -734,6 +734,12 @@ export const tr: Dict = {
   },
 
   prefs: {
+    subscription: "Abonelik",
+    trialDays: "Ücretsiz denemen {n} gün içinde bitiyor",
+    trialOneDay: "Ücretsiz denemen 1 gün içinde bitiyor",
+    trialHours: "Ücretsiz denemen {h} saat içinde bitiyor",
+    proActive: "UnSwipe Pro etkin",
+    manageSub: "Aboneliği yönet veya iptal et",
     title: 'Ayarlar',
     system: 'Sistem',
     screenTime: 'Ekran Süresi',
@@ -990,7 +996,7 @@ export const tr: Dict = {
   trial: {
     giftTitle: 'UnSwipe’ı ücretsiz denemeni istiyoruz.',
     giftBody: 'Her şeyi denemek için {n} gün. Bugün hiçbir şey ödemezsin.',
-    bellTitle: 'Denemen bitmeden 1 gün önce sana bir hatırlatma göndereceğiz.',
+    bellTitle: "Ayarların, denemenin bitmesine ne kadar kaldığını her zaman gösterir.",
     bellBody: 'Sürpriz yok: ödeme alınmadan önce sen karar verirsin.',
   },
 };

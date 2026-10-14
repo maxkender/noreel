@@ -472,7 +472,7 @@ export const sr: Dict = {
     trialToday: 'Danas',
     trialTodayBody: 'Sve se otključava. Ne plaćaš ništa.',
     trialWarn: 'Dan 2',
-    trialWarnBody: 'Upozoravamo te: ostalo je 24 h.',
+    trialWarnBody: "Подешавања приказују преостало време.",
     trialCharge: 'Dan {n}',
     trialChargeBody: 'Pretplata počinje, osim ako je ne otkažeš.',
     weekToday: 'Danas',
@@ -734,6 +734,12 @@ export const sr: Dict = {
   },
 
   prefs: {
+    subscription: "Претплата",
+    trialDays: "Твој бесплатни пробни период истиче за {n} дана",
+    trialOneDay: "Твој бесплатни пробни период истиче за 1 дан",
+    trialHours: "Твој бесплатни пробни период истиче за {h} ч",
+    proActive: "UnSwipe Pro је активан",
+    manageSub: "Управљај претплатом или је откажи",
     title: 'Podešavanja',
     system: 'Sistem',
     screenTime: 'Vreme pred ekranom',
@@ -990,7 +996,7 @@ export const sr: Dict = {
   trial: {
     giftTitle: 'Želimo da probaš UnSwipe besplatno.',
     giftBody: '{n} dana da probaš sve. Danas ne plaćaš ništa.',
-    bellTitle: 'Poslaćemo ti podsetnik 1 dan pre isteka probe.',
+    bellTitle: "Подешавања увек приказују колико је времена остало до краја пробног периода.",
     bellBody: 'Bez iznenađenja: odlučuješ pre nego što ti se naplati.',
   },
 };

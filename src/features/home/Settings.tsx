@@ -25,6 +25,13 @@ import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
 } from '@/services/shield.real';
+import { customerInfo, subStatus, type SubStatus } from '@/services/purchases';
+import { trialLeft } from '@/services/trial';
+
+/** Ou gerer l'abonnement quand le magasin n'a pas donne de lien. */
+const MANAGE_FALLBACK = Platform.OS === 'ios'
+  ? 'https://apps.apple.com/account/subscriptions'
+  : 'https://play.google.com/store/account/subscriptions?package=com.vikstudios.noreel';
 
 /*
  * Les jours, dans l'ordre ou on les lit — et numerotes comme Date.getDay les
@@ -84,6 +91,23 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
   useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
 
+  /*
+    L'abonnement, lu a chaque ouverture.
+    C'est ICI que l'essai dit combien de temps il lui reste — pas par une
+    notification. Rien ne s'affiche sans abonnement du magasin (le code
+    d'acces des examinateurs n'en a pas).
+  */
+  const [sub, setSub] = useState<SubStatus | null>(null);
+  useEffect(() => { if (visible) void customerInfo().then((i) => setSub(subStatus(i))); }, [visible]);
+  const subLabel = (() => {
+    if (!sub) return null;
+    if (!sub.trial || !sub.expires) return d.prefs.proActive;
+    const left = trialLeft(sub.expires);
+    if (left.kind === 'days') return t(d.prefs.trialDays, { n: left.n });
+    if (left.kind === 'day') return d.prefs.trialOneDay;
+    return t(d.prefs.trialHours, { h: left.h });
+  })();
+
   return (
     <Modal
       visible={visible || closing}
@@ -120,6 +144,16 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
           </View>
 
           <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+            {subLabel && (
+              <>
+                <Group title={d.prefs.subscription} />
+                <Line
+                  label={subLabel}
+                  sub={d.prefs.manageSub}
+                  onPress={() => { void Linking.openURL(sub?.manageUrl ?? MANAGE_FALLBACK).catch(() => {}); }}
+                />
+              </>
+            )}
             {Platform.OS === 'ios' && (
               <>
             <Group title={d.block.title} />

@@ -492,7 +492,7 @@ export const fr = {
     trialToday: `Aujourd'hui`,
     trialTodayBody: 'Tout se débloque. Tu ne paies rien.',
     trialWarn: 'Jour 2',
-    trialWarnBody: 'On te prévient : il te reste 24 h.',
+    trialWarnBody: "Tes réglages affichent le temps qui reste.",
     trialCharge: 'Jour {n}',
     trialChargeBody: `L'abonnement commence, sauf si tu as annulé.`,
     weekToday: 'Aujourd’hui',
@@ -754,6 +754,12 @@ export const fr = {
   },
 
   prefs: {
+    subscription: "Abonnement",
+    trialDays: "Ton essai gratuit se termine dans {n} jours",
+    trialOneDay: "Ton essai gratuit se termine dans 1 jour",
+    trialHours: "Ton essai gratuit se termine dans {h} h",
+    proActive: "UnSwipe Pro est actif",
+    manageSub: "Gérer ou annuler l’abonnement",
     title: 'Paramètres',
     system: 'Système',
     screenTime: 'Temps d’écran',
@@ -1010,7 +1016,7 @@ export const fr = {
   trial: {
     giftTitle: 'On veut que tu essaies UnSwipe gratuitement.',
     giftBody: `{n}${NBSP}jours pour tout tester. Tu ne paies rien aujourd’hui.`,
-    bellTitle: `On t’enverra un rappel 1${NBSP}jour avant la fin de ton essai.`,
+    bellTitle: "Tes réglages affichent toujours le temps qui reste avant la fin de ton essai.",
     bellBody: `Pas de surprise${NNBSP}: tu décides avant d’être prélevé.`,
   },
 } as const;

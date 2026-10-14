@@ -472,7 +472,7 @@ export const fi: Dict = {
     trialToday: 'Tänään',
     trialTodayBody: 'Kaikki avautuu. Et maksa mitään.',
     trialWarn: 'Päivä 2',
-    trialWarnBody: 'Muistutamme sinua: 24 tuntia jäljellä.',
+    trialWarnBody: "Asetuksissa näkyy jäljellä oleva aika.",
     trialCharge: 'Päivä {n}',
     trialChargeBody: 'Tilauksesi alkaa, ellet peruuttanut.',
     weekToday: 'Tänään',
@@ -734,6 +734,12 @@ export const fi: Dict = {
   },
 
   prefs: {
+    subscription: "Tilaus",
+    trialDays: "Ilmainen kokeilusi päättyy {n} päivän päästä",
+    trialOneDay: "Ilmainen kokeilusi päättyy 1 päivän päästä",
+    trialHours: "Ilmainen kokeilusi päättyy {h} tunnin päästä",
+    proActive: "UnSwipe Pro on käytössä",
+    manageSub: "Hallitse tai peru tilaus",
     title: 'Asetukset',
     system: 'Järjestelmä',
     screenTime: 'Ruutuaika',
@@ -990,7 +996,7 @@ export const fi: Dict = {
   trial: {
     giftTitle: 'Haluamme, että kokeilet UnSwipea ilmaiseksi.',
     giftBody: '{n} päivää aikaa kokeilla kaikkea. Et maksa tänään mitään.',
-    bellTitle: 'Lähetämme muistutuksen 1 päivä ennen kokeilusi päättymistä.',
+    bellTitle: "Asetuksissa näkyy aina, paljonko kokeilua on jäljellä.",
     bellBody: 'Ei yllätyksiä: sinä päätät ennen veloitusta.',
   },
 };

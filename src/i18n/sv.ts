@@ -471,7 +471,7 @@ export const sv: Dict = {
     trialToday: 'I dag',
     trialTodayBody: 'Allt låses upp. Du betalar inget.',
     trialWarn: 'Dag 2',
-    trialWarnBody: 'Vi säger till: 24 timmar kvar.',
+    trialWarnBody: "Dina inställningar visar tiden som är kvar.",
     trialCharge: 'Dag {n}',
     trialChargeBody: 'Din prenumeration börjar, om du inte har avslutat.',
     weekToday: 'I dag',
@@ -733,6 +733,12 @@ export const sv: Dict = {
   },
 
   prefs: {
+    subscription: "Prenumeration",
+    trialDays: "Din gratis provperiod slutar om {n} dagar",
+    trialOneDay: "Din gratis provperiod slutar om 1 dag",
+    trialHours: "Din gratis provperiod slutar om {h} h",
+    proActive: "UnSwipe Pro är aktivt",
+    manageSub: "Hantera eller avsluta prenumerationen",
     title: 'Inställningar',
     system: 'System',
     screenTime: 'Skärmtid',
@@ -988,7 +994,7 @@ export const sv: Dict = {
   trial: {
     giftTitle: 'Vi vill att du provar UnSwipe gratis.',
     giftBody: '{n} dagar att testa allt. Du betalar inget i dag.',
-    bellTitle: 'Vi skickar en påminnelse 1 dag innan provperioden tar slut.',
+    bellTitle: "Dina inställningar visar alltid hur lång tid som är kvar av provperioden.",
     bellBody: 'Inga överraskningar: du bestämmer innan något dras.',
   },
 };
