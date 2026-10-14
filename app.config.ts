@@ -52,7 +52,14 @@ const config: ExpoConfig = {
     // expo-sensors ajoute la reconnaissance d'activite (podometre) a son manifeste.
     // On ne s'en sert pas (seulement DeviceMotion pour l'inclinaison), et Google
     // classe toute app qui la declare comme « app de sante ».
-    blockedPermissions: ['android.permission.ACTIVITY_RECOGNITION'],
+    // Les autres viennent des bibliotheques par defaut et ne servent a rien ici :
+    // pas de fenetre par-dessus les autres apps, pas d'acces au stockage partage.
+    blockedPermissions: [
+      'android.permission.ACTIVITY_RECOGNITION',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+    ],
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: NIGHT,
