@@ -14,7 +14,7 @@ import { Screen } from '@/components/Screen';
 import { SelectCard } from '@/components/SelectCard';
 import { Text } from '@/components/type/Text';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { FaceCloud } from '@/components/FaceCloud';
+import { FaceWall } from '@/components/FaceCloud';
 import { MockFeed, MockTabBar } from '@/components/MockFeed';
 import { haptics } from '@/lib/haptics';
 import { track } from '@/services';
@@ -383,12 +383,11 @@ export function RateAsk({ onNext }: P) {
       onPress={() => { void ask(); }}
       secondary={d.rate.later}
       onSecondary={onNext}
-      center
       hue="accent"
     >
-      {/* Des ronds qui flottent se lisent comme des gens : c'est le seul point de cet ecran. */}
-      <View style={st.cloud}>
-        <FaceCloud height={280} />
+      {/* Les visages EN HAUT, en mosaique : on voit des gens avant de lire. */}
+      <View style={{ marginTop: space.lg }}>
+        <FaceWall />
       </View>
 
       <Animated.View entering={FadeIn.delay(600).duration(520)} style={st.stars}>
@@ -435,7 +434,7 @@ const sheet = () => StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.7, shadowRadius: 26,
     shadowOffset: { width: 0, height: 12 },
   },
-  stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
+  stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm, marginTop: space.xl },
   gaugeStage: { height: 200, alignItems: 'center', justifyContent: 'center' },
   wordSlot: { height: 24, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },
   slideHit: { alignSelf: 'stretch', height: 56, justifyContent: 'center' },
@@ -453,10 +452,5 @@ const sheet = () => StyleSheet.create({
   stepLabels: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignSelf: 'stretch', paddingHorizontal: space.lg, marginTop: space.xs,
-  },
-  cloud: { alignSelf: 'stretch', justifyContent: 'center' },
-  cloudMid: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
   },
 });

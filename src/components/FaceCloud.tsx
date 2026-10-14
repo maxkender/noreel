@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
-  Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming,
+  Easing, FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
@@ -144,3 +144,35 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   photo: { width: '100%', height: '100%' },
 });
+
+/*
+ * La communaute, en MOSAIQUE : deux rangees de portraits aux coins arrondis,
+ * posees en haut de l'ecran. Le nuage en anneau laissait un trou au milieu
+ * depuis que la mascotte est partie, et un cercle se lit comme un schema.
+ * Chaque portrait arrive a son tour, en fondu : pas de mouvement continu.
+ */
+export function FaceWall() {
+  const c = useColors();
+  const { width } = useWindowDimensions();
+  const cols = 5;
+  const gap = 8;
+  const tile = Math.min(64, Math.floor((width - 2 * 20 - (cols - 1) * gap) / cols));
+  const rows = [FACES.slice(0, cols), FACES.slice(cols, cols * 2)];
+  return (
+    <View style={{ gap, alignItems: 'center' }} pointerEvents="none">
+      {rows.map((row, r) => (
+        <View key={r} style={{ flexDirection: 'row', gap, marginLeft: r === 1 ? tile / 2 : 0, marginRight: r === 1 ? 0 : tile / 2 }}>
+          {row.map((src, i) => (
+            <Animated.View key={i} entering={FadeIn.delay(80 + (r * cols + i) * 45).duration(320)}>
+              <Image
+                source={src}
+                style={{ width: tile, height: tile, borderRadius: 16, borderWidth: 1, borderColor: withAlpha(c.mist, 0.12) }}
+                contentFit="cover"
+              />
+            </Animated.View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}

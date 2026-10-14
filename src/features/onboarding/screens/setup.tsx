@@ -290,7 +290,8 @@ export function PromiseScreen({ onNext }: P) {
         rappelle ce qu'il y a a reprendre, en petit : ce n'est plus le sujet
         de l'ecran, c'est sa raison.
       */}
-      <Animated.View entering={FadeIn.delay(200).duration(520)}>
+      {/* Plus bas : sans l'image du haut, tout collait au bord de l'ecran. */}
+      <Animated.View entering={FadeIn.delay(200).duration(520)} style={{ marginTop: space.xxl * 2 }}>
         <Text variant="label" color={c.accent} style={st.center}>
           {t(d.ob.promiseKick, { y: years }).toUpperCase()}
         </Text>
@@ -309,7 +310,6 @@ export function PromiseScreen({ onNext }: P) {
 
 const sheet = (c: Palette) => StyleSheet.create({
   center: { textAlign: 'center' },
-  mascot: { alignItems: 'center', marginBottom: space.lg },
   aside: { marginBottom: space.xl },
   // Les lignes deja ecrites reculent d'un cran : l'oeil suit celle qui
   // s'ecrit, sans perdre ce qui precede.

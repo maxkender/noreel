@@ -31,7 +31,8 @@ export function TabTour({
     return () => { alive = false; };
   }, [tab, seen]);
 
-  const show: TourId | null = replay ? replay.id : (tab !== 'account' && seen[tab] === false ? tab : null);
+  // La visite ne se lance d'elle-meme QUE sur l'accueil : trois etapes, et c'est tout.
+  const show: TourId | null = replay ? replay.id : (tab === 'home' && seen[tab] === false ? tab : null);
   if (!show) return null;
   const done = () => {
     void markTourSeen(show);
@@ -43,8 +44,6 @@ export function TabTour({
     home: [
       { target: 'home-apps', title: d.tour.h1, body: d.tour.h1b },
       { target: ['home-open', 'home-apps'], title: d.tour.h2, body: d.tour.h2b },
-      // Le badge s'en va une fois les apps posees : l'etape avec lui.
-      { target: 'home-addHome', title: d.tour.h3, body: d.tour.h3b, optional: true },
       { target: ['home-blockReal', 'nav-block'], title: d.tour.h4, body: d.tour.h4b, optional: true },
     ],
     block: [

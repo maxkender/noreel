@@ -10,7 +10,7 @@
  */
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { dict } from '@/i18n';
-import { Paywall } from './Paywall';
+import { Paywall, hasTrial } from './Paywall';
 
 jest.mock('react-native-purchases', () => ({
   __esModule: true,
@@ -73,4 +73,20 @@ it('la croix arrive apres le delai, jamais avant', () => {
   act(() => { jest.advanceTimersByTime(200); });
   expect(screen.getByTestId('paywall-close')).toBeTruthy();
   jest.useRealTimers();
+});
+
+describe("l'essai, lu sur le produit (test A/B sans essai)", () => {
+  const pack = (introPrice: unknown) => ({ product: { introPrice } }) as never;
+  it('reconnait un essai gratuit', () => {
+    expect(hasTrial(pack({ price: 0, periodUnit: 'DAY', periodNumberOfUnits: 3 }))).toBe(true);
+  });
+  it("ne prend pas un produit sans offre pour un essai", () => {
+    expect(hasTrial(pack(null))).toBe(false);
+  });
+  it("ne prend pas une premiere periode payante pour un essai", () => {
+    expect(hasTrial(pack({ price: 0.99 }))).toBe(false);
+  });
+  it('sans magasin, garde le parcours par defaut (avec essai)', () => {
+    expect(hasTrial(undefined)).toBe(true);
+  });
 });

@@ -2,7 +2,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Bell, Check, CreditCard, Unlock, X } from 'lucide-react-native';
+import { Bell, Check, CreditCard, Sparkles, Unlock, X } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
@@ -48,6 +48,20 @@ const ANNUAL_EUR = Platform.OS === 'ios' ? 24.99 : 29.99;
 function euros(p: PurchasesPackage | undefined, fallback: number): number {
   const n = p?.product.price;
   return typeof n === 'number' && n > 0 ? n : fallback;
+}
+
+/**
+ * Le forfait offre-t-il un essai gratuit ?
+ *
+ * C'est le MAGASIN qui le dit : l'offre d'essai est posee sur le produit.
+ * Pour le test A/B, l'offre RevenueCat « sans essai » pointe vers des
+ * produits qui n'en ont pas, et l'ecran ne doit alors rien promettre.
+ * Sans magasin (prix de secours), on suit l'offre par defaut : avec essai.
+ */
+export function hasTrial(p: PurchasesPackage | undefined): boolean {
+  if (!p) return true;
+  const intro = p.product.introPrice;
+  return !!intro && intro.price === 0;
 }
 
 /** Deux decimales, virgule francaise, symbole du magasin quand on l'a. */
@@ -176,6 +190,8 @@ export function Paywall(
   const find = (k: string) => packs.find((x) => x.identifier === k);
   const annual = find('$rc_annual');
   const monthly = find('$rc_monthly');
+  // L'essai du forfait CHOISI, tel que le magasin le decrit (test A/B « sans essai »).
+  const trial = hasTrial(plan === 'annual' ? annual : monthly);
   const chosen = plan === 'annual' ? annual : monthly;
   const price = (p?: PurchasesPackage, f?: string) => p?.product.priceString ?? f ?? '';
 
@@ -311,12 +327,12 @@ export function Paywall(
           */
           <Text variant="label" tone="tertiary" style={st.center}>
             {plan === 'annual'
-              ? t(d.pay.priceLine, {
+              ? t(trial ? d.pay.priceLine : d.pay.priceYearNoTrial, {
                 n: TRIAL_DAYS,
                 m: money(euros(annual, ANNUAL_EUR) / 12),
                 y: price(annual, FALLBACK.annual),
               })
-              : t(d.pay.priceMonthly, { n: TRIAL_DAYS, p: price(monthly, FALLBACK.monthly) })}
+              : t(trial ? d.pay.priceMonthly : d.pay.priceMonthNoTrial, { n: TRIAL_DAYS, p: price(monthly, FALLBACK.monthly) })}
           </Text>
         ) : (
           <Animated.View entering={FadeIn.duration(320)}>
@@ -363,7 +379,7 @@ export function Paywall(
 
       {/* Ce qui sera preleve, et quand — AVANT les prix : c'est la question
           qui bloque la main au-dessus du bouton. */}
-      <Trial plan={plan} />
+      <Trial plan={plan} trial={trial} />
 
       {/* Deux lignes, l'une sous l'autre : le nom a gauche, le prix a droite. */}
       <View style={st.plans}>
@@ -430,7 +446,7 @@ export function Paywall(
  * l'annuel », plutot qu'un bandeau de plus qui redirait la meme chose deux
  * centimetres au-dessus.
  */
-function Trial({ plan }: { plan: Plan }) {
+function Trial({ plan, trial = true }: { plan: Plan; trial?: boolean }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
@@ -447,16 +463,25 @@ function Trial({ plan }: { plan: Plan }) {
     laisserait croire le contraire, et le prelevement se decouvrirait le jour
     meme.
   */
-  const steps: [typeof Bell, string, string, boolean][] = [
-    [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
-    [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
-    [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
-  ];
+  // Sans essai, la frise ne parle pas d'essai : acces immediat, chaque jour, resiliable.
+  const steps: [typeof Bell, string, string, boolean][] = trial
+    ? [
+      [Unlock, d.pay.trialToday, d.pay.trialTodayBody, true],
+      [Bell, d.pay.trialWarn, d.pay.trialWarnBody, true],
+      [CreditCard, t(d.pay.trialCharge, { n: TRIAL_DAYS }), d.pay.trialChargeBody, false],
+    ]
+    : [
+      [Unlock, d.pay.trialToday, d.pay.ntTodayBody, true],
+      [Sparkles, d.pay.ntDaily, d.pay.ntDailyBody, true],
+      [CreditCard, d.pay.ntAnytime, d.pay.ntAnytimeBody, false],
+    ];
 
   return (
     <View style={st.trial}>
       <Text variant="label" color={c.accent}>
-        {t(plan === 'monthly' ? d.pay.trialBannerMonthly : d.pay.trialBanner, { n: TRIAL_DAYS })}
+        {trial
+          ? t(plan === 'monthly' ? d.pay.trialBannerMonthly : d.pay.trialBanner, { n: TRIAL_DAYS })
+          : d.pay.noTrialBanner}
       </Text>
 
       <View style={st.steps}>

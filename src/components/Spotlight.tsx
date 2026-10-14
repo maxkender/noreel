@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
 import Animated, {
-  Easing, FadeIn, LinearTransition, useAnimatedProps, useSharedValue, withTiming, type SharedValue,
+  Easing, FadeIn, useAnimatedProps, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { withAlpha } from '@/theme/colors';
@@ -28,7 +28,6 @@ const PAD = 8;
 const GAP = 16;
 const SETTLE_MS = 380;
 const SCROLL_MS = 460;
-const MOVE_MS = 420;
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 
 const APath = Animated.createAnimatedComponent(Path);
@@ -40,9 +39,14 @@ function roundedRect(x: number, y: number, w: number, h: number, r: number): str
   return `M${x + rr} ${y}H${x + w - rr}A${rr} ${rr} 0 0 1 ${x + w} ${y + rr}V${y + h - rr}A${rr} ${rr} 0 0 1 ${x + w - rr} ${y + h}H${x + rr}A${rr} ${rr} 0 0 1 ${x} ${y + h - rr}V${y + rr}A${rr} ${rr} 0 0 1 ${x + rr} ${y}Z`;
 }
 
-/** Fait glisser une valeur du fil d'animation vers sa cible. */
+/**
+ * Pose la valeur SUR PLACE.
+ * Le cadre glissait d'un element a l'autre en se deformant : un grand
+ * carre qui traverse l'ecran. Il se pose maintenant directement, et c'est
+ * le contour qui apparait en fondu.
+ */
 function glide(sv: SharedValue<number>, to: number) {
-  sv.value = withTiming(to, { duration: MOVE_MS, easing: EASE });
+  sv.value = to;
 }
 
 /*
@@ -102,9 +106,10 @@ export function Spotlight({
   const veilProps = useAnimatedProps(() => ({
     d: `M0 0H${W}V${H}H0Z ${roundedRect(hx.value, hy.value, hw.value, hh.value, radii.tile)}`,
   }));
+  const ringOn = useSharedValue(0);
   const ringProps = useAnimatedProps(() => ({
     d: roundedRect(hx.value, hy.value, hw.value, hh.value, radii.tile),
-    strokeOpacity: hw.value > 1 ? 1 : 0,
+    strokeOpacity: hw.value > 1 ? ringOn.value : 0,
   }));
 
   const find = useCallback(async (k: number): Promise<Box | null> => {
@@ -175,8 +180,10 @@ export function Spotlight({
       ? { x: r.x - PAD, y: r.y - PAD, w: r.w + PAD * 2, h: r.h + PAD * 2 }
       : { x: cx, y: cy, w: 0, h: 0 };
     prev.current = r;
+    ringOn.value = 0;
     glide(hx, to.x); glide(hy, to.y); glide(hw, to.w); glide(hh, to.h);
-  }, [found, hx, hy, hw, hh, W, H]);
+    ringOn.value = withTiming(1, { duration: 280, easing: EASE });
+  }, [found, hx, hy, hw, hh, W, H, ringOn]);
 
   const next = () => {
     if (busy.current) return;
@@ -189,13 +196,10 @@ export function Spotlight({
   const r = found?.rect ?? null;
   const minTop = top + GAP;
   const maxTop = H - bottom - GAP - cardH;
-  let cardTop = H * 0.3;
-  if (r) {
-    const below = r.y + r.h + PAD + GAP;
-    const above = r.y - PAD - GAP - cardH;
-    cardTop = below + cardH <= H - bottom - GAP ? below : above >= minTop ? above : maxTop;
-  }
-  cardTop = Math.max(minTop, Math.min(maxTop, cardTop));
+  // Deux places seulement : en bas, ou en haut si l'element eclaire est dans
+  // la moitie basse. La carte ne glisse plus d'un bout a l'autre de l'ecran.
+  const low = r ? r.y + r.h / 2 > H / 2 : false;
+  const cardTop = low ? minTop : maxTop;
 
   const { title, body } = steps[i];
   // La carte ne se montre qu'une fois l'etape en cours mesuree.
@@ -205,14 +209,13 @@ export function Spotlight({
     <Pressable style={StyleSheet.absoluteFill} onPress={next} testID={testID}>
       <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
-          <APath animatedProps={veilProps} fill={c.night} fillOpacity={0.8} fillRule="evenodd" />
+          <APath animatedProps={veilProps} fill={c.night} fillOpacity={0.7} fillRule="evenodd" />
           <APath animatedProps={ringProps} fill="none" stroke={c.accent} strokeWidth={2} />
         </Svg>
       </Animated.View>
 
       {/* La carte suit le trou : sa place change en glissant, son texte en fondu. */}
       <Animated.View
-        layout={LinearTransition.duration(MOVE_MS).easing(EASE)}
         style={[st.cardWrap, { top: cardTop, opacity: shown ? 1 : 0 }]}
         pointerEvents={shown ? 'box-none' : 'none'}
         testID={shown ? `${testID}-ready` : undefined}
@@ -250,13 +253,13 @@ const sheet = (c: Palette) => StyleSheet.create({
   cardWrap: { position: 'absolute', left: gutter, right: gutter },
   card: {
     borderRadius: radii.tile, padding: space.lg,
-    backgroundColor: c.night, borderWidth: 1, borderColor: withAlpha(c.mist, 0.22),
+    backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge,
   },
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.sm },
   skip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.12) },
   foot: { marginTop: space.md },
   next: {
     alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',
-    height: 48, borderRadius: radii.chip, backgroundColor: c.accent,
+    height: 48, borderRadius: 24, backgroundColor: c.mist,
   },
 });

@@ -19,7 +19,8 @@ import { Language } from './screens/Language';
 import { Activities } from './screens/Activities';
 import { Attribution, Prep, Proof, RateAsk } from './screens/extra';
 import { Finale } from './Finale';
-import { Paywall } from './screens/Paywall';
+import { Paywall, hasTrial } from './screens/Paywall';
+import { currentOffering } from '@/services/purchases';
 import { TrialBell, TrialGift } from './screens/Trial';
 import { AgeAsk, Guess } from './screens/time';
 import { Dopamine, Exploited, LovePage, NothingLands, ReceptorsPage, ScienceIntro } from './screens/science';
@@ -39,6 +40,20 @@ export function OnboardingFlow() {
   const [intro, setIntro] = useState(true);
   // Le dernier plan, joue une fois le parcours fini.
   const [finale, setFinale] = useState(false);
+  /*
+    Le test A/B « sans essai » : quand l'offre servie par RevenueCat n'a pas
+    d'essai, les deux ecrans qui l'annoncent disparaissent du parcours.
+    Lu des le debut, bien avant d'y arriver ; sans reponse, on garde l'essai.
+  */
+  const [offerTrial, setOfferTrial] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    void currentOffering().then(({ offering }) => {
+      const annual = offering?.availablePackages.find((p) => p.identifier === '$rc_annual');
+      if (alive && annual) setOfferTrial(hasTrial(annual));
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const persist = useOnboardingStore((s) => s.setStep);
   const complete = useOnboardingStore((s) => s.complete);
   const start = useOnboardingStore((s) => s.start);
@@ -176,8 +191,7 @@ export function OnboardingFlow() {
     <Prep key="prep" onNext={next} />,
     <PromiseScreen key="pro" onNext={next} />,
     // Avant les prix : l'essai est offert, et on previent avant sa fin.
-    <TrialGift key="try" onNext={next} />,
-    <TrialBell key="bell" onNext={next} />,
+    ...(offerTrial ? [<TrialGift key="try" onNext={next} />, <TrialBell key="bell" onNext={next} />] : []),
     <Paywall key="pw" onDone={() => setFinale(true)} />,
   ];
 
@@ -297,10 +311,11 @@ function reveal() {
 function unveil() {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ scale: 0.95 }] },
+    // Un fondu et une montee de quelques points, sans zoom : le zoom « popait ».
+    initialValues: { opacity: 0, transform: [{ translateY: 10 }] },
     animations: {
-      opacity: withTiming(1, { duration: 360, easing: easings.out }),
-      transform: [{ scale: withTiming(1, { duration: 480, easing: easings.out }) }],
+      opacity: withTiming(1, { duration: 420, easing: easings.out }),
+      transform: [{ translateY: withTiming(0, { duration: 520, easing: easings.out }) }],
     },
   };
 }

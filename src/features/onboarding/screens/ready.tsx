@@ -153,15 +153,25 @@ export function Ready({ onNext }: P) {
         </Text>
       </Animated.View>
 
-      <View style={st.stage} pointerEvents="none">
-        <Animated.View style={[st.glow, { backgroundColor: withAlpha(c.accent, 0.45) }, glow]} />
+      {/* L'empreinte se TIENT aussi : c'est la qu'on pose le pouce d'instinct. */}
+      <View style={st.stage} pointerEvents="box-none">
+        <Animated.View style={[st.glow, { backgroundColor: withAlpha(c.accent, 0.45) }, glow]} pointerEvents="none" />
         {Array.from({ length: SPARKS }, (_, i) => <Spark key={i} i={i} burst={burst} colour={i % 3 === 0 ? c.accentWarm : c.accent} />)}
         <Animated.View style={hero}>
-          <HoldRing progress={fill} size={RING} stroke={5}>
-            {done
-              ? <Check size={64} strokeWidth={2.4} color={c.accent} />
-              : <Fingerprint size={64} strokeWidth={1.6} color={withAlpha(c.mist, 0.8)} />}
-          </HoldRing>
+          <Pressable
+            onPressIn={grab}
+            onPressOut={release}
+            disabled={done}
+            accessibilityRole="button"
+            accessibilityHint={d.ready.hold}
+            hitSlop={12}
+          >
+            <HoldRing progress={fill} size={RING} stroke={5}>
+              {done
+                ? <Check size={64} strokeWidth={2.4} color={c.accent} />
+                : <Fingerprint size={64} strokeWidth={1.6} color={holding ? c.accent : withAlpha(c.mist, 0.8)} />}
+            </HoldRing>
+          </Pressable>
         </Animated.View>
         {APPS.map((id, i) => (
           <Orbit key={id} id={id} i={i} fill={fill} jolt={jolt} />
