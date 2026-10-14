@@ -13,7 +13,7 @@ import { haptics } from '@/lib/haptics';
 import Constants from 'expo-constants';
 import { dict, interpolate } from '@/i18n';
 
-export const SUPPORT_EMAIL = 'maximilien@vikstudios.com';
+export const SUPPORT_EMAIL = 'support@vikstudios.com';
 
 /**
  * Un retour sur l'app.

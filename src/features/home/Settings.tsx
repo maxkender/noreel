@@ -29,6 +29,8 @@ import {
   type AuthState,
 } from '@/services/shield.real';
 import { customerInfo, subStatus, type SubStatus } from '@/services/purchases';
+import { alertsOn } from '@/services/igAlerts';
+import { useRouter } from 'expo-router';
 import { trialLeft } from '@/services/trial';
 
 /** Ou gerer l'abonnement quand le magasin n'a pas donne de lien. */
@@ -101,6 +103,11 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
     d'acces des examinateurs n'en a pas).
   */
   const [langOpen, setLangOpen] = useState(false);
+  const router = useRouter();
+  /** Ferme la feuille, PUIS ouvre l'ecran : iOS n'empile pas une page sur une fenetre ouverte. */
+  const go = (path: '/help' | '/alerts') => { haptics.tap(); close(); setTimeout(() => router.push(path), 260); };
+  const [alerts, setAlerts] = useState(false);
+  useEffect(() => { if (visible) void alertsOn().then(setAlerts); }, [visible]);
   const setLang = useLang((x) => x.set);
   const [sub, setSub] = useState<SubStatus | null>(null);
   useEffect(() => { if (visible) void customerInfo().then((i) => setSub(subStatus(i))); }, [visible]);
@@ -169,6 +176,18 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
                 onPress={() => { if (l !== lang) { haptics.tick(); setLang(l); } }}
               />
             ))}
+
+            {/* Les alertes Instagram : iPhone seulement pour l'instant. */}
+            {Platform.OS === 'ios' && (
+              <>
+                <Group title={d.alerts.title} />
+                <Line
+                  label={d.alerts.row}
+                  right={<Text variant="body" tone="tertiary">{`${alerts ? d.alerts.on : d.alerts.off}  ›`}</Text>}
+                  onPress={() => go('/alerts')}
+                />
+              </>
+            )}
 
             {subLabel && (
               <>
@@ -354,6 +373,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               besoin de sa ligne.
             */}
             <Group title={d.prefs.help} />
+            <Line label={d.faq.row} onPress={() => go('/help')} />
             <Line
               label={d.prefs.feedback}
               sub={d.prefs.feedbackBody}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { AppState, Platform, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,6 +17,10 @@ import { watchReal } from '@/services/realtime';
 import { shield } from '@/services';
 import { startNotifications } from '@/services/trial';
 import { pullUpdate } from '@/services/refresh';
+// Importe pour son effet : la tache des alertes Instagram doit exister avant tout ecran,
+// iOS pouvant relancer l'app en arriere-plan rien que pour elle.
+import { refreshWords } from '@/services/igAlerts';
+import { dict } from '@/i18n';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
@@ -54,6 +59,20 @@ export default function RootLayout() {
   useEffect(() => { startNotifications(); }, []);
 
   /*
+    Une alerte touchee ouvre ce qu'elle annonce : Instagram, dans UnSwipe.
+    Aussi quand l'app etait fermee — la reponse est alors lue au demarrage.
+  */
+  useEffect(() => {
+    const open = (r: Notifications.NotificationResponse | null) => {
+      const url = r?.notification.request.content.data?.url;
+      if (typeof url === 'string' && url.startsWith('/client/')) setTimeout(() => router.push(url as '/client/[id]'), 400);
+    };
+    void Notifications.getLastNotificationResponseAsync().then(open).catch(() => {});
+    const sub = Notifications.addNotificationResponseReceivedListener(open);
+    return () => sub.remove();
+  }, []);
+
+  /*
     On cherche un correctif a chaque retour au premier plan.
     Nos regles de filtrage vivent dans le paquet JavaScript : quand Instagram
     remanie sa structure, le correctif part par expo-updates et arrive en
@@ -85,6 +104,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (langLoaded) void SplashScreen.hideAsync();
   }, [langLoaded]);
+  // Les mots des alertes suivent la langue choisie : la tache de fond n'a pas d'ecran pour les lire.
+  const langNow = useLang((x) => x.lang);
+  useEffect(() => {
+    if (!langLoaded || Platform.OS !== 'ios') return;
+    void refreshWords({ title: dict.alerts.notifTitle, dm: dict.alerts.notifDm, act: dict.alerts.notifAct });
+  }, [langLoaded, langNow]);
 
   // La langue vient du disque : dessiner avant, c'est dessiner dans la
   // mauvaise langue le temps d'une image, puis tout redessiner.
