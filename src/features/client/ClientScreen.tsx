@@ -782,7 +782,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
           pullToRefreshEnabled={Platform.OS !== 'ios'}
           allowsInlineMediaPlayback
           // Le frein natif d'iOS, explicitement : le meme que dans Safari.
-          decelerationRate="normal"
+          // iOS SEULEMENT : sur Android la prop part telle quelle au natif, qui
+          // attend un nombre. « normal » y levait une ClassCastException qui
+          // detruisait tout React : ecran noir, puis l'app se fermait.
+          decelerationRate={Platform.OS === 'ios' ? 'normal' : undefined}
           mediaPlaybackRequiresUserAction={Platform.OS === 'ios'}
           setSupportMultipleWindows={false}
           // Sans cette liste, iOS remet les schemas inconnus au systeme,
