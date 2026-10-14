@@ -49,6 +49,10 @@ const config: ExpoConfig = {
     package: 'com.vikstudios.noreel',
     // Rien de plus que ce qu'Expo demande : la WebView, les notifications locales et le reseau.
     permissions: [],
+    // expo-sensors ajoute la reconnaissance d'activite (podometre) a son manifeste.
+    // On ne s'en sert pas (seulement DeviceMotion pour l'inclinaison), et Google
+    // classe toute app qui la declare comme « app de sante ».
+    blockedPermissions: ['android.permission.ACTIVITY_RECOGNITION'],
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: NIGHT,
