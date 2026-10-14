@@ -599,6 +599,7 @@ export const pl: Dict = {
     capClose: 'Zamknij {app}',
     stalling: 'Strona się ociąga. Odśwież albo wyłącz filtr, żeby sprawdzić, skąd to się bierze.',
     crashTitle: "Na tej stronie wystąpił problem.",
+    settingsApplied: "Ustawienia zastosowane ✓",
     retry: 'Spróbuj ponownie',
     reload: 'Odśwież',
     raw: 'Bez filtra',

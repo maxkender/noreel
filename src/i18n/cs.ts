@@ -599,6 +599,7 @@ export const cs: Dict = {
     capClose: 'Zavřít {app}',
     stalling: 'Stránka je pomalá. Obnov ji, nebo vypni filtr, abys zjistil, odkud to je.',
     crashTitle: "Na této stránce došlo k chybě.",
+    settingsApplied: "Nastavení použito ✓",
     retry: 'Zkusit znovu',
     reload: 'Obnovit',
     raw: 'Bez filtru',

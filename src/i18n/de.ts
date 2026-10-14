@@ -599,6 +599,7 @@ export const de: Dict = {
     capClose: '{app} schließen',
     stalling: 'Die Seite ist langsam. Lade neu, oder nimm den Filter weg, um zu sehen, woran es liegt.',
     crashTitle: "Auf dieser Seite ist ein Fehler aufgetreten.",
+    settingsApplied: "Einstellungen übernommen ✓",
     retry: 'Erneut versuchen',
     reload: 'Neu laden',
     raw: 'Ohne Filter',

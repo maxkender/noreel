@@ -599,6 +599,7 @@ export const sl: Dict = {
     capClose: 'Zapri {app}',
     stalling: 'Stran je počasna. Osveži ali umakni filter, da vidiš, od kod prihaja.',
     crashTitle: "Na tej strani je prišlo do napake.",
+    settingsApplied: "Nastavitve uveljavljene ✓",
     retry: 'Poskusi znova',
     reload: 'Osveži',
     raw: 'Brez filtra',

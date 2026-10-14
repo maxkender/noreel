@@ -619,6 +619,7 @@ export const fr = {
     capClose: 'Fermer {app}',
     stalling: `La page tarde. Recharge, ou passe sans filtre pour savoir d'où ça vient.`,
     crashTitle: "Cette page a rencontré un problème.",
+    settingsApplied: "Réglages appliqués ✓",
     retry: 'Réessayer',
     reload: 'Recharger',
     raw: 'Sans filtre',

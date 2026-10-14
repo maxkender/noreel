@@ -598,6 +598,7 @@ export const sv: Dict = {
     capClose: 'Stäng {app}',
     stalling: 'Sidan är seg. Ladda om, eller släpp filtret för att se var det kommer ifrån.',
     crashTitle: "Något gick fel på den här sidan.",
+    settingsApplied: "Inställningar tillämpade ✓",
     retry: 'Försök igen',
     reload: 'Ladda om',
     raw: 'Inget filter',

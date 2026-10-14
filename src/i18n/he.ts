@@ -599,6 +599,7 @@ export const he: Dict = {
     capClose: 'סגירת {app}',
     stalling: 'העמוד איטי. אפשר לטעון מחדש, או להוריד את הפילטר כדי להבין מאיפה זה מגיע.',
     crashTitle: "משהו השתבש בדף הזה.",
+    settingsApplied: "ההגדרות הוחלו ✓",
     retry: 'לנסות שוב',
     reload: 'טעינה מחדש',
     raw: 'בלי פילטר',

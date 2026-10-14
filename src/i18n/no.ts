@@ -598,6 +598,7 @@ export const no: Dict = {
     capClose: 'Lukk {app}',
     stalling: 'Siden er treg. Last på nytt, eller dropp filteret for å finne ut hvor det kommer fra.',
     crashTitle: "Noe gikk galt på denne siden.",
+    settingsApplied: "Innstillinger brukt ✓",
     retry: 'Prøv igjen',
     reload: 'Last på nytt',
     raw: 'Uten filter',

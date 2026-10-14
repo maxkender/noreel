@@ -599,6 +599,7 @@ export const fi: Dict = {
     capClose: 'Sulje {app}',
     stalling: 'Sivu on hidas. Lataa uudelleen tai poista suodatin nähdäksesi, mistä se johtuu.',
     crashTitle: "Tällä sivulla tapahtui virhe.",
+    settingsApplied: "Asetukset otettu käyttöön ✓",
     retry: 'Yritä uudelleen',
     reload: 'Lataa uudelleen',
     raw: 'Ei suodatinta',

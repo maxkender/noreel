@@ -1,7 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import type { ClientId } from './blockers';
 
-const KEY = 'unswipe.seen-client.v1';
+/*
+  v2 sur Android : jusqu'a la version 11, l'ecran plantait a sa premiere
+  ouverture, APRES avoir deja note « on est venu ». Les testeurs Android ne
+  sont donc jamais passes par la connexion ; on leur repropose, une fois.
+*/
+const KEY = Platform.OS === 'android' ? 'unswipe.seen-client.v2' : 'unswipe.seen-client.v1';
 
 /*
  * La toute premiere ouverture d'une app.
@@ -21,12 +27,25 @@ export async function firstRunUrl(id: ClientId, login?: string): Promise<string 
   try {
     const raw = await AsyncStorage.getItem(KEY);
     const seen: string[] = raw ? JSON.parse(raw) : [];
-    if (seen.includes(id)) return null;
-    await AsyncStorage.setItem(KEY, JSON.stringify([...seen, id]));
-    return login;
+    return seen.includes(id) ? null : login;
   } catch {
     return null;
   }
+}
+
+/**
+ * La page de connexion s'est VRAIMENT affichee.
+ *
+ * On ne le note qu'ici, et plus a l'ouverture de l'ecran : un ecran qui
+ * plante ou qu'on ferme avant le chargement ne doit pas faire croire qu'on
+ * est deja passe par la connexion.
+ */
+export async function markFirstRunDone(id: ClientId): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(KEY);
+    const seen: string[] = raw ? JSON.parse(raw) : [];
+    if (!seen.includes(id)) await AsyncStorage.setItem(KEY, JSON.stringify([...seen, id]));
+  } catch { /* le disque, pas nous */ }
 }
 
 /**

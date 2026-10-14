@@ -1,5 +1,5 @@
 import { type useAnimatedScrollHandler } from 'react-native-reanimated';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { I18nManager, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -53,6 +53,8 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
   const x = useSharedValue(on ? 18 : 0);
   // De droite a gauche, le pouce glisse vers la gauche pour « allume ».
   const knob = useAnimatedStyle(() => ({ transform: [{ translateX: x.value * (I18nManager.isRTL ? -1 : 1) }] }));
+  // Le pouce suit la valeur, d'ou qu'elle vienne : la ligne entiere peut la changer.
+  useEffect(() => { x.value = withSpring(on ? 18 : 0, springs.snappy); }, [on, x]);
 
   return (
     <Pressable

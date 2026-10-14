@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
@@ -103,8 +103,9 @@ export function ClientSettings({
           exiting={SlideOutDown.duration(220)}
           style={[st.sheet, { maxHeight: winH * 0.6 }]}
         >
-          <BlurView intensity={80} tint={tint} style={StyleSheet.absoluteFill} />
-          <View style={st.tint} />
+          {/* Le flou en direct ralentit Android au point que les appuis trainent : un verre plein, la-bas. */}
+          {Platform.OS === 'ios' && <BlurView intensity={80} tint={tint} style={StyleSheet.absoluteFill} />}
+          <View style={[st.tint, Platform.OS !== 'ios' && st.tintSolid]} />
           {/* Le reflet haut : c'est lui qui donne l'epaisseur du verre. */}
           <View style={st.sheen} pointerEvents="none" />
 
@@ -130,16 +131,30 @@ export function ClientSettings({
 
             <Text variant="label" tone="tertiary" style={st.group}>{d.ui.proSettings}</Text>
             {APP_TOGGLES[id].filter((t) => !t.locked).map((t) => (
-              <View key={t.key} style={st.line}>
+              /*
+                La LIGNE entiere est l'interrupteur.
+                Le seul pouce faisait 44 sur 26 points, dans une liste qui
+                defile : sur Android, un doigt qui bouge d'un rien devenait un
+                defilement et l'appui se perdait. On touche le texte, ca marche.
+              */
+              <Pressable
+                key={t.key}
+                style={st.line}
+                disabled={!pro}
+                onPress={() => { haptics.tick(); toggle(id, t.key, !isOn(id, t.key)); }}
+                android_ripple={{ color: withAlpha(c.mist, 0.12) }}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: pro && isOn(id, t.key), disabled: !pro }}
+              >
                 <Text variant="body" style={{ flexShrink: 1 }}>{d.toggles[t.label]}</Text>
                 {t.beta && (
                   <View style={st.beta}><Text variant="label" tone="tertiary" style={{ fontSize: 9 }}>Beta</Text></View>
                 )}
                 <View style={{ flex: 1 }} />
                 {pro
-                  ? <Toggle on={isOn(id, t.key)} onChange={(v) => toggle(id, t.key, v)} />
+                  ? <View pointerEvents="none"><Toggle on={isOn(id, t.key)} onChange={() => {}} /></View>
                   : <LockedPill label="Pro" />}
-              </View>
+              </Pressable>
             ))}
 
             <Text variant="label" tone="tertiary" style={st.note}>
@@ -234,6 +249,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: withAlpha(c.glassTint, 0.84),
   },
+  tintSolid: { backgroundColor: withAlpha(c.glassTint, 0.97) },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: withAlpha(c.mist, 0.35) },
   grab: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.25), marginTop: -8, marginBottom: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.sm },

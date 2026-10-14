@@ -67,6 +67,8 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    // Android : pas de voile gris sous les trois boutons, nos fonds sont sombres.
+    ['expo-navigation-bar', { enforceContrast: false, style: 'light' }],
     'expo-font',
     'expo-localization',
     'expo-apple-authentication',

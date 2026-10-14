@@ -22,7 +22,7 @@ import { forget, looksLoggedIn, restore, snapshot } from '@/services/sessions';
 import { LinkSheet } from './LinkSheet';
 import { PostAsk, PostModeSheet } from './PostSheet';
 import { startPostMode, usePostModeReconcile } from '@/services/postmode';
-import { firstRunUrl } from './firstrun';
+import { firstRunUrl, markFirstRunDone } from './firstrun';
 import { ClientTutorial } from './ClientTutorial';
 import { markTutorialSeen, tutorialSeen } from './tutorial';
 import { ACCOUNT } from './accounts';
@@ -254,6 +254,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [panel, setPanel] = useState(false);
   /** Un reglage a bouge pendant que la feuille etait ouverte : on recharge a sa fermeture. */
   const touched = useRef(false);
+  /** « Reglages appliques », deux secondes et demie apres OK : sinon on ne sait pas si ca a pris. */
+  const [applied, setApplied] = useState(false);
   // Blocage strict : un reel touche affiche un mur au lieu de ne rien
   // faire. Sans retour visible, l'utilisateur croit a un bug et insiste.
   const strict = useSettings((x) => x.strictMode);
@@ -758,6 +760,8 @@ export function ClientScreen({ id }: { id: ClientId }) {
           onLoadProgress={(e) => setLoad(e.nativeEvent.progress)}
         onLoadEnd={() => {
             setReady(true);
+            // La connexion s'est affichee : les prochaines fois, on va au fil.
+            if (entry && entry !== client.url) void markFirstRunDone(id);
             // Qui est connecte, a chaque page : la barre du bas met un instant a se dessiner.
             if (id === 'instagram') setTimeout(() => web.current?.injectJavaScript('window.__nrWho && window.__nrWho(); true;'), 1500);
             // Et, apres un changement de compte, si c'est bien lui.
@@ -831,6 +835,15 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
       {/* Le selecteur de comptes met un instant a s'ouvrir, et il peut ne pas
           s'ouvrir du tout : dans les deux cas on le dit. */}
+      {applied && (
+        <View style={[styles.valve, { top: noteTop }]} pointerEvents="none">
+          {/* Sur une pastille : posee a nu, elle se perdait dans le texte de la page. */}
+          <View style={{ backgroundColor: withAlpha(c.night, 0.92), borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+            <Text variant="label" color={c.accent}>{d.client.settingsApplied}</Text>
+          </View>
+        </View>
+      )}
+
       {postNote && (
         <View style={[styles.valve, { top: noteTop }]} pointerEvents="none">
           <Text variant="label" color={c.accent}>{postNote}</Text>
@@ -911,7 +924,12 @@ export function ClientScreen({ id }: { id: ClientId }) {
             page rechargee repart avec le script a jour, et rien de ce qui
             etait cache ne garde la trace de l'avoir ete.
           */
-          if (touched.current) { touched.current = false; web.current?.reload(); }
+          if (touched.current) {
+            touched.current = false;
+            web.current?.reload();
+            setApplied(true);
+            setTimeout(() => setApplied(false), 2500);
+          }
         }}
         accounts={accounts}
         current={currentUid}

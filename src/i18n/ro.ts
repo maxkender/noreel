@@ -599,6 +599,7 @@ export const ro: Dict = {
     capClose: 'Închide {app}',
     stalling: 'Pagina e lentă. Reîncarcă, sau scoate filtrul ca să afli de unde vine.',
     crashTitle: "A apărut o problemă pe această pagină.",
+    settingsApplied: "Setări aplicate ✓",
     retry: 'Încearcă din nou',
     reload: 'Reîncarcă',
     raw: 'Fără filtru',

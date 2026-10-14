@@ -599,6 +599,7 @@ export const es: Dict = {
     capClose: 'Cerrar {app}',
     stalling: 'La página va lenta. Recarga, o quita el filtro para ver de dónde viene.',
     crashTitle: "Esta página ha tenido un problema.",
+    settingsApplied: "Ajustes aplicados ✓",
     retry: 'Reintentar',
     reload: 'Recargar',
     raw: 'Sin filtro',

@@ -696,6 +696,28 @@ export const INSTAGRAM_BLOCKER = `
   'use strict';
   ${COMMON}
 
+  /*
+    ANDROID : RESSEMBLER A L'IPHONE QU'ON ANNONCE.
+    On se presente en Safari d'iPhone, mais le moteur d'Android expose les
+    service workers SANS les notifications ni le push. Un vrai iPhone n'a
+    jamais ce melange, et la vue web d'iOS n'a pas de service workers du
+    tout. Instagram s'y perdait sur la page des notifications (le coeur) :
+    ecran blanc. On retire les service workers, comme sur iPhone, et on
+    desinscrit ceux qu'il avait deja poses. iOS (window.webkit) n'est pas touche.
+  */
+  try {
+    if (!window.webkit && navigator.serviceWorker) {
+      const sw = navigator.serviceWorker;
+      if (sw.getRegistrations) {
+        sw.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
+      }
+      delete Navigator.prototype.serviceWorker;
+      if ('serviceWorker' in navigator) {
+        Object.defineProperty(navigator, 'serviceWorker', { get: () => undefined, configurable: true });
+      }
+    }
+  } catch (e) { /* la page suit son chemin */ }
+
   // L'onglet Reels disparait. Explorer est redirige plus bas plutot que
   // masque : lui couper l'icone emportait aussi la recherche.
   /*

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CLIENTS, buildScript } from './blockers';
-import { firstRunUrl } from './firstrun';
+import { firstRunUrl, markFirstRunDone } from './firstrun';
 
 describe('le fil qu’on ne touche plus', () => {
   /*
@@ -123,11 +123,21 @@ describe('la premiere ouverture', () => {
     expect(await firstRunUrl('instagram', CLIENTS.instagram.login)).toBe(
       'https://www.instagram.com/accounts/login/'
     );
+    await markFirstRunDone('instagram');
     expect(await firstRunUrl('instagram', CLIENTS.instagram.login)).toBeNull();
   });
 
-  it('compte chaque app separement', async () => {
+  it("ne compte pas une ouverture dont la page n'a jamais charge", async () => {
+    // Android plantait a la premiere ouverture : le drapeau etait deja pose,
+    // et la connexion n'etait plus jamais proposee.
     await firstRunUrl('instagram', CLIENTS.instagram.login);
+    expect(await firstRunUrl('instagram', CLIENTS.instagram.login)).toBe(
+      'https://www.instagram.com/accounts/login/'
+    );
+  });
+
+  it('compte chaque app separement', async () => {
+    await markFirstRunDone('instagram');
     expect(await firstRunUrl('tiktok', CLIENTS.tiktok.login)).toBe(
       'https://www.tiktok.com/login'
     );

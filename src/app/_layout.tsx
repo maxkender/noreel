@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Poppins_400Regular } from '@expo-google-fonts/poppins/400Regular';
 import { Poppins_500Medium } from '@expo-google-fonts/poppins/500Medium';
 import { Poppins_600SemiBold } from '@expo-google-fonts/poppins/600SemiBold';
@@ -23,6 +24,28 @@ import { pullUpdate } from '@/services/refresh';
 
 void SplashScreen.preventAutoHideAsync();
 void SystemUI.setBackgroundColorAsync(colors.night);
+
+/*
+  Android dessine l'app SOUS ses boutons systeme (bord a bord, impose depuis
+  Android 15). Sur les telephones a trois boutons, nos boutons du bas et la
+  barre d'onglets d'Instagram tombaient dessous et ne se touchaient plus.
+  Une seule marge, ici, pour tous les ecrans : ils s'arretent au-dessus.
+  Les SafeAreaView natives mesurent leur vrai recouvrement, donc elles ne
+  doublent pas cette marge ; les modales, dessinees dans leur propre
+  fenetre, gardent la leur. iOS n'est pas concerne.
+*/
+function AboveSystemButtons({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const c = useColors();
+  if (Platform.OS !== 'android') return <>{children}</>;
+  return (
+    <View style={{ flex: 1, paddingBottom: insets.bottom, backgroundColor: c.night }}>
+      {/* Les boutons systeme suivent le fond, comme le texte de la barre d'etat. */}
+      <NavigationBar style={c.night === colors.night ? 'light' : 'dark'} />
+      {children}
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const c = useColors();
@@ -92,6 +115,7 @@ export default function RootLayout() {
           iOS, pas par JavaScript — elles tiennent les 60 images par seconde
           meme quand l'ecran d'arrivee a du travail a faire.
         */}
+        <AboveSystemButtons>
         <Stack
           screenOptions={{
             headerShown: false,
@@ -137,6 +161,7 @@ export default function RootLayout() {
             }}
           />
         </Stack>
+        </AboveSystemButtons>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -599,6 +599,7 @@ export const tr: Dict = {
     capClose: '{app} uygulamasını kapat',
     stalling: 'Sayfa yavaş. Yenile ya da nereden kaynaklandığını görmek için filtreyi kaldır.',
     crashTitle: "Bu sayfada bir sorun oluştu.",
+    settingsApplied: "Ayarlar uygulandı ✓",
     retry: 'Tekrar dene',
     reload: 'Yenile',
     raw: 'Filtresiz',

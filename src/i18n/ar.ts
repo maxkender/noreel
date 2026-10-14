@@ -599,6 +599,7 @@ export const ar: Dict = {
     capClose: 'إغلاق {app}',
     stalling: 'الصفحة بطيئة. أعد التحميل، أو أزل الفلتر لتعرف مصدر المشكلة.',
     crashTitle: "حدثت مشكلة في هذه الصفحة.",
+    settingsApplied: "تم تطبيق الإعدادات ✓",
     retry: 'حاول مجددًا',
     reload: 'إعادة تحميل',
     raw: 'بدون فلتر',

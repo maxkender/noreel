@@ -599,6 +599,7 @@ export const hr: Dict = {
     capClose: 'Zatvori {app}',
     stalling: 'Stranica je spora. Osvježi, ili makni filtar da vidiš odakle dolazi.',
     crashTitle: "Na ovoj stranici došlo je do pogreške.",
+    settingsApplied: "Postavke primijenjene ✓",
     retry: 'Pokušaj ponovno',
     reload: 'Osvježi',
     raw: 'Bez filtra',

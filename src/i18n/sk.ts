@@ -599,6 +599,7 @@ export const sk: Dict = {
     capClose: 'Zavrieť {app}',
     stalling: 'Stránka je pomalá. Obnov ju, alebo vypni filter a zisti, kde je problém.',
     crashTitle: "Na tejto stránke nastala chyba.",
+    settingsApplied: "Nastavenia použité ✓",
     retry: 'Skúsiť znova',
     reload: 'Obnoviť',
     raw: 'Bez filtra',

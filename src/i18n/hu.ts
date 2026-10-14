@@ -599,6 +599,7 @@ export const hu: Dict = {
     capClose: '{app} bezárása',
     stalling: 'Az oldal lassú. Töltsd újra, vagy vedd le a szűrőt, hogy kiderüljön, honnan jön.',
     crashTitle: "Hiba történt ezen az oldalon.",
+    settingsApplied: "Beállítások alkalmazva ✓",
     retry: 'Újra',
     reload: 'Újratöltés',
     raw: 'Szűrő nélkül',
