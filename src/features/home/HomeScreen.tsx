@@ -416,6 +416,9 @@ function BlockTab({
         <Tile icon={LayoutGrid} label={d.misc.homeScreen} onPress={() => router.push('/widgets')} />
       </View>
 
+      {/* Le mode strict verrouille le blocage de Temps d'ecran : sans
+          l'acces accorde, il n'y a rien a verrouiller, donc pas de curseur. */}
+      {ready && !needsAuth && (
       <View ref={aStrict} collapsable={false}>
         {pro ? (
           <SlideToConfirm
@@ -431,6 +434,7 @@ function BlockTab({
           </Pressable>
         )}
       </View>
+      )}
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
       <HelpSheet

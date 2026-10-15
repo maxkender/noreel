@@ -50,7 +50,7 @@ export function TabTour({
       { target: 'block-status', title: d.tour.b1, body: d.tour.b1b },
       { target: 'block-btn', title: d.tour.b2, body: d.tour.b2b },
       { target: 'block-btn', title: d.tour.b3, body: d.tour.b3b },
-      { target: 'block-strict', title: d.tour.b4, body: d.tour.b4b },
+      { target: 'block-strict', title: d.tour.b4, body: d.tour.b4b, optional: true },
     ],
   };
 
