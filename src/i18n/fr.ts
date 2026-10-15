@@ -1143,6 +1143,7 @@ export const fr = {
     b5: "Remplace les icônes d’Instagram et des autres par celles d’UnSwipe sur ton écran d’accueil : tu les ouvriras par réflexe.",
   },
   shield: {
+    notif: "Touche ici pour ouvrir UnSwipe, sans Reels.",
     title: "Ouvrir UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} est bloqué. Ouvre-le dans UnSwipe, sans Reels.",
     open: "Ouvrir UnSwipe",

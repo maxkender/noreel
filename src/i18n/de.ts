@@ -1123,6 +1123,7 @@ export const de: Dict = {
     b5: "Ersetze auf deinem Home-Bildschirm die Symbole von Instagram und den anderen Apps durch die von UnSwipe: Du öffnest sie dann aus Gewohnheit.",
   },
   shield: {
+    notif: "Tippe hier, um UnSwipe zu öffnen, ohne Reels.",
     title: "UnSwipe öffnen",
     subtitle: "{applicationOrDomainDisplayName} ist gesperrt. Öffne es in UnSwipe, ohne Reels.",
     open: "UnSwipe öffnen",

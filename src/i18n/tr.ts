@@ -1123,6 +1123,7 @@ export const tr: Dict = {
     b5: "Ana ekranında Instagram'ın ve diğerlerinin simgelerini UnSwipe'ınkilerle değiştir: onları alışkanlıkla açarsın.",
   },
   shield: {
+    notif: "UnSwipe'ı Reels olmadan açmak için dokun.",
     title: "UnSwipe'ı aç",
     subtitle: "{applicationOrDomainDisplayName} engellendi. Reels olmadan UnSwipe'ta aç.",
     open: "UnSwipe'ı aç",

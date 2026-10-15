@@ -1123,6 +1123,7 @@ export const el: Dict = {
     b5: "Αντικατάστησε στην οθόνη Αφετηρίας τα εικονίδια του Instagram και των άλλων με εκείνα του UnSwipe: θα τα ανοίγεις από συνήθεια.",
   },
   shield: {
+    notif: "Πάτησε εδώ για να ανοίξεις το UnSwipe, χωρίς Reels.",
     title: "Άνοιγμα UnSwipe",
     subtitle: "Το {applicationOrDomainDisplayName} είναι μπλοκαρισμένο. Άνοιξέ το στο UnSwipe, χωρίς Reels.",
     open: "Άνοιγμα UnSwipe",

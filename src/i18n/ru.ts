@@ -1123,6 +1123,7 @@ export const ru: Dict = {
     b5: "Замени на экране «Домой» значки Instagram и других приложений на значки UnSwipe: ты будешь открывать их по привычке.",
   },
   shield: {
+    notif: "Нажми, чтобы открыть UnSwipe, без Reels.",
     title: "Открыть UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} заблокировано. Открой его в UnSwipe, без Reels.",
     open: "Открыть UnSwipe",

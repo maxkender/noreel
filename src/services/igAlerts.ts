@@ -274,12 +274,19 @@ export async function autoEnableAlerts(words: State['words']): Promise<boolean> 
   const s = await load();
   if (s.on) return true;
   if (s.optOut) return false;
-  const perm = await Notifications.getPermissionsAsync();
-  if (!perm.granted) return false;
   const status = await BackgroundTask.getStatusAsync();
   if (status === BackgroundTask.BackgroundTaskStatus.Restricted) return false;
+  // D'abord Instagram connecte, ENSUITE la permission : on ne la demande
+  // qu'au moment ou elle sert. Elle n'etait jamais demandee : les alertes
+  // restaient eteintes sans que personne le sache.
   const now = await readCounts();
   if (!now) return false;
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) {
+    if (!perm.canAskAgain) return false;
+    const ask = await Notifications.requestPermissionsAsync();
+    if (!ask.granted) return false;
+  }
   await save({ on: true, optOut: false, dm: now.dm, act: now.act, words });
   await BackgroundTask.registerTaskAsync(IG_ALERTS_TASK, { minimumInterval: 15 });
   return true;

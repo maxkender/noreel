@@ -1123,6 +1123,7 @@ export const hu: Dict = {
     b5: "Cseréld le a főképernyőn az Instagram és a többi app ikonját az UnSwipe ikonjaira: megszokásból azokat fogod megnyitni.",
   },
   shield: {
+    notif: "Koppints ide az UnSwipe megnyitásához, Reels nélkül.",
     title: "UnSwipe megnyitása",
     subtitle: "A(z) {applicationOrDomainDisplayName} le van tiltva. Nyisd meg az UnSwipe-ban, Reels nélkül.",
     open: "UnSwipe megnyitása",

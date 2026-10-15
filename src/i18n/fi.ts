@@ -1123,6 +1123,7 @@ export const fi: Dict = {
     b5: "Vaihda Koti-valikossa Instagram- ja muiden sovellusten kuvakkeet UnSwipe-kuvakkeisiin: avaat ne tottumuksesta.",
   },
   shield: {
+    notif: "Napauta avataksesi UnSwipen ilman Reelsejä.",
     title: "Avaa UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} on estetty. Avaa se UnSwipessa ilman Reelsejä.",
     open: "Avaa UnSwipe",

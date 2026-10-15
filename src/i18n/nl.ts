@@ -1123,6 +1123,7 @@ export const nl: Dict = {
     b5: "Vervang op je beginscherm de iconen van Instagram en de andere apps door die van UnSwipe: je opent ze dan uit gewoonte.",
   },
   shield: {
+    notif: "Tik hier om UnSwipe te openen, zonder Reels.",
     title: "UnSwipe openen",
     subtitle: "{applicationOrDomainDisplayName} is geblokkeerd. Open het in UnSwipe, zonder Reels.",
     open: "UnSwipe openen",

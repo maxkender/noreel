@@ -1123,6 +1123,7 @@ export const ro: Dict = {
     b5: "Înlocuiește pe ecranul principal pictogramele Instagram și ale celorlalte aplicații cu cele UnSwipe: le vei deschide din reflex.",
   },
   shield: {
+    notif: "Atinge aici ca să deschizi UnSwipe, fără Reels.",
     title: "Deschide UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} este blocată. Deschide-o în UnSwipe, fără Reels.",
     open: "Deschide UnSwipe",

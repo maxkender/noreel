@@ -1123,6 +1123,7 @@ export const cs: Dict = {
     b5: "Nahraď na ploše ikony aplikace Instagram a dalších ikonami UnSwipe: budeš je otevírat ze zvyku.",
   },
   shield: {
+    notif: "Klepni sem a otevři UnSwipe, bez Reels.",
     title: "Otevřít UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} je zablokovaná. Otevři ji v UnSwipe, bez Reels.",
     open: "Otevřít UnSwipe",

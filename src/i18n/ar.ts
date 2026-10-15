@@ -1123,6 +1123,7 @@ export const ar: Dict = {
     b5: "استبدل أيقونات Instagram والتطبيقات الأخرى بأيقونات UnSwipe على شاشتك الرئيسية: ستفتحها بحكم العادة.",
   },
   shield: {
+    notif: "اضغط هنا لفتح UnSwipe بدون Reels.",
     title: "افتح UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} محظور. افتحه في UnSwipe بدون Reels.",
     open: "افتح UnSwipe",

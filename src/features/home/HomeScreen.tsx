@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -498,6 +499,9 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
     void alertsOn().then(setAlerts);
     if (Platform.OS === 'ios') {
       void readCounts().then((r) => { setLogged(r !== null); void lastChecks().then(setChecks); });
+      // Notifications refusees une fois : iOS ne redemande plus, seuls les Reglages peuvent les rendre.
+      const denied = d.alerts.denied;
+      void Notifications.getPermissionsAsync().then((p) => { if (p && !p.granted && !p.canAskAgain) setAlertNote(denied); }).catch(() => {});
     }
   }, []);
   // La derniere verification, dans l'app et en fond : on voit enfin si la chaine marche.
@@ -565,7 +569,11 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
             <Text variant="label" tone="secondary">
               {logged === false ? d.alerts.loginFirst : alerts ? d.alerts.connected : d.alerts.row}
             </Text>
-            {alertNote ? <Text variant="label" color={c.ember}>{alertNote}</Text> : null}
+            {alertNote ? (
+              <Pressable onPress={() => { if (alertNote === d.alerts.denied) void Linking.openSettings(); }} hitSlop={6}>
+                <Text variant="label" color={c.ember}>{alertNote}</Text>
+              </Pressable>
+            ) : null}
             {logged !== false && (
               <>
                 <Text variant="label" tone="tertiary" style={{ fontSize: 11 }} numberOfLines={2}>

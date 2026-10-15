@@ -1123,6 +1123,7 @@ export const sl: Dict = {
     b5: "Na začetnem zaslonu zamenjaj ikone aplikacij Instagram in drugih z ikonami UnSwipe: tako bo prst iz navade odprl UnSwipe.",
   },
   shield: {
+    notif: "Tapni tukaj in odpri UnSwipe, brez Reels.",
     title: "Odpri UnSwipe",
     subtitle: "Aplikacija {applicationOrDomainDisplayName} je blokirana. Odpri jo v aplikaciji UnSwipe, brez Reels.",
     open: "Odpri UnSwipe",

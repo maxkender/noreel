@@ -1123,6 +1123,7 @@ export const bg: Dict = {
     b5: "Замени на началния екран иконите на Instagram и другите с тези на UnSwipe: ще ги отваряш по навик.",
   },
   shield: {
+    notif: "Докосни тук, за да отвориш UnSwipe, без Reels.",
     title: "Отвори UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} е блокирано. Отвори го в UnSwipe, без Reels.",
     open: "Отвори UnSwipe",

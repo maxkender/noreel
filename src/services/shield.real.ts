@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as DA from 'react-native-device-activity';
 import { Asset } from 'expo-asset';
+import * as Notifications from 'expo-notifications';
 import type { ShieldService } from './types';
 import { dict } from '@/i18n';
 
@@ -53,7 +54,7 @@ export async function requestAuthorization(): Promise<AuthState> {
  */
 const ICON = 'unswipe-shield.png';
 
-export async function configureShield(words: { title: string; subtitle: string; open: string; close: string }): Promise<void> {
+export async function configureShield(words: { title: string; subtitle: string; open: string; close: string; notif: string }): Promise<void> {
   if (!FAMILY_CONTROLS_ENABLED) return;
   try {
     // Le logo, copie une fois dans le dossier partage que l'extension sait lire.
@@ -81,7 +82,19 @@ export async function configureShield(words: { title: string; subtitle: string; 
         secondaryButtonLabelColor: { red: 170, green: 174, blue: 182, alpha: 1 },
       },
       {
-        primary: { behavior: 'close', actions: [{ type: 'openApp' }] },
+        /*
+         * « Ouvrir UnSwipe » : iOS interdit a l'ecran de blocage d'ouvrir une
+         * app (l'ancien « openApp » plantait l'extension). Comme Opal et
+         * SocialLite, on ferme l'app bloquee et une notification arrive :
+         * la toucher ouvre UnSwipe.
+         */
+        primary: {
+          behavior: 'close',
+          actions: [{
+            type: 'sendNotification',
+            payload: { title: 'UnSwipe', body: words.notif, sound: 'default', interruptionLevel: 'active', identifier: 'unswipe-shield-open' },
+          }],
+        },
         secondary: { behavior: 'close' },
       },
     );
@@ -117,6 +130,11 @@ export const realShield: ShieldService = {
       if (!selection) return false;
       // L'ecran que voit celui qui ouvre l'app bloquee, dans sa langue.
       await configureShield(dict.shield);
+      // Le bouton « Ouvrir UnSwipe » de l'ecran de blocage passe par une notification.
+      try {
+        const perm = await Notifications.getPermissionsAsync();
+        if (!perm.granted && perm.canAskAgain) await Notifications.requestPermissionsAsync();
+      } catch { /* sans notifications, le blocage marche quand meme */ }
       DA.blockSelection({ activitySelectionToken: selection });
       return true;
     } catch {

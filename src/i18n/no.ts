@@ -1121,6 +1121,7 @@ export const no: Dict = {
     b5: "Bytt ut ikonene til Instagram og de andre med UnSwipes på Hjem-skjermen: du kommer til å åpne dem av vane.",
   },
   shield: {
+    notif: "Trykk her for å åpne UnSwipe, uten Reels.",
     title: "Åpne UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} er blokkert. Åpne den i UnSwipe, uten Reels.",
     open: "Åpne UnSwipe",

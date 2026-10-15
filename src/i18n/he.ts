@@ -1123,6 +1123,7 @@ export const he: Dict = {
     b5: "החלף במסך הבית את הסמלים של Instagram ושל האחרות בסמלים של UnSwipe: תפתח אותם מתוך הרגל.",
   },
   shield: {
+    notif: "אפשר לגעת כאן כדי לפתוח את UnSwipe, בלי Reels.",
     title: "לפתוח את UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} חסומה. אפשר לפתוח אותה ב-UnSwipe, בלי Reels.",
     open: "לפתוח את UnSwipe",

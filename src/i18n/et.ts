@@ -1123,6 +1123,7 @@ export const et: Dict = {
     b5: "Asenda avakuval rakenduse Instagram ja teiste ikoonid rakenduse UnSwipe ikoonidega: avad need harjumusest.",
   },
   shield: {
+    notif: "Puuduta siin, et avada UnSwipe ilma Reelsita.",
     title: "Ava UnSwipe",
     subtitle: "Rakendus {applicationOrDomainDisplayName} on blokeeritud. Ava see rakenduses UnSwipe, ilma Reelsita.",
     open: "Ava UnSwipe",

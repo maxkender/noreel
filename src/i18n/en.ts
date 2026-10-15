@@ -1123,6 +1123,7 @@ export const en: Dict = {
     b5: "Replace the Instagram and other icons with UnSwipe's on your home screen: you'll open them out of habit.",
   },
   shield: {
+    notif: "Tap here to open UnSwipe, without Reels.",
     title: "Open UnSwipe",
     subtitle: "{applicationOrDomainDisplayName} is blocked. Open it in UnSwipe, without Reels.",
     open: "Open UnSwipe",
