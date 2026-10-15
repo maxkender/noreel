@@ -1093,6 +1093,7 @@ export const fr = {
     row: "Aide et support",
   },
   alerts: {
+    test: "Tester maintenant",
     row: "Alertes Instagram",
     on: "Activées",
     off: "Désactivées",

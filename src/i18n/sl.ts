@@ -1073,6 +1073,7 @@ export const sl: Dict = {
     row: "Pomoč in podpora",
   },
   alerts: {
+    test: "Preizkusi zdaj",
     row: "Opozorila Instagram",
     on: "Vklopljeno",
     off: "Izklopljeno",

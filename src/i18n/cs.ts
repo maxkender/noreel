@@ -1073,6 +1073,7 @@ export const cs: Dict = {
     row: "Nápověda a podpora",
   },
   alerts: {
+    test: "Otestovat teď",
     row: "Upozornění z Instagramu",
     on: "Zapnuto",
     off: "Vypnuto",

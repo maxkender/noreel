@@ -1073,6 +1073,7 @@ export const hu: Dict = {
     row: "Súgó és támogatás",
   },
   alerts: {
+    test: "Teszt most",
     row: "Instagram-értesítések",
     on: "Be",
     off: "Ki",

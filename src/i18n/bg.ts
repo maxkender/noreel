@@ -1073,6 +1073,7 @@ export const bg: Dict = {
     row: "Помощ и поддръжка",
   },
   alerts: {
+    test: "Тествай сега",
     row: "Известия от Instagram",
     on: "Вкл.",
     off: "Изкл.",

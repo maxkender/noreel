@@ -1073,6 +1073,7 @@ export const ro: Dict = {
     row: "Ajutor și asistență",
   },
   alerts: {
+    test: "Testează acum",
     row: "Alerte Instagram",
     on: "Activate",
     off: "Dezactivate",

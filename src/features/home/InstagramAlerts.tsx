@@ -11,7 +11,7 @@ import { Text } from '@/components/type/Text';
 import { Button } from '@/components/Button';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { alertsOn, disableAlerts, enableAlerts, readCounts, type EnableResult } from '@/services/igAlerts';
+import { alertsOn, disableAlerts, enableAlerts, readCounts, testAlert, type EnableResult } from '@/services/igAlerts';
 
 // La meme identite que la vue Instagram d'UnSwipe : la session ouverte ici est la sienne.
 const UA =
@@ -113,6 +113,15 @@ export function InstagramAlerts() {
         <View style={st.foot}>
           {note ? <Text variant="label" color={c.ember} style={st.center}>{note}</Text> : null}
           <Text variant="label" tone="tertiary" style={st.center}>{d.alerts.delay}</Text>
+          {on && (
+            <Button
+              label={d.alerts.test}
+              onPress={() => {
+                haptics.press();
+                void testAlert(words).then((r) => setNote(r === 'sent' ? null : r === 'login' ? d.alerts.needLogin : d.alerts.denied));
+              }}
+            />
+          )}
           {on
             ? <Button label={d.alerts.turnOff} onPress={() => { void turnOff(); }} variant="ghost" />
             : <Button label={d.alerts.turnOn} onPress={() => { void turnOn(); }} disabled={busy || logged === null} />}

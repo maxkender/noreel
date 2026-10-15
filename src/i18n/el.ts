@@ -1073,6 +1073,7 @@ export const el: Dict = {
     row: "Βοήθεια και υποστήριξη",
   },
   alerts: {
+    test: "Δοκιμή τώρα",
     row: "Ειδοποιήσεις Instagram",
     on: "Ενεργές",
     off: "Ανενεργές",

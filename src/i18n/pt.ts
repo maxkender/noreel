@@ -1073,6 +1073,7 @@ export const pt: Dict = {
     row: "Ajuda e suporte",
   },
   alerts: {
+    test: "Testar agora",
     row: "Alertas do Instagram",
     on: "Ativados",
     off: "Desativados",

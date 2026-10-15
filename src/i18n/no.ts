@@ -1071,6 +1071,7 @@ export const no: Dict = {
     row: "Hjelp og støtte",
   },
   alerts: {
+    test: "Test nå",
     row: "Instagram-varsler",
     on: "På",
     off: "Av",

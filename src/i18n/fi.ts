@@ -1073,6 +1073,7 @@ export const fi: Dict = {
     row: "Ohjeet ja tuki",
   },
   alerts: {
+    test: "Testaa nyt",
     row: "Instagram-hälytykset",
     on: "Päällä",
     off: "Pois",

@@ -1073,6 +1073,7 @@ export const et: Dict = {
     row: "Abi ja tugi",
   },
   alerts: {
+    test: "Testi kohe",
     row: "Instagrami teavitused",
     on: "Sees",
     off: "Väljas",

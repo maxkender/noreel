@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
+import { snapshot } from './sessions';
 
 /*
  * LES ALERTES INSTAGRAM, SUR LE TELEPHONE.
@@ -63,11 +64,38 @@ export function activityOf(counts: Record<string, number> | undefined): number {
   return keys.reduce((n, k) => n + (typeof counts[k] === 'number' ? counts[k] : 0), 0);
 }
 
-async function get(path: string): Promise<Record<string, unknown> | null> {
-  const r = await fetch(ORIGIN + path, {
-    credentials: 'include',
-    headers: { 'x-ig-app-id': APP_ID, 'x-requested-with': 'XMLHttpRequest', 'user-agent': UA, accept: '*/*' },
-  });
+/*
+ * La session, PRISE A LA SOURCE.
+ *
+ * La premiere version comptait sur `credentials: 'include'` : sur iPhone,
+ * la requete partait avec le magasin de cookies de l'app, alors que la
+ * session d'Instagram vit dans celui de la WebView. Instagram repondait
+ * comme a un inconnu, et les alertes ne s'activaient pas. On lit donc les
+ * cookies de la WebView (les deux magasins) et on les envoie nous-memes,
+ * avec le jeton CSRF qu'Instagram attend.
+ */
+async function sessionHeaders(): Promise<Record<string, string> | null> {
+  try {
+    const jar = await snapshot('instagram');
+    if (!jar.sessionid?.value) return null;
+    const cookie = Object.values(jar).map((k) => `${k.name}=${k.value}`).join('; ');
+    return {
+      cookie,
+      'x-csrftoken': jar.csrftoken?.value ?? '',
+      'x-ig-app-id': APP_ID,
+      'x-requested-with': 'XMLHttpRequest',
+      'user-agent': UA,
+      referer: ORIGIN + '/',
+      accept: '*/*',
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function get(path: string, headers: Record<string, string>): Promise<Record<string, unknown> | null> {
+  // `omit` : iOS n'ajoute ni ne remplace rien, l'en-tete Cookie part tel quel.
+  const r = await fetch(ORIGIN + path, { credentials: 'omit', headers });
   if (!r.ok) return null;
   const j = (await r.json()) as Record<string, unknown>;
   return j && j.status === 'ok' ? j : null;
@@ -79,9 +107,11 @@ async function get(path: string): Promise<Record<string, unknown> | null> {
  */
 export async function readCounts(): Promise<Counts | null> {
   try {
-    const badge = await get('/api/v1/direct_v2/get_badge_count/?no_raven=1');
+    const headers = await sessionHeaders();
+    if (!headers) return null;
+    const badge = await get('/api/v1/direct_v2/get_badge_count/?no_raven=1', headers);
     if (!badge || typeof badge.badge_count !== 'number') return null;
-    const news = await get('/api/v1/news/inbox/');
+    const news = await get('/api/v1/news/inbox/', headers);
     return { dm: badge.badge_count, act: activityOf(news?.counts as Record<string, number> | undefined) };
   } catch {
     return null;
@@ -127,6 +157,29 @@ if (Platform.OS === 'ios') {
       return BackgroundTask.BackgroundTaskResult.Failed;
     }
   });
+}
+
+/**
+ * Une verification A LA DEMANDE : lit les compteurs maintenant et envoie
+ * une notification avec ce qu'ils valent, meme s'ils n'ont pas bouge. Sert a
+ * prouver que toute la chaine marche, sans attendre le bon vouloir d'iOS.
+ */
+export async function testAlert(words: State['words']): Promise<'sent' | 'login' | 'denied'> {
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return 'denied';
+  const now = await readCounts();
+  if (!now) return 'login';
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: words.title,
+      body: `${words.dm.replace('{n}', String(now.dm))} · ${words.act.replace('{n}', String(now.act))}`,
+      data: { url: '/client/instagram' },
+    },
+    trigger: null,
+  });
+  const s = await load();
+  if (s.on) await save({ ...s, dm: now.dm, act: now.act });
+  return 'sent';
 }
 
 export async function alertsOn(): Promise<boolean> {

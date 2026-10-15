@@ -1073,6 +1073,7 @@ export const tr: Dict = {
     row: "Yardım ve destek",
   },
   alerts: {
+    test: "Şimdi test et",
     row: "Instagram uyarıları",
     on: "Açık",
     off: "Kapalı",
