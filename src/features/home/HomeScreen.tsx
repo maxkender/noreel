@@ -7,14 +7,16 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import {
   BellRing, ChevronDown, ChevronRight, CircleQuestionMark, ClipboardPaste, Home as HomeIcon, LayoutGrid, Link2, Lock,
-  LockOpen, Settings as SettingsIcon, Shield, SlidersHorizontal, Smartphone, Timer, User,
+  Info, Settings as SettingsIcon, Shield, SlidersHorizontal, Smartphone, Timer, User,
 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import { alertsOn } from '@/services/igAlerts';
+import { alertsOn, autoEnableAlerts, disableAlerts, enableAlerts, readCounts } from '@/services/igAlerts';
 import { CLIENTS, type ClientId } from '@/features/client/blockers';
 import { SlideToConfirm } from '@/components/SlideToConfirm';
+import { Toggle } from './parts';
 import { PostModeSheet } from '@/features/client/PostSheet';
-import { BlockOrbit } from './BlockOrbit';
+import { HelpSheet } from '@/components/HelpSheet';
+import { BlockHero, BlockStep } from './BlockHero';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -32,7 +34,6 @@ import { useAnchor, useTourScroll } from './anchors';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { NavBar } from './NavBar';
-import { Settings } from './Settings';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
@@ -47,10 +48,17 @@ export function HomeScreen() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d } = useT();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>('home');
+  // Retour sur l'accueil (souvent depuis Instagram, ou l'on vient de se
+  // connecter) : les alertes s'allument d'elles-memes si elles peuvent.
+  useFocusEffect(useCallback(() => {
+    if (Platform.OS === 'ios') {
+      void autoEnableAlerts({ title: d.alerts.notifTitle, dm: d.alerts.notifDm, act: d.alerts.notifAct }).catch(() => {});
+    }
+  }, [d]));
   // Rejouer la story d'un onglet : un compteur, pour que la meme demande deux fois passe.
   const [replay, setReplay] = useState<{ id: TourId; n: number } | null>(null);
-  const [settings, setSettings] = useState(false);
   const [streak, setStreak] = useState(0);
   // L'en-tete : la visite guidee place ses cadres sous lui.
   const aFrameTop = useAnchor('frame-top');
@@ -125,10 +133,9 @@ export function HomeScreen() {
             realFloor={realFloor}
           />
         )}
-        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} onControl={() => setTab('block')} />}
+        {tab === 'account' && <AccountTab onSettings={() => router.push('/settings')} onControl={() => setTab('block')} />}
       </Animated.View>
 
-      <Settings visible={settings} onClose={() => setSettings(false)} />
 
       {/* Le contenu se dissout avant d'atteindre la barre. */}
       <LinearGradient
@@ -272,6 +279,7 @@ function BlockTab({
   const [intro, setIntro] = useState(false);
   const [paywall, setPaywall] = useState(false);
   const [post, setPost] = useState(false);
+  const [info, setInfo] = useState(false);
   // Le registre de la protection, pour l'etat du filtre.
   const { s: prot } = useProtect();
   // Le blocage des apps d'origine et le mode strict sont payants : grises et
@@ -332,7 +340,13 @@ function BlockTab({
       onScroll={onListScroll}
       scrollEventThrottle={16}
     >
-      <Text variant="displayM">{d.block.title}</Text>
+      {/* Le titre, et le « i » qui explique tout l'onglet en cinq questions. */}
+      <View style={st.accHead}>
+        <Text variant="displayM" style={{ flex: 1 }}>{d.block.title}</Text>
+        <Pressable onPress={() => { haptics.tap(); setInfo(true); }} hitSlop={10} style={st.gearBtn} accessibilityRole="button" accessibilityLabel={d.blockHelp.title}>
+          <Info size={20} strokeWidth={2} color={c.mist} />
+        </Pressable>
+      </View>
 
       {/* Le filtre ne parle que s'il a un doute. */}
       {prot?.shaky && (
@@ -344,21 +358,27 @@ function BlockTab({
         Les trois chiffres et le temps du jour sont partis : cet onglet sert
         a regler, pas a se comparer. La carte dit quoi faire, en clair.
       */}
-      {/* Le schema : UnSwipe au centre, les apps d'origine autour, cadenas fermes ou ouverts. */}
-      <View style={{ marginTop: space.md }}>
-        <BlockOrbit blocked={on} />
-      </View>
-      <View style={[st.statusPill, { backgroundColor: on ? withAlpha(c.accent, 0.14) : withAlpha(c.ember, 0.14) }]}>
-        {on
-          ? <Lock size={14} strokeWidth={2.4} color={c.accent} />
-          : <LockOpen size={14} strokeWidth={2.4} color={c.ember} />}
-        <Text variant="label" color={on ? c.accent : c.ember}>{on ? d.blockTab.onTitle : d.blockTab.offTitle}</Text>
+      {/* Ce que fait le blocage, dessine : apps d'origine -> cadenas -> UnSwipe. */}
+      <View ref={aStatus} collapsable={false}>
+        <BlockHero
+          on={on}
+          title={on ? d.blockTab.onTitle : d.blockTab.offTitle}
+          line={on ? d.blockTab.heroOn : d.blockTab.heroOff}
+        />
       </View>
 
-      <View ref={aStatus} collapsable={false} style={[st.blockCard, !pro && st.dimmed]}>
-        <Text variant="body" tone="secondary" style={st.center}>
-          {needsAuth ? d.blockTab.needAuth : d.blockTab.guide}
-        </Text>
+      {/*
+        LA MISE EN PLACE, EN TROIS ETAPES COCHEES.
+        On voit ce qui est fait et ce qui reste ; le bouton fait toujours
+        l'etape suivante, et rien d'autre.
+      */}
+      <View style={[st.blockCard, !pro && st.dimmed]}>
+        <Text variant="label" tone="tertiary" style={{ alignSelf: 'flex-start' }}>{d.blockTab.stepsTitle}</Text>
+        <View style={{ alignSelf: 'stretch' }}>
+          <BlockStep n={1} label={d.block.authorize} done={!needsAuth} current={needsAuth} />
+          <BlockStep n={2} label={d.blockTab.step2} done={!!selection} current={!needsAuth && !selection} />
+          <BlockStep n={3} label={d.blockTab.step3} done={on} current={!needsAuth && !!selection && !on} />
+        </View>
         <Pressable
           ref={aBtn}
           collapsable={false}
@@ -375,7 +395,7 @@ function BlockTab({
             {!pro ? d.blockTab.unlock
               : needsAuth ? d.block.authorize
               : !selection ? d.blockTab.choose
-              : on ? d.blockTab.turnOff : d.blockTab.turnOn}
+              : on ? d.blockTab.turnOff : d.blockTab.step3}
           </Text>
         </Pressable>
       </View>
@@ -408,6 +428,17 @@ function BlockTab({
       </View>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
+      <HelpSheet
+        visible={info}
+        onClose={() => setInfo(false)}
+        topics={[
+          { t: d.blockHelp.t1, h: d.blockHelp.h1, b: d.blockHelp.b1 },
+          { t: d.blockHelp.t2, h: d.blockHelp.h2, b: d.blockHelp.b2 },
+          { t: d.blockHelp.t3, h: d.blockHelp.h3, b: d.blockHelp.b3 },
+          { t: d.blockHelp.t4, h: d.blockHelp.h4, b: d.blockHelp.b4 },
+          { t: d.blockHelp.t5, h: d.blockHelp.h5, b: d.blockHelp.b5 },
+        ]}
+      />
       <PostModeSheet visible={post} onClose={() => setPost(false)} armed={on && !!selection} onSetup={() => { void arm(); }} />
 
       <HardModeIntro
@@ -451,7 +482,22 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
   const [alerts, setAlerts] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkNote, setLinkNote] = useState<string | null>(null);
-  useEffect(() => { void alertsOn().then(setAlerts); }, []);
+  const [logged, setLogged] = useState<boolean | null>(null);
+  const [alertNote, setAlertNote] = useState<string | null>(null);
+  useEffect(() => {
+    void alertsOn().then(setAlerts);
+    if (Platform.OS === 'ios') void readCounts().then((r) => setLogged(r !== null));
+  }, []);
+  const flipAlerts = async (v: boolean) => {
+    setAlertNote(null);
+    if (!v) { await disableAlerts(); setAlerts(false); return; }
+    setAlerts(true);
+    const r = await enableAlerts({ title: d.alerts.notifTitle, dm: d.alerts.notifDm, act: d.alerts.notifAct });
+    if (r === 'on') return;
+    setAlerts(false);
+    if (r === 'login') { setLogged(false); return; }
+    setAlertNote(r === 'denied' ? d.alerts.denied : d.alerts.unavailable);
+  };
 
   // Le lien colle : on reconnait le site, et on l'ouvre DANS UnSwipe.
   const pasteLink = async () => {
@@ -480,11 +526,13 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
         </Pressable>
       </View>
 
+      {/* Les alertes : un interrupteur, allume par defaut. Sans Instagram
+          connecte, la carte le dit et mene a la connexion. */}
       {Platform.OS === 'ios' && (
         <Pressable
-          onPress={() => { haptics.tap(); router.push('/alerts'); }}
+          onPress={() => { if (logged === false) { haptics.tap(); router.push('/client/instagram'); } }}
           style={[st.notifCard, alerts && { borderColor: withAlpha('#34D399', 0.6) }]}
-          accessibilityRole="button"
+          accessibilityRole={logged === false ? 'button' : undefined}
         >
           <BellRing size={22} strokeWidth={2} color={c.mist} />
           <View style={{ flex: 1, gap: 2 }}>
@@ -492,12 +540,14 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
               <Text variant="title">{d.account.notifs}</Text>
               <View style={st.betaPill}><Text variant="label" tone="secondary" style={{ fontSize: 10 }}>Beta</Text></View>
             </View>
-            <Text variant="label" tone="secondary">{d.alerts.row}</Text>
+            <Text variant="label" tone="secondary">
+              {logged === false ? d.alerts.loginFirst : alerts ? d.alerts.connected : d.alerts.row}
+            </Text>
+            {alertNote ? <Text variant="label" color={c.ember}>{alertNote}</Text> : null}
           </View>
-          <View style={[st.statePill, { backgroundColor: alerts ? '#34D399' : withAlpha(c.mist, 0.1) }]}>
-            <Text variant="label" color={alerts ? '#04120B' : withAlpha(c.mist, 0.7)}>{alerts ? d.alerts.on : d.alerts.off}</Text>
-          </View>
-          <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+          {logged === false
+            ? <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+            : <Toggle on={alerts} onChange={(v) => { void flipAlerts(v); }} />}
         </Pressable>
       )}
 

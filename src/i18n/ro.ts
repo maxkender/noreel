@@ -738,6 +738,11 @@ export const ro: Dict = {
   },
 
   blockTab: {
+    step3: "Activează blocarea",
+    step2: "Alege aplicațiile de blocat",
+    stepsTitle: "Configurare în 3 pași",
+    heroOff: "Deocamdată, Instagram și celelalte se deschid normal, cu tot cu Reels.",
+    heroOn: "Când deschizi Instagram sau altă aplicație blocată, ajungi în UnSwipe, fără Reels.",
     hardOn: "Mod strict activat",
     slide: "Glisează: mod strict",
     manage: "Aplicațiile tale",
@@ -826,6 +831,9 @@ export const ro: Dict = {
   },
 
   misc: {
+    copied: "Copiat",
+    copyLink: "Copiază linkul",
+    saveIconFull: "Salvează pictograma",
     addHome: 'Adaugă aplicațiile pe ecranul principal',
     homeDone: 'Gata',
     saveIcon: 'Pictogramă',
@@ -1073,6 +1081,7 @@ export const ro: Dict = {
     row: "Ajutor și asistență",
   },
   alerts: {
+    loginFirst: "Conectează-te la Instagram în UnSwipe ca să primești alertele.",
     test: "Testează acum",
     row: "Alerte Instagram",
     on: "Activate",
@@ -1092,5 +1101,23 @@ export const ro: Dict = {
     notifTitle: "Instagram",
     notifDm: "Mesaje necitite: {n}",
     notifAct: "Activitate nouă: {n}",
+  },
+  blockHelp: {
+    title: "Cum funcționează blocarea",
+    t1: "Ce face blocarea",
+    h1: "Aplicațiile originale nu se mai deschid.",
+    b1: "Alegi aplicațiile de blocat, cum ar fi Instagram sau TikTok. Odată blocate, iOS le închide imediat ce sunt deschise: treci prin UnSwipe, versiunea fără Reels și Shorts.",
+    t2: "Alegerea aplicațiilor",
+    h2: "Bifează ca să blochezi, debifează ca să deblochezi.",
+    b2: "Atinge „Aplicațiile tale” ca să deschizi lista Apple. Bifează aplicații, nu categorii sau site-uri, altfel ar fi blocat și UnSwipe.",
+    t3: "Mod postare",
+    h3: "Postează fără să deblochezi tot.",
+    b3: "Redeschide aplicația originală pentru cât timp alegi, ca să publici o postare sau o poveste, apoi o blochează din nou singur.",
+    t4: "Mod strict",
+    h4: "Fără cale de întoarcere dintr-un impuls.",
+    b4: "Glisează cursorul ca să-l activezi. Apoi, oprirea blocării cere un efort real: tocmai asta îl face eficient.",
+    t5: "Ecranul principal",
+    h5: "Pune UnSwipe în locul originalelor.",
+    b5: "Înlocuiește pe ecranul principal pictogramele Instagram și ale celorlalte aplicații cu cele UnSwipe: le vei deschide din reflex.",
   },
 };

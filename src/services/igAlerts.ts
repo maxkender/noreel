@@ -34,6 +34,8 @@ const UA =
 /** Ce qu'on garde : l'etat, les derniers compteurs vus, et les mots des notifications. */
 type State = {
   on: boolean;
+  /** Coupees A LA MAIN : on ne les rallume plus tout seuls. */
+  optOut?: boolean;
   dm: number;
   act: number;
   /** Les textes dans la langue de l'app, figes a l'activation : la tache tourne sans interface. */
@@ -205,14 +207,14 @@ export async function enableAlerts(words: State['words']): Promise<EnableResult>
   }
   const now = await readCounts();
   if (!now) return 'login';
-  await save({ on: true, dm: now.dm, act: now.act, words });
+  await save({ on: true, optOut: false, dm: now.dm, act: now.act, words });
   await BackgroundTask.registerTaskAsync(IG_ALERTS_TASK, { minimumInterval: 15 });
   return 'on';
 }
 
 export async function disableAlerts(): Promise<void> {
   const s = await load();
-  await save({ ...s, on: false });
+  await save({ ...s, on: false, optOut: true });
   try { await BackgroundTask.unregisterTaskAsync(IG_ALERTS_TASK); } catch { /* deja retiree */ }
 }
 
@@ -220,4 +222,27 @@ export async function disableAlerts(): Promise<void> {
 export async function refreshWords(words: State['words']): Promise<void> {
   const s = await load();
   if (s.on) await save({ ...s, words });
+}
+
+/*
+ * ALLUMEES PAR DEFAUT.
+ * Ce n'est pas a la personne d'aller les chercher : des qu'Instagram est
+ * connecte dans UnSwipe et que les notifications sont permises (demande faite
+ * pendant l'onboarding), on les active sans rien demander. Seul un « non »
+ * explicite (l'interrupteur coupe) les tient eteintes.
+ */
+export async function autoEnableAlerts(words: State['words']): Promise<boolean> {
+  if (Platform.OS !== 'ios') return false;
+  const s = await load();
+  if (s.on) return true;
+  if (s.optOut) return false;
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return false;
+  const status = await BackgroundTask.getStatusAsync();
+  if (status === BackgroundTask.BackgroundTaskStatus.Restricted) return false;
+  const now = await readCounts();
+  if (!now) return false;
+  await save({ on: true, optOut: false, dm: now.dm, act: now.act, words });
+  await BackgroundTask.registerTaskAsync(IG_ALERTS_TASK, { minimumInterval: 15 });
+  return true;
 }

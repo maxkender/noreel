@@ -738,6 +738,11 @@ export const cs: Dict = {
   },
 
   blockTab: {
+    step3: "Zapnout blokování",
+    step2: "Vybrat aplikace k blokování",
+    stepsTitle: "Nastavení ve 3 krocích",
+    heroOff: "Zatím se Instagram a ostatní otevírají normálně, včetně Reels.",
+    heroOn: "Když otevřeš Instagram nebo jinou blokovanou aplikaci, skončíš v UnSwipe, bez Reels.",
     hardOn: "Přísný režim zapnutý",
     slide: "Přejeď pro přísný režim",
     manage: "Správa aplikací",
@@ -826,6 +831,9 @@ export const cs: Dict = {
   },
 
   misc: {
+    copied: "Zkopírováno",
+    copyLink: "Kopírovat odkaz",
+    saveIconFull: "Uložit ikonu",
     addHome: 'Přidat aplikace na plochu',
     homeDone: 'Hotovo',
     saveIcon: 'Ikona',
@@ -1073,6 +1081,7 @@ export const cs: Dict = {
     row: "Nápověda a podpora",
   },
   alerts: {
+    loginFirst: "Přihlas se v UnSwipe k Instagramu, ať ti chodí upozornění.",
     test: "Otestovat teď",
     row: "Upozornění z Instagramu",
     on: "Zapnuto",
@@ -1092,5 +1101,23 @@ export const cs: Dict = {
     notifTitle: "Instagram",
     notifDm: "Nepřečtené zprávy: {n}",
     notifAct: "Nová aktivita: {n}",
+  },
+  blockHelp: {
+    title: "Jak funguje blokování",
+    t1: "Co blokování dělá",
+    h1: "Původní aplikace se už neotevřou.",
+    b1: "Vybereš aplikace, které chceš blokovat, například Instagram nebo TikTok. Jakmile jsou zablokované, iOS je zavře hned při otevření: místo nich použiješ UnSwipe, verzi bez Reels a Shorts.",
+    t2: "Výběr aplikací",
+    h2: "Zaškrtni pro blokování, odškrtni pro odblokování.",
+    b2: "Klepni na „Správa aplikací“ a otevře se seznam od Apple. Zaškrtávej aplikace, ne kategorie ani weby, jinak by se zablokoval i UnSwipe.",
+    t3: "Režim přidávání",
+    h3: "Přidávej bez odblokování všeho.",
+    b3: "Znovu otevře původní aplikaci na dobu, kterou zvolíš, aby šlo přidat příspěvek nebo příběh, a pak ji sám znovu zablokuje.",
+    t4: "Přísný režim",
+    h4: "Žádné couvání z rozmaru.",
+    b4: "Zapni ho posunutím přepínače. Pak vypnutí blokování stojí skutečné úsilí: právě proto funguje.",
+    t5: "Plocha",
+    h5: "Dej UnSwipe na místo originálů.",
+    b5: "Nahraď na ploše ikony aplikace Instagram a dalších ikonami UnSwipe: budeš je otevírat ze zvyku.",
   },
 };

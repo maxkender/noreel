@@ -738,6 +738,11 @@ export const pt: Dict = {
   },
 
   blockTab: {
+    step3: "Ativar o bloqueio",
+    step2: "Escolher as apps a bloquear",
+    stepsTitle: "Configuração em 3 passos",
+    heroOff: "Por agora, o Instagram e as outras abrem normalmente, com Reels incluídos.",
+    heroOn: "Quando abres o Instagram ou outra app bloqueada, vais parar ao UnSwipe, sem Reels.",
     hardOn: "Modo rigoroso ativado",
     slide: "Desliza para modo rigoroso",
     manage: "Gerir apps",
@@ -826,6 +831,9 @@ export const pt: Dict = {
   },
 
   misc: {
+    copied: "Copiado",
+    copyLink: "Copiar link",
+    saveIconFull: "Guardar ícone",
     addHome: 'Adicionar as apps ao ecrã principal',
     homeDone: 'Feito',
     saveIcon: 'Ícone',
@@ -1073,6 +1081,7 @@ export const pt: Dict = {
     row: "Ajuda e suporte",
   },
   alerts: {
+    loginFirst: "Inicia sessão no Instagram no UnSwipe para receberes os alertas.",
     test: "Testar agora",
     row: "Alertas do Instagram",
     on: "Ativados",
@@ -1092,5 +1101,23 @@ export const pt: Dict = {
     notifTitle: "Instagram",
     notifDm: "Mensagens não lidas: {n}",
     notifAct: "Nova atividade: {n}",
+  },
+  blockHelp: {
+    title: "Como funciona o bloqueio",
+    t1: "O que faz o bloqueio",
+    h1: "As apps originais deixam de abrir.",
+    b1: "Escolhes as apps a bloquear, como o Instagram ou o TikTok. Depois de bloqueadas, o iOS fecha-as assim que se abrem: passas pelo UnSwipe, a versão sem Reels nem Shorts.",
+    t2: "Escolher as apps",
+    h2: "Marca para bloquear, desmarca para desbloquear.",
+    b2: "Toca em «Gerir apps» para abrir a lista da Apple. Marca apps, não categorias nem sites, senão o UnSwipe também ficaria bloqueado.",
+    t3: "Modo publicação",
+    h3: "Publica sem desbloquear tudo.",
+    b3: "Reabre a app original durante o tempo que escolheres, para publicares um post ou uma story, e depois volta a bloqueá-la sozinho.",
+    t4: "Modo rigoroso",
+    h4: "Nada de voltar atrás por impulso.",
+    b4: "Desliza o cursor para o ativar. Depois disso, desligar o bloqueio exige um esforço real: é isso que o torna eficaz.",
+    t5: "Ecrã principal",
+    h5: "Põe o UnSwipe no lugar das originais.",
+    b5: "Substitui os ícones do Instagram e das outras pelos do UnSwipe no teu ecrã principal: vais abri-los por hábito.",
   },
 };

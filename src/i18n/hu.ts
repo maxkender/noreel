@@ -738,6 +738,11 @@ export const hu: Dict = {
   },
 
   blockTab: {
+    step3: "Blokkolás bekapcsolása",
+    step2: "Válaszd ki a blokkolandó appokat",
+    stepsTitle: "Beállítás 3 lépésben",
+    heroOff: "Egyelőre az Instagram és a többi app normálisan nyílik meg, Reelsszel együtt.",
+    heroOn: "Ha megnyitod az Instagramot vagy egy másik blokkolt appot, az UnSwipe-ban kötsz ki, Reels nélkül.",
     hardOn: "Szigorú mód bekapcsolva",
     slide: "Húzd a szigorú módhoz",
     manage: "Appok kezelése",
@@ -826,6 +831,9 @@ export const hu: Dict = {
   },
 
   misc: {
+    copied: "Másolva",
+    copyLink: "Link másolása",
+    saveIconFull: "Ikon mentése",
     addHome: 'Add hozzá az appokat a Főképernyőhöz',
     homeDone: 'Kész',
     saveIcon: 'Ikon',
@@ -1073,6 +1081,7 @@ export const hu: Dict = {
     row: "Súgó és támogatás",
   },
   alerts: {
+    loginFirst: "Jelentkezz be az Instagramba az UnSwipe-ban, hogy megkapd az értesítéseket.",
     test: "Teszt most",
     row: "Instagram-értesítések",
     on: "Be",
@@ -1092,5 +1101,23 @@ export const hu: Dict = {
     notifTitle: "Instagram",
     notifDm: "Olvasatlan üzenetek: {n}",
     notifAct: "Új tevékenység: {n}",
+  },
+  blockHelp: {
+    title: "Így működik a blokkolás",
+    t1: "Mit csinál a blokkolás",
+    h1: "Az eredeti appok többé nem nyílnak meg.",
+    b1: "Te választod ki a blokkolandó appokat, például az Instagramot vagy a TikTokot. Blokkolás után az iOS azonnal bezárja őket, amint megnyílnak: helyettük az UnSwipe-ot használod, a Reels és Shorts nélküli változatot.",
+    t2: "Appok kiválasztása",
+    h2: "Jelöld be a blokkoláshoz, vedd ki a jelölést a feloldáshoz.",
+    b2: "Koppints az „Appok kezelése” gombra az Apple listájának megnyitásához. Appokat jelölj be, ne kategóriákat vagy webhelyeket, különben az UnSwipe is blokkolva lenne.",
+    t3: "Posztolás mód",
+    h3: "Posztolj anélkül, hogy mindent feloldanál.",
+    b3: "Az általad választott időre újra megnyitja az eredeti appot, hogy posztolhass vagy megoszthass egy sztorit, aztán magától újra zárolja.",
+    t4: "Szigorú mód",
+    h4: "Nincs visszaút egy hirtelen ötlet miatt.",
+    b4: "Húzd el a csúszkát a bekapcsolásához. Utána a blokkolás kikapcsolása valódi erőfeszítést kíván: ettől lesz hatásos.",
+    t5: "Főképernyő",
+    h5: "Tedd az UnSwipe-ot az eredetiek helyére.",
+    b5: "Cseréld le a főképernyőn az Instagram és a többi app ikonját az UnSwipe ikonjaira: megszokásból azokat fogod megnyitni.",
   },
 };

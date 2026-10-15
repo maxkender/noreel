@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
-  Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View,
+  Linking, Platform, Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
-import { useBlurTint, useColors, type Palette, type ThemeName } from '@/theme/useColors';
+import { useColors, type Palette, type ThemeName } from '@/theme/useColors';
 import { space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { haptics } from '@/lib/haptics';
@@ -18,7 +17,7 @@ import { Toggle } from './parts';
 import { LANG_NAMES } from '@/components/LangPicker';
 import { FLAGS } from '@/features/onboarding/screens/Language';
 import { useLang } from '@/store/lang';
-import { Check } from 'lucide-react-native';
+import { Check, ChevronLeft } from 'lucide-react-native';
 import { STORE_URL, shareApp, shareOnWhatsApp } from '@/lib/share';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
@@ -27,7 +26,6 @@ import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
 } from '@/services/shield.real';
-import { alertsOn } from '@/services/igAlerts';
 import { useRouter } from 'expo-router';
 
 
@@ -40,9 +38,16 @@ const THEMES: [ThemeName, 'themeSystem' | 'themeDark' | 'themeLight'][] = [
 ];
 
 /** Feuille de reglages : tout ce qu'il y a dedans agit reellement. */
-export function Settings({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/**
+ * Les reglages, en PAGE : on y entre et on en ressort par la fleche,
+ * comme dans les Reglages d'iOS. Ils etaient une feuille qui montait sur
+ * l'accueil, trop petite pour tout ce qu'elle contient.
+ */
+export function Settings() {
+  const visible = true;
+  const router = useRouter();
+  const onClose = () => router.back();
   const c = useColors();
-  const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
   const { d, lang } = useT();
   /*
@@ -54,11 +59,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
     seconde de plus, le temps que la feuille redescende — c'est la seule
     facon d'avoir une sortie dans une modale.
   */
-  const [closing, setClosing] = useState(false);
-  const close = useCallback(() => {
-    setClosing(true);
-    setTimeout(() => { setClosing(false); onClose(); }, 220);
-  }, [onClose]);
+  const close = onClose;
 
   const s = useSettings();
   const [cleared, setCleared] = useState(false);
@@ -70,49 +71,21 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
   const [langOpen, setLangOpen] = useState(false);
   const setLang = useLang((x) => x.set);
-  const router = useRouter();
-  /** Ferme la feuille, PUIS ouvre l'ecran : iOS n'empile pas une page sur une fenetre ouverte. */
-  const go = (path: '/help' | '/alerts') => { haptics.tap(); close(); setTimeout(() => router.push(path), 260); };
-  const [alerts, setAlerts] = useState(false);
-  useEffect(() => { if (visible) void alertsOn().then(setAlerts); }, [visible]);
+  /** Une page de plus par-dessus les reglages. */
+  const go = (path: '/help' | '/alerts') => { haptics.tap(); router.push(path); };
 
 
   return (
-    <Modal
-      visible={visible || closing}
-      transparent
-      animationType="none"
-      onRequestClose={close}
-    >
-      {/* Le fond de l'app se floute derriere la feuille : sans ca, la feuille
-          de verre se detache d'une image nette et ressemble a un calque. */}
-      <Animated.View
-        entering={FadeIn.duration(220)}
-        exiting={FadeOut.duration(200)}
-        style={StyleSheet.absoluteFill}
-      >
-        <BlurView intensity={26} tint={tint} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-
-      <Pressable style={st.scrim} onPress={close}>
-        {!closing && (
-        <Animated.View
-          entering={SlideInDown.duration(280)}
-          exiting={SlideOutDown.duration(220)}
-          style={st.sheet}
-        >
-          <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
-          <View style={st.tint} />
-
-          <View style={st.head}>
-            <View style={{ width: 44 }} />
-            <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>{d.prefs.title}</Text>
-            <Pressable onPress={close} style={st.done} hitSlop={10}>
-              <Text variant="label" color={c.night}>OK</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+    <View style={st.page}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <View style={st.pageHead}>
+          <Pressable onPress={() => { haptics.tap(); close(); }} hitSlop={12} style={st.back} accessibilityRole="button" accessibilityLabel="Back">
+            <ChevronLeft size={22} strokeWidth={2.2} color={c.mist} />
+          </Pressable>
+          <Text variant="title" style={{ flex: 1, textAlign: 'center' }}>{d.prefs.title}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <ScrollView contentContainerStyle={st.pageBody} showsVerticalScrollIndicator={false}>
             {/*
               La langue, EN HAUT et en clair : une ligne, la langue du moment,
               et la liste qui se deplie sur place. Elle vivait en bas, en
@@ -134,17 +107,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               />
             ))}
 
-            {/* Les alertes Instagram : iPhone seulement pour l'instant. */}
-            {Platform.OS === 'ios' && (
-              <>
-                <Group title={d.alerts.title} />
-                <Line
-                  label={d.alerts.row}
-                  right={<Text variant="body" tone="tertiary">{`${alerts ? d.alerts.on : d.alerts.off}  ›`}</Text>}
-                  onPress={() => go('/alerts')}
-                />
-              </>
-            )}
 
             {Platform.OS === 'ios' && (
               <>
@@ -305,14 +267,12 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             <Text variant="label" tone="tertiary" style={st.foot}>
               {d.account.dataBody}
             </Text>
-          </ScrollView>
-        </Animated.View>
-        )}
-      </Pressable>
+        </ScrollView>
+      </SafeAreaView>
 
       <Feedback visible={feedback} onClose={() => setFeedback(false)} />
       <Sources visible={sources} onClose={() => setSources(false)} />
-    </Modal>
+    </View>
   );
 }
 
@@ -340,6 +300,13 @@ function Line({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
+  page: { flex: 1, backgroundColor: c.night },
+  pageHead: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, paddingVertical: space.sm },
+  back: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge,
+  },
+  pageBody: { paddingHorizontal: space.lg, paddingBottom: space.xxl * 2 },
   scrim: { flex: 1, backgroundColor: '#00000090', justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',

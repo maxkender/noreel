@@ -738,6 +738,11 @@ export const sr: Dict = {
   },
 
   blockTab: {
+    step3: "Uključi blokiranje",
+    step2: "Izaberi aplikacije za blokiranje",
+    stepsTitle: "Podešavanje u 3 koraka",
+    heroOff: "Za sada se Instagram i ostale otvaraju normalno, uključujući Reels.",
+    heroOn: "Kad otvoriš Instagram ili neku drugu blokiranu aplikaciju, završiš u UnSwipe-u, bez Reels-a.",
     hardOn: "Strogi režim uključen",
     slide: "Prevuci za strogi režim",
     manage: "Aplikacije",
@@ -826,6 +831,9 @@ export const sr: Dict = {
   },
 
   misc: {
+    copied: "Kopirano",
+    copyLink: "Kopiraj link",
+    saveIconFull: "Sačuvaj ikonu",
     addHome: 'Dodaj aplikacije na početni ekran',
     homeDone: 'Gotovo',
     saveIcon: 'Ikona',
@@ -1073,6 +1081,7 @@ export const sr: Dict = {
     row: "Pomoć i podrška",
   },
   alerts: {
+    loginFirst: "Prijavi se na Instagram u UnSwipe-u kako bi ti stizala upozorenja.",
     test: "Testiraj sada",
     row: "Instagram upozorenja",
     on: "Uključeno",
@@ -1092,5 +1101,23 @@ export const sr: Dict = {
     notifTitle: "Instagram",
     notifDm: "Nepročitane poruke: {n}",
     notifAct: "Nova aktivnost: {n}",
+  },
+  blockHelp: {
+    title: "Kako funkcioniše blokiranje",
+    t1: "Šta radi blokiranje",
+    h1: "Originalne aplikacije se više ne otvaraju.",
+    b1: "Biraš aplikacije koje želiš da blokiraš, poput aplikacija Instagram ili TikTok. Kad su blokirane, iOS ih zatvara čim se otvore: koristiš UnSwipe, verziju bez Reels i Shorts sadržaja.",
+    t2: "Izbor aplikacija",
+    h2: "Označi za blokiranje, poništi oznaku za deblokiranje.",
+    b2: "Dodirni „Aplikacije“ da se otvori lista kompanije Apple. Označavaj aplikacije, ne kategorije ni veb-sajtove, inače bi i UnSwipe bio blokiran.",
+    t3: "Režim objave",
+    h3: "Objavljuj bez deblokiranja svega.",
+    b3: "Ponovo otvara originalnu aplikaciju na vreme koje izabereš, da objaviš post ili story, a zatim je sam ponovo zaključava.",
+    t4: "Strogi režim",
+    h4: "Bez odustajanja iz hira.",
+    b4: "Povuci klizač da ga uključiš. Posle toga isključivanje blokiranja traži pravi trud: upravo zato deluje.",
+    t5: "Početni ekran",
+    h5: "Stavi UnSwipe na mesto originala.",
+    b5: "Zameni na početnom ekranu ikone aplikacija Instagram i ostalih ikonama UnSwipe: otvaraćeš ih iz navike.",
   },
 };

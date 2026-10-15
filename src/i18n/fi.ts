@@ -738,6 +738,11 @@ export const fi: Dict = {
   },
 
   blockTab: {
+    step3: "Ota esto käyttöön",
+    step2: "Valitse estettävät sovellukset",
+    stepsTitle: "Käyttöönotto 3 vaiheessa",
+    heroOff: "Tällä hetkellä Instagram ja muut aukeavat normaalisti, Reels mukaan lukien.",
+    heroOn: "Kun avaat Instagramin tai muun estetyn sovelluksen, päädyt UnSwipeen ilman Reelsiä.",
     hardOn: "Tiukka tila päällä",
     slide: "Liu'uta: tiukka tila",
     manage: "Sovellukset",
@@ -826,6 +831,9 @@ export const fi: Dict = {
   },
 
   misc: {
+    copied: "Kopioitu",
+    copyLink: "Kopioi linkki",
+    saveIconFull: "Tallenna kuvake",
     addHome: 'Lisää sovellukset Koti-valikkoon',
     homeDone: 'Valmis',
     saveIcon: 'Kuvake',
@@ -1073,6 +1081,7 @@ export const fi: Dict = {
     row: "Ohjeet ja tuki",
   },
   alerts: {
+    loginFirst: "Kirjaudu Instagramiin UnSwipessa, niin saat hälytykset.",
     test: "Testaa nyt",
     row: "Instagram-hälytykset",
     on: "Päällä",
@@ -1092,5 +1101,23 @@ export const fi: Dict = {
     notifTitle: "Instagram",
     notifDm: "Lukemattomia viestejä: {n}",
     notifAct: "Uutta toimintaa: {n}",
+  },
+  blockHelp: {
+    title: "Näin esto toimii",
+    t1: "Mitä esto tekee",
+    h1: "Alkuperäiset sovellukset eivät enää aukea.",
+    b1: "Valitset estettävät sovellukset, kuten Instagram tai TikTok. Kun ne on estetty, iOS sulkee ne heti avattaessa: käytät sen sijaan UnSwipe-sovellusta, versiota ilman Reels- ja Shorts-videoita.",
+    t2: "Sovellusten valinta",
+    h2: "Valitse estääksesi, poista valinta vapauttaaksesi.",
+    b2: "Avaa Applen luettelo napauttamalla ”Sovellukset”. Valitse sovelluksia, älä kategorioita tai verkkosivustoja, muuten myös UnSwipe estetään.",
+    t3: "Julkaisutila",
+    h3: "Julkaise poistamatta kaikkia estoja.",
+    b3: "Se avaa alkuperäisen sovelluksen valitsemaksesi ajaksi, jotta voit julkaista postauksen tai tarinan, ja estää sen sitten taas itsestään.",
+    t4: "Tiukka tila",
+    h4: "Ei paluuta hetken mielijohteesta.",
+    b4: "Ota se käyttöön liukusäätimellä. Sen jälkeen eston poistaminen vaatii todellista vaivaa: juuri se tekee siitä tehokkaan.",
+    t5: "Koti-valikko",
+    h5: "Laita UnSwipe alkuperäisten tilalle.",
+    b5: "Vaihda Koti-valikossa Instagram- ja muiden sovellusten kuvakkeet UnSwipe-kuvakkeisiin: avaat ne tottumuksesta.",
   },
 };

@@ -738,6 +738,11 @@ export const et: Dict = {
   },
 
   blockTab: {
+    step3: "Lülita blokeerimine sisse",
+    step2: "Vali blokeeritavad äpid",
+    stepsTitle: "Seadistus 3 sammuga",
+    heroOff: "Praegu avanevad Instagram ja teised tavapäraselt, koos Reelsiga.",
+    heroOn: "Kui avad Instagrami või mõne muu blokeeritud äpi, jõuad UnSwipe'i, ilma Reelsita.",
     hardOn: "Range režiim on sees",
     slide: "Libista: range režiim",
     manage: "Halda rakendusi",
@@ -826,6 +831,9 @@ export const et: Dict = {
   },
 
   misc: {
+    copied: "Kopeeritud",
+    copyLink: "Kopeeri link",
+    saveIconFull: "Salvesta ikoon",
     addHome: 'Lisa äpid oma avakuvale',
     homeDone: 'Valmis',
     saveIcon: 'Ikoon',
@@ -1073,6 +1081,7 @@ export const et: Dict = {
     row: "Abi ja tugi",
   },
   alerts: {
+    loginFirst: "Logi rakenduses UnSwipe Instagrami sisse, et teavitusi saada.",
     test: "Testi kohe",
     row: "Instagrami teavitused",
     on: "Sees",
@@ -1092,5 +1101,23 @@ export const et: Dict = {
     notifTitle: "Instagram",
     notifDm: "Lugemata sõnumid: {n}",
     notifAct: "Uus tegevus: {n}",
+  },
+  blockHelp: {
+    title: "Kuidas blokeerimine töötab",
+    t1: "Mida blokeerimine teeb",
+    h1: "Algsed rakendused enam ei avane.",
+    b1: "Valid blokeeritavad rakendused, näiteks Instagram või TikTok. Kui need on blokeeritud, sulgeb iOS need kohe avamisel: kasutad selle asemel rakendust UnSwipe, versiooni, kus pole Reels- ega Shorts-videoid.",
+    t2: "Rakenduste valimine",
+    h2: "Märgi blokeerimiseks, eemalda märge vabastamiseks.",
+    b2: "Puuduta „Halda rakendusi“, et avada ettevõtte Apple loend. Märgi rakendusi, mitte kategooriaid ega veebisaite, muidu blokeeritakse ka UnSwipe.",
+    t3: "Postitusrežiim",
+    h3: "Postita ilma kõike vabastamata.",
+    b3: "See avab algse rakenduse uuesti sinu valitud ajaks, et saaksid postituse või loo jagada, ja blokeerib selle siis ise uuesti.",
+    t4: "Range režiim",
+    h4: "Hetkeajel tagasiteed pole.",
+    b4: "Lükka liugurit, et see sisse lülitada. Pärast seda nõuab blokeeringu väljalülitamine tõelist pingutust: just see teebki selle tõhusaks.",
+    t5: "Avakuva",
+    h5: "Pane UnSwipe originaalide asemele.",
+    b5: "Asenda avakuval rakenduse Instagram ja teiste ikoonid rakenduse UnSwipe ikoonidega: avad need harjumusest.",
   },
 };

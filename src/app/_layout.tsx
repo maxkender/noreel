@@ -19,7 +19,7 @@ import { startNotifications } from '@/services/trial';
 import { pullUpdate } from '@/services/refresh';
 // Importe pour son effet : la tache des alertes Instagram doit exister avant tout ecran,
 // iOS pouvant relancer l'app en arriere-plan rien que pour elle.
-import { refreshWords } from '@/services/igAlerts';
+import { autoEnableAlerts, refreshWords } from '@/services/igAlerts';
 import { dict } from '@/i18n';
 
 void SplashScreen.preventAutoHideAsync();
@@ -108,7 +108,15 @@ export default function RootLayout() {
   const langNow = useLang((x) => x.lang);
   useEffect(() => {
     if (!langLoaded || Platform.OS !== 'ios') return;
-    void refreshWords({ title: dict.alerts.notifTitle, dm: dict.alerts.notifDm, act: dict.alerts.notifAct });
+    const words = { title: dict.alerts.notifTitle, dm: dict.alerts.notifDm, act: dict.alerts.notifAct };
+    void refreshWords(words);
+    // Allumees par defaut, au lancement et a chaque retour dans l'app (une
+    // connexion a Instagram vient peut-etre d'avoir lieu).
+    void autoEnableAlerts(words).catch(() => {});
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') void autoEnableAlerts(words).catch(() => {});
+    });
+    return () => sub.remove();
   }, [langLoaded, langNow]);
 
   // La langue vient du disque : dessiner avant, c'est dessiner dans la

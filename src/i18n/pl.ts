@@ -738,6 +738,11 @@ export const pl: Dict = {
   },
 
   blockTab: {
+    step3: "Włącz blokadę",
+    step2: "Wybierz aplikacje do zablokowania",
+    stepsTitle: "Konfiguracja w 3 krokach",
+    heroOff: "Na razie Instagram i pozostałe otwierają się normalnie, razem z Reels.",
+    heroOn: "Gdy otwierasz Instagram lub inną zablokowaną aplikację, trafiasz do UnSwipe, bez Reels.",
     hardOn: "Tryb ścisły włączony",
     slide: "Przesuń: tryb ścisły",
     manage: "Zarządzaj apkami",
@@ -826,6 +831,9 @@ export const pl: Dict = {
   },
 
   misc: {
+    copied: "Skopiowano",
+    copyLink: "Kopiuj link",
+    saveIconFull: "Zapisz ikonę",
     addHome: 'Dodaj aplikacje do ekranu początkowego',
     homeDone: 'Gotowe',
     saveIcon: 'Ikona',
@@ -1073,6 +1081,7 @@ export const pl: Dict = {
     row: "Pomoc i wsparcie",
   },
   alerts: {
+    loginFirst: "Zaloguj się do Instagrama w UnSwipe, aby otrzymywać alerty.",
     test: "Przetestuj teraz",
     row: "Alerty z Instagrama",
     on: "Włączone",
@@ -1092,5 +1101,23 @@ export const pl: Dict = {
     notifTitle: "Instagram",
     notifDm: "Nieprzeczytane wiadomości: {n}",
     notifAct: "Nowa aktywność: {n}",
+  },
+  blockHelp: {
+    title: "Jak działa blokada",
+    t1: "Co robi blokada",
+    h1: "Oryginalne aplikacje już się nie otwierają.",
+    b1: "Wybierasz aplikacje do zablokowania, np. Instagram lub TikTok. Po zablokowaniu iOS zamyka je od razu po otwarciu: korzystasz wtedy z UnSwipe, wersji bez Reels i Shorts.",
+    t2: "Wybór aplikacji",
+    h2: "Zaznacz, by zablokować, odznacz, by odblokować.",
+    b2: "Stuknij „Zarządzaj apkami”, by otworzyć listę Apple. Zaznaczaj aplikacje, nie kategorie ani strony internetowe, inaczej UnSwipe też zostałby zablokowany.",
+    t3: "Tryb publikowania",
+    h3: "Publikuj bez odblokowywania wszystkiego.",
+    b3: "Ponownie otwiera oryginalną aplikację na wybrany przez ciebie czas, żeby dodać post lub relację, a potem sam ją znowu blokuje.",
+    t4: "Tryb ścisły",
+    h4: "Bez wycofywania się pod wpływem impulsu.",
+    b4: "Przesuń suwak, by go włączyć. Potem wyłączenie blokady wymaga prawdziwego wysiłku: właśnie dlatego działa.",
+    t5: "Ekran początkowy",
+    h5: "Postaw UnSwipe w miejscu oryginałów.",
+    b5: "Zamień na ekranie początkowym ikony aplikacji Instagram i innych na ikony UnSwipe: będziesz je otwierać z przyzwyczajenia.",
   },
 };

@@ -11,8 +11,6 @@ import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
 import { Glass } from '@/components/glass/Glass';
-import { Glow } from '@/components/Glow';
-import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { APPS, LOGOS } from './AppSlider';
 import { dict } from '@/i18n';
@@ -58,7 +56,6 @@ export function Widgets() {
 
   return (
     <View style={st.root}>
-      <Glow />
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <View style={st.head}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={st.back}>
@@ -78,22 +75,26 @@ export function Widgets() {
           </Glass>
           <Text variant="label" tone="tertiary" style={{ marginTop: space.md }}>{dict.misc.iconHint}</Text>
 
-          <Text variant="label" tone="tertiary" style={{ marginTop: space.xl }}>{dict.ui.wLinks}</Text>
-          <View style={{ gap: space.sm, marginTop: space.sm }}>
+          {/*
+            UNE CARTE PAR APP : la grande icone a enregistrer, et son lien a
+            copier. Les deux choses dont Raccourcis a besoin, cote a cote.
+          */}
+          <View style={st.cards}>
             {APPS.map((a) => (
-              <Pressable key={a.id} style={st.row} onPress={() => { void copy(a.id); }}>
-                <Image source={LOGOS[a.id]} style={st.logo} contentFit="contain" />
-                <View style={{ flex: 1 }}>
-                  <Text variant="body">{a.name}</Text>
-                  <Text variant="label" tone="tertiary">unswipe://client/{a.id}</Text>
-                </View>
-                <Pressable onPress={() => { void saveIcon(a.id); }} hitSlop={8} style={st.iconBtn} accessibilityRole="button" accessibilityLabel={dict.misc.saveIcon}>
-                  <ImageDown size={16} strokeWidth={2} color={c.accent} />
+              <View key={a.id} style={st.card}>
+                <Image source={LOGOS[a.id]} style={st.bigLogo} contentFit="contain" />
+                <Text variant="title">{a.name}</Text>
+                <Pressable onPress={() => { void saveIcon(a.id); }} style={st.pillBtn} accessibilityRole="button">
+                  <ImageDown size={16} strokeWidth={2.2} color={c.night} />
+                  <Text variant="label" color={c.night}>{dict.misc.saveIconFull}</Text>
                 </Pressable>
-                {copied === a.id
-                  ? <Check size={18} strokeWidth={2.2} color={c.accent} />
-                  : <Copy size={17} strokeWidth={1.8} color={withAlpha(c.mist, 0.45)} />}
-              </Pressable>
+                <Pressable onPress={() => { void copy(a.id); }} style={st.ghostBtn} accessibilityRole="button">
+                  {copied === a.id
+                    ? <Check size={16} strokeWidth={2.4} color={c.accent} />
+                    : <Copy size={15} strokeWidth={2} color={c.mist} />}
+                  <Text variant="label" color={copied === a.id ? c.accent : c.mist}>{copied === a.id ? dict.misc.copied : dict.misc.copyLink}</Text>
+                </Pressable>
+              </View>
             ))}
           </View>
 
@@ -114,7 +115,6 @@ export function Widgets() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <GlassSweep />
     </View>
   );
 }
@@ -138,6 +138,20 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   back: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: gutter, paddingTop: space.lg, paddingBottom: space.xxl },
+  cards: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.md, marginTop: space.lg },
+  card: {
+    width: '48%', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: 22,
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  bigLogo: { width: 76, height: 76 },
+  pillBtn: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    height: 38, borderRadius: 19, backgroundColor: c.mist,
+  },
+  ghostBtn: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    height: 36, borderRadius: 18, backgroundColor: withAlpha(c.mist, 0.08),
+  },
   steps: { padding: space.lg, marginTop: space.xl, gap: space.md },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   badge: {

@@ -251,7 +251,7 @@ const sheet = (c: Palette) => StyleSheet.create({
   },
   grab: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: withAlpha(c.mist, 0.3), marginBottom: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.sm },
-  done: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: withAlpha(c.mist, 0.1) },
+  done: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: c.mist },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: space.sm,
     padding: space.md, borderRadius: 16, backgroundColor: withAlpha(c.mist, 0.06),

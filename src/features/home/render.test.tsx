@@ -105,12 +105,8 @@ describe('le faux fil', () => {
  * l'onglet blocage ouvre maintenant sur la carte de recuperation.
  */
 describe('les ecrans modifies', () => {
-  it('la feuille de reglages, fermee', () => {
-    render(<Settings visible={false} onClose={() => {}} />);
-  });
-
-  it('la feuille de reglages, ouverte', () => {
-    const r = render(<Settings visible onClose={() => {}} />);
+  it('la page de reglages', () => {
+    const r = render(<Settings />);
     expect(r.toJSON()).toBeTruthy();
   });
 

@@ -738,6 +738,11 @@ export const sl: Dict = {
   },
 
   blockTab: {
+    step3: "Vklopi blokiranje",
+    step2: "Izberi aplikacije za blokiranje",
+    stepsTitle: "Nastavitev v 3 korakih",
+    heroOff: "Zaenkrat se Instagram in ostale odpirajo normalno, vključno z Reels.",
+    heroOn: "Ko odpreš Instagram ali drugo blokirano aplikacijo, pristaneš v aplikaciji UnSwipe, brez Reels.",
     hardOn: "Strogi način vklopljen",
     slide: "Povleci za strogi način",
     manage: "Aplikacije",
@@ -826,6 +831,9 @@ export const sl: Dict = {
   },
 
   misc: {
+    copied: "Kopirano",
+    copyLink: "Kopiraj povezavo",
+    saveIconFull: "Shrani ikono",
     addHome: 'Dodaj aplikacije na domači zaslon',
     homeDone: 'Končano',
     saveIcon: 'Ikona',
@@ -1073,6 +1081,7 @@ export const sl: Dict = {
     row: "Pomoč in podpora",
   },
   alerts: {
+    loginFirst: "Prijavi se v Instagram v UnSwipe, da ti bodo prihajala opozorila.",
     test: "Preizkusi zdaj",
     row: "Opozorila Instagram",
     on: "Vklopljeno",
@@ -1092,5 +1101,23 @@ export const sl: Dict = {
     notifTitle: "Instagram",
     notifDm: "Neprebrana sporočila: {n}",
     notifAct: "Nova dejavnost: {n}",
+  },
+  blockHelp: {
+    title: "Kako deluje blokiranje",
+    t1: "Kaj naredi blokiranje",
+    h1: "Izvirne aplikacije se ne odprejo več.",
+    b1: "Izbereš aplikacije, ki jih želiš blokirati, na primer Instagram ali TikTok. Ko so blokirane, jih iOS zapre takoj, ko se odprejo: namesto njih uporabiš UnSwipe, različico brez Reels in Shorts.",
+    t2: "Izbira aplikacij",
+    h2: "Označi za blokiranje, odznači za odblokiranje.",
+    b2: "Tapni »Aplikacije«, da se odpre seznam podjetja Apple. Označi aplikacije, ne kategorij ali spletnih mest, sicer bi bil blokiran tudi UnSwipe.",
+    t3: "Način objave",
+    h3: "Objavljaj brez odblokiranja vsega.",
+    b3: "Izvirno aplikacijo znova odpre za čas, ki ga izbereš, da lahko deliš objavo ali zgodbo, nato pa jo sam spet zaklene.",
+    t4: "Strogi način",
+    h4: "Brez umika na hitro muho.",
+    b4: "Povleci drsnik, da ga vklopiš. Potem izklop blokiranja zahteva pravi trud: prav zato deluje.",
+    t5: "Začetni zaslon",
+    h5: "Postavi UnSwipe na mesto izvirnikov.",
+    b5: "Na začetnem zaslonu zamenjaj ikone aplikacij Instagram in drugih z ikonami UnSwipe: tako bo prst iz navade odprl UnSwipe.",
   },
 };

@@ -738,6 +738,11 @@ export const en: Dict = {
   },
 
   blockTab: {
+    step3: "Turn on blocking",
+    step2: "Choose the apps to block",
+    stepsTitle: "Set up in 3 steps",
+    heroOff: "Right now, Instagram and the others open normally, Reels included.",
+    heroOn: "When you open Instagram or another blocked app, you land in UnSwipe, without Reels.",
     hardOn: "Strict mode is on",
     slide: "Slide for strict mode",
     manage: "Manage apps",
@@ -826,6 +831,9 @@ export const en: Dict = {
   },
 
   misc: {
+    copied: "Copied",
+    copyLink: "Copy link",
+    saveIconFull: "Save icon",
     addHome: 'Add the apps to your Home Screen',
     homeDone: 'Done',
     saveIcon: 'Icon',
@@ -1073,6 +1081,7 @@ export const en: Dict = {
     row: "Help & Support",
   },
   alerts: {
+    loginFirst: "Log in to Instagram in UnSwipe to get alerts.",
     test: "Test now",
     row: "Instagram alerts",
     on: "On",
@@ -1092,5 +1101,23 @@ export const en: Dict = {
     notifTitle: "Instagram",
     notifDm: "Unread messages: {n}",
     notifAct: "New activity: {n}",
+  },
+  blockHelp: {
+    title: "How blocking works",
+    t1: "What blocking does",
+    h1: "The original apps won't open anymore.",
+    b1: "You choose the apps to block, like Instagram or TikTok. Once blocked, iOS closes them as soon as they open: you go through UnSwipe instead, the version without Reels or Shorts.",
+    t2: "Choosing the apps",
+    h2: "Tick to block, untick to unblock.",
+    b2: "Tap “Manage apps” to open Apple's list. Tick apps, not categories or websites, otherwise UnSwipe would be blocked too.",
+    t3: "Post mode",
+    h3: "Post without unblocking everything.",
+    b3: "It reopens the original app for the time you choose so you can post or share a story, then locks it again on its own.",
+    t4: "Strict mode",
+    h4: "No turning back on a whim.",
+    b4: "Slide to turn it on. After that, switching blocking off takes real effort: that's what makes it work.",
+    t5: "Home screen",
+    h5: "Put UnSwipe where the originals were.",
+    b5: "Replace the Instagram and other icons with UnSwipe's on your home screen: you'll open them out of habit.",
   },
 };

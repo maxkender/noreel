@@ -738,6 +738,11 @@ export const nl: Dict = {
   },
 
   blockTab: {
+    step3: "Blokkering aanzetten",
+    step2: "Kies de apps om te blokkeren",
+    stepsTitle: "Instellen in 3 stappen",
+    heroOff: "Op dit moment openen Instagram en de andere apps gewoon, inclusief Reels.",
+    heroOn: "Als je Instagram of een andere geblokkeerde app opent, kom je in UnSwipe terecht, zonder Reels.",
     hardOn: "Strenge modus staat aan",
     slide: "Veeg voor strenge modus",
     manage: "Apps beheren",
@@ -826,6 +831,9 @@ export const nl: Dict = {
   },
 
   misc: {
+    copied: "Gekopieerd",
+    copyLink: "Link kopiëren",
+    saveIconFull: "Icoon bewaren",
     addHome: 'Zet de apps op je beginscherm',
     homeDone: 'Klaar',
     saveIcon: 'Symbool',
@@ -1073,6 +1081,7 @@ export const nl: Dict = {
     row: "Hulp & support",
   },
   alerts: {
+    loginFirst: "Log in bij Instagram in UnSwipe om meldingen te krijgen.",
     test: "Nu testen",
     row: "Instagram-meldingen",
     on: "Aan",
@@ -1092,5 +1101,23 @@ export const nl: Dict = {
     notifTitle: "Instagram",
     notifDm: "Ongelezen berichten: {n}",
     notifAct: "Nieuwe activiteit: {n}",
+  },
+  blockHelp: {
+    title: "Zo werkt blokkeren",
+    t1: "Wat blokkeren doet",
+    h1: "De originele apps openen niet meer.",
+    b1: "Je kiest welke apps je blokkeert, zoals Instagram of TikTok. Zodra ze geblokkeerd zijn, sluit iOS ze meteen als ze openen: je gaat via UnSwipe, de versie zonder Reels en Shorts.",
+    t2: "Apps kiezen",
+    h2: "Vink aan om te blokkeren, vink uit om te deblokkeren.",
+    b2: "Tik op ‘Apps beheren’ om de lijst van Apple te openen. Vink apps aan, geen categorieën of websites, anders wordt UnSwipe ook geblokkeerd.",
+    t3: "Plaatsmodus",
+    h3: "Plaatsen zonder alles te deblokkeren.",
+    b3: "Hij opent de originele app weer voor de tijd die je kiest, zodat je een post of story kunt plaatsen, en blokkeert hem daarna vanzelf weer.",
+    t4: "Strenge modus",
+    h4: "Niet terug in een opwelling.",
+    b4: "Schuif de schakelaar om hem aan te zetten. Daarna kost het echt moeite om blokkeren uit te zetten: daardoor werkt het.",
+    t5: "Beginscherm",
+    h5: "Zet UnSwipe op de plek van de originelen.",
+    b5: "Vervang op je beginscherm de iconen van Instagram en de andere apps door die van UnSwipe: je opent ze dan uit gewoonte.",
   },
 };

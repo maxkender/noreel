@@ -737,6 +737,11 @@ export const no: Dict = {
   },
 
   blockTab: {
+    step3: "Slå på blokkering",
+    step2: "Velg appene som skal blokkeres",
+    stepsTitle: "Kom i gang i 3 steg",
+    heroOff: "Akkurat nå åpnes Instagram og de andre som vanlig, Reels inkludert.",
+    heroOn: "Når du åpner Instagram eller en annen blokkert app, havner du i UnSwipe, uten Reels.",
     hardOn: "Streng modus er på",
     slide: "Sveip for streng modus",
     manage: "Styr apper",
@@ -825,6 +830,9 @@ export const no: Dict = {
   },
 
   misc: {
+    copied: "Kopiert",
+    copyLink: "Kopier lenke",
+    saveIconFull: "Lagre ikon",
     addHome: 'Legg appene på Hjem-skjermen',
     homeDone: 'Ferdig',
     saveIcon: 'Ikon',
@@ -1071,6 +1079,7 @@ export const no: Dict = {
     row: "Hjelp og støtte",
   },
   alerts: {
+    loginFirst: "Logg inn på Instagram i UnSwipe for å få varsler.",
     test: "Test nå",
     row: "Instagram-varsler",
     on: "På",
@@ -1090,5 +1099,23 @@ export const no: Dict = {
     notifTitle: "Instagram",
     notifDm: "Uleste meldinger: {n}",
     notifAct: "Ny aktivitet: {n}",
+  },
+  blockHelp: {
+    title: "Slik fungerer blokkeringen",
+    t1: "Hva blokkeringen gjør",
+    h1: "Originalappene åpnes ikke lenger.",
+    b1: "Du velger hvilke apper som skal blokkeres, for eksempel Instagram eller TikTok. Når de er blokkert, lukker iOS dem med en gang de åpnes: du går via UnSwipe i stedet, versjonen uten Reels og Shorts.",
+    t2: "Velge apper",
+    h2: "Huk av for å blokkere, fjern haken for å oppheve.",
+    b2: "Trykk på «Styr apper» for å åpne Apples liste. Huk av apper, ikke kategorier eller nettsteder, ellers blir UnSwipe også blokkert.",
+    t3: "Postmodus",
+    h3: "Post uten å oppheve all blokkering.",
+    b3: "Den åpner originalappen igjen så lenge du velger, slik at du kan poste et innlegg eller en story, og låser den så igjen av seg selv.",
+    t4: "Streng modus",
+    h4: "Ingen vei tilbake på et innfall.",
+    b4: "Dra glidebryteren for å slå den på. Etter det krever det ekte innsats å slå av blokkeringen: det er det som gjør at den virker.",
+    t5: "Hjem-skjermen",
+    h5: "Sett UnSwipe der originalene var.",
+    b5: "Bytt ut ikonene til Instagram og de andre med UnSwipes på Hjem-skjermen: du kommer til å åpne dem av vane.",
   },
 };

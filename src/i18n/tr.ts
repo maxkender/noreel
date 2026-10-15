@@ -738,6 +738,11 @@ export const tr: Dict = {
   },
 
   blockTab: {
+    step3: "Kilitlemeyi aç",
+    step2: "Kilitlenecek uygulamaları seç",
+    stepsTitle: "3 adımda kurulum",
+    heroOff: "Şu an Instagram ve diğerleri normal açılıyor, Reels dahil.",
+    heroOn: "Instagram’ı veya kilitli başka bir uygulamayı açtığında Reels olmadan UnSwipe’a düşersin.",
     hardOn: "Sıkı mod açık",
     slide: "Sıkı mod için kaydır",
     manage: "Uygulamalar",
@@ -826,6 +831,9 @@ export const tr: Dict = {
   },
 
   misc: {
+    copied: "Kopyalandı",
+    copyLink: "Bağlantıyı kopyala",
+    saveIconFull: "Simgeyi kaydet",
     addHome: 'Uygulamaları ana ekrana ekle',
     homeDone: 'Tamam',
     saveIcon: 'Simge',
@@ -1073,6 +1081,7 @@ export const tr: Dict = {
     row: "Yardım ve destek",
   },
   alerts: {
+    loginFirst: "Uyarıları almak için UnSwipe'ta Instagram'a giriş yap.",
     test: "Şimdi test et",
     row: "Instagram uyarıları",
     on: "Açık",
@@ -1092,5 +1101,23 @@ export const tr: Dict = {
     notifTitle: "Instagram",
     notifDm: "Okunmamış mesajlar: {n}",
     notifAct: "Yeni etkinlik: {n}",
+  },
+  blockHelp: {
+    title: "Engelleme nasıl çalışır",
+    t1: "Engelleme ne yapar",
+    h1: "Orijinal uygulamalar artık açılmaz.",
+    b1: "Instagram veya TikTok gibi engellenecek uygulamaları sen seçersin. Engellendikten sonra iOS onları açılır açılmaz kapatır: bunun yerine Reels ve Shorts içermeyen sürüm olan UnSwipe'ı kullanırsın.",
+    t2: "Uygulamaları seç",
+    h2: "Engellemek için işaretle, kaldırmak için işareti kaldır.",
+    b2: "Apple'ın listesini açmak için “Uygulamalar” düğmesine dokun. Kategorileri veya web sitelerini değil, uygulamaları işaretle; yoksa UnSwipe da engellenir.",
+    t3: "Paylaşım modu",
+    h3: "Her şeyin engelini kaldırmadan paylaş.",
+    b3: "Bir gönderi veya hikâye paylaşabilmen için orijinal uygulamayı seçtiğin süre boyunca yeniden açar, sonra kendiliğinden tekrar kilitler.",
+    t4: "Sıkı mod",
+    h4: "Anlık bir hevesle geri dönüş yok.",
+    b4: "Açmak için kaydırıcıyı kaydır. Sonrasında engellemeyi kapatmak gerçek bir çaba ister: onu etkili kılan da bu.",
+    t5: "Ana ekran",
+    h5: "UnSwipe'ı orijinallerin yerine koy.",
+    b5: "Ana ekranında Instagram'ın ve diğerlerinin simgelerini UnSwipe'ınkilerle değiştir: onları alışkanlıkla açarsın.",
   },
 };

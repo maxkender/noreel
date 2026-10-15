@@ -738,6 +738,11 @@ export const it: Dict = {
   },
 
   blockTab: {
+    step3: "Attiva il blocco",
+    step2: "Scegli le app da bloccare",
+    stepsTitle: "Configurazione in 3 passi",
+    heroOff: "Per ora Instagram e le altre si aprono normalmente, Reels compresi.",
+    heroOn: "Quando apri Instagram o un’altra app bloccata, arrivi su UnSwipe, senza Reels.",
     hardOn: "Modalità rigorosa attiva",
     slide: "Scorri: modalità rigorosa",
     manage: "Gestisci app",
@@ -826,6 +831,9 @@ export const it: Dict = {
   },
 
   misc: {
+    copied: "Copiato",
+    copyLink: "Copia link",
+    saveIconFull: "Salva icona",
     addHome: 'Aggiungi le app alla schermata Home',
     homeDone: 'Fatto',
     saveIcon: 'Icona',
@@ -1073,6 +1081,7 @@ export const it: Dict = {
     row: "Aiuto e supporto",
   },
   alerts: {
+    loginFirst: "Accedi a Instagram in UnSwipe per ricevere gli avvisi.",
     test: "Prova ora",
     row: "Avvisi Instagram",
     on: "Attivi",
@@ -1092,5 +1101,23 @@ export const it: Dict = {
     notifTitle: "Instagram",
     notifDm: "Messaggi non letti: {n}",
     notifAct: "Nuove attività: {n}",
+  },
+  blockHelp: {
+    title: "Come funziona il blocco",
+    t1: "Cosa fa il blocco",
+    h1: "Le app originali non si aprono più.",
+    b1: "Scegli le app da bloccare, come Instagram o TikTok. Una volta bloccate, iOS le chiude appena si aprono: passi da UnSwipe, la versione senza Reels né Shorts.",
+    t2: "Scegliere le app",
+    h2: "Spunta per bloccare, togli la spunta per sbloccare.",
+    b2: "Tocca «Gestisci app» per aprire l’elenco di Apple. Spunta delle app, non categorie o siti web, altrimenti verrebbe bloccato anche UnSwipe.",
+    t3: "Modalità pubblicazione",
+    h3: "Pubblica senza sbloccare tutto.",
+    b3: "Riapre l’app originale per il tempo che scegli, così puoi pubblicare un post o una storia, poi la blocca di nuovo da sola.",
+    t4: "Modalità rigorosa",
+    h4: "Niente marcia indietro per un capriccio.",
+    b4: "Fai scorrere il cursore per attivarla. Dopo, disattivare il blocco richiede un vero sforzo: è questo che la rende efficace.",
+    t5: "Schermata Home",
+    h5: "Metti UnSwipe al posto delle originali.",
+    b5: "Sostituisci le icone di Instagram e delle altre con quelle di UnSwipe nella schermata Home: le aprirai per abitudine.",
   },
 };

@@ -738,6 +738,11 @@ export const de: Dict = {
   },
 
   blockTab: {
+    step3: "Sperre einschalten",
+    step2: "Die zu sperrenden Apps wählen",
+    stepsTitle: "Einrichtung in 3 Schritten",
+    heroOff: "Im Moment öffnen sich Instagram und die anderen ganz normal, Reels inklusive.",
+    heroOn: "Wenn du Instagram oder eine andere gesperrte App öffnest, landest du in UnSwipe, ohne Reels.",
     hardOn: "Strenger Modus aktiv",
     slide: "Wischen für strengen Modus",
     manage: "Apps verwalten",
@@ -826,6 +831,9 @@ export const de: Dict = {
   },
 
   misc: {
+    copied: "Kopiert",
+    copyLink: "Link kopieren",
+    saveIconFull: "Symbol sichern",
     addHome: 'Die Apps zum Startbildschirm hinzufügen',
     homeDone: 'Erledigt',
     saveIcon: 'Symbol',
@@ -1073,6 +1081,7 @@ export const de: Dict = {
     row: "Hilfe & Support",
   },
   alerts: {
+    loginFirst: "Melde dich in UnSwipe bei Instagram an, um Benachrichtigungen zu erhalten.",
     test: "Jetzt testen",
     row: "Instagram-Benachrichtigungen",
     on: "An",
@@ -1092,5 +1101,23 @@ export const de: Dict = {
     notifTitle: "Instagram",
     notifDm: "Ungelesene Nachrichten: {n}",
     notifAct: "Neue Aktivitäten: {n}",
+  },
+  blockHelp: {
+    title: "So funktioniert das Blockieren",
+    t1: "Was das Blockieren bewirkt",
+    h1: "Die Original-Apps öffnen sich nicht mehr.",
+    b1: "Du wählst die Apps aus, die blockiert werden sollen, zum Beispiel Instagram oder TikTok. Sind sie blockiert, schließt iOS sie sofort beim Öffnen: Du gehst stattdessen über UnSwipe, die Version ohne Reels und Shorts.",
+    t2: "Apps auswählen",
+    h2: "Häkchen setzen zum Blockieren, entfernen zum Freigeben.",
+    b2: "Tippe auf „Apps verwalten“, um Apples Liste zu öffnen. Wähle Apps aus, keine Kategorien oder Websites, sonst wird auch UnSwipe blockiert.",
+    t3: "Post-Modus",
+    h3: "Posten, ohne alles freizugeben.",
+    b3: "Er öffnet die Original-App für die Zeit, die du wählst, damit du einen Post oder eine Story teilen kannst, und sperrt sie danach von selbst wieder.",
+    t4: "Strenger Modus",
+    h4: "Kein Zurück aus einer Laune heraus.",
+    b4: "Schieb den Regler, um ihn einzuschalten. Danach kostet es echte Mühe, das Blockieren abzuschalten: Genau das macht ihn wirksam.",
+    t5: "Home-Bildschirm",
+    h5: "Setz UnSwipe an die Stelle der Originale.",
+    b5: "Ersetze auf deinem Home-Bildschirm die Symbole von Instagram und den anderen Apps durch die von UnSwipe: Du öffnest sie dann aus Gewohnheit.",
   },
 };

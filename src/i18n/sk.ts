@@ -738,6 +738,11 @@ export const sk: Dict = {
   },
 
   blockTab: {
+    step3: "Zapnúť blokovanie",
+    step2: "Vybrať apky na zablokovanie",
+    stepsTitle: "Nastavenie v 3 krokoch",
+    heroOff: "Zatiaľ sa Instagram a ostatné otvárajú normálne, aj s Reels.",
+    heroOn: "Keď otvoríš Instagram alebo inú zablokovanú apku, ocitneš sa v UnSwipe, bez Reels.",
     hardOn: "Prísny režim zapnutý",
     slide: "Potiahni pre prísny režim",
     manage: "Správa aplikácií",
@@ -826,6 +831,9 @@ export const sk: Dict = {
   },
 
   misc: {
+    copied: "Skopírované",
+    copyLink: "Kopírovať odkaz",
+    saveIconFull: "Uložiť ikonu",
     addHome: 'Pridať apky na plochu',
     homeDone: 'Hotovo',
     saveIcon: 'Ikona',
@@ -1073,6 +1081,7 @@ export const sk: Dict = {
     row: "Pomoc a podpora",
   },
   alerts: {
+    loginFirst: "Prihlás sa v UnSwipe do Instagramu, aby ti chodili upozornenia.",
     test: "Otestovať teraz",
     row: "Upozornenia z Instagramu",
     on: "Zapnuté",
@@ -1092,5 +1101,23 @@ export const sk: Dict = {
     notifTitle: "Instagram",
     notifDm: "Neprečítané správy: {n}",
     notifAct: "Nová aktivita: {n}",
+  },
+  blockHelp: {
+    title: "Ako funguje blokovanie",
+    t1: "Čo robí blokovanie",
+    h1: "Pôvodné aplikácie sa už neotvoria.",
+    b1: "Vyberieš aplikácie, ktoré chceš blokovať, napríklad Instagram alebo TikTok. Keď sú zablokované, iOS ich zatvorí hneď pri otvorení: namiesto nich použiješ UnSwipe, verziu bez Reels a Shorts.",
+    t2: "Výber aplikácií",
+    h2: "Zaškrtni na blokovanie, odškrtni na odblokovanie.",
+    b2: "Ťukni na „Správa aplikácií“ a otvorí sa zoznam od Apple. Zaškrtávaj aplikácie, nie kategórie ani weby, inak by sa zablokoval aj UnSwipe.",
+    t3: "Režim pridávania",
+    h3: "Pridávaj bez odblokovania všetkého.",
+    b3: "Znovu otvorí pôvodnú aplikáciu na čas, ktorý zvolíš, aby sa dal pridať príspevok alebo príbeh, a potom ju sám znova zablokuje.",
+    t4: "Prísny režim",
+    h4: "Žiadne cúvanie z rozmaru.",
+    b4: "Zapni ho posunutím prepínača. Potom vypnutie blokovania stojí skutočné úsilie: práve preto funguje.",
+    t5: "Plocha",
+    h5: "Daj UnSwipe na miesto originálov.",
+    b5: "Nahraď na ploche ikony aplikácie Instagram a ďalších ikonami UnSwipe: budeš ich otvárať zo zvyku.",
   },
 };

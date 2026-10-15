@@ -758,6 +758,11 @@ export const fr = {
   },
 
   blockTab: {
+    step3: "Activer le blocage",
+    step2: "Choisir les apps à bloquer",
+    stepsTitle: "Mise en place, en 3 étapes",
+    heroOff: "Pour l’instant, Instagram et les autres s’ouvrent normalement, Reels compris.",
+    heroOn: "Quand tu ouvres Instagram ou une autre app bloquée, tu atterris dans UnSwipe, sans Reels.",
     hardOn: "Mode strict activé",
     slide: "Glisse pour le mode strict",
     manage: "Gérer les apps",
@@ -846,6 +851,9 @@ export const fr = {
   },
 
   misc: {
+    copied: "Copié",
+    copyLink: "Copier le lien",
+    saveIconFull: "Enregistrer l’icône",
     addHome: 'Ajouter les apps à l’écran d’accueil',
     homeDone: 'C’est fait',
     saveIcon: 'Icône',
@@ -1093,6 +1101,7 @@ export const fr = {
     row: "Aide et support",
   },
   alerts: {
+    loginFirst: "Connecte-toi à Instagram dans UnSwipe pour recevoir les alertes.",
     test: "Tester maintenant",
     row: "Alertes Instagram",
     on: "Activées",
@@ -1112,6 +1121,24 @@ export const fr = {
     notifTitle: "Instagram",
     notifDm: "Messages non lus : {n}",
     notifAct: "Nouvelle activité : {n}",
+  },
+  blockHelp: {
+    title: "Comment marche le blocage",
+    t1: "Ce que fait le blocage",
+    h1: "Les apps d’origine ne s’ouvrent plus.",
+    b1: "Tu choisis les apps à bloquer, comme Instagram ou TikTok. Une fois bloquées, iOS les ferme dès qu’on les ouvre : tu passes par UnSwipe, la version sans Reels ni Shorts.",
+    t2: "Choisir les apps",
+    h2: "Coche pour bloquer, décoche pour débloquer.",
+    b2: "Touche « Gérer les apps » : la liste d’Apple s’ouvre. Coche des apps, pas des catégories ni des sites web, sinon UnSwipe serait bloqué aussi.",
+    t3: "Le mode publication",
+    h3: "Publier sans tout débloquer.",
+    b3: "Il rouvre l’app d’origine le temps que tu choisis, pour publier un post ou une story, puis la rebloque tout seul.",
+    t4: "Le mode strict",
+    h4: "Pas de retour en arrière sur un coup de tête.",
+    b4: "Glisse le curseur pour l’activer. Ensuite, couper le blocage demande un vrai effort : c’est ce qui le rend efficace.",
+    t5: "L’écran d’accueil",
+    h5: "Mets UnSwipe à la place des originales.",
+    b5: "Remplace les icônes d’Instagram et des autres par celles d’UnSwipe sur ton écran d’accueil : tu les ouvriras par réflexe.",
   },
 } as const;
 
