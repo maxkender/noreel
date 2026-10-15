@@ -8,7 +8,7 @@ import Animated, {
 import type { LucideIcon } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
-import { gutter, space } from '@/theme/spacing';
+import { gutter } from '@/theme/spacing';
 import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
 import { useAnchor } from './anchors';

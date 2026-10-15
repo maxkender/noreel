@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -24,6 +24,8 @@ const SHOWN = 4;
  * connait, et une adresse pour nous ecrire. Une question s'ouvre sur place,
  * une seule a la fois : on lit une reponse, pas un mur de texte.
  */
+const IOS = Platform.OS === 'ios';
+
 export function HelpSupport() {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
@@ -39,8 +41,8 @@ export function HelpSupport() {
     [Trash, d.faq.q4, d.faq.a4],
     [UsersRound, d.faq.q5, d.faq.a5],
     [Film, d.faq.q6, d.faq.a6],
-    [Share, d.faq.q7, d.faq.a7],
-    [Bell, d.faq.q8, d.faq.a8],
+    // Mode publication et alertes Instagram : iOS seulement, Android n'en parle pas.
+    ...(IOS ? [[Share, d.faq.q7, d.faq.a7], [Bell, d.faq.q8, d.faq.a8]] as [Icon, string, string][] : []),
     [KeyRound, d.faq.q9, d.faq.a9],
     [LogOut, d.faq.q10, d.faq.a10],
     [Heart, d.faq.q11, d.faq.a11],
@@ -114,7 +116,7 @@ export function HelpSupport() {
                 <Text variant="body" tone="secondary" style={{ flex: 1 }}>{l}</Text>
               </View>
             ))}
-            <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>{d.faq.limPost}</Text>
+            {IOS && <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>{d.faq.limPost}</Text>}
             <Text variant="body" tone="secondary" style={{ marginTop: space.sm }}>{d.faq.limBeta}</Text>
           </View>
 

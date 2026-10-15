@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { withAlpha } from '@/theme/colors';
 import { useBlurTint, useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -47,7 +47,8 @@ export function Sources({ visible, onClose }: { visible: boolean; onClose: () =>
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={st.scrim} onPress={onClose}>
-        <Animated.View entering={SlideInDown.duration(280)} style={st.sheet}>
+        {/* Android : un fondu, pas un glissement — voir ClientSettings, les appuis s'y perdaient. */}
+        <Animated.View entering={Platform.OS === 'ios' ? SlideInDown.duration(280) : FadeIn.duration(180)} style={st.sheet}>
           <BlurView intensity={65} tint={tint} style={StyleSheet.absoluteFill} />
           <View style={st.tint} />
 

@@ -503,7 +503,7 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
       const denied = d.alerts.denied;
       void Notifications.getPermissionsAsync().then((p) => { if (p && !p.granted && !p.canAskAgain) setAlertNote(denied); }).catch(() => {});
     }
-  }, []);
+  }, [d.alerts.denied]);
   // La derniere verification, dans l'app et en fond : on voit enfin si la chaine marche.
   const when = (x?: Diag) => (x ? `${new Date(x.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${x.why}` : '—');
   const runTest = async () => {

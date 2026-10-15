@@ -755,7 +755,9 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
                 if (!m.ok) setTimeout(() => setSwitchFailed(false), 4000);
               }
               // Le « + » : on propose la vraie app pour publier.
-              if (m && m.t === 'post') setPostAsk(true);
+              // Le mode publication s'appuie sur Temps d'ecran : iOS seulement. Sur
+              // Android, le « + » d'Instagram fait simplement son travail.
+              if (m && m.t === 'post' && Platform.OS === 'ios') setPostAsk(true);
             } catch {
               /* message qui ne vient pas de nous */
             }

@@ -23,6 +23,16 @@ import { AccountList } from './SwitchSheet';
 import type { Session } from '@/store/sessions';
 
 
+/*
+ * ANDROID : PAS D'ENTREE QUI GLISSE OU GRANDIT sous des boutons.
+ * Apres une entree en glissement (ou en zoom), Android garde la position de
+ * DEPART pour juger si le doigt est encore sur le bouton : au moindre
+ * mouvement du doigt, l'appui etait annule. Les interrupteurs et le « OK »
+ * des reglages ne marchaient qu'en touchant parfaitement immobile.
+ * Un fondu ne deplace rien : on le prend la-bas.
+ */
+const SHEET_IN = Platform.OS === 'ios' ? SlideInDown.duration(280) : FadeIn.duration(180);
+
 /**
  * Les reglages de l'app, atteignables SANS la quitter.
  *
@@ -99,8 +109,8 @@ export function ClientSettings({
       <View style={[st.scrim, { paddingBottom: Math.max(insets?.bottom ?? 0, 10) + 4 }]} pointerEvents="box-none">
         {!closing && (
         <Animated.View
-          entering={SlideInDown.duration(280)}
-          exiting={SlideOutDown.duration(220)}
+          entering={SHEET_IN}
+          exiting={Platform.OS === 'ios' ? SlideOutDown.duration(220) : FadeOut.duration(160)}
           style={[st.sheet, { maxHeight: winH * 0.6 }]}
         >
           {/* Le flou en direct ralentit Android au point que les appuis trainent : un verre plein, la-bas. */}
@@ -192,7 +202,8 @@ export function ClientSettings({
               {d.ui.passNote}
             </Text>
 
-            {id === 'instagram' && (
+            {/* Le mode publication s'appuie sur Temps d'ecran : iOS seulement. */}
+            {id === 'instagram' && Platform.OS === 'ios' && (
               <>
                 <Text variant="label" tone="tertiary" style={st.section}>{d.ui.publication}</Text>
                 <Pressable

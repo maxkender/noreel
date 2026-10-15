@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
 import Animated, {
   Easing, FadeIn, ZoomIn, useAnimatedProps, withRepeat, withSequence, useSharedValue, withTiming, type SharedValue,
@@ -230,7 +230,8 @@ export function Spotlight({
       {shown && (
         <Animated.View
           key={i}
-          entering={ZoomIn.duration(220).easing(EASE)}
+          // Android : un fondu. Apres un zoom, « Suivant » perdait les appuis d'un doigt qui bouge un peu.
+          entering={Platform.OS === 'ios' ? ZoomIn.duration(220).easing(EASE) : FadeIn.duration(200)}
           style={[st.bubbleWrap, { top: cardTop, left: cardLeft, width: BW }]}
           pointerEvents="box-none"
           testID={`${testID}-ready`}
