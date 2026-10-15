@@ -27,8 +27,8 @@ type Plan = 'annual' | 'monthly';
 // seconde de chargement.
 // L'annuel n'a pas le meme prix partout : 24,99 sur l'App Store, 29,99 sur
 // Google Play (le fondateur a baisse Apple seul, le 14 octobre 2026).
-const IOS = Platform.OS === 'ios';
-const FALLBACK = { annual: IOS ? '24,99 €' : '29,99 €', monthly: IOS ? '5,99 €' : '7,99 €' };
+// Memes prix sur les deux magasins depuis le 15 octobre 2026.
+const FALLBACK = { annual: '24,99 €', monthly: '5,99 €' };
 // L'essai existe sur les DEUX forfaits, et il est porte par les magasins :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
@@ -36,7 +36,7 @@ export const TRIAL_DAYS = 3;
 // Le prix reel du magasin, releve au tableau de bord : la valeur de
 // secours servait 44,99 alors que la fiche dit 49,99, et c'est elle qu'on
 // affiche tant que le magasin ne repond pas.
-const ANNUAL_EUR = Platform.OS === 'ios' ? 24.99 : 29.99;
+const ANNUAL_EUR = 24.99;
 
 /**
  * Le montant d'un forfait, en nombre.
@@ -69,7 +69,7 @@ export function hasTrial(p: PurchasesPackage | undefined): boolean {
 function money(n: number, symbol = '€'): string {
   return `${n.toFixed(2).replace('.', ',')} ${symbol}`;
 }
-const MONTHLY_EUR = Platform.OS === 'ios' ? 5.99 : 7.99;
+const MONTHLY_EUR = 5.99;
 // Douze mensualites face a un an : la comparaison honnete, et c'est elle qui
 // rend l'annuel evident. Calculee sur les prix DU MAGASIN : une constante
 // afficherait une remise fausse des que l'un des deux prix change.
