@@ -14,7 +14,7 @@ import { useProStore } from '@/store/pro';
 import { useSettings } from '@/store/settings';
 import { useLang } from '@/store/lang';
 import { watchReal } from '@/services/realtime';
-import { shield } from '@/services';
+import { configureShield, shield } from '@/services';
 import { startNotifications } from '@/services/trial';
 import { pullUpdate } from '@/services/refresh';
 // Importe pour son effet : la tache des alertes Instagram doit exister avant tout ecran,
@@ -110,6 +110,8 @@ export default function RootLayout() {
     if (!langLoaded || Platform.OS !== 'ios') return;
     const words = { title: dict.alerts.notifTitle, dm: dict.alerts.notifDm, act: dict.alerts.notifAct };
     void refreshWords(words);
+    // L'ecran de blocage parle la langue de l'app.
+    void configureShield(dict.shield);
     // Allumees par defaut, au lancement et a chaque retour dans l'app (une
     // connexion a Instagram vient peut-etre d'avoir lieu).
     void autoEnableAlerts(words).catch(() => {});

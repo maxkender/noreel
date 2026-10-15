@@ -445,6 +445,8 @@ export const fi: Dict = {
   },
 
   pay: {
+    subNow: "Poista lyhytvideot lopullisesti.",
+    titleNow: "Nyt on aika ottaa aikasi takaisin {accent}.",
     priceLine: '{n} päivän ilmainen kokeilu, sitten {m}/kk — laskutetaan {y}/vuosi',
     priceWeek: '{p} viikossa, ei kokeilua. Peru milloin vain.',
     storeDown: 'Kauppa ei vastannut. Tarkista yhteytesi ja yritä uudelleen.',
@@ -1119,5 +1121,11 @@ export const fi: Dict = {
     t5: "Koti-valikko",
     h5: "Laita UnSwipe alkuperäisten tilalle.",
     b5: "Vaihda Koti-valikossa Instagram- ja muiden sovellusten kuvakkeet UnSwipe-kuvakkeisiin: avaat ne tottumuksesta.",
+  },
+  shield: {
+    title: "Avaa UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} on estetty. Avaa se UnSwipessa ilman Reelsejä.",
+    open: "Avaa UnSwipe",
+    close: "Sulje",
   },
 };

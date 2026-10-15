@@ -465,6 +465,8 @@ export const fr = {
   },
 
   pay: {
+    subNow: "Supprime les vidéos courtes pour de bon.",
+    titleNow: "C'est le moment de reprendre {accent} de ton temps.",
     priceLine: '{n} j d’essai gratuit, puis {m}/mois — facturé {y}/an',
     priceWeek: '{p} par semaine, sans essai. Annulable à tout moment.',
     storeDown: 'Le magasin n’a pas répondu. Vérifie ta connexion, puis réessaie.',
@@ -1139,6 +1141,12 @@ export const fr = {
     t5: "L’écran d’accueil",
     h5: "Mets UnSwipe à la place des originales.",
     b5: "Remplace les icônes d’Instagram et des autres par celles d’UnSwipe sur ton écran d’accueil : tu les ouvriras par réflexe.",
+  },
+  shield: {
+    title: "Ouvrir UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} est bloqué. Ouvre-le dans UnSwipe, sans Reels.",
+    open: "Ouvrir UnSwipe",
+    close: "Fermer",
   },
 } as const;
 

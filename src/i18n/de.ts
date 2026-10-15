@@ -445,6 +445,8 @@ export const de: Dict = {
   },
 
   pay: {
+    subNow: "Lösch Kurzvideos für immer.",
+    titleNow: "Jetzt ist der Moment, die {accent} über deine Zeit zurückzuholen.",
     priceLine: '{n} Tage gratis testen, dann {m}/Monat — {y}/Jahr abgerechnet',
     priceWeek: '{p} pro Woche, ohne Testphase. Jederzeit kündbar.',
     storeDown: 'Der Store hat nicht geantwortet. Prüfe deine Verbindung und versuch es noch einmal.',
@@ -1119,5 +1121,11 @@ export const de: Dict = {
     t5: "Home-Bildschirm",
     h5: "Setz UnSwipe an die Stelle der Originale.",
     b5: "Ersetze auf deinem Home-Bildschirm die Symbole von Instagram und den anderen Apps durch die von UnSwipe: Du öffnest sie dann aus Gewohnheit.",
+  },
+  shield: {
+    title: "UnSwipe öffnen",
+    subtitle: "{applicationOrDomainDisplayName} ist gesperrt. Öffne es in UnSwipe, ohne Reels.",
+    open: "UnSwipe öffnen",
+    close: "Schließen",
   },
 };

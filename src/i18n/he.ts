@@ -445,6 +445,8 @@ export const he: Dict = {
   },
 
   pay: {
+    subNow: "למחוק את הסרטונים הקצרים לתמיד.",
+    titleNow: "זה הזמן להחזיר לעצמך את {accent} על הזמן שלך.",
     priceLine: '{n} ימי ניסיון חינם, ואז {m}/חודש — חיוב של {y}/שנה',
     priceWeek: '{p} לשבוע, בלי ניסיון. אפשר לבטל בכל רגע.',
     storeDown: 'החנות לא ענתה. כדאי לבדוק את החיבור ולנסות שוב.',
@@ -1119,5 +1121,11 @@ export const he: Dict = {
     t5: "מסך הבית",
     h5: "שים את UnSwipe במקום המקוריות.",
     b5: "החלף במסך הבית את הסמלים של Instagram ושל האחרות בסמלים של UnSwipe: תפתח אותם מתוך הרגל.",
+  },
+  shield: {
+    title: "לפתוח את UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} חסומה. אפשר לפתוח אותה ב-UnSwipe, בלי Reels.",
+    open: "לפתוח את UnSwipe",
+    close: "סגירה",
   },
 };

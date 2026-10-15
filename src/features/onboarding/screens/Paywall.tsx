@@ -27,7 +27,8 @@ type Plan = 'annual' | 'monthly';
 // seconde de chargement.
 // L'annuel n'a pas le meme prix partout : 24,99 sur l'App Store, 29,99 sur
 // Google Play (le fondateur a baisse Apple seul, le 14 octobre 2026).
-const FALLBACK = { annual: Platform.OS === 'ios' ? '24,99 €' : '29,99 €', monthly: '7,99 €' };
+const IOS = Platform.OS === 'ios';
+const FALLBACK = { annual: IOS ? '24,99 €' : '29,99 €', monthly: IOS ? '5,99 €' : '7,99 €' };
 // L'essai existe sur les DEUX forfaits, et il est porte par les magasins :
 // c'est Apple qui l'applique a l'achat, pas nous. On l'ANNONCE ici, on ne le
 // fabrique pas — l'annoncer sans qu'il existe cote magasin serait mentir.
@@ -68,7 +69,7 @@ export function hasTrial(p: PurchasesPackage | undefined): boolean {
 function money(n: number, symbol = '€'): string {
   return `${n.toFixed(2).replace('.', ',')} ${symbol}`;
 }
-const MONTHLY_EUR = 7.99;
+const MONTHLY_EUR = Platform.OS === 'ios' ? 5.99 : 7.99;
 // Douze mensualites face a un an : la comparaison honnete, et c'est elle qui
 // rend l'annuel evident. Calculee sur les prix DU MAGASIN : une constante
 // afficherait une remise fausse des que l'un des deux prix change.
@@ -368,14 +369,23 @@ export function Paywall(
         )}
       </View>
 
-      <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
-        {d.pay.ready}
-      </Text>
+      {/* iOS : pas de « ton programme est pret », un titre qui appelle a agir
+          et une ligne qui dit ce qu'on achete. Android garde l'ancien en-tete. */}
+      {!IOS && (
+        <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
+          {d.pay.ready}
+        </Text>
+      )}
       <Text variant="displayM" style={st.center}>
-        {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
+        {t(IOS ? d.pay.titleNow : d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
         <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>
-        {t(d.pay.title, { accent: '\u0000' }).split('\u0000')[1]}
+        {t(IOS ? d.pay.titleNow : d.pay.title, { accent: '\u0000' }).split('\u0000')[1]}
       </Text>
+      {IOS && (
+        <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
+          {d.pay.subNow}
+        </Text>
+      )}
 
       {/* Ce qui sera preleve, et quand — AVANT les prix : c'est la question
           qui bloque la main au-dessus du bouton. */}

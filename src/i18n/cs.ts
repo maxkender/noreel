@@ -445,6 +445,8 @@ export const cs: Dict = {
   },
 
   pay: {
+    subNow: "Smaž krátká videa navždy.",
+    titleNow: "Teď je čas získat zpět {accent} nad svým časem.",
     priceLine: '{n} dní zdarma, pak {m}/měsíc — účtováno {y}/rok',
     priceWeek: '{p} týdně, bez zkušební doby. Zruš kdykoli.',
     storeDown: 'Obchod neodpověděl. Zkontroluj připojení a zkus to znovu.',
@@ -1119,5 +1121,11 @@ export const cs: Dict = {
     t5: "Plocha",
     h5: "Dej UnSwipe na místo originálů.",
     b5: "Nahraď na ploše ikony aplikace Instagram a dalších ikonami UnSwipe: budeš je otevírat ze zvyku.",
+  },
+  shield: {
+    title: "Otevřít UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} je zablokovaná. Otevři ji v UnSwipe, bez Reels.",
+    open: "Otevřít UnSwipe",
+    close: "Zavřít",
   },
 };

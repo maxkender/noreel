@@ -445,6 +445,8 @@ export const hr: Dict = {
   },
 
   pay: {
+    subNow: "Izbriši kratke videe zauvijek.",
+    titleNow: "Sada je vrijeme da vratiš {accent} nad svojim vremenom.",
     priceLine: '{n} dana besplatno, zatim {m}/mjesec — naplata {y}/godina',
     priceWeek: '{p} tjedno, bez probnog razdoblja. Otkaži kad god želiš.',
     storeDown: 'Trgovina ne odgovara. Provjeri vezu, pa pokušaj ponovno.',
@@ -1119,5 +1121,11 @@ export const hr: Dict = {
     t5: "Početni zaslon",
     h5: "Stavi UnSwipe na mjesto izvornih.",
     b5: "Zamijeni na početnom zaslonu ikone aplikacija Instagram i ostalih ikonama UnSwipe: otvarat ćeš ih iz navike.",
+  },
+  shield: {
+    title: "Otvori UnSwipe",
+    subtitle: "Aplikacija {applicationOrDomainDisplayName} je blokirana. Otvori je u aplikaciji UnSwipe, bez Reelsa.",
+    open: "Otvori UnSwipe",
+    close: "Zatvori",
   },
 };

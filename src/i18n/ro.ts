@@ -445,6 +445,8 @@ export const ro: Dict = {
   },
 
   pay: {
+    subNow: "Șterge videoclipurile scurte pentru totdeauna.",
+    titleNow: "Acum e momentul să recapeți {accent} asupra timpului tău.",
     priceLine: '{n} zile de probă gratuită, apoi {m}/lună — facturat {y}/an',
     priceWeek: '{p} pe săptămână, fără probă. Anulezi oricând.',
     storeDown: 'Magazinul nu a răspuns. Verifică-ți conexiunea, apoi încearcă din nou.',
@@ -1119,5 +1121,11 @@ export const ro: Dict = {
     t5: "Ecranul principal",
     h5: "Pune UnSwipe în locul originalelor.",
     b5: "Înlocuiește pe ecranul principal pictogramele Instagram și ale celorlalte aplicații cu cele UnSwipe: le vei deschide din reflex.",
+  },
+  shield: {
+    title: "Deschide UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} este blocată. Deschide-o în UnSwipe, fără Reels.",
+    open: "Deschide UnSwipe",
+    close: "Închide",
   },
 };

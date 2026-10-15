@@ -10,7 +10,7 @@ import {
   Info, Settings as SettingsIcon, Shield, SlidersHorizontal, Smartphone, Timer, User,
 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import { alertsOn, autoEnableAlerts, disableAlerts, enableAlerts, readCounts } from '@/services/igAlerts';
+import { alertsOn, autoEnableAlerts, disableAlerts, enableAlerts, lastChecks, readCounts, testAlert, type Diag } from '@/services/igAlerts';
 import { CLIENTS, type ClientId } from '@/features/client/blockers';
 import { SlideToConfirm } from '@/components/SlideToConfirm';
 import { Toggle } from './parts';
@@ -373,12 +373,17 @@ function BlockTab({
         l'etape suivante, et rien d'autre.
       */}
       <View style={[st.blockCard, !pro && st.dimmed]}>
-        <Text variant="label" tone="tertiary" style={{ alignSelf: 'flex-start' }}>{d.blockTab.stepsTitle}</Text>
-        <View style={{ alignSelf: 'stretch' }}>
-          <BlockStep n={1} label={d.block.authorize} done={!needsAuth} current={needsAuth} />
-          <BlockStep n={2} label={d.blockTab.step2} done={!!selection} current={!needsAuth && !selection} />
-          <BlockStep n={3} label={d.blockTab.step3} done={on} current={!needsAuth && !!selection && !on} />
-        </View>
+        {/* Les trois etapes faites, la liste n'a plus rien a dire : il ne reste que le bouton. */}
+        {!on && (
+          <>
+            <Text variant="label" tone="tertiary" style={{ alignSelf: 'flex-start' }}>{d.blockTab.stepsTitle}</Text>
+            <View style={{ alignSelf: 'stretch' }}>
+              <BlockStep n={1} label={d.block.authorize} done={!needsAuth} current={needsAuth} />
+              <BlockStep n={2} label={d.blockTab.step2} done={!!selection} current={!needsAuth && !selection} />
+              <BlockStep n={3} label={d.blockTab.step3} done={on} current={!needsAuth && !!selection && !on} />
+            </View>
+          </>
+        )}
         <Pressable
           ref={aBtn}
           collapsable={false}
@@ -484,10 +489,23 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
   const [linkNote, setLinkNote] = useState<string | null>(null);
   const [logged, setLogged] = useState<boolean | null>(null);
   const [alertNote, setAlertNote] = useState<string | null>(null);
+  const [checks, setChecks] = useState<{ fg?: Diag; bg?: Diag }>({});
   useEffect(() => {
     void alertsOn().then(setAlerts);
-    if (Platform.OS === 'ios') void readCounts().then((r) => setLogged(r !== null));
+    if (Platform.OS === 'ios') {
+      void readCounts().then((r) => { setLogged(r !== null); void lastChecks().then(setChecks); });
+    }
   }, []);
+  // La derniere verification, dans l'app et en fond : on voit enfin si la chaine marche.
+  const when = (x?: Diag) => (x ? `${new Date(x.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${x.why}` : '—');
+  const runTest = async () => {
+    haptics.press();
+    setAlertNote(null);
+    const r = await testAlert({ title: d.alerts.notifTitle, dm: d.alerts.notifDm, act: d.alerts.notifAct });
+    if (r === 'login') setLogged(false);
+    if (r === 'denied') setAlertNote(d.alerts.denied);
+    setChecks(await lastChecks());
+  };
   const flipAlerts = async (v: boolean) => {
     setAlertNote(null);
     if (!v) { await disableAlerts(); setAlerts(false); return; }
@@ -544,6 +562,16 @@ function AccountTab({ onSettings, onControl }: { onSettings: () => void; onContr
               {logged === false ? d.alerts.loginFirst : alerts ? d.alerts.connected : d.alerts.row}
             </Text>
             {alertNote ? <Text variant="label" color={c.ember}>{alertNote}</Text> : null}
+            {logged !== false && (
+              <>
+                <Text variant="label" tone="tertiary" style={{ fontSize: 11 }} numberOfLines={2}>
+                  {`App ${when(checks.fg)}\niOS ${when(checks.bg)}`}
+                </Text>
+                <Pressable onPress={() => { void runTest(); }} hitSlop={8} style={st.testPill} accessibilityRole="button">
+                  <Text variant="label" style={{ fontSize: 12 }}>{d.alerts.test}</Text>
+                </Pressable>
+              </>
+            )}
           </View>
           {logged === false
             ? <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
@@ -602,6 +630,10 @@ const sheet = (c: Palette) => StyleSheet.create({
   notifCard: {
     flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.lg,
     padding: space.lg, borderRadius: 24, borderWidth: 1.5, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  testPill: {
+    alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 999, backgroundColor: withAlpha(c.mist, 0.1),
   },
   betaPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: withAlpha(c.mist, 0.1) },
   statePill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },

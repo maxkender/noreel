@@ -445,6 +445,8 @@ export const en: Dict = {
   },
 
   pay: {
+    subNow: "Delete short-form content forever.",
+    titleNow: "Now is the time to take back {accent} of your time.",
     priceLine: '{n}-day free trial, then {m}/month — billed {y}/year',
     priceWeek: '{p} per week, no trial. Cancel any time.',
     storeDown: 'The store did not answer. Check your connection, then try again.',
@@ -1119,5 +1121,11 @@ export const en: Dict = {
     t5: "Home screen",
     h5: "Put UnSwipe where the originals were.",
     b5: "Replace the Instagram and other icons with UnSwipe's on your home screen: you'll open them out of habit.",
+  },
+  shield: {
+    title: "Open UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} is blocked. Open it in UnSwipe, without Reels.",
+    open: "Open UnSwipe",
+    close: "Close",
   },
 };

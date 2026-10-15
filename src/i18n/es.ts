@@ -445,6 +445,8 @@ export const es: Dict = {
   },
 
   pay: {
+    subNow: "Elimina los vídeos cortos para siempre.",
+    titleNow: "Es el momento de recuperar el {accent} de tu tiempo.",
     priceLine: '{n} días de prueba gratis, luego {m}/mes — facturado {y}/año',
     priceWeek: '{p} por semana, sin prueba. Cancela cuando quieras.',
     storeDown: 'La tienda no ha respondido. Comprueba tu conexión y vuelve a intentarlo.',
@@ -1119,5 +1121,11 @@ export const es: Dict = {
     t5: "Pantalla de inicio",
     h5: "Pon UnSwipe en lugar de las originales.",
     b5: "Sustituye los iconos de Instagram y de las demás por los de UnSwipe en tu pantalla de inicio: los abrirás por costumbre.",
+  },
+  shield: {
+    title: "Abrir UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} está bloqueada. Ábrela en UnSwipe, sin Reels.",
+    open: "Abrir UnSwipe",
+    close: "Cerrar",
   },
 };

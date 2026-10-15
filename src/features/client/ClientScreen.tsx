@@ -235,6 +235,10 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
   const noteTop = topInset + 44 + 6;
 
   const web = useRef<WebView>(null);
+  const [history, setHistory] = useState({ back: false, forward: false });
+  const seeHistory = (n: { canGoBack: boolean; canGoForward: boolean }) => {
+    setHistory((h) => (h.back === n.canGoBack && h.forward === n.canGoForward ? h : { back: n.canGoBack, forward: n.canGoForward }));
+  };
   const [ready, setReady] = useState(false);
   /*
     L'avancement du chargement, de zero a un.
@@ -757,8 +761,11 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
             }
           }}
           onShouldStartLoadWithRequest={guard}
-          onLoadProgress={(e) => setLoad(e.nativeEvent.progress)}
-        onLoadEnd={() => {
+          onLoadProgress={(e) => { setLoad(e.nativeEvent.progress); seeHistory(e.nativeEvent); }}
+          // Les fleches du menu : grisees quand il n'y a pas de page avant ou apres.
+          onNavigationStateChange={Platform.OS === 'ios' ? seeHistory : undefined}
+        onLoadEnd={(e) => {
+            seeHistory(e.nativeEvent);
             setReady(true);
             // La connexion s'est affichee : les prochaines fois, on va au fil.
             if (entry && entry !== client.url) void markFirstRunDone(id);
@@ -801,7 +808,7 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
           voler les touches. */}
-      <NavBar onAction={onNav} accounts={id === 'instagram' ? accounts.length : 2} />
+      <NavBar onAction={onNav} accounts={id === 'instagram' ? accounts.length : 2} canBack={Platform.OS === 'ios' ? history.back : true} canForward={Platform.OS === 'ios' ? history.forward : true} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />

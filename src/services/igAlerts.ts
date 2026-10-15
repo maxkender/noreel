@@ -95,27 +95,65 @@ async function sessionHeaders(): Promise<Record<string, string> | null> {
   }
 }
 
+/*
+ * POURQUOI LA DERNIERE VERIFICATION A ECHOUE, en clair.
+ * « Ca ne marche pas » ne disait rien ; la carte des alertes affiche
+ * maintenant la derniere raison et l'heure, au premier plan comme en fond.
+ */
+const DIAG = 'unswipe.igalerts.diag.v1';
+export type Diag = { at: number; why: string };
+let why = '';
+
+async function note(bg: boolean): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(DIAG);
+    const all = raw ? JSON.parse(raw) : {};
+    all[bg ? 'bg' : 'fg'] = { at: Date.now(), why };
+    await AsyncStorage.setItem(DIAG, JSON.stringify(all));
+  } catch { /* le disque, pas nous */ }
+}
+
+/** Les dernieres verifications : `fg` dans l'app, `bg` reveillee par iOS. */
+export async function lastChecks(): Promise<{ fg?: Diag; bg?: Diag }> {
+  try {
+    const raw = await AsyncStorage.getItem(DIAG);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 async function get(path: string, headers: Record<string, string>): Promise<Record<string, unknown> | null> {
   // `omit` : iOS n'ajoute ni ne remplace rien, l'en-tete Cookie part tel quel.
   const r = await fetch(ORIGIN + path, { credentials: 'omit', headers });
-  if (!r.ok) return null;
+  if (!r.ok) { why = `HTTP ${r.status}`; return null; }
   const j = (await r.json()) as Record<string, unknown>;
-  return j && j.status === 'ok' ? j : null;
+  if (!j || j.status !== 'ok') { why = `status ${String(j?.status)}`; return null; }
+  return j;
 }
 
 /**
  * Les deux compteurs, maintenant. Null si la session ne passe pas
  * (deconnecte, ou Instagram qui refuse) : on ne previent jamais sur un doute.
  */
-export async function readCounts(): Promise<Counts | null> {
+export async function readCounts(bg = false): Promise<Counts | null> {
+  const out = await countsNow();
+  await note(bg);
+  return out;
+}
+
+async function countsNow(): Promise<Counts | null> {
   try {
     const headers = await sessionHeaders();
-    if (!headers) return null;
+    if (!headers) { why = 'no session'; return null; }
     const badge = await get('/api/v1/direct_v2/get_badge_count/?no_raven=1', headers);
-    if (!badge || typeof badge.badge_count !== 'number') return null;
+    if (!badge) return null;
+    if (typeof badge.badge_count !== 'number') { why = 'no badge'; return null; }
     const news = await get('/api/v1/news/inbox/', headers);
+    why = `ok · ${badge.badge_count}/${activityOf(news?.counts as Record<string, number> | undefined)}`;
     return { dm: badge.badge_count, act: activityOf(news?.counts as Record<string, number> | undefined) };
-  } catch {
+  } catch (e) {
+    why = `error ${e instanceof Error ? e.message : String(e)}`.slice(0, 80);
     return null;
   }
 }
@@ -129,10 +167,10 @@ export function newsLines(prev: Counts, now: Counts, words: State['words']): str
 }
 
 /** Une verification : compare, previent si ca monte, retient les compteurs. */
-export async function checkOnce(notify = true): Promise<'news' | 'quiet' | 'off' | 'failed'> {
+export async function checkOnce(notify = true, bg = false): Promise<'news' | 'quiet' | 'off' | 'failed'> {
   const s = await load();
   if (!s.on) return 'off';
-  const now = await readCounts();
+  const now = await readCounts(bg);
   if (!now) return 'failed';
   const lines = newsLines(s, now, s.words);
   if (notify && lines.length) {
@@ -153,7 +191,7 @@ export async function checkOnce(notify = true): Promise<'news' | 'quiet' | 'off'
 if (Platform.OS === 'ios') {
   TaskManager.defineTask(IG_ALERTS_TASK, async () => {
     try {
-      const r = await checkOnce(true);
+      const r = await checkOnce(true, true);
       return r === 'failed' ? BackgroundTask.BackgroundTaskResult.Failed : BackgroundTask.BackgroundTaskResult.Success;
     } catch {
       return BackgroundTask.BackgroundTaskResult.Failed;

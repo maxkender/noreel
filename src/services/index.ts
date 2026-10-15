@@ -18,4 +18,4 @@ export function track(event: AnalyticsEvent, props?: Record<string, unknown>): v
 
 export * from './types';
 
-export { FAMILY_CONTROLS_ENABLED } from './shield.real';
+export { FAMILY_CONTROLS_ENABLED, configureShield } from './shield.real';

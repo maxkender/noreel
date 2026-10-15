@@ -445,6 +445,8 @@ export const pl: Dict = {
   },
 
   pay: {
+    subNow: "Usuń krótkie filmy na zawsze.",
+    titleNow: "To czas, by odzyskać {accent} nad swoim czasem.",
     priceLine: '{n} dni za darmo, potem {m}/mies. — płatne {y}/rok',
     priceWeek: '{p} tygodniowo, bez okresu próbnego. Anuluj w dowolnym momencie.',
     storeDown: 'Sklep nie odpowiedział. Sprawdź połączenie i spróbuj ponownie.',
@@ -1119,5 +1121,11 @@ export const pl: Dict = {
     t5: "Ekran początkowy",
     h5: "Postaw UnSwipe w miejscu oryginałów.",
     b5: "Zamień na ekranie początkowym ikony aplikacji Instagram i innych na ikony UnSwipe: będziesz je otwierać z przyzwyczajenia.",
+  },
+  shield: {
+    title: "Otwórz UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} jest zablokowana. Otwórz ją w UnSwipe, bez Reels.",
+    open: "Otwórz UnSwipe",
+    close: "Zamknij",
   },
 };

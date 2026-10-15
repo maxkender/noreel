@@ -445,6 +445,8 @@ export const nl: Dict = {
   },
 
   pay: {
+    subNow: "Verwijder korte video's voorgoed.",
+    titleNow: "Dit is het moment om {accent} over je tijd terug te pakken.",
     priceLine: '{n} dagen gratis proberen, daarna {m}/maand — {y}/jaar gefactureerd',
     priceWeek: '{p} per week, zonder proefperiode. Altijd opzegbaar.',
     storeDown: 'De store gaf geen antwoord. Controleer je verbinding en probeer het opnieuw.',
@@ -1119,5 +1121,11 @@ export const nl: Dict = {
     t5: "Beginscherm",
     h5: "Zet UnSwipe op de plek van de originelen.",
     b5: "Vervang op je beginscherm de iconen van Instagram en de andere apps door die van UnSwipe: je opent ze dan uit gewoonte.",
+  },
+  shield: {
+    title: "UnSwipe openen",
+    subtitle: "{applicationOrDomainDisplayName} is geblokkeerd. Open het in UnSwipe, zonder Reels.",
+    open: "UnSwipe openen",
+    close: "Sluiten",
   },
 };

@@ -445,6 +445,8 @@ export const hu: Dict = {
   },
 
   pay: {
+    subNow: "Töröld a rövid videókat örökre.",
+    titleNow: "Itt az idő visszavenni az {accent} az időd felett.",
     priceLine: '{n} napos ingyenes próba, utána {m}/hó — évente {y} számlázva',
     priceWeek: '{p} hetente, próbaidő nélkül. Bármikor lemondható.',
     storeDown: 'Az áruház nem válaszolt. Ellenőrizd a kapcsolatot, és próbáld újra.',
@@ -1119,5 +1121,11 @@ export const hu: Dict = {
     t5: "Főképernyő",
     h5: "Tedd az UnSwipe-ot az eredetiek helyére.",
     b5: "Cseréld le a főképernyőn az Instagram és a többi app ikonját az UnSwipe ikonjaira: megszokásból azokat fogod megnyitni.",
+  },
+  shield: {
+    title: "UnSwipe megnyitása",
+    subtitle: "A(z) {applicationOrDomainDisplayName} le van tiltva. Nyisd meg az UnSwipe-ban, Reels nélkül.",
+    open: "UnSwipe megnyitása",
+    close: "Bezárás",
   },
 };

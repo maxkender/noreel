@@ -444,6 +444,8 @@ export const sv: Dict = {
   },
 
   pay: {
+    subNow: "Radera korta videor för gott.",
+    titleNow: "Nu är det dags att ta tillbaka {accent} över din tid.",
     priceLine: '{n} dagar gratis, sedan {m}/månad — faktureras {y}/år',
     priceWeek: '{p} per vecka, ingen provperiod. Avsluta när som helst.',
     storeDown: 'Butiken svarade inte. Kolla din uppkoppling och försök igen.',
@@ -1117,5 +1119,11 @@ export const sv: Dict = {
     t5: "Hemskärmen",
     h5: "Sätt UnSwipe där originalen satt.",
     b5: "Byt ut ikonerna för Instagram och de andra mot UnSwipes på hemskärmen: du kommer att öppna dem av vana.",
+  },
+  shield: {
+    title: "Öppna UnSwipe",
+    subtitle: "{applicationOrDomainDisplayName} är blockerad. Öppna den i UnSwipe, utan Reels.",
+    open: "Öppna UnSwipe",
+    close: "Stäng",
   },
 };

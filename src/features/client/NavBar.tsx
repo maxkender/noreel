@@ -35,8 +35,8 @@ export type NavAction = 'back' | 'reload' | 'forward' | 'account' | 'link' | 'se
  * marquer « deplace » au premier pixel empechait tout appui.
  */
 export function NavBar({
-  onAction, accounts = 2,
-}: { onAction: (a: NavAction) => void; accounts?: number }) {
+  onAction, accounts = 2, canBack = true, canForward = true,
+}: { onAction: (a: NavAction) => void; accounts?: number; canBack?: boolean; canForward?: boolean }) {
   const c = useColors();
   const styles = useMemo(() => sheet(c), [c]);
   const { d } = useT();
@@ -99,10 +99,10 @@ export function NavBar({
           style={styles.barWrap}
         >
           <View style={styles.bar}>
-            <Key icon={ChevronLeft} label={d.client.back} onPress={() => act('back')} />
+            <Key icon={ChevronLeft} label={d.client.back} onPress={() => act('back')} disabled={!canBack} />
             <Key icon={House} label={d.client.home} onPress={() => act('exit')} />
             <Key icon={RotateCw} label={d.client.reload} onPress={() => act('reload')} />
-            <Key icon={ChevronRight} label={d.client.forward} onPress={() => act('forward')} />
+            <Key icon={ChevronRight} label={d.client.forward} onPress={() => act('forward')} disabled={!canForward} />
             {/*
               Changer de compte en un geste.
               Instagram tient lui-meme plusieurs sessions : sa page de
@@ -149,19 +149,22 @@ export function NavBar({
 }
 
 function Key({
-  icon: Icon, label, onPress, colour, big,
+  icon: Icon, label, onPress, colour, big, disabled,
 }: {
   icon: typeof House;
   label: string;
   onPress: () => void;
   colour?: string;
   big?: boolean;
+  /** Rien a faire (pas de page avant, par exemple) : grise, et l'appui ne fait rien. */
+  disabled?: boolean;
 }) {
   const scale = useSharedValue(1);
   const c = useColors();
   const styles = useMemo(() => sheet(c), [c]);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const tap = Gesture.Tap()
+    .enabled(!disabled)
     .onBegin(() => { scale.value = withTiming(0.88, { duration: 80 }); })
     .onFinalize(() => { scale.value = withSpring(1, springs.snappy); })
     .onEnd(() => { runOnJS(onPress)(); });
@@ -169,9 +172,10 @@ function Key({
   return (
     <GestureDetector gesture={tap}>
       <Animated.View
-        style={[big ? styles.quit : styles.key, anim]}
+        style={[big ? styles.quit : styles.key, anim, disabled && { opacity: 0.3 }]}
         accessibilityRole="button"
         accessibilityLabel={label}
+        accessibilityState={{ disabled: !!disabled }}
       >
         <Icon size={big ? 22 : 20} strokeWidth={2} color={colour ?? c.mist} />
       </Animated.View>

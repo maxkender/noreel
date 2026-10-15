@@ -445,6 +445,8 @@ export const tr: Dict = {
   },
 
   pay: {
+    subNow: "Kısa videoları sonsuza dek sil.",
+    titleNow: "Şimdi zamanının {accent} geri alma zamanı.",
     priceLine: '{n} gün ücretsiz deneme, sonra ayda {m} — yıllık {y} faturalandırılır',
     priceWeek: 'Haftada {p}, deneme yok. İstediğin zaman iptal et.',
     storeDown: 'Mağaza yanıt vermedi. Bağlantını kontrol edip tekrar dene.',
@@ -1119,5 +1121,11 @@ export const tr: Dict = {
     t5: "Ana ekran",
     h5: "UnSwipe'ı orijinallerin yerine koy.",
     b5: "Ana ekranında Instagram'ın ve diğerlerinin simgelerini UnSwipe'ınkilerle değiştir: onları alışkanlıkla açarsın.",
+  },
+  shield: {
+    title: "UnSwipe'ı aç",
+    subtitle: "{applicationOrDomainDisplayName} engellendi. Reels olmadan UnSwipe'ta aç.",
+    open: "UnSwipe'ı aç",
+    close: "Kapat",
   },
 };

@@ -20,7 +20,8 @@ const FAMILY_CONTROLS = process.env.EXPO_PUBLIC_FAMILY_CONTROLS === '1';
 const config: ExpoConfig = {
   name: 'UnSwipe',
   slug: 'noreel',
-  scheme: ['unswipe', 'noreel'],
+  // device-activity:// : le lien fixe que le bouton de l'ecran de blocage ouvre.
+  scheme: ['unswipe', 'noreel', 'device-activity'],
   version: '1.1.4',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
@@ -71,6 +72,9 @@ const config: ExpoConfig = {
     ['expo-navigation-bar', { enforceContrast: false, style: 'light' }],
     'expo-font',
     'expo-localization',
+    // Les alertes Instagram : sans ce plugin, l'Info.plist n'avait ni le mode
+    // « processing » ni l'identifiant de la tache, et iOS ne la lancait jamais.
+    'expo-background-task',
     'expo-apple-authentication',
     // expo-notifications est applique automatiquement ; celui-ci nettoie apres lui.
     './plugins/withoutPushEntitlement',
@@ -101,11 +105,13 @@ const config: ExpoConfig = {
           {
             appGroup: 'group.com.vikstudios.noreel',
             appleTeamId: 'K792T8TQ4X',
-            // Aucune extension : la signature multi-cible d'EAS echouait en
-            // silence avec 4 cibles. Le blocage de base (choisir des apps,
-            // les bloquer) se fait depuis l'app principale seule. On perd
-            // l'ecran de blocage personnalise et le suivi programme.
-            copyToTargetFolder: false,
+            // Les extensions de la bibliotheque sont ACTIVES (15 octobre 2026) :
+            // l'ecran de blocage UnSwipe (ShieldConfiguration), son bouton
+            // (ShieldAction) et le suivi programme (ActivityMonitor). Leurs
+            // App ID ont Family Controls (distribution) et des profils App
+            // Store actifs ; c'est ce qui manquait quand la signature
+            // multi-cible echouait.
+            copyToTargetFolder: true,
           },
         ] as [string, Record<string, unknown>]]
       : []),

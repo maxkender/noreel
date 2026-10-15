@@ -445,6 +445,8 @@ export const et: Dict = {
   },
 
   pay: {
+    subNow: "Kustuta lühivideod lõplikult.",
+    titleNow: "Nüüd on aeg võtta taas {accent} oma aja üle.",
     priceLine: '{n}-päevane tasuta proov, siis {m}/kuus — arveldatakse {y}/aastas',
     priceWeek: '{p} nädalas, ilma proovita. Tühista millal tahes.',
     storeDown: 'Pood ei vastanud. Kontrolli ühendust ja proovi uuesti.',
@@ -1119,5 +1121,11 @@ export const et: Dict = {
     t5: "Avakuva",
     h5: "Pane UnSwipe originaalide asemele.",
     b5: "Asenda avakuval rakenduse Instagram ja teiste ikoonid rakenduse UnSwipe ikoonidega: avad need harjumusest.",
+  },
+  shield: {
+    title: "Ava UnSwipe",
+    subtitle: "Rakendus {applicationOrDomainDisplayName} on blokeeritud. Ava see rakenduses UnSwipe, ilma Reelsita.",
+    open: "Ava UnSwipe",
+    close: "Sulge",
   },
 };

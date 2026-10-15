@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { I18nManager, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { I18nManager, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -13,7 +13,9 @@ import { haptics } from '@/lib/haptics';
 import { Text } from '@/components/type/Text';
 import { useAnchor } from './anchors';
 
-const PAD = 6;
+// iOS : une barre basse et serree, collee au bas de l'ecran, comme Opal.
+const IOS = Platform.OS === 'ios';
+const PAD = IOS ? 3 : 6;
 // Sortie douce, sans depassement : rien ne rebondit.
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 const AIcon = Animated.createAnimatedComponent(View);
@@ -141,12 +143,12 @@ function Tab({
     >
       <AIcon style={anim}>
         <Icon
-          size={21}
+          size={IOS ? 19 : 21}
           strokeWidth={active ? 2.2 : 1.8}
           color={active ? c.accent : withAlpha(c.mist, 0.45)}
         />
       </AIcon>
-      <Text variant="label" color={active ? c.accent : withAlpha(c.mist, 0.45)}>
+      <Text variant="label" color={active ? c.accent : withAlpha(c.mist, 0.45)} style={IOS ? { fontSize: 10, lineHeight: 12 } : undefined}>
         {label}
       </Text>
     </Pressable>
@@ -154,9 +156,9 @@ function Tab({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  wrap: { position: 'absolute', left: gutter, right: gutter, bottom: 28 },
+  wrap: { position: 'absolute', left: gutter, right: gutter, bottom: IOS ? 18 : 28 },
   bar: {
-    flexDirection: 'row', borderRadius: 28, overflow: 'hidden', padding: PAD,
+    flexDirection: 'row', borderRadius: IOS ? 24 : 28, overflow: 'hidden', padding: PAD,
     borderWidth: 1, borderColor: withAlpha(c.mist, 0.32),
     shadowColor: '#000', shadowOpacity: 0.7, shadowRadius: 30,
     shadowOffset: { width: 0, height: 16 }, elevation: 20,
@@ -164,9 +166,9 @@ const sheet = (c: Palette) => StyleSheet.create({
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
   pill: {
     position: 'absolute', top: PAD, bottom: PAD, left: PAD,
-    borderRadius: 22, overflow: 'hidden',
+    borderRadius: IOS ? 21 : 22, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(c.accent, 0.4),
   },
   flash: { backgroundColor: withAlpha(c.mist, 0.3) },
-  tab: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: space.sm },
+  tab: { flex: 1, alignItems: 'center', gap: IOS ? 1 : 4, paddingVertical: IOS ? 5 : space.sm },
 });
