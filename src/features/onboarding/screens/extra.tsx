@@ -383,10 +383,11 @@ export function RateAsk({ onNext }: P) {
       onPress={() => { void ask(); }}
       secondary={d.rate.later}
       onSecondary={onNext}
+      center
       hue="accent"
     >
-      {/* Les visages EN HAUT, en mosaique : on voit des gens avant de lire. */}
-      <View style={{ marginTop: space.lg }}>
+      {/* Tout le bloc au MILIEU de l'ecran : visages, etoiles, titre. */}
+      <View>
         <FaceWall />
       </View>
 

@@ -104,16 +104,17 @@ const COLS = 10;
 const GAP = 7;
 /** Le retrait de la grille dans la page : de l'air autour des cases. */
 const INSET = 12;
-const WORK_GREEN = '#2E9E5B';
+// Quatre couleurs qui ne se confondent pas : le libre est le SEUL vert.
+const WORK_GREEN = '#A78BFA';
 type Kind = 'sleep' | 'work' | 'eat' | 'free';
 
 /** Le tempo, en millisecondes. */
-const APPEAR = 16;   // une case de plus
-const TAKE = 48;     // une case prise de plus (sommeil, travail, repas)
-const BITE = 95;     // une case libre mordue de plus (le telephone)
-const BEAT = 1000;   // le silence entre deux etapes
+const APPEAR = 9;   // une case de plus
+const TAKE = 0;     // une case prise de plus (sommeil, travail, repas)
+const BITE = 55;     // une case libre mordue de plus (le telephone)
+const BEAT = 350;   // le silence entre deux etapes
 /** Le temps de LIRE la ligne et de voir les cases colorees, avant qu'elles partent. */
-const READ = 1000;
+const READ = 550;
 
 /**
  * Tes annees, une case chacune — et ce qu'il en reste vraiment.
@@ -165,18 +166,19 @@ export function LifeYears({ onNext }: P) {
     const tWork = tSleep + READ + L.sleep * TAKE + BEAT;
     const tEat = tWork + READ + L.work * TAKE + BEAT;
     const tFree = tEat + READ + L.eat * TAKE + BEAT;
-    const tPhone = tFree + 1400;
+    const tPhone = tFree + 900;
     const tDone = tPhone + bites * BITE + 700;
 
-    let taken = 0;
     let freeIndex = 0;
     const cells = kinds.map((kind) => {
       let paintAt = Number.MAX_SAFE_INTEGER;
       let goneAt = Number.MAX_SAFE_INTEGER;
       let biteAt = Number.MAX_SAFE_INTEGER;
-      if (kind === 'sleep') { paintAt = tSleep; goneAt = tSleep + READ + taken * TAKE; taken += 1; }
-      if (kind === 'work') { paintAt = tWork; goneAt = tWork + READ + (taken - L.sleep) * TAKE; taken += 1; }
-      if (kind === 'eat') { paintAt = tEat; goneAt = tEat + READ + (taken - L.sleep - L.work) * TAKE; taken += 1; }
+      // Les annees prises se colorent par groupe, puis S'EFFACENT ensemble
+      // (en gris) quand on nomme le temps libre : il ne reste que lui en couleur.
+      if (kind === 'sleep') { paintAt = tSleep; goneAt = tFree; }
+      if (kind === 'work') { paintAt = tWork; goneAt = tFree; }
+      if (kind === 'eat') { paintAt = tEat; goneAt = tFree; }
       if (kind === 'free') {
         // Les dernieres cases libres sont mordues, de la fin vers le debut.
         const fromEnd = free - 1 - freeIndex;
@@ -209,10 +211,10 @@ export function LifeYears({ onNext }: P) {
   }, [plan, L.remaining, clock]);
 
   const cell = Math.floor((width - gutter * 2 - INSET * 2 - COLS * GAP) / COLS);
-  const base = withAlpha(c.mist, 0.12);
-  const freeTone = withAlpha('#7CF5B0', 0.8);
+  const base = withAlpha(c.mist, 0.09);
+  const freeTone = '#34D399';
   const tone: Record<Kind, string> = {
-    sleep: withAlpha(c.accent, 0.7), work: WORK_GREEN, eat: c.ember, free: freeTone,
+    sleep: '#60A5FA', work: WORK_GREEN, eat: '#FBBF24', free: freeTone,
   };
 
   const lines: [number, string, string][] = [
@@ -309,11 +311,11 @@ function Cell({
     const gone = interpolate(t, [goneAt, goneAt + 520], [0, 1], Extrapolation.CLAMP);
     const lit = interpolate(t, [freeAt, freeAt + 500], [0, 1], Extrapolation.CLAMP);
     const bite = interpolate(t, [biteAt, biteAt + 220], [0, 1], Extrapolation.CLAMP);
-    // Prise, la case GARDE sa place et sa couleur : la grille ne bouge plus.
+    // Prise, la case GARDE sa place : elle se colore, puis passe au gris.
     const k = 1;
-    void gone;
     const resting = interpolateColor(lit, [0, 1], [base, free]);
-    const painted = interpolateColor(paint, [0, 1], [resting, colour]);
+    const coloured = interpolateColor(paint, [0, 1], [resting, colour]);
+    const painted = interpolateColor(gone, [0, 1], [coloured, base]);
     // La case mordue saute un peu en rougissant : on sent ce qui est pris.
     const pop = bite > 0 && bite < 1 ? 1 + 0.4 * Math.sin(bite * Math.PI) : 1;
     return {
