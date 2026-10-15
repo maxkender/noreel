@@ -156,7 +156,7 @@ export function FaceWall() {
   const { width } = useWindowDimensions();
   const cols = 5;
   const gap = 8;
-  const tile = Math.min(64, Math.floor((width - 2 * 20 - (cols - 1) * gap) / cols));
+  const tile = Math.min(46, Math.floor((width - 2 * 20 - (cols - 1) * gap) / cols));
   const rows = [FACES.slice(0, cols), FACES.slice(cols, cols * 2)];
   return (
     <View style={{ gap, alignItems: 'center' }} pointerEvents="none">
@@ -166,7 +166,7 @@ export function FaceWall() {
             <Animated.View key={i} entering={FadeIn.delay(80 + (r * cols + i) * 45).duration(320)}>
               <Image
                 source={src}
-                style={{ width: tile, height: tile, borderRadius: 16, borderWidth: 1, borderColor: withAlpha(c.mist, 0.12) }}
+                style={{ width: tile, height: tile, borderRadius: tile / 2, borderWidth: 1, borderColor: withAlpha(c.mist, 0.12) }}
                 contentFit="cover"
               />
             </Animated.View>

@@ -107,6 +107,9 @@ export const sk: Dict = {
   },
 
   s6: {
+    equiv: "To je {y} rokov tvojho života.",
+    minutesLine: "minút scrollovania do konca života, týmto tempom.",
+    damage: "Tu sú škody.",
     lifeOf: 'Z {n} ROKOV, KTORÉ TI OSTÁVAJÚ',
     years: 'okolo {y} rokov',
     bodyShort: 'stráviš na telefóne.',
@@ -721,6 +724,10 @@ export const sk: Dict = {
   },
 
   blockTab: {
+    hardOn: "Prísny režim zapnutý",
+    slide: "Potiahni pre prísny režim",
+    manage: "Správa aplikácií",
+    guide: "Vyber aplikácie, ktoré chceš zablokovať alebo odblokovať. Zablokované sa už neotvoria: chodíš cez UnSwipe.",
     today: 'Dnes',
     streak: 'Séria',
     ofCap: 'Z limitu',
@@ -736,7 +743,6 @@ export const sk: Dict = {
     more: 'Blokovať ďalšie apky',
     moreOn: 'Pridaj do zoznamu, čo chceš.',
     moreOff: 'Hry, správy, čokoľvek, čo ťa vťahuje.',
-    hardOn: 'Zrušenie blokovania stojí minútu, jednu vetu a tri príklady.',
     hardOff: 'Vypnutie bude zámerne otravné. Asi tri minúty.',
     shortcuts: 'Apky na ploche',
   },
@@ -784,6 +790,7 @@ export const sk: Dict = {
   },
 
   picker: {
+    guide: "Zaškrtni aplikácie na zablokovanie, odškrtni tie na odblokovanie. Zaškrtnuté aplikácie sa už neotvoria: budeš chodiť cez UnSwipe.",
     authorize: 'Povoliť Čas pred obrazovkou',
     choose: 'Vyber, čo sa má pozastaviť.',
     selected: 'Vybrané apky: {n}',
@@ -859,6 +866,9 @@ export const sk: Dict = {
 
 
   ui: {
+    viewList: "Zoznam",
+    viewGrid: "Mriežka",
+    viewSwipe: "Posúvanie",
     wStep1: 'Skopíruj odkaz apky nižšie.',
     wStep2: 'Otvor Skratky → + → Otvoriť URL → vlož odkaz.',
     wStep3: 'Zdieľať → Pridať na plochu. Vyber názov a ikonu.',

@@ -107,6 +107,9 @@ export const ro: Dict = {
   },
 
   s6: {
+    equiv: "Adică {y} ani din viața ta.",
+    minutesLine: "minute de scroll până la sfârșitul vieții, în ritmul ăsta.",
+    damage: "Iată dauna.",
     lifeOf: 'DIN CEI {n} ANI CARE ȚI-AU RĂMAS',
     years: '{y} ani',
     bodyShort: 'petrecuți pe telefon.',
@@ -721,6 +724,10 @@ export const ro: Dict = {
   },
 
   blockTab: {
+    hardOn: "Mod strict activat",
+    slide: "Glisează: mod strict",
+    manage: "Aplicațiile tale",
+    guide: "Alege aplicațiile de blocat sau de deblocat. Odată blocate, nu se mai deschid: treci prin UnSwipe.",
     today: 'Azi',
     streak: 'Serie',
     ofCap: 'Din plafon',
@@ -736,7 +743,6 @@ export const ro: Dict = {
     more: 'Blochează alte aplicații',
     moreOn: 'Adaugă ce vrei la listă.',
     moreOff: 'Jocuri, știri, orice te acaparează.',
-    hardOn: 'Ca să scoți blocarea îți trebuie un minut, o propoziție și trei calcule.',
     hardOff: 'Face dezactivarea intenționat anevoioasă. Cam trei minute.',
     shortcuts: 'Aplicații pe ecranul principal',
   },
@@ -784,6 +790,7 @@ export const ro: Dict = {
   },
 
   picker: {
+    guide: "Bifează aplicațiile de blocat, debifează-le pe cele de deblocat. Aplicațiile bifate nu se vor mai deschide: vei trece prin UnSwipe.",
     authorize: 'Permite Timp de utilizare',
     choose: 'Alege ce se pune pe pauză.',
     selected: '{n} {s:aplicație selectată|aplicații selectate}',
@@ -859,6 +866,9 @@ export const ro: Dict = {
 
 
   ui: {
+    viewList: "Listă",
+    viewGrid: "Grilă",
+    viewSwipe: "Glisare",
     wStep1: 'Copiază linkul aplicației de mai jos.',
     wStep2: 'Deschide Comenzi rapide → + → Deschide URL → lipește linkul.',
     wStep3: 'Partajează → Adaugă pe ecranul principal. Alege numele și pictograma.',

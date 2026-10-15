@@ -107,6 +107,9 @@ export const nl: Dict = {
   },
 
   s6: {
+    equiv: "Dat is {y} jaar van je leven.",
+    minutesLine: "minuten scrollen tot het einde van je leven, in dit tempo.",
+    damage: "Dit is de schade.",
     lifeOf: 'VAN DE {n} JAAR DIE JE NOG HEBT',
     years: '{y} jaar',
     bodyShort: 'op je telefoon.',
@@ -721,6 +724,10 @@ export const nl: Dict = {
   },
 
   blockTab: {
+    hardOn: "Strenge modus staat aan",
+    slide: "Veeg voor strenge modus",
+    manage: "Apps beheren",
+    guide: "Kies de apps die je wilt blokkeren of deblokkeren. Geblokkeerd openen ze niet meer: je gaat via UnSwipe.",
     today: 'Vandaag',
     streak: 'Reeks',
     ofCap: 'Van je limiet',
@@ -736,7 +743,6 @@ export const nl: Dict = {
     more: 'Andere apps blokkeren',
     moreOn: 'Voeg toe wat je maar wilt.',
     moreOff: 'Games, nieuws, alles wat je grijpt.',
-    hardOn: 'De blokkade opheffen kost een minuut, een zin en drie sommen.',
     hardOff: 'Maakt uitzetten bewust lastig. Ongeveer drie minuten.',
     shortcuts: 'Apps op je beginscherm',
   },
@@ -784,6 +790,7 @@ export const nl: Dict = {
   },
 
   picker: {
+    guide: "Vink de apps aan die je wilt blokkeren, vink de apps uit die je wilt deblokkeren. Aangevinkte apps openen niet meer: je gaat via UnSwipe.",
     authorize: 'Schermtijd toestaan',
     choose: 'Kies wat er gepauzeerd wordt.',
     selected: '{n} app{s} geselecteerd',
@@ -859,6 +866,9 @@ export const nl: Dict = {
 
 
   ui: {
+    viewList: "Lijst",
+    viewGrid: "Raster",
+    viewSwipe: "Swipen",
     wStep1: 'Kopieer hieronder de link van de app.',
     wStep2: 'Open Opdrachten → + → Open URL → plak de link.',
     wStep3: 'Deel → Zet op beginscherm. Kies de naam en het symbool.',

@@ -107,6 +107,9 @@ export const sv: Dict = {
   },
 
   s6: {
+    equiv: "Det är {y} år av ditt liv.",
+    minutesLine: "minuter av scrollande resten av ditt liv, i den här takten.",
+    damage: "Här är skadan.",
     lifeOf: 'AV DE {n} ÅR DU HAR KVAR',
     years: '{y} år',
     bodyShort: 'på din mobil.',
@@ -720,6 +723,10 @@ export const sv: Dict = {
   },
 
   blockTab: {
+    hardOn: "Strikt läge är på",
+    slide: "Svep för strikt läge",
+    manage: "Hantera appar",
+    guide: "Välj apparna du vill blockera eller avblockera. När de är blockerade öppnas de inte: du går via UnSwipe.",
     today: 'I dag',
     streak: 'Svit',
     ofCap: 'Av ditt tak',
@@ -735,7 +742,6 @@ export const sv: Dict = {
     more: 'Blockera andra appar',
     moreOn: 'Lägg till vad du vill i listan.',
     moreOff: 'Spel, nyheter, allt som fångar dig.',
-    hardOn: 'Att ta bort blockeringen kräver en minut, en mening och tre räknetal.',
     hardOff: 'Gör det medvetet jobbigt att stänga av. Ungefär tre minuter.',
     shortcuts: 'Appar på din hemskärm',
   },
@@ -783,6 +789,7 @@ export const sv: Dict = {
   },
 
   picker: {
+    guide: "Bocka för apparna du vill blockera, bocka ur dem du vill avblockera. Markerade appar öppnas inte längre: du går via UnSwipe.",
     authorize: 'Tillåt Skärmtid',
     choose: 'Välj vad som ska pausas.',
     selected: '{n} app{s:|ar} vald{s:|a}',
@@ -857,6 +864,9 @@ export const sv: Dict = {
   },
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Rutnät",
+    viewSwipe: "Svep",
     wStep1: 'Kopiera applänken nedan.',
     wStep2: 'Öppna Genvägar → + → Öppna URL → klistra in länken.',
     wStep3: 'Dela → Lägg till på hemskärmen. Välj namn och ikon.',

@@ -107,6 +107,9 @@ export const pt: Dict = {
   },
 
   s6: {
+    equiv: "Ou seja, {y} anos da tua vida.",
+    minutesLine: "minutos a fazer scroll até ao fim da tua vida, a este ritmo.",
+    damage: "Eis os estragos.",
     lifeOf: 'DOS {n} ANOS QUE TE RESTAM',
     years: '{y} anos',
     bodyShort: 'passados no telemóvel.',
@@ -721,6 +724,10 @@ export const pt: Dict = {
   },
 
   blockTab: {
+    hardOn: "Modo rigoroso ativado",
+    slide: "Desliza para modo rigoroso",
+    manage: "Gerir apps",
+    guide: "Escolhe as apps a bloquear ou desbloquear. Uma vez bloqueadas, deixam de abrir: passas pelo UnSwipe.",
     today: 'Hoje',
     streak: 'Série',
     ofCap: 'Do teu limite',
@@ -736,7 +743,6 @@ export const pt: Dict = {
     more: 'Bloquear outras apps',
     moreOn: 'Adiciona o que quiseres à lista.',
     moreOff: 'Jogos, notícias, tudo o que te agarra.',
-    hardOn: 'Desfazer o bloqueio leva um minuto, uma frase e três contas.',
     hardOff: 'Torna desligá-lo deliberadamente penoso. Cerca de três minutos.',
     shortcuts: 'Apps no teu ecrã principal',
   },
@@ -784,6 +790,7 @@ export const pt: Dict = {
   },
 
   picker: {
+    guide: "Assinala as apps a bloquear, desmarca as que queres desbloquear. As apps assinaladas deixarão de abrir: passarás pelo UnSwipe.",
     authorize: 'Permitir Tempo de Ecrã',
     choose: 'Escolhe o que fica em pausa.',
     selected: '{n} app{s} selecionada{s}',
@@ -859,6 +866,9 @@ export const pt: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Grelha",
+    viewSwipe: "Deslizar",
     wStep1: 'Copia o link da app abaixo.',
     wStep2: 'Abre os Atalhos → + → Abrir URL → cola o link.',
     wStep3: 'Partilhar → Adicionar ao ecrã principal. Escolhe o nome e o ícone.',

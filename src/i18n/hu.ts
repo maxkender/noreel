@@ -107,6 +107,9 @@ export const hu: Dict = {
   },
 
   s6: {
+    equiv: "Ez {y} év az életedből.",
+    minutesLine: "perc görgetés életed végéig, ilyen tempóban.",
+    damage: "Íme a kár.",
     lifeOf: 'A HÁTRALÉVŐ {n} ÉVEDBŐL',
     years: '{y} év',
     bodyShort: 'megy a telefonodra.',
@@ -721,6 +724,10 @@ export const hu: Dict = {
   },
 
   blockTab: {
+    hardOn: "Szigorú mód bekapcsolva",
+    slide: "Húzd a szigorú módhoz",
+    manage: "Appok kezelése",
+    guide: "Válaszd ki a letiltandó vagy feloldandó appokat. A letiltottak többé nem nyílnak meg: az UnSwipe-on át mész.",
     today: 'Ma',
     streak: 'Sorozat',
     ofCap: 'A korlátodból',
@@ -736,7 +743,6 @@ export const hu: Dict = {
     more: 'Más appok blokkolása',
     moreOn: 'Adj a listához bármit, amit akarsz.',
     moreOff: 'Játékok, hírek, bármi, ami beszippant.',
-    hardOn: 'A blokkolás visszavonása egy percbe, egy mondatba és három fejszámolásba kerül.',
     hardOff: 'Szándékosan fájdalmassá teszi a kikapcsolást. Nagyjából három perc.',
     shortcuts: 'Appok a Főképernyőn',
   },
@@ -784,6 +790,7 @@ export const hu: Dict = {
   },
 
   picker: {
+    guide: "Jelöld be a letiltandó appokat, a feloldandókról vedd le a jelölést. A bejelölt appok többé nem nyílnak meg: az UnSwipe-on át mész majd.",
     authorize: 'Képernyőidő engedélyezése',
     choose: 'Válaszd ki, mi legyen szüneteltetve.',
     selected: '{n} app kiválasztva',
@@ -859,6 +866,9 @@ export const hu: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Rács",
+    viewSwipe: "Lapozás",
     wStep1: 'Másold ki az app linkjét lent.',
     wStep2: 'Nyisd meg a Parancsok appot → + → URL megnyitása → illeszd be a linket.',
     wStep3: 'Megosztás → Főképernyőhöz adás. Válassz nevet és ikont.',

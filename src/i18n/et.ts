@@ -107,6 +107,9 @@ export const et: Dict = {
   },
 
   s6: {
+    equiv: "See on {y} aastat sinu elust.",
+    minutesLine: "minutit kerimist elu lõpuni, sellises tempos.",
+    damage: "Siin on kahju.",
     lifeOf: 'SU {n} ALLESJÄÄNUD AASTAST',
     years: '{y} aastat',
     bodyShort: 'telefonis veedetud.',
@@ -721,6 +724,10 @@ export const et: Dict = {
   },
 
   blockTab: {
+    hardOn: "Range režiim on sees",
+    slide: "Libista: range režiim",
+    manage: "Halda rakendusi",
+    guide: "Vali rakendused, mida blokeerida või vabastada. Blokeerituna need enam ei avane: lähed läbi UnSwipe'i.",
     today: 'Täna',
     streak: 'Seeria',
     ofCap: 'Su limiidist',
@@ -736,7 +743,6 @@ export const et: Dict = {
     more: 'Blokeeri teisi äppe',
     moreOn: 'Lisa nimekirja, mida tahad.',
     moreOff: 'Mängud, uudised, kõik, mis sind kaasa tõmbab.',
-    hardOn: 'Blokeeringu mahavõtmine võtab minuti, ühe lause ja kolm tehet.',
     hardOff: 'Teeb väljalülitamise meelega vaevaliseks. Umbes kolm minutit.',
     shortcuts: 'Äpid su avakuval',
   },
@@ -784,6 +790,7 @@ export const et: Dict = {
   },
 
   picker: {
+    guide: "Märgi blokeeritavad rakendused, eemalda märge vabastatavatelt. Märgitud rakendused enam ei avane: lähed läbi UnSwipe'i.",
     authorize: 'Luba Ekraaniaeg',
     choose: 'Vali, mis pausile läheb.',
     selected: '{n} {s:äpp valitud|äppi valitud}',
@@ -859,6 +866,9 @@ export const et: Dict = {
 
 
   ui: {
+    viewList: "Loend",
+    viewGrid: "Ruudustik",
+    viewSwipe: "Libistamine",
     wStep1: 'Kopeeri allolev äpi link.',
     wStep2: 'Ava Otseteed → + → Ava URL → kleebi link.',
     wStep3: 'Jaga → Lisa avakuvale. Vali nimi ja ikoon.',

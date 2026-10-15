@@ -5,12 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ChevronRight, Home as HomeIcon, Lock, Shield, Smartphone, User } from 'lucide-react-native';
+import { ChevronRight, Home as HomeIcon, LayoutGrid, Lock, Shield, SlidersHorizontal, Smartphone, Timer, User } from 'lucide-react-native';
+import { SlideToConfirm } from '@/components/SlideToConfirm';
+import { PostModeSheet } from '@/features/client/PostSheet';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
 import { Text } from '@/components/type/Text';
-import { Glass } from '@/components/glass/Glass';
 import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
@@ -22,17 +23,15 @@ import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { TabTour } from './Tours';
 import { type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
-import { Card, Row, Toggle } from './parts';
+import { Card, Row } from './parts';
 import { useAnchor, useTourScroll } from './anchors';
 import { shareApp, shareOnWhatsApp } from '@/lib/share';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
-import { ScreenTime } from './ScreenTime';
 import { NavBar } from './NavBar';
 import { Sources } from './Sources';
 import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
-import { LockedPill } from './LockedPill';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
 import { HardMode, HardModeIntro } from './HardMode';
@@ -110,10 +109,7 @@ export function HomeScreen() {
           filet — et chacun laissait une bordure qui se voit. Ici il n'y a
           plus de bordure a rater : rien ne passe derriere. */}
       <SafeAreaView ref={aFrameTop} collapsable={false} edges={['top']} style={st.headWrap}>
-        <Header
-          onSettings={() => setSettings(true)}
-          onProfile={() => setTab('account')}
-        />
+        <Header switcher={tab === 'home'} />
       </SafeAreaView>
 
       <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
@@ -128,7 +124,7 @@ export function HomeScreen() {
             realFloor={realFloor}
           />
         )}
-        {tab === 'account' && <AccountTab />}
+        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
       </Animated.View>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -181,6 +177,7 @@ function HomeTab({
   const { d } = useT();
   const router = useRouter();
   const homeDone = useSettings((x) => x.homeShortcutsDone);
+  const view = useSettings((x) => x.homeView);
   const blocking = useSettings((x) => x.blocking);
   const selection = useSettings((x) => x.selection);
   // Tant que l'app d'origine n'est pas fermee, on le rappelle ici.
@@ -240,22 +237,12 @@ function HomeTab({
       )}
 
       <View ref={aApps} collapsable={false}>
-        <AppSlider minutes={minutes} />
+        <AppSlider minutes={minutes} mode={view} />
       </View>
     </Animated.ScrollView>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  const c = useColors();
-  const st = useMemo(() => sheet(c), [c]);
-  return (
-    <View style={st.stat}>
-      <Text variant="title" color={c.accent}>{value}</Text>
-      <Text variant="label" tone="tertiary">{label}</Text>
-    </View>
-  );
-}
 
 /* ---------------- Blocage ---------------- */
 
@@ -270,13 +257,12 @@ function BlockTab({
 }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
+  const { d } = useT();
   const router = useRouter();
   const [on, setOn] = useState(false);
   const [auth, setAuth] = useState<string>('notDetermined');
   const hard = useSettings((x) => x.hardMode);
   const selection = useSettings((x) => x.selection);
-  const goal = useSettings((x) => x.goalMinutes);
   const setSetting = useSettings((x) => x.set);
   const blockingOn = useSettings((x) => x.blocking);
   // Revenu de la vraie app apres une publication : le blocage se remet.
@@ -284,6 +270,7 @@ function BlockTab({
   const [gate, setGate] = useState(false);
   const [intro, setIntro] = useState(false);
   const [paywall, setPaywall] = useState(false);
+  const [post, setPost] = useState(false);
   // Le registre de la protection, pour l'etat du filtre.
   const { s: prot } = useProtect();
   // Le blocage des apps d'origine et le mode strict sont payants : grises et
@@ -330,7 +317,6 @@ function BlockTab({
     stopWatching();
   };
 
-  const pct = Math.min(100, Math.round((total / Math.max(goal, 1)) * 100));
   // Les ancres de la visite guidee.
   const [listRef, onListScroll] = useTourScroll('block');
   const aStatus = useAnchor('block-status');
@@ -347,71 +333,37 @@ function BlockTab({
     >
       <Text variant="displayM">{d.block.title}</Text>
 
-      {/*
-        Ce qu'on a recupere vient AVANT ce qu'on a consomme.
-        Les trois chiffres du jour — temps passe, serie, part du plafond —
-        disent tous ce qu'on a depense. Ouvrir sur une depense fait un releve
-        de compte ; ouvrir sur les reels evites et le temps repris fait un
-        bilan. C'est ce second chiffre qui justifie l'abonnement a la fin du
-        mois, donc c'est lui qu'on voit en premier.
-      */}
-      {/*
-        Corti n'est plus ici : il a son onglet.
-
-        Sa scene tenait le haut de cette page, et elle y faisait double emploi
-        depuis qu'il a le sien — on voyait la meme soucoupe et la meme jauge a
-        deux endroits, et l'onglet blocage, qui parle d'interrupteurs et
-        d'applications choisies, ouvrait sur une mascotte. Il ouvre maintenant
-        sur ce qu'on vient y regler.
-      */}
-      {/* Le filtre ne parle que s'il a un doute : une page qui dit « tout va
-          bien » a chaque ouverture finit par ne plus etre lue. */}
+      {/* Le filtre ne parle que s'il a un doute. */}
       {prot?.shaky && (
         <ProtectionStatus s={prot} onFix={() => { haptics.press(); void pullAndRestart(); }} />
       )}
 
-      {/* Puis les trois chiffres du jour : le temps passe dans les versions
-          filtrees, les jours d'affilee, et la part du plafond du jour. */}
-      <Glass radius={22} intensity={55} warmEdge="none" style={st.strip}>
-        <Stat label={d.blockTab.today} value={formatHours(total)} />
-        <View style={st.stripLine} />
-        <Stat label={d.blockTab.streak} value={t(d.duration.daysShort, { n: streak })} />
-        <View style={st.stripLine} />
-        <Stat label={d.blockTab.ofCap} value={`${pct} %`} />
-      </Glass>
-
-      <View ref={aStatus} collapsable={false} style={[st.status, on ? st.statusOn : st.statusOff, !pro && st.dimmed]}>
-        <View style={[st.statusRing, on && st.statusRingOn]}>
-          <Shield size={26} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.5)} />
+      {/*
+        LE BLOCAGE DES APPS D'ORIGINE, et rien au-dessus.
+        Les trois chiffres et le temps du jour sont partis : cet onglet sert
+        a regler, pas a se comparer. La carte dit quoi faire, en clair.
+      */}
+      <View ref={aStatus} collapsable={false} style={[st.blockCard, !pro && st.dimmed]}>
+        <View style={[st.blockIcon, on && { backgroundColor: withAlpha(c.accent, 0.16) }]}>
+          <Shield size={28} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.6)} />
         </View>
-        <Text variant="title" style={{ textAlign: 'center' }}>
-          {on ? d.blockTab.onTitle : d.blockTab.offTitle}
+        <Text variant="title" style={st.center}>{on ? d.blockTab.onTitle : d.blockTab.offTitle}</Text>
+        <Text variant="body" tone="secondary" style={st.center}>
+          {needsAuth ? d.blockTab.needAuth : d.blockTab.guide}
         </Text>
-        {/* Une phrase seulement quand il y a quelque chose a FAIRE. */}
-        {(needsAuth || !selection) && (
-          <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
-            {needsAuth ? d.blockTab.needAuth : d.blockTab.pick}
-          </Text>
-        )}
         <Pressable
           ref={aBtn}
           collapsable={false}
           onPress={() => {
             if (!on) { void arm(); return; }
             haptics.press();
-            // Avec le mode strict arme, on n'eteint pas : on ouvre la porte.
             if (hard) { setGate(true); return; }
             disarm();
           }}
-          style={[st.statusBtn, on && st.statusBtnOn]}
+          style={[st.blockBtn, on ? st.blockBtnOff : st.blockBtnOn]}
+          accessibilityRole="button"
         >
-          <Text
-            variant="button"
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-            color={on ? c.night : c.mist}
-          >
+          <Text variant="button" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} color={on ? c.mist : c.night}>
             {!pro ? d.blockTab.unlock
               : needsAuth ? d.block.authorize
               : !selection ? d.blockTab.choose
@@ -420,33 +372,35 @@ function BlockTab({
         </Pressable>
       </View>
 
-      <Card>
-        <Row
-          title={d.blockTab.more}
+      {/* Trois carres, comme une barre d'outils : gerer, publier, l'ecran d'accueil. */}
+      <View style={st.tiles}>
+        <Tile
+          icon={SlidersHorizontal}
+          label={d.blockTab.manage}
           onPress={() => (pro ? router.push('/picker') : setPaywall(true))}
-          right={pro
-            ? <Text variant="body" tone="tertiary">›</Text>
-            : <LockedPill label="Pro" onPress={() => setPaywall(true)} />}
         />
-        <View ref={aStrict} collapsable={false}>
-        <Row
-          title={d.ui.hardTitle}
-          right={!pro ? <LockedPill label="Pro" onPress={() => setPaywall(true)} /> : (
-            <Toggle
-              on={hard}
-              onChange={(v) => {
-                if (v) { setIntro(true); return; }
-                // On ne DESARME pas le mode strict d'un doigt : ce serait la
-                // porte de service qu'il est cense fermer.
-                setGate(true);
-              }}
-            />
-          )}
-        />
-        </View>
-      </Card>
+        <Tile icon={Timer} label={d.client.postModeTitle} onPress={() => setPost(true)} />
+        <Tile icon={LayoutGrid} label={d.misc.homeScreen} onPress={() => router.push('/widgets')} />
+      </View>
+
+      <View ref={aStrict} collapsable={false}>
+        {pro ? (
+          <SlideToConfirm
+            label={d.blockTab.slide}
+            done={hard}
+            doneLabel={d.blockTab.hardOn}
+            onConfirm={() => setIntro(true)}
+            onDonePress={() => setGate(true)}
+          />
+        ) : (
+          <Pressable onPress={() => setPaywall(true)}>
+            <SlideToConfirm label={d.blockTab.slide} onConfirm={() => setPaywall(true)} />
+          </Pressable>
+        )}
+      </View>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
+      <PostModeSheet visible={post} onClose={() => setPost(false)} armed={on && !!selection} />
 
       <HardModeIntro
         visible={intro}
@@ -459,22 +413,24 @@ function BlockTab({
         onCancel={() => setGate(false)}
         onPass={() => { setGate(false); setSetting('hardMode', false); disarm(); }}
       />
-
-      <ScreenTime minutes={minutes} realFloor={realFloor} />
-
-      <Card>
-        <Row
-          title={d.block.homeScreen}
-          onPress={() => router.push('/widgets')}
-          right={<Text variant="body" tone="tertiary">›</Text>}
-        />
-      </Card>
     </Animated.ScrollView>
   );
 }
 
+/** Un carre d'action : une icone, un mot. */
+function Tile({ icon: Icon, label, onPress }: { icon: typeof Shield; label: string; onPress: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  return (
+    <Pressable onPress={() => { haptics.tap(); onPress(); }} style={st.tile} accessibilityRole="button">
+      <Icon size={24} strokeWidth={1.9} color={c.mist} />
+      <Text variant="label" style={st.center} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+    </Pressable>
+  );
+}
+
 /* ---------------- Compte ---------------- */
-function AccountTab() {
+function AccountTab({ onSettings }: { onSettings: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const [sources, setSources] = useState(false);
@@ -490,6 +446,11 @@ function AccountTab() {
       scrollEventThrottle={16}
     >
       <Text variant="displayM">{d.account.title}</Text>
+
+      {/* Les reglages vivent ICI, et plus dans l'en-tete de l'accueil. */}
+      <Card style={{ marginTop: space.lg }}>
+        <Row title={d.prefs.title} onPress={onSettings} right={<ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />} />
+      </Card>
 
       {/* La connexion Apple n'existe que chez Apple. */}
       {Platform.OS === 'ios' && (
@@ -531,6 +492,26 @@ function AccountTab() {
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
+  center: { textAlign: 'center' },
+  blockCard: {
+    marginTop: space.lg, alignItems: 'center', gap: space.sm, padding: space.lg,
+    borderRadius: 24, borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  blockIcon: {
+    width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.mist, 0.06), marginBottom: space.xs,
+  },
+  blockBtn: {
+    alignSelf: 'stretch', height: 52, borderRadius: 26, marginTop: space.sm,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg,
+  },
+  blockBtnOn: { backgroundColor: c.mist },
+  blockBtnOff: { backgroundColor: withAlpha(c.mist, 0.08), borderWidth: 1, borderColor: c.glassEdge },
+  tiles: { flexDirection: 'row', gap: space.sm, marginTop: space.md, marginBottom: space.md },
+  tile: {
+    flex: 1, aspectRatio: 1.1, borderRadius: 22, alignItems: 'center', justifyContent: 'center', gap: space.sm,
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid, paddingHorizontal: space.xs,
+  },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   score: {
     width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',

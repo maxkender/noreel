@@ -112,6 +112,9 @@ export const fr = {
   },
 
   s6: {
+    equiv: "Soit {y} ans de ta vie.",
+    minutesLine: "minutes à scroller d’ici la fin de ta vie, à ce rythme.",
+    damage: "Voici les dégâts.",
     lifeOf: 'SUR LES {n} ANS QU’IL TE RESTE',
     years: '{y} ans',
     bodyShort: 'passés sur ton téléphone.',
@@ -741,6 +744,10 @@ export const fr = {
   },
 
   blockTab: {
+    hardOn: "Mode strict activé",
+    slide: "Glisse pour le mode strict",
+    manage: "Gérer les apps",
+    guide: "Choisis les apps à bloquer ou à débloquer. Bloquées, elles ne s’ouvrent plus : tu passes par UnSwipe.",
     today: 'Aujourd’hui',
     streak: 'Série',
     ofCap: 'Du plafond',
@@ -756,7 +763,6 @@ export const fr = {
     more: `Bloquer d'autres apps`,
     moreOn: 'Ajoute ce que tu veux à la liste.',
     moreOff: 'Jeux, actualités, tout ce qui te happe.',
-    hardOn: 'Rendre le blocage demande une minute, une phrase et trois calculs.',
     hardOff: 'Rend la désactivation volontairement pénible. Environ trois minutes.',
     shortcuts: `Apps sur l'écran d'accueil`,
   },
@@ -804,6 +810,7 @@ export const fr = {
   },
 
   picker: {
+    guide: "Coche les apps à bloquer, décoche celles à débloquer. Les apps cochées ne s’ouvriront plus : tu passeras par UnSwipe.",
     authorize: 'Autoriser Temps d’écran',
     choose: `Choisis ce qu'on met en pause.`,
     selected: '{n} app{s} sélectionnée{s}',
@@ -879,6 +886,9 @@ export const fr = {
 
 
   ui: {
+    viewList: "Liste",
+    viewGrid: "Grille",
+    viewSwipe: "Défiler",
     wStep1: 'Copie le lien de l’app ci-dessous.',
     wStep2: 'Ouvre Raccourcis → + → Ouvrir l’URL → colle le lien.',
     wStep3: 'Partager → Sur l’écran d’accueil. Choisis le nom et l’icône.',

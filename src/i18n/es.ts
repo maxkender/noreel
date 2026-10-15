@@ -107,6 +107,9 @@ export const es: Dict = {
   },
 
   s6: {
+    equiv: "Son {y} años de tu vida.",
+    minutesLine: "minutos de scroll de aquí al final de tu vida, a este ritmo.",
+    damage: "Este es el daño.",
     lifeOf: 'DE LOS {n} AÑOS QUE TE QUEDAN',
     years: '{y} años',
     bodyShort: 'pasados en el móvil.',
@@ -721,6 +724,10 @@ export const es: Dict = {
   },
 
   blockTab: {
+    hardOn: "Modo estricto activado",
+    slide: "Desliza para modo estricto",
+    manage: "Gestionar apps",
+    guide: "Elige las apps que quieres bloquear o desbloquear. Una vez bloqueadas, ya no se abren: pasas por UnSwipe.",
     today: 'Hoy',
     streak: 'Racha',
     ofCap: 'De tu límite',
@@ -736,7 +743,6 @@ export const es: Dict = {
     more: 'Bloquear otras apps',
     moreOn: 'Añade a la lista lo que quieras.',
     moreOff: 'Juegos, noticias, todo lo que te atrape.',
-    hardOn: 'Devolver el bloqueo cuesta un minuto, una frase y tres cálculos.',
     hardOff: 'Hace que desactivarlo sea pesado a propósito. Unos tres minutos.',
     shortcuts: 'Apps en tu pantalla de inicio',
   },
@@ -784,6 +790,7 @@ export const es: Dict = {
   },
 
   picker: {
+    guide: "Marca las apps que quieres bloquear y desmarca las que quieres desbloquear. Las apps marcadas ya no se abrirán: pasarás por UnSwipe.",
     authorize: 'Autorizar Tiempo de uso',
     choose: 'Elige qué pausar.',
     selected: '{n} app{s} seleccionada{s}',
@@ -859,6 +866,9 @@ export const es: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Cuadrícula",
+    viewSwipe: "Deslizar",
     wStep1: 'Copia el enlace de la app de abajo.',
     wStep2: 'Abre Atajos → + → Abrir URL → pega el enlace.',
     wStep3: 'Compartir → Añadir a pantalla de inicio. Elige el nombre y el icono.',

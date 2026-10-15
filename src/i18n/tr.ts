@@ -107,6 +107,9 @@ export const tr: Dict = {
   },
 
   s6: {
+    equiv: "Bu, hayatının {y} yılı demek.",
+    minutesLine: "dakika kaydırma, hayatının sonuna kadar, bu gidişle.",
+    damage: "İşte verilen zarar.",
     lifeOf: 'SANA KALAN {n} YILIN',
     years: '{y} yılı',
     bodyShort: 'telefonda geçiyor.',
@@ -721,6 +724,10 @@ export const tr: Dict = {
   },
 
   blockTab: {
+    hardOn: "Sıkı mod açık",
+    slide: "Sıkı mod için kaydır",
+    manage: "Uygulamalar",
+    guide: "Engellemek veya engelini kaldırmak istediğin uygulamaları seç. Engellenenler artık açılmaz: UnSwipe üzerinden girersin.",
     today: 'Bugün',
     streak: 'Seri',
     ofCap: 'Sınırının',
@@ -736,7 +743,6 @@ export const tr: Dict = {
     more: 'Başka uygulamaları engelle',
     moreOn: 'Listeye istediğini ekle.',
     moreOff: 'Oyunlar, haberler, seni yakalayan her şey.',
-    hardOn: 'Engellemeyi geri vermek bir dakika, bir cümle ve üç hesap ister.',
     hardOff: 'Kapatmayı bilerek zahmetli yapar. Yaklaşık üç dakika.',
     shortcuts: 'Ana ekranındaki uygulamalar',
   },
@@ -784,6 +790,7 @@ export const tr: Dict = {
   },
 
   picker: {
+    guide: "Engellemek istediğin uygulamaları işaretle, engelini kaldırmak istediklerinin işaretini kaldır. İşaretli uygulamalar artık açılmayacak: UnSwipe üzerinden gireceksin.",
     authorize: 'Ekran Süresi’ne izin ver',
     choose: 'Neyi duraklatacağını seç.',
     selected: '{n} uygulama seçildi',
@@ -859,6 +866,9 @@ export const tr: Dict = {
 
 
   ui: {
+    viewList: "Liste",
+    viewGrid: "Izgara",
+    viewSwipe: "Kaydır",
     wStep1: 'Aşağıdaki uygulama bağlantısını kopyala.',
     wStep2: 'Kestirmeler → + → URL Aç → bağlantıyı yapıştır.',
     wStep3: 'Paylaş → Ana Ekrana Ekle. Adı ve simgeyi seç.',

@@ -258,7 +258,8 @@ export function LifeYears({ onNext }: P) {
         {lines.map(([at, dot, label]) => (stage >= at ? (
           <Animated.View key={at} entering={FadeInDown.duration(380)} style={s.lineRow}>
             <View style={[s.lineDot, { backgroundColor: dot }]} />
-            <Text variant={at === 5 ? 'title' : 'body'} tone={at === 5 ? undefined : 'secondary'}>{label}</Text>
+            {/* Sans l'emoji du texte : la pastille de couleur dit deja de quoi il s'agit. */}
+            <Text variant={at === 5 ? 'title' : 'body'} tone={at === 5 ? undefined : 'secondary'}>{label.replace(/^[\uD800-\uDBFF][\uDC00-\uDFFF]\uFE0F?\s*/, '')}</Text>
           </Animated.View>
         ) : null))}
       </View>
@@ -308,13 +309,15 @@ function Cell({
     const gone = interpolate(t, [goneAt, goneAt + 520], [0, 1], Extrapolation.CLAMP);
     const lit = interpolate(t, [freeAt, freeAt + 500], [0, 1], Extrapolation.CLAMP);
     const bite = interpolate(t, [biteAt, biteAt + 220], [0, 1], Extrapolation.CLAMP);
-    const k = 1 - gone;
+    // Prise, la case GARDE sa place et sa couleur : la grille ne bouge plus.
+    const k = 1;
+    void gone;
     const resting = interpolateColor(lit, [0, 1], [base, free]);
     const painted = interpolateColor(paint, [0, 1], [resting, colour]);
     // La case mordue saute un peu en rougissant : on sent ce qui est pris.
     const pop = bite > 0 && bite < 1 ? 1 + 0.4 * Math.sin(bite * Math.PI) : 1;
     return {
-      opacity: born * (1 - gone),
+      opacity: born,
       width: size * k,
       height: size,
       marginRight: GAP * k,
@@ -335,41 +338,62 @@ function Cell({
 export function S6Years({ onNext }: P) {
   const c = useColors();
   const s = useMemo(() => sheet(c), [c]);
-  const { d, t } = useT();
+  const { d, t, lang } = useT();
   const age = useOnboardingStore((x) => x.age);
   const minutes = useOnboardingStore(effectiveMinutes);
   const L = useMemo(() => lifeYears(age, minutes), [age, minutes]);
-  const [y, setY] = useState(0);
+  /*
+    LES DEGATS, EN MINUTES.
+    Les minutes a scroller d'ici la fin, a ce rythme : un chiffre qui monte
+    jusqu'aux millions. Puis, encadree en rouge, ce que ca fait en annees —
+    le meme calcul que la grille d'avant, pour que les deux ecrans disent
+    la meme chose.
+  */
+  const total = Math.round(minutes * 365.25 * L.remaining);
+  const [m, setM] = useState(0);
+  const [boxed, setBoxed] = useState(false);
+  const fmt = useMemo(() => {
+    try { return new Intl.NumberFormat(lang); } catch { return null; }
+  }, [lang]);
 
   useEffect(() => {
-    // 1,6 s quel que soit le chiffre : un petit nombre ne doit pas defiler
-    // plus vite qu'un grand.
-    const steps = 34;
+    const steps = 40;
     let i = 0;
     const id = setInterval(() => {
       i += 1;
-      setY(Math.round((L.phone * i) / steps));
+      // Rapide au debut, qui ralentit sur la fin : on voit le chiffre se poser.
+      const k = 1 - Math.pow(1 - i / steps, 3);
+      setM(Math.round(total * k));
       if (i % 8 === 0) haptics.tick();
-      if (i >= steps) clearInterval(id);
-    }, 1600 / steps);
+      if (i >= steps) { clearInterval(id); setTimeout(() => { setBoxed(true); haptics.press(); }, 250); }
+    }, 1500 / steps);
     return () => clearInterval(id);
-  }, [L.phone]);
+  }, [total]);
 
   return (
-    <Screen cta={d.misc.reclaim} onPress={onNext} readyAfter={2200} center hue="ember">
-      <Animated.View entering={FadeIn.duration(700)} style={s.yearsBlock}>
-        <Text variant="label" tone="tertiary">{t(d.s6.lifeOf, { n: L.remaining })}</Text>
-        <Text variant="hero" color={c.danger} style={s.center} numberOfLines={1} adjustsFontSizeToFit>
-          {t(d.s6.years, { y })}
+    <Screen cta={d.misc.reclaim} onPress={onNext} readyAfter={1000} center hue="ember">
+      <Animated.View entering={FadeIn.duration(500)} style={s.yearsBlock}>
+        <Text variant="displayM" style={s.center}>{d.s6.damage}</Text>
+        <Text variant="hero" color={c.mist} style={[s.center, { marginTop: space.lg, fontVariant: ['tabular-nums'] }]} numberOfLines={1} adjustsFontSizeToFit>
+          {fmt ? fmt.format(m) : String(m)}
         </Text>
-        <Text variant="lead" tone="secondary" style={s.center}>{d.s6.bodyShort}</Text>
+        <Text variant="lead" tone="secondary" style={s.center}>{d.s6.minutesLine}</Text>
       </Animated.View>
+      <View style={s.damageSlot}>
+        {boxed && (
+          <Animated.View entering={FadeIn.duration(450)} style={[s.damageBox, { borderColor: withAlpha(c.danger, 0.6), backgroundColor: withAlpha(c.danger, 0.12) }]}>
+            <Text variant="displayM" color={c.danger} style={s.center}>{t(d.s6.equiv, { y: L.phone })}</Text>
+          </Animated.View>
+        )}
+      </View>
     </Screen>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
   yearsBlock: { alignItems: 'center', gap: space.xs },
+  damageSlot: { height: 96, justifyContent: 'center', marginTop: space.xl },
+  damageBox: { borderWidth: 1.5, borderRadius: 18, paddingVertical: space.md, paddingHorizontal: space.lg, alignSelf: 'center' },
   mark: { width: 64, height: 64, alignSelf: 'center', marginBottom: space.xl },
   center: { textAlign: 'center' },
   years: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', alignSelf: 'stretch', marginTop: space.xl },

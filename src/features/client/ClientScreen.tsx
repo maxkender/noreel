@@ -113,7 +113,9 @@ export function ClientScreen({ id }: { id: ClientId }) {
     propres bulles de message. Sans teinte, le bandeau reprend la couleur du
     site et la page garde ses couleurs d'origine.
   */
-  const tintId = useAppsStore((st) => st.tints[id]);
+  // Les couleurs d'app ont ete retirees des reglages (15 octobre 2026) : une
+  // teinte choisie avant ne s'applique plus, la page garde ses couleurs.
+  const tintId: string | undefined = undefined;
   const tint = useMemo(() => tintById(tintId), [tintId]);
   const tinted = tintId && tintId !== 'default';
   const barColour = tinted ? tint.hex : chrome;
@@ -121,7 +123,10 @@ export function ClientScreen({ id }: { id: ClientId }) {
 
   // La fenetre du samedi soir. Elle voyage avec le script : la page doit
   // pouvoir decider seule, a la minute, sans qu'on lui reparle.
-  const valve = useSettings((x) => x.valve);
+  // La fenetre autorisee a ete retiree des reglages : on la tient fermee,
+  // meme pour qui l'avait allumee avant.
+  const savedValve = useSettings((x) => x.valve);
+  const valve = useMemo(() => ({ ...savedValve, on: false }), [savedValve]);
   // Le laissez-passer : une echeance, que le temps perime tout seul.
   const openUntil = useSettings((x) => x.reelsUntil);
   const setSetting = useSettings((x) => x.set);

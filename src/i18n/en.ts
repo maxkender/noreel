@@ -107,6 +107,9 @@ export const en: Dict = {
   },
 
   s6: {
+    equiv: "That's {y} years of your life.",
+    minutesLine: "minutes of scrolling for the rest of your life, at this pace.",
+    damage: "Here is the damage.",
     lifeOf: 'OUT OF THE {n} YEARS YOU HAVE LEFT',
     years: '{y} years',
     bodyShort: 'spent on your phone.',
@@ -721,6 +724,10 @@ export const en: Dict = {
   },
 
   blockTab: {
+    hardOn: "Strict mode is on",
+    slide: "Slide for strict mode",
+    manage: "Manage apps",
+    guide: "Choose the apps to block or unblock. Once blocked, they won't open: you go through UnSwipe instead.",
     today: 'Today',
     streak: 'Streak',
     ofCap: 'Of your cap',
@@ -736,7 +743,6 @@ export const en: Dict = {
     more: 'Block other apps',
     moreOn: 'Add whatever you want to the list.',
     moreOff: 'Games, news, anything that grabs you.',
-    hardOn: 'Giving the block back takes a minute, a sentence and three sums.',
     hardOff: 'Makes turning it off deliberately painful. About three minutes.',
     shortcuts: 'Apps on your home screen',
   },
@@ -784,6 +790,7 @@ export const en: Dict = {
   },
 
   picker: {
+    guide: "Tick the apps to block, untick the ones to unblock. Ticked apps won't open anymore: you'll go through UnSwipe.",
     authorize: 'Allow Screen Time',
     choose: 'Choose what gets paused.',
     selected: '{n} app{s} selected',
@@ -859,6 +866,9 @@ export const en: Dict = {
 
 
   ui: {
+    viewList: "List",
+    viewGrid: "Grid",
+    viewSwipe: "Swipe",
     wStep1: 'Copy the app link below.',
     wStep2: 'Open Shortcuts → + → Open URL → paste the link.',
     wStep3: 'Share → Add to Home Screen. Choose the name and the icon.',

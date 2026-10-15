@@ -107,6 +107,9 @@ export const de: Dict = {
   },
 
   s6: {
+    equiv: "Das sind {y} Jahre deines Lebens.",
+    minutesLine: "Minuten Scrollen bis ans Ende deines Lebens, in diesem Tempo.",
+    damage: "Das ist der Schaden.",
     lifeOf: 'VON DEN {n} JAHREN, DIE DIR BLEIBEN',
     years: '{y} Jahre',
     bodyShort: 'am Handy verbracht.',
@@ -721,6 +724,10 @@ export const de: Dict = {
   },
 
   blockTab: {
+    hardOn: "Strenger Modus aktiv",
+    slide: "Wischen für strengen Modus",
+    manage: "Apps verwalten",
+    guide: "Wähle die Apps, die du sperren oder entsperren willst. Gesperrt öffnen sie sich nicht mehr: Du gehst über UnSwipe.",
     today: 'Heute',
     streak: 'Serie',
     ofCap: 'Deines Limits',
@@ -736,7 +743,6 @@ export const de: Dict = {
     more: 'Andere Apps sperren',
     moreOn: 'Füge der Liste hinzu, was du willst.',
     moreOff: 'Spiele, Nachrichten, alles, was dich packt.',
-    hardOn: 'Die Sperre zurückzugeben dauert eine Minute, einen Satz und drei Rechnungen.',
     hardOff: 'Macht das Ausschalten absichtlich mühsam. Etwa drei Minuten.',
     shortcuts: 'Apps auf deinem Startbildschirm',
   },
@@ -784,6 +790,7 @@ export const de: Dict = {
   },
 
   picker: {
+    guide: "Hake die Apps an, die du sperren willst, und entferne den Haken bei denen, die du entsperren willst. Angehakte Apps öffnen sich nicht mehr: Du gehst über UnSwipe.",
     authorize: 'Bildschirmzeit erlauben',
     choose: 'Wähle, was pausiert wird.',
     selected: '{n} App{s} ausgewählt',
@@ -859,6 +866,9 @@ export const de: Dict = {
 
 
   ui: {
+    viewList: "Liste",
+    viewGrid: "Raster",
+    viewSwipe: "Wischen",
     wStep1: 'Kopiere den App-Link unten.',
     wStep2: 'Öffne Kurzbefehle → + → URL öffnen → Link einfügen.',
     wStep3: 'Teilen → Zum Home-Bildschirm. Wähle Name und Symbol.',

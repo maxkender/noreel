@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Bell, Gift, Sparkles } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import Animated, {
   Easing, FadeIn, FadeInDown, FadeInUp, ZoomIn, cancelAnimation, useAnimatedStyle, useSharedValue,
   withDelay, withRepeat, withSequence, withTiming, type SharedValue,
@@ -15,8 +15,11 @@ import { haptics } from '@/lib/haptics';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useT } from '@/i18n';
 import { TRIAL_DAYS } from './Paywall';
+import { PhoneFrame } from '@/components/PhoneFrame';
+import { MockFeed } from '@/components/MockFeed';
 
 const MARK = require('@/assets/brand/mark.png');
+const GIFT_PHONE = 160;
 
 type P = { onNext: () => void };
 
@@ -42,44 +45,31 @@ export function TrialGift({ onNext }: P) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { d, t } = useT();
-  const reduced = useReducedMotion();
-  const breath = useSharedValue(0);
-
+  /*
+    L'essai, MONTRE plutot que promis : le meme telephone que plus tot,
+    ou les Reels tombent un a un puis l'onglet s'en va. Le cadeau et ses
+    eclats faisaient image generee ; ici on voit ce qu'on essaie.
+  */
+  const [filtered, setFiltered] = useState(false);
+  const [tab, setTab] = useState(true);
   useEffect(() => {
-    if (reduced) return;
-    // Le cadeau respire : une pulsation lente, jamais un rebond.
-    loop(breath, withRepeat(withTiming(1, { duration: 1900, easing: Easing.inOut(Easing.sin) }), -1, true));
-    return () => cancelAnimation(breath);
-  }, [breath, reduced]);
-
-  const pulse = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + breath.value * 0.05 }, { rotate: `${-3 + breath.value * 6}deg` }],
-  }));
+    const a1 = setTimeout(() => { setFiltered(true); haptics.tick(); }, 700);
+    const a2 = setTimeout(() => { setTab(false); haptics.success(); }, 2100);
+    return () => { clearTimeout(a1); clearTimeout(a2); };
+  }, []);
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} center hue="accent" readyAfter={READY_MS}>
-      <View style={st.stage}>
-        <Ripple delay={0} />
-        <Ripple delay={1100} />
-        <Animated.View entering={ZoomIn.springify().damping(13).stiffness(140)} style={[st.ring, pulse]}>
-          <Gift size={58} strokeWidth={1.7} color={c.accent} />
-        </Animated.View>
-        {/* Des eclats autour, chacun a son heure : le paquet vient d'arriver. */}
-        {SPARKS.map((s, i) => (
-          <Animated.View
-            key={i}
-            entering={ZoomIn.delay(420 + i * 130).springify().damping(9)}
-            style={[st.spark, { left: `${s.x * 100}%`, top: `${s.y * 100}%` }]}
-          >
-            <Sparkles size={s.d} strokeWidth={1.8} color={i % 2 ? c.accentWarm : c.accent} />
-          </Animated.View>
-        ))}
-      </View>
+      <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center', marginBottom: space.xl }}>
+        <PhoneFrame width={GIFT_PHONE}>
+          <MockFeed filtered={filtered} tab={tab} drift u={(GIFT_PHONE - 8) / 188} />
+        </PhoneFrame>
+      </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(260).duration(560)}>
+      <Animated.View entering={FadeInDown.delay(200).duration(480)}>
         <Text variant="displayM" style={st.center}>{d.trial.giftTitle}</Text>
       </Animated.View>
-      <Animated.View entering={FadeIn.delay(720).duration(520)}>
+      <Animated.View entering={FadeIn.delay(500).duration(480)}>
         <Text variant="lead" tone="secondary" style={[st.center, { marginTop: space.md }]}>
           {t(d.trial.giftBody, { n: TRIAL_DAYS })}
         </Text>
@@ -89,10 +79,6 @@ export function TrialGift({ onNext }: P) {
 }
 
 /* Ou les eclats se posent, en part de la scene : autour du paquet, jamais dessus. */
-const SPARKS = [
-  { x: 0.16, y: 0.14, d: 18 }, { x: 0.76, y: 0.08, d: 22 }, { x: 0.84, y: 0.62, d: 16 },
-  { x: 0.10, y: 0.66, d: 20 }, { x: 0.52, y: 0.02, d: 14 },
-];
 
 /* ---------- La cloche ---------- */
 

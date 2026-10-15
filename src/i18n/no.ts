@@ -107,6 +107,9 @@ export const no: Dict = {
   },
 
   s6: {
+    equiv: "Det er {y} år av livet ditt.",
+    minutesLine: "minutter med scrolling resten av livet, i dette tempoet.",
+    damage: "Her er skaden.",
     lifeOf: 'AV DE {n} ÅRENE DU HAR IGJEN',
     years: '{y} år',
     bodyShort: 'brukt på mobilen.',
@@ -720,6 +723,10 @@ export const no: Dict = {
   },
 
   blockTab: {
+    hardOn: "Streng modus er på",
+    slide: "Sveip for streng modus",
+    manage: "Styr apper",
+    guide: "Velg appene du vil blokkere eller oppheve blokkeringen for. Når de er blokkert, åpnes de ikke: du går via UnSwipe.",
     today: 'I dag',
     streak: 'Rekke',
     ofCap: 'Av taket ditt',
@@ -735,7 +742,6 @@ export const no: Dict = {
     more: 'Blokker andre apper',
     moreOn: 'Legg til hva du vil i lista.',
     moreOff: 'Spill, nyheter, alt som fanger deg.',
-    hardOn: 'Å fjerne blokkeringen krever ett minutt, én setning og tre regnestykker.',
     hardOff: 'Gjør det bevisst slitsomt å slå av. Omtrent tre minutter.',
     shortcuts: 'Apper på Hjem-skjermen',
   },
@@ -783,6 +789,7 @@ export const no: Dict = {
   },
 
   picker: {
+    guide: "Huk av appene du vil blokkere, fjern haken for dem du vil oppheve blokkeringen for. Avhukede apper åpnes ikke lenger: du går via UnSwipe.",
     authorize: 'Tillat Skjermtid',
     choose: 'Velg hva som skal settes på pause.',
     selected: '{n} app{s:|er} valgt',
@@ -857,6 +864,9 @@ export const no: Dict = {
   },
 
   ui: {
+    viewList: "Liste",
+    viewGrid: "Rutenett",
+    viewSwipe: "Sveip",
     wStep1: 'Kopier applenken nedenfor.',
     wStep2: 'Åpne Snarveier → + → Åpne URL → lim inn lenken.',
     wStep3: 'Del → Legg til på Hjem-skjerm. Velg navn og ikon.',

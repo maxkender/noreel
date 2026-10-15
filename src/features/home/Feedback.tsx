@@ -44,12 +44,18 @@ export function Feedback({ visible, onClose }: { visible: boolean; onClose: () =
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    /*
+      En CARTE (pageSheet), pas en plein ecran : ouverte depuis les reglages,
+      la page pleine posait « Annuler » sous l'heure et l'encoche, ou le doigt
+      ne passe pas. La carte laisse de l'air en haut et se ferme aussi en la
+      tirant vers le bas.
+    */
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={st.root}>
-        <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
+        <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <View style={st.head}>
-            <Pressable onPress={() => { haptics.tap(); onClose(); }} hitSlop={12}>
-              <Text variant="label" color={c.accent}>{dict.misc.cancel}</Text>
+            <Pressable onPress={() => { haptics.tap(); onClose(); }} hitSlop={16} style={st.cancel} accessibilityRole="button">
+              <Text variant="label" color={c.mist}>{dict.misc.cancel}</Text>
             </Pressable>
             <Text variant="label" tone="tertiary">{dict.ui.fbBar}</Text>
             <View style={{ width: 54 }} />
@@ -113,6 +119,7 @@ const sheet = (c: Palette) => StyleSheet.create({
     paddingHorizontal: gutter, paddingVertical: space.md,
   },
   body: { flex: 1, paddingHorizontal: gutter, paddingTop: space.md },
+  cancel: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge },
   label: { marginTop: space.lg, marginBottom: space.xs },
   input: {
     padding: space.md, borderRadius: 14,

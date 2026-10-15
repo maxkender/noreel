@@ -107,6 +107,9 @@ export const pl: Dict = {
   },
 
   s6: {
+    equiv: "To {y} lat twojego życia.",
+    minutesLine: "minut scrollowania do końca życia, w tym tempie.",
+    damage: "Oto szkody.",
     lifeOf: 'Z {n} LAT, KTÓRE CI ZOSTAŁY',
     years: '{y} lat',
     bodyShort: 'spędzonych w telefonie.',
@@ -721,6 +724,10 @@ export const pl: Dict = {
   },
 
   blockTab: {
+    hardOn: "Tryb ścisły włączony",
+    slide: "Przesuń: tryb ścisły",
+    manage: "Zarządzaj apkami",
+    guide: "Wybierz aplikacje do zablokowania lub odblokowania. Zablokowane już się nie otworzą: wchodzisz przez UnSwipe.",
     today: 'Dzisiaj',
     streak: 'Seria',
     ofCap: 'Z limitu',
@@ -736,7 +743,6 @@ export const pl: Dict = {
     more: 'Blokuj inne aplikacje',
     moreOn: 'Dodaj do listy, co tylko chcesz.',
     moreOff: 'Gry, newsy, wszystko, co Cię wciąga.',
-    hardOn: 'Zdjęcie blokady wymaga minuty, zdania i trzech działań.',
     hardOff: 'Sprawia, że wyłączenie jest celowo uciążliwe. Około trzech minut.',
     shortcuts: 'Aplikacje na ekranie początkowym',
   },
@@ -784,6 +790,7 @@ export const pl: Dict = {
   },
 
   picker: {
+    guide: "Zaznacz aplikacje do zablokowania, odznacz te do odblokowania. Zaznaczone aplikacje już się nie otworzą: będziesz wchodzić przez UnSwipe.",
     authorize: 'Zezwól na Czas przed ekranem',
     choose: 'Wybierz, co ma być wstrzymywane.',
     selected: '{n} {s:aplikacja wybrana|aplikacje wybrane}',
@@ -859,6 +866,9 @@ export const pl: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Siatka",
+    viewSwipe: "Przewijanie",
     wStep1: 'Skopiuj link do aplikacji poniżej.',
     wStep2: 'Otwórz Skróty → + → Otwórz URL → wklej link.',
     wStep3: 'Udostępnij → Do ekranu początkowego. Wybierz nazwę i ikonę.',

@@ -52,7 +52,7 @@ export const APPS: { id: ClientId; name: string; sub: keyof Dict['ui'] }[] = [
 
 // L'icone occupe presque tout son emplacement : c'est ce qu'on vient
 // chercher, elle n'a pas a partager la place avec du vide.
-const RATIO = 0.62;   // part de la largeur donnee a une app
+const RATIO = 0.44;   // part de la largeur : l'app du milieu ET ses deux voisines se voient
 const FILL = 0.94;    // part de cet emplacement occupee par l'icone
 
 /**
@@ -64,18 +64,30 @@ const FILL = 0.94;    // part de cet emplacement occupee par l'icone
  * les voisines mordent sur les bords, floutees, et le glissement devient
  * evident sans qu'on ait a l'ecrire.
  */
-export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
+/*
+ * L'ordre de la ROUE : Instagram au milieu, entre deux autres, et c'est lui
+ * qu'on voit en arrivant.
+ */
+const WHEEL = [APPS[1], APPS[0], APPS[2], APPS[3]];
+const START = 1;
+
+export function AppSlider({ minutes, mode = 'swipe' }: { minutes: Record<string, number>; mode?: 'swipe' | 'grid' | 'list' }) {
+  if (mode !== 'swipe') return <AppBoard mode={mode} minutes={minutes} />;
+  return <AppWheel minutes={minutes} />;
+}
+
+function AppWheel({ minutes }: { minutes: Record<string, number> }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const { width } = useWindowDimensions();
   const item = Math.round(width * RATIO);
   const tile = Math.round(item * FILL);
   const side = (width - item) / 2;
-  const [i, setI] = useState(0);
+  const [i, setI] = useState(START);
   const [open, setOpen] = useState(false);
   const [gate, setGate] = useState(false);
   const pro = useProStore((p) => p.pro);
-  const x = useSharedValue(0);
+  const x = useSharedValue(START * item);
   const turn = useSharedValue(0);
   const chevron = useAnimatedStyle(() => ({
     transform: [{ rotate: `${turn.value * 180}deg` }],
@@ -98,12 +110,12 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
   useAnimatedReaction(
     () => Math.round(x.value / item),
     (cur, prev) => {
-      if (cur !== prev && cur >= 0 && cur < APPS.length) runOnJS(select)(cur);
+      if (cur !== prev && cur >= 0 && cur < WHEEL.length) runOnJS(select)(cur);
     },
     [item]
   );
 
-  const app = APPS[i];
+  const app = WHEEL[i];
 
   return (
     <View>
@@ -117,8 +129,9 @@ export function AppSlider({ minutes }: { minutes: Record<string, number> }) {
           decelerationRate="fast"
           disableIntervalMomentum
           contentContainerStyle={{ paddingHorizontal: side }}
+          contentOffset={{ x: START * item, y: 0 }}
         >
-          {APPS.map((a, k) => (
+          {WHEEL.map((a, k) => (
             <Tile
               key={a.id}
               app={a}
@@ -297,6 +310,15 @@ function Toggles({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.md, marginTop: space.md },
+  gridCell: {
+    width: '48%', aspectRatio: 1, borderRadius: 24, alignItems: 'center', justifyContent: 'center', gap: space.sm,
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  listRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: 20,
+    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
   slot: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.md },
   lockBadge: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -319,3 +341,58 @@ const sheet = (c: Palette) => StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: withAlpha(c.mist, 0.1),
   },
 });
+
+/**
+ * La grille et la liste : toutes les apps d'un coup d'oeil, sans geste.
+ * Une app verrouillee ouvre l'offre, les autres s'ouvrent directement.
+ */
+function AppBoard({ mode, minutes }: { mode: 'grid' | 'list'; minutes: Record<string, number> }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const router = useRouter();
+  const pro = useProStore((p) => p.pro);
+  const [gate, setGate] = useState(false);
+  const open = (id: ClientId) => {
+    haptics.tap();
+    if (!pro && id !== FREE) { setGate(true); return; }
+    router.push(`/client/${id}`);
+  };
+  void minutes;
+  return (
+    <View>
+      {mode === 'grid' ? (
+        <View style={st.grid}>
+          {APPS.map((a) => {
+            const locked = !pro && a.id !== FREE;
+            return (
+              <Pressable key={a.id} onPress={() => open(a.id)} style={st.gridCell} accessibilityRole="button" accessibilityLabel={a.name}>
+                <Image source={LOGOS[a.id]} style={{ width: 72, height: 72, opacity: locked ? 0.4 : 1 }} contentFit="contain" />
+                <Text variant="title">{a.name}</Text>
+                {locked && <Lock size={13} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={{ gap: space.sm }}>
+          {APPS.map((a) => {
+            const locked = !pro && a.id !== FREE;
+            return (
+              <Pressable key={a.id} onPress={() => open(a.id)} style={st.listRow} accessibilityRole="button" accessibilityLabel={a.name}>
+                <Image source={LOGOS[a.id]} style={{ width: 44, height: 44, opacity: locked ? 0.4 : 1 }} contentFit="contain" />
+                <View style={{ flex: 1 }}>
+                  <Text variant="title">{a.name}</Text>
+                  <Text variant="label" tone="secondary">{dict.ui[a.sub]}</Text>
+                </View>
+                {locked
+                  ? <Lock size={15} strokeWidth={2.2} color={withAlpha(c.mist, 0.5)} />
+                  : <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+      <ProGate visible={gate} onClose={() => setGate(false)} />
+    </View>
+  );
+}

@@ -401,7 +401,7 @@ export function RateAsk({ onNext }: P) {
       <Text variant="displayM" style={[st.mid, { marginTop: space.lg }]}>
         {d.rate.title}
       </Text>
-      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.md }]}>
+      <Text variant="lead" tone="secondary" style={[st.mid, { marginTop: space.xs }]}>
         {d.rate.body}
       </Text>
     </Screen>
@@ -434,7 +434,7 @@ const sheet = () => StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.7, shadowRadius: 26,
     shadowOffset: { width: 0, height: 12 },
   },
-  stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm, marginTop: space.xl },
+  stars: { flexDirection: 'row', justifyContent: 'center', gap: space.sm, marginTop: space.lg },
   gaugeStage: { height: 200, alignItems: 'center', justifyContent: 'center' },
   wordSlot: { height: 24, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },
   slideHit: { alignSelf: 'stretch', height: 56, justifyContent: 'center' },

@@ -107,6 +107,9 @@ export const sr: Dict = {
   },
 
   s6: {
+    equiv: "To je {y} godina tvog života.",
+    minutesLine: "minuta skrolovanja do kraja života, ovim tempom.",
+    damage: "Evo štete.",
     lifeOf: 'OD {n} GODINA KOJE TI OSTAJU',
     years: '{y} godina',
     bodyShort: 'provedenih na telefonu.',
@@ -721,6 +724,10 @@ export const sr: Dict = {
   },
 
   blockTab: {
+    hardOn: "Strogi režim uključen",
+    slide: "Prevuci za strogi režim",
+    manage: "Aplikacije",
+    guide: "Izaberi aplikacije koje želiš da blokiraš ili odblokiraš. Blokirane se više ne otvaraju: ideš preko UnSwipe-a.",
     today: 'Danas',
     streak: 'Niz',
     ofCap: 'Od limita',
@@ -736,7 +743,6 @@ export const sr: Dict = {
     more: 'Blokiraj druge aplikacije',
     moreOn: 'Dodaj na listu šta god hoćeš.',
     moreOff: 'Igre, vesti, sve što te uvuče.',
-    hardOn: 'Skidanje blokade traži minut, jednu rečenicu i tri računice.',
     hardOff: 'Čini isključivanje namerno mučnim. Oko tri minuta.',
     shortcuts: 'Aplikacije na početnom ekranu',
   },
@@ -784,6 +790,7 @@ export const sr: Dict = {
   },
 
   picker: {
+    guide: "Označi aplikacije koje želiš da blokiraš, odznači one koje želiš da odblokiraš. Označene aplikacije se više neće otvarati: ići ćeš preko UnSwipe-a.",
     authorize: 'Dozvoli Vreme pred ekranom',
     choose: 'Izaberi šta se pauzira.',
     selected: 'Izabrano: {n} {s:aplikacija|aplikacije}',
@@ -859,6 +866,9 @@ export const sr: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Mreža",
+    viewSwipe: "Listanje",
     wStep1: 'Kopiraj link aplikacije ispod.',
     wStep2: 'Otvori Prečice → + → Otvori URL → nalepi link.',
     wStep3: 'Deli → Dodaj na početni ekran. Izaberi ime i ikonu.',

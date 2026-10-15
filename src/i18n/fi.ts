@@ -107,6 +107,9 @@ export const fi: Dict = {
   },
 
   s6: {
+    equiv: "Se on {y} vuotta elämästäsi.",
+    minutesLine: "minuuttia selaamista loppuelämäsi aikana tällä tahdilla.",
+    damage: "Tässä vahingot.",
     lifeOf: 'JÄLJELLÄ OLEVISTA {n} VUODESTASI',
     years: '{y} vuotta',
     bodyShort: 'kuluu puhelimella.',
@@ -721,6 +724,10 @@ export const fi: Dict = {
   },
 
   blockTab: {
+    hardOn: "Tiukka tila päällä",
+    slide: "Liu'uta: tiukka tila",
+    manage: "Sovellukset",
+    guide: "Valitse sovellukset, jotka haluat estää tai vapauttaa. Estetyt eivät enää aukea: menet UnSwipen kautta.",
     today: 'Tänään',
     streak: 'Putki',
     ofCap: 'Rajastasi',
@@ -736,7 +743,6 @@ export const fi: Dict = {
     more: 'Estä muita sovelluksia',
     moreOn: 'Lisää listaan mitä haluat.',
     moreOff: 'Pelit, uutiset, kaikki mikä vie mukanaan.',
-    hardOn: 'Eston poistaminen vaatii minuutin, lauseen ja kolme laskua.',
     hardOff: 'Tekee poiskytkemisestä tarkoituksella vaivalloista. Noin kolme minuuttia.',
     shortcuts: 'Sovellukset Koti-valikossa',
   },
@@ -784,6 +790,7 @@ export const fi: Dict = {
   },
 
   picker: {
+    guide: "Valitse estettävät sovellukset ja poista valinta vapautettavista. Valitut sovellukset eivät enää aukea: menet UnSwipen kautta.",
     authorize: 'Salli Ruutuaika',
     choose: 'Valitse, mitä keskeytetään.',
     selected: '{n} {s:sovellus valittu|sovellusta valittu}',
@@ -859,6 +866,9 @@ export const fi: Dict = {
 
 
   ui: {
+    viewList: "Lista",
+    viewGrid: "Ruudukko",
+    viewSwipe: "Pyyhkäisy",
     wStep1: 'Kopioi alla oleva sovelluksen linkki.',
     wStep2: 'Avaa Pikakomennot → + → Avaa URL → liitä linkki.',
     wStep3: 'Jaa → Lisää Koti-valikkoon. Valitse nimi ja kuvake.',

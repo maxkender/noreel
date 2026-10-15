@@ -79,7 +79,11 @@ export function Picker({ onNext }: P) {
         chargeait plus dans UnSwipe, avec « bloque par un filtre de contenu ».
         Une app cochee ne bloque que l'app.
       */}
+      {/* Ce qu'on fait ici, en une phrase : cocher bloque, decocher debloque. */}
       <Text variant="lead" tone="secondary" style={{ marginTop: space.sm }}>
+        {d.picker.guide}
+      </Text>
+      <Text variant="label" tone="tertiary" style={{ marginTop: space.xs }}>
         {d.picker.appsOnly}
       </Text>
 

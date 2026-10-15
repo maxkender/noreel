@@ -107,6 +107,9 @@ export const it: Dict = {
   },
 
   s6: {
+    equiv: "Sono {y} anni della tua vita.",
+    minutesLine: "minuti di scroll da qui alla fine della tua vita, a questo ritmo.",
+    damage: "Ecco il danno.",
     lifeOf: 'DEI {n} ANNI CHE TI RESTANO',
     years: '{y} anni',
     bodyShort: 'passati sul telefono.',
@@ -721,6 +724,10 @@ export const it: Dict = {
   },
 
   blockTab: {
+    hardOn: "Modalità rigorosa attiva",
+    slide: "Scorri: modalità rigorosa",
+    manage: "Gestisci app",
+    guide: "Scegli le app da bloccare o sbloccare. Una volta bloccate, non si aprono più: passi da UnSwipe.",
     today: 'Oggi',
     streak: 'Serie',
     ofCap: 'Del tuo limite',
@@ -736,7 +743,6 @@ export const it: Dict = {
     more: 'Blocca altre app',
     moreOn: 'Aggiungi alla lista quello che vuoi.',
     moreOff: 'Giochi, notizie, tutto ciò che ti cattura.',
-    hardOn: 'Restituire il blocco richiede un minuto, una frase e tre calcoli.',
     hardOff: 'Rende la disattivazione volutamente faticosa. Circa tre minuti.',
     shortcuts: 'App nella schermata Home',
   },
@@ -784,6 +790,7 @@ export const it: Dict = {
   },
 
   picker: {
+    guide: "Spunta le app da bloccare, togli la spunta a quelle da sbloccare. Le app spuntate non si apriranno più: passerai da UnSwipe.",
     authorize: 'Autorizza Tempo di utilizzo',
     choose: 'Scegli cosa mettere in pausa.',
     selected: '{n} app selezionat{s:a|e}',
@@ -859,6 +866,9 @@ export const it: Dict = {
 
 
   ui: {
+    viewList: "Elenco",
+    viewGrid: "Griglia",
+    viewSwipe: "Scorri",
     wStep1: 'Copia il link dell’app qui sotto.',
     wStep2: 'Apri Comandi rapidi → + → Apri URL → incolla il link.',
     wStep3: 'Condividi → Aggiungi alla schermata Home. Scegli il nome e l’icona.',

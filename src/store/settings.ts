@@ -53,6 +53,8 @@ type State = {
   postLimit: number;
   /** Les apps ont ete posees sur l'ecran d'accueil : le badge de l'accueil disparait. */
   homeShortcutsDone: boolean;
+  /** L'accueil des apps : la roue, une grille, ou une liste. */
+  homeView: 'swipe' | 'grid' | 'list';
   set: <K extends keyof State>(key: K, value: State[K]) => void;
 };
 
@@ -78,6 +80,7 @@ export const useSettings = create<State>()(
       postMinutes: 5,
       postLimit: 3,
       homeShortcutsDone: false,
+      homeView: 'swipe',
       set: (key, value) => {
         set({ [key]: value } as Partial<State>);
         // L'haptique est un module global : on la synchronise tout de suite.

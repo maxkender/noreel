@@ -14,8 +14,6 @@ import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
 import { LANGS, formatHours } from '@/lib/format';
 import { useSettings } from '@/store/settings';
-import { useAppsStore } from '@/store/apps';
-import { TINTS } from '@/theme/tints';
 import { Toggle } from './parts';
 import { LANG_NAMES } from '@/components/LangPicker';
 import { FLAGS } from '@/features/onboarding/screens/Language';
@@ -28,34 +26,10 @@ import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
 } from '@/services/shield.real';
-import { customerInfo, subStatus, type SubStatus } from '@/services/purchases';
 import { alertsOn } from '@/services/igAlerts';
 import { useRouter } from 'expo-router';
-import { trialLeft } from '@/services/trial';
-
-/** Ou gerer l'abonnement quand le magasin n'a pas donne de lien. */
-const MANAGE_FALLBACK = Platform.OS === 'ios'
-  ? 'https://apps.apple.com/account/subscriptions'
-  : 'https://play.google.com/store/account/subscriptions?package=com.vikstudios.noreel';
-
-/*
- * Les jours, dans l'ordre ou on les lit — et numerotes comme Date.getDay les
- * numerote : dimanche vaut 0. Leur nom vient du systeme, dans la langue
- * choisie : une liste ecrite ici n'existerait qu'en francais.
- */
-const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const dayNames = (lang: string): [number, string][] => {
-  const f = new Intl.DateTimeFormat(lang, { weekday: 'long' });
-  // Le 7 janvier 2024 est un dimanche : jour 0.
-  return DAY_ORDER.map((k) => {
-    const name = f.format(new Date(2024, 0, 7 + k));
-    return [k, name.charAt(0).toUpperCase() + name.slice(1)];
-  });
-};
 
 
-// Le soir seulement : une fenetre le matin se prolonge sur la journee.
-const HOURS = [18, 19, 20, 21, 22];
 
 const GOALS = [60, 90, 120, 180, 240];
 /* Les libelles sont lus au rendu : la table vit au niveau du module, ou le
@@ -69,7 +43,7 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   const c = useColors();
   const tint = useBlurTint();
   const st = useMemo(() => sheet(c), [c]);
-  const { d, t, lang } = useT();
+  const { d, lang } = useT();
   /*
     La feuille SORT, elle ne disparait pas.
 
@@ -86,9 +60,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
   }, [onClose]);
 
   const s = useSettings();
-  const DAYS = useMemo(() => dayNames(lang), [lang]);
-  const instaTint = useAppsStore((x) => x.tints.instagram);
-  const setTint = useAppsStore((x) => x.setTint);
   const [cleared, setCleared] = useState(false);
   const [feedback, setFeedback] = useState(false);
   const [sources, setSources] = useState(false);
@@ -96,29 +67,14 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
 
   useEffect(() => { if (visible) void authorizationStatus().then(setAuth); }, [visible]);
 
-  /*
-    L'abonnement, lu a chaque ouverture.
-    C'est ICI que l'essai dit combien de temps il lui reste — pas par une
-    notification. Rien ne s'affiche sans abonnement du magasin (le code
-    d'acces des examinateurs n'en a pas).
-  */
   const [langOpen, setLangOpen] = useState(false);
+  const setLang = useLang((x) => x.set);
   const router = useRouter();
   /** Ferme la feuille, PUIS ouvre l'ecran : iOS n'empile pas une page sur une fenetre ouverte. */
   const go = (path: '/help' | '/alerts') => { haptics.tap(); close(); setTimeout(() => router.push(path), 260); };
   const [alerts, setAlerts] = useState(false);
   useEffect(() => { if (visible) void alertsOn().then(setAlerts); }, [visible]);
-  const setLang = useLang((x) => x.set);
-  const [sub, setSub] = useState<SubStatus | null>(null);
-  useEffect(() => { if (visible) void customerInfo().then((i) => setSub(subStatus(i))); }, [visible]);
-  const subLabel = (() => {
-    if (!sub) return null;
-    if (!sub.trial || !sub.expires) return d.prefs.proActive;
-    const left = trialLeft(sub.expires);
-    if (left.kind === 'days') return t(d.prefs.trialDays, { n: left.n });
-    if (left.kind === 'day') return d.prefs.trialOneDay;
-    return t(d.prefs.trialHours, { h: left.h });
-  })();
+
 
   return (
     <Modal
@@ -189,16 +145,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               </>
             )}
 
-            {subLabel && (
-              <>
-                <Group title={d.prefs.subscription} />
-                <Line
-                  label={subLabel}
-                  sub={d.prefs.manageSub}
-                  onPress={() => { void Linking.openURL(sub?.manageUrl ?? MANAGE_FALLBACK).catch(() => {}); }}
-                />
-              </>
-            )}
             {Platform.OS === 'ios' && (
               <>
             <Group title={d.block.title} />
@@ -240,86 +186,6 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
             {/* Deux portes : WhatsApp directement, ou la feuille de partage d'iOS avec le lien. */}
             <Line label={d.ui.shareWhatsApp} onPress={() => { void shareOnWhatsApp(); }} />
             <Line label={d.ui.shareLink} sub={STORE_URL.replace('https://', '')} onPress={() => { void shareApp(); }} />
-
-            <Group title={d.prefs.colour} />
-            <View style={st.chips}>
-              {TINTS.map((t) => {
-                const on = (instaTint ?? 'default') === t.id;
-                return (
-                  <Pressable
-                    key={t.id}
-                    onPress={() => { haptics.tick(); setTint('instagram', t.id); }}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: on }}
-                    accessibilityLabel={d.tints[t.id as keyof typeof d.tints] ?? t.label}
-                    style={[st.swatch, { backgroundColor: t.hex }, on && st.swatchOn]}
-                  />
-                );
-              })}
-            </View>
-            <Text variant="label" tone="tertiary" style={st.hint}>
-              {d.prefs.colourBody}
-            </Text>
-
-            <Group title={d.prefs.valve} />
-            <Line
-              label={d.prefs.valveRow}
-              sub={s.valve.on
-                ? t(d.prefs.valveOn, {
-                    day: DAYS.find(([k]) => k === s.valve.day)?.[1] ?? '',
-                    from: s.valve.from,
-                    to: s.valve.to,
-                  })
-                : d.prefs.valveOff}
-              right={
-                <Toggle
-                  on={s.valve.on}
-                  onChange={(v) => s.set('valve', { ...s.valve, on: v })}
-                />
-              }
-            />
-            {s.valve.on && (
-              <>
-                <View style={st.chips}>
-                  {DAYS.map(([k, label]) => {
-                    const on = s.valve.day === k;
-                    return (
-                      <Pressable
-                        key={k}
-                        onPress={() => { haptics.tick(); s.set('valve', { ...s.valve, day: k }); }}
-                        style={[st.chip, on && st.chipOn]}
-                      >
-                        <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
-                          {label.slice(0, 3)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <View style={st.chips}>
-                  {HOURS.map((h) => {
-                    const on = s.valve.from === h;
-                    return (
-                      <Pressable
-                        key={h}
-                        // La fenetre dure une heure : la fin suit le debut, on
-                        // ne peut donc pas se retrouver avec une fin avant son
-                        // debut, ni avec une soupape ouverte toute la soiree.
-                        onPress={() => {
-                          haptics.tick();
-                          s.set('valve', { ...s.valve, from: h, to: h + 1 });
-                        }}
-                        style={[st.chip, on && st.chipOn]}
-                      >
-                        <Text variant="label" color={on ? c.night : withAlpha(c.mist, 0.7)}>
-                          {h} h
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </>
-            )}
 
             <Group title={d.prefs.look} />
             <View style={st.chips}>
