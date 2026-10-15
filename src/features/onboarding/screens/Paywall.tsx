@@ -369,23 +369,16 @@ export function Paywall(
         )}
       </View>
 
-      {/* iOS : pas de « ton programme est pret », un titre qui appelle a agir
-          et une ligne qui dit ce qu'on achete. Android garde l'ancien en-tete. */}
-      {!IOS && (
-        <Text variant="label" color={c.accent} style={[st.center, { marginBottom: space.sm }]}>
-          {d.pay.ready}
-        </Text>
-      )}
+      {/* Pas de « ton programme est pret » : un titre qui appelle a agir
+          et une ligne qui dit ce qu'on achete. */}
       <Text variant="displayM" style={st.center}>
-        {t(IOS ? d.pay.titleNow : d.pay.title, { accent: '\u0000' }).split('\u0000')[0]}
+        {t(d.pay.titleNow, { accent: '\u0000' }).split('\u0000')[0]}
         <Text variant="displayM" color={c.accent}>{d.pay.titleAccent}</Text>
-        {t(IOS ? d.pay.titleNow : d.pay.title, { accent: '\u0000' }).split('\u0000')[1]}
+        {t(d.pay.titleNow, { accent: '\u0000' }).split('\u0000')[1]}
       </Text>
-      {IOS && (
-        <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
-          {d.pay.subNow}
-        </Text>
-      )}
+      <Text variant="body" tone="secondary" style={[st.center, { marginTop: space.sm }]}>
+        {d.pay.subNow}
+      </Text>
 
       {/* Ce qui sera preleve, et quand — AVANT les prix : c'est la question
           qui bloque la main au-dessus du bouton. */}

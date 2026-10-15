@@ -763,7 +763,7 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
           onShouldStartLoadWithRequest={guard}
           onLoadProgress={(e) => { setLoad(e.nativeEvent.progress); seeHistory(e.nativeEvent); }}
           // Les fleches du menu : grisees quand il n'y a pas de page avant ou apres.
-          onNavigationStateChange={Platform.OS === 'ios' ? seeHistory : undefined}
+          onNavigationStateChange={seeHistory}
         onLoadEnd={(e) => {
             seeHistory(e.nativeEvent);
             setReady(true);
@@ -808,7 +808,7 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
 
       {/* La barre flotte au-dessus de la WebView : la page ne peut pas lui
           voler les touches. */}
-      <NavBar onAction={onNav} accounts={id === 'instagram' ? accounts.length : 2} canBack={Platform.OS === 'ios' ? history.back : true} canForward={Platform.OS === 'ios' ? history.forward : true} />
+      <NavBar onAction={onNav} accounts={id === 'instagram' ? accounts.length : 2} canBack={history.back} canForward={history.forward} />
 
       {/* La lame de verre marque l'ouverture de la page. */}
       <GlassSweep />
