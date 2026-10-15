@@ -2,13 +2,12 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaInsetsContext, initialWindowMetrics } from 'react-native-safe-area-context';
 import Animated, {
-  Easing, FadeIn, useAnimatedProps, useSharedValue, withTiming, type SharedValue,
+  Easing, FadeIn, ZoomIn, useAnimatedProps, withRepeat, withSequence, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, radii, space } from '@/theme/spacing';
-import { Button } from './Button';
 import { Text } from './type/Text';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
@@ -182,7 +181,11 @@ export function Spotlight({
     prev.current = r;
     ringOn.value = 0;
     glide(hx, to.x); glide(hy, to.y); glide(hw, to.w); glide(hh, to.h);
-    ringOn.value = withTiming(1, { duration: 280, easing: EASE });
+    // Le contour arrive, puis RESPIRE doucement : il montre sans clignoter.
+    ringOn.value = withSequence(
+      withTiming(1, { duration: 280, easing: EASE }),
+      withRepeat(withTiming(0.45, { duration: 900, easing: Easing.inOut(Easing.sin) }), -1, true),
+    );
   }, [found, hx, hy, hw, hh, W, H, ringOn]);
 
   const next = () => {
@@ -196,11 +199,21 @@ export function Spotlight({
   const r = found?.rect ?? null;
   const minTop = top + GAP;
   const maxTop = H - bottom - GAP - cardH;
-  // Deux places seulement : en bas, ou en haut si l'element eclaire est dans
-  // la moitie basse. La carte ne glisse plus d'un bout a l'autre de l'ecran.
-  const low = r ? r.y + r.h / 2 > H / 2 : false;
-  const cardTop = low ? minTop : maxTop;
-
+  /*
+    LA BULLE, collee a l'element, avec une pointe vers lui — comme les
+    astuces d'iOS. Dessous s'il y a la place, sinon dessus ; centree sur
+    l'element et tenue dans l'ecran. Sans element, elle se pose au milieu.
+  */
+  const BW = Math.min(W - gutter * 2, 320);
+  const below = r ? r.y + r.h + PAD + 14 : 0;
+  const fitsBelow = r ? below + cardH <= H - bottom - GAP : false;
+  const cardTop = !r
+    ? Math.max(minTop, H / 2 - cardH / 2)
+    : fitsBelow ? below : Math.max(minTop, r.y - PAD - 14 - cardH);
+  const cx = r ? r.x + r.w / 2 : W / 2;
+  const cardLeft = Math.max(gutter, Math.min(W - gutter - BW, cx - BW / 2));
+  const arrowLeft = Math.max(18, Math.min(BW - 18, cx - cardLeft)) - 8;
+  void maxTop;
   const { title, body } = steps[i];
   // La carte ne se montre qu'une fois l'etape en cours mesuree.
   const shown = found !== null && found.step === i;
@@ -209,57 +222,63 @@ export function Spotlight({
     <Pressable style={StyleSheet.absoluteFill} onPress={next} testID={testID}>
       <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
-          <APath animatedProps={veilProps} fill={c.night} fillOpacity={0.7} fillRule="evenodd" />
+          <APath animatedProps={veilProps} fill={c.night} fillOpacity={0.6} fillRule="evenodd" />
           <APath animatedProps={ringProps} fill="none" stroke={c.accent} strokeWidth={2} />
         </Svg>
       </Animated.View>
 
-      {/* La carte suit le trou : sa place change en glissant, son texte en fondu. */}
-      <Animated.View
-        style={[st.cardWrap, { top: cardTop, opacity: shown ? 1 : 0 }]}
-        pointerEvents={shown ? 'box-none' : 'none'}
-        testID={shown ? `${testID}-ready` : undefined}
-        onLayout={(e) => { const h = Math.round(e.nativeEvent.layout.height); if (h && h !== cardH) setCardH(h); }}
-      >
-        {/* La carte absorbe le tap : taper sur ce qu'on lit n'avance pas. */}
-        <Pressable onPress={() => {}} style={st.card}>
-          <Animated.View key={i} entering={FadeIn.duration(240)}>
+      {shown && (
+        <Animated.View
+          key={i}
+          entering={ZoomIn.duration(220).easing(EASE)}
+          style={[st.bubbleWrap, { top: cardTop, left: cardLeft, width: BW }]}
+          pointerEvents="box-none"
+          testID={`${testID}-ready`}
+          onLayout={(e) => { const h = Math.round(e.nativeEvent.layout.height); if (h && h !== cardH) setCardH(h); }}
+        >
+          {r && fitsBelow && <View style={[st.arrow, st.arrowUp, { left: arrowLeft }]} />}
+          <Pressable onPress={() => {}} style={st.bubble}>
             <View style={st.head}>
-              <Text variant="label" tone="tertiary">{`${i + 1} / ${n}`}</Text>
-              <View style={{ flex: 1 }} />
+              <Text variant="title" style={{ flex: 1 }}>{title}</Text>
               <Pressable onPress={() => { haptics.tap(); finish(); }} hitSlop={12} accessibilityRole="button" style={st.skip}>
                 <Text variant="label" tone="secondary">{d.tuto.skip}</Text>
               </Pressable>
             </View>
-            <Text variant="title">{title}</Text>
-            {body ? <Text variant="body" tone="secondary" style={{ marginTop: space.xs }}>{body}</Text> : null}
+            {body ? <Text variant="body" tone="secondary">{body}</Text> : null}
             <View style={st.foot}>
-              {last
-                ? <Button label={d.tuto.go} onPress={finish} />
-                : (
-                  <Pressable onPress={next} style={st.next} accessibilityRole="button" testID={`${testID}-next`}>
-                    <Text variant="button" color={c.night}>{d.tour.next}</Text>
-                  </Pressable>
-                )}
+              <View style={st.dots}>
+                {steps.map((_, k) => <View key={k} style={[st.dot, k === i && st.dotOn]} />)}
+              </View>
+              <Pressable onPress={last ? finish : next} style={st.next} accessibilityRole="button" testID={`${testID}-next`}>
+                <Text variant="label" color={c.night}>{last ? d.tuto.go : d.tour.next}</Text>
+              </Pressable>
             </View>
-          </Animated.View>
-        </Pressable>
-      </Animated.View>
+          </Pressable>
+          {r && !fitsBelow && <View style={[st.arrow, st.arrowDown, { left: arrowLeft }]} />}
+        </Animated.View>
+      )}
     </Pressable>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  cardWrap: { position: 'absolute', left: gutter, right: gutter },
-  card: {
-    borderRadius: radii.tile, padding: space.lg,
-    backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge,
+  bubbleWrap: { position: 'absolute' },
+  bubble: {
+    borderRadius: 20, padding: space.lg, gap: space.sm,
+    backgroundColor: c.glassSolid, borderWidth: 1, borderColor: withAlpha(c.accent, 0.35),
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 18, shadowOffset: { width: 0, height: 8 },
   },
-  head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.sm },
-  skip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.12) },
-  foot: { marginTop: space.md },
-  next: {
-    alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center',
-    height: 48, borderRadius: 24, backgroundColor: c.mist,
+  arrow: {
+    width: 16, height: 16, backgroundColor: c.glassSolid, transform: [{ rotate: '45deg' }],
+    borderColor: withAlpha(c.accent, 0.35), position: 'relative',
   },
+  arrowUp: { marginBottom: -9, borderLeftWidth: 1, borderTopWidth: 1, zIndex: 2 },
+  arrowDown: { marginTop: -9, borderRightWidth: 1, borderBottomWidth: 1, zIndex: 2 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  skip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radii.pill, backgroundColor: withAlpha(c.mist, 0.1) },
+  foot: { flexDirection: 'row', alignItems: 'center', marginTop: space.xs },
+  dots: { flex: 1, flexDirection: 'row', gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: withAlpha(c.mist, 0.25) },
+  dotOn: { width: 18, backgroundColor: c.accent },
+  next: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: c.mist },
 });

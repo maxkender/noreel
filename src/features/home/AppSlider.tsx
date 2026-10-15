@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  Pressable, StyleSheet, View, useWindowDimensions,
+  Modal, Pressable, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ import Animated, {
   useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { ChevronDown, ChevronRight, Lock } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, Lock, Settings as SettingsIcon } from 'lucide-react-native';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -310,15 +310,29 @@ function Toggles({
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.md, marginTop: space.md },
-  gridCell: {
-    width: '48%', aspectRatio: 1, borderRadius: 24, alignItems: 'center', justifyContent: 'center', gap: space.sm,
-    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', rowGap: space.xl, marginTop: space.lg },
+  gridCell: { width: '46%', alignItems: 'center' },
+  gearBadge: {
+    position: 'absolute', top: -6, right: -6, width: 32, height: 32, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.glassSolid,
+    borderWidth: 1, borderColor: c.glassEdge,
   },
+  proBadge: {
+    position: 'absolute', left: -4, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: c.mist,
+  },
+  proPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: c.mist },
   listRow: {
-    flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: 20,
-    borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+    flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.md,
+    borderRadius: 24, borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
   },
+  gearRound: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: withAlpha(c.mist, 0.08),
+  },
+  sheetPage: { flex: 1, backgroundColor: c.night, padding: gutter, gap: space.md },
+  sheetHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingTop: space.sm },
+  sheetDone: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, backgroundColor: c.mist },
   slot: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.md },
   lockBadge: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -343,20 +357,25 @@ const sheet = (c: Palette) => StyleSheet.create({
 });
 
 /**
- * La grille et la liste : toutes les apps d'un coup d'oeil, sans geste.
- * Une app verrouillee ouvre l'offre, les autres s'ouvrent directement.
+ * La grille et la liste, a la SocialLite : de grandes icones, le nom
+ * dessous, une roue dentee pour les reglages de l'app. Pas de cadre autour :
+ * l'icone EST la carte.
  */
 function AppBoard({ mode, minutes }: { mode: 'grid' | 'list'; minutes: Record<string, number> }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const pro = useProStore((p) => p.pro);
   const [gate, setGate] = useState(false);
+  const [gear, setGear] = useState<ClientId | null>(null);
+  const icon = Math.min(150, Math.round((width - gutter * 2) * 0.36));
   const open = (id: ClientId) => {
     haptics.tap();
     if (!pro && id !== FREE) { setGate(true); return; }
     router.push(`/client/${id}`);
   };
+  const settings = (id: ClientId) => { haptics.tap(); setGear(id); };
   void minutes;
   return (
     <View>
@@ -365,34 +384,67 @@ function AppBoard({ mode, minutes }: { mode: 'grid' | 'list'; minutes: Record<st
           {APPS.map((a) => {
             const locked = !pro && a.id !== FREE;
             return (
-              <Pressable key={a.id} onPress={() => open(a.id)} style={st.gridCell} accessibilityRole="button" accessibilityLabel={a.name}>
-                <Image source={LOGOS[a.id]} style={{ width: 72, height: 72, opacity: locked ? 0.4 : 1 }} contentFit="contain" />
-                <Text variant="title">{a.name}</Text>
-                {locked && <Lock size={13} strokeWidth={2.4} color={withAlpha(c.mist, 0.5)} />}
-              </Pressable>
+              <View key={a.id} style={st.gridCell}>
+                <Pressable onPress={() => open(a.id)} accessibilityRole="button" accessibilityLabel={a.name}>
+                  <Image source={LOGOS[a.id]} style={{ width: icon, height: icon, opacity: locked ? 0.45 : 1 }} contentFit="contain" />
+                  {locked && (
+                    <View style={st.proBadge}><Lock size={11} strokeWidth={2.6} color={c.night} /><Text variant="label" color={c.night}>Pro</Text></View>
+                  )}
+                  <Pressable onPress={() => settings(a.id)} hitSlop={8} style={st.gearBadge} accessibilityRole="button" accessibilityLabel={fillIn(dict.ui.appSettings, { name: a.name })}>
+                    <SettingsIcon size={15} strokeWidth={2.2} color={c.mist} />
+                  </Pressable>
+                </Pressable>
+                <Text variant="title" style={{ marginTop: space.sm }}>{a.name}</Text>
+              </View>
             );
           })}
         </View>
       ) : (
-        <View style={{ gap: space.sm }}>
+        <View style={{ gap: space.sm, marginTop: space.sm }}>
           {APPS.map((a) => {
             const locked = !pro && a.id !== FREE;
             return (
               <Pressable key={a.id} onPress={() => open(a.id)} style={st.listRow} accessibilityRole="button" accessibilityLabel={a.name}>
-                <Image source={LOGOS[a.id]} style={{ width: 44, height: 44, opacity: locked ? 0.4 : 1 }} contentFit="contain" />
-                <View style={{ flex: 1 }}>
-                  <Text variant="title">{a.name}</Text>
+                <Image source={LOGOS[a.id]} style={{ width: 54, height: 54, opacity: locked ? 0.45 : 1 }} contentFit="contain" />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+                    <Text variant="title">{a.name}</Text>
+                    {locked && <View style={st.proPill}><Text variant="label" color={c.night} style={{ fontSize: 10 }}>Pro</Text></View>}
+                  </View>
                   <Text variant="label" tone="secondary">{dict.ui[a.sub]}</Text>
                 </View>
-                {locked
-                  ? <Lock size={15} strokeWidth={2.2} color={withAlpha(c.mist, 0.5)} />
-                  : <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />}
+                <Pressable onPress={() => settings(a.id)} hitSlop={8} style={st.gearRound} accessibilityRole="button" accessibilityLabel={fillIn(dict.ui.appSettings, { name: a.name })}>
+                  <SettingsIcon size={18} strokeWidth={2} color={withAlpha(c.mist, 0.75)} />
+                </Pressable>
+                <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
               </Pressable>
             );
           })}
         </View>
       )}
+      <AppSettingsSheet app={gear} onClose={() => setGear(null)} locked={!pro} onLocked={() => { setGear(null); setGate(true); }} />
       <ProGate visible={gate} onClose={() => setGate(false)} />
     </View>
+  );
+}
+
+/** Les reglages d'une app, dans une carte iOS : les memes interrupteurs que sous la roue. */
+function AppSettingsSheet({ app, onClose, locked, onLocked }: { app: ClientId | null; onClose: () => void; locked: boolean; onLocked: () => void }) {
+  const c = useColors();
+  const st = useMemo(() => sheet(c), [c]);
+  const a = APPS.find((x) => x.id === app);
+  return (
+    <Modal visible={!!app} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={st.sheetPage}>
+        <View style={st.sheetHead}>
+          {a && <Image source={LOGOS[a.id]} style={{ width: 36, height: 36 }} contentFit="contain" />}
+          <Text variant="title" style={{ flex: 1 }}>{a ? fillIn(dict.ui.appSettings, { name: a.name }) : ''}</Text>
+          <Pressable onPress={() => { haptics.tap(); onClose(); }} hitSlop={12} style={st.sheetDone} accessibilityRole="button">
+            <Text variant="label" color={c.night}>OK</Text>
+          </Pressable>
+        </View>
+        {app && <Toggles app={app} locked={locked} onLocked={onLocked} />}
+      </View>
+    </Modal>
   );
 }

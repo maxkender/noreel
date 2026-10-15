@@ -11,9 +11,9 @@ import { gutter, space } from '@/theme/spacing';
 import { useT } from '@/i18n';
 
 export default function ClientRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, to } = useLocalSearchParams<{ id: string; to?: string }>();
   const key = (id && id in CLIENTS ? id : 'instagram') as ClientId;
-  return <ClientScreen id={key} />;
+  return <ClientScreen id={key} openUrl={typeof to === 'string' ? to : undefined} />;
 }
 
 /**

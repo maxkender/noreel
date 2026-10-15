@@ -22,6 +22,7 @@ import { Check } from 'lucide-react-native';
 import { STORE_URL, shareApp, shareOnWhatsApp } from '@/lib/share';
 import { Feedback, SUPPORT_EMAIL } from './Feedback';
 import { Sources } from './Sources';
+import { AppleSignIn } from './AppleSignIn';
 import {
   FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization,
   type AuthState,
@@ -238,6 +239,14 @@ export function Settings({ visible, onClose }: { visible: boolean; onClose: () =
               se suivaient. Un reglage qui ne fait rien de particulier n’a pas
               besoin de sa ligne.
             */}
+            {/* La connexion Apple (retrouver son abonnement) : ici, plus dans le compte. */}
+            {Platform.OS === 'ios' && (
+              <>
+                <Group title={d.ui.subscription} />
+                <AppleSignIn />
+              </>
+            )}
+
             <Group title={d.prefs.help} />
             <Line label={d.faq.row} onPress={() => go('/help')} />
             <Line

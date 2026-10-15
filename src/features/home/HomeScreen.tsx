@@ -5,9 +5,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ChevronRight, Home as HomeIcon, LayoutGrid, Lock, Shield, SlidersHorizontal, Smartphone, Timer, User } from 'lucide-react-native';
+import {
+  BellRing, ChevronDown, ChevronRight, CircleQuestionMark, ClipboardPaste, Home as HomeIcon, LayoutGrid, Link2, Lock,
+  LockOpen, Settings as SettingsIcon, Shield, SlidersHorizontal, Smartphone, Timer, User,
+} from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import { alertsOn } from '@/services/igAlerts';
+import { CLIENTS, type ClientId } from '@/features/client/blockers';
 import { SlideToConfirm } from '@/components/SlideToConfirm';
 import { PostModeSheet } from '@/features/client/PostSheet';
+import { BlockOrbit } from './BlockOrbit';
 import { withAlpha } from '@/theme/colors';
 import { useColors, type Palette } from '@/theme/useColors';
 import { gutter, space } from '@/theme/spacing';
@@ -15,22 +22,16 @@ import { Text } from '@/components/type/Text';
 import { GlassSweep } from '@/components/GlassSweep';
 import { haptics } from '@/lib/haptics';
 import { useT } from '@/i18n';
-import { formatHours } from '@/lib/format';
 import { shield } from '@/services';
 import { today as usageToday, streak as usageStreak, type Today } from '@/services/usage';
 import { FAMILY_CONTROLS_ENABLED, authorizationStatus, requestAuthorization } from '@/services/shield.real';
-import { effectiveMinutes, useOnboardingStore } from '@/store/onboarding';
 import { TabTour } from './Tours';
 import { type TourId } from './tourSeen';
 import { useSettings } from '@/store/settings';
-import { Card, Row } from './parts';
 import { useAnchor, useTourScroll } from './anchors';
-import { shareApp, shareOnWhatsApp } from '@/lib/share';
 import { AppSlider } from './AppSlider';
 import { Header } from './Header';
 import { NavBar } from './NavBar';
-import { Sources } from './Sources';
-import { AppleSignIn } from './AppleSignIn';
 import { Settings } from './Settings';
 import { ProGate } from './ProGate';
 import { useProStore } from '@/store/pro';
@@ -124,7 +125,7 @@ export function HomeScreen() {
             realFloor={realFloor}
           />
         )}
-        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} />}
+        {tab === 'account' && <AccountTab onSettings={() => setSettings(true)} onControl={() => setTab('block')} />}
       </Animated.View>
 
       <Settings visible={settings} onClose={() => setSettings(false)} />
@@ -343,11 +344,18 @@ function BlockTab({
         Les trois chiffres et le temps du jour sont partis : cet onglet sert
         a regler, pas a se comparer. La carte dit quoi faire, en clair.
       */}
+      {/* Le schema : UnSwipe au centre, les apps d'origine autour, cadenas fermes ou ouverts. */}
+      <View style={{ marginTop: space.md }}>
+        <BlockOrbit blocked={on} />
+      </View>
+      <View style={[st.statusPill, { backgroundColor: on ? withAlpha(c.accent, 0.14) : withAlpha(c.ember, 0.14) }]}>
+        {on
+          ? <Lock size={14} strokeWidth={2.4} color={c.accent} />
+          : <LockOpen size={14} strokeWidth={2.4} color={c.ember} />}
+        <Text variant="label" color={on ? c.accent : c.ember}>{on ? d.blockTab.onTitle : d.blockTab.offTitle}</Text>
+      </View>
+
       <View ref={aStatus} collapsable={false} style={[st.blockCard, !pro && st.dimmed]}>
-        <View style={[st.blockIcon, on && { backgroundColor: withAlpha(c.accent, 0.16) }]}>
-          <Shield size={28} strokeWidth={1.8} color={on ? c.accent : withAlpha(c.mist, 0.6)} />
-        </View>
-        <Text variant="title" style={st.center}>{on ? d.blockTab.onTitle : d.blockTab.offTitle}</Text>
         <Text variant="body" tone="secondary" style={st.center}>
           {needsAuth ? d.blockTab.needAuth : d.blockTab.guide}
         </Text>
@@ -400,7 +408,7 @@ function BlockTab({
       </View>
 
       <ProGate visible={paywall} onClose={() => setPaywall(false)} />
-      <PostModeSheet visible={post} onClose={() => setPost(false)} armed={on && !!selection} />
+      <PostModeSheet visible={post} onClose={() => setPost(false)} armed={on && !!selection} onSetup={() => { void arm(); }} />
 
       <HardModeIntro
         visible={intro}
@@ -430,14 +438,34 @@ function Tile({ icon: Icon, label, onPress }: { icon: typeof Shield; label: stri
 }
 
 /* ---------------- Compte ---------------- */
-function AccountTab({ onSettings }: { onSettings: () => void }) {
+/**
+ * Le compte, a la SocialLite : la roue dentee en haut a droite, les alertes
+ * Instagram en premier, puis quatre lignes nettes. Le reste (connexion Apple,
+ * sources, version) vit dans les reglages.
+ */
+function AccountTab({ onSettings, onControl }: { onSettings: () => void; onControl: () => void }) {
   const c = useColors();
   const st = useMemo(() => sheet(c), [c]);
-  const [sources, setSources] = useState(false);
   const { d } = useT();
   const router = useRouter();
-  const minutes = useOnboardingStore(effectiveMinutes);
-  const age = useOnboardingStore((x) => x.age);
+  const [alerts, setAlerts] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkNote, setLinkNote] = useState<string | null>(null);
+  useEffect(() => { void alertsOn().then(setAlerts); }, []);
+
+  // Le lien colle : on reconnait le site, et on l'ouvre DANS UnSwipe.
+  const pasteLink = async () => {
+    haptics.tap();
+    const raw = (await Clipboard.getStringAsync()).trim();
+    let host = '';
+    try { host = new URL(raw).hostname; } catch { /* pas un lien */ }
+    const id = (Object.keys(CLIENTS) as ClientId[]).find((k) => host.endsWith(CLIENTS[k].host)
+      || (k === 'twitter' && host.endsWith('twitter.com')) || (k === 'youtube' && host.endsWith('youtu.be')));
+    if (!id) { setLinkNote(d.account.linkUnknown); haptics.stop(); return; }
+    setLinkNote(null);
+    setLinkOpen(false);
+    router.push({ pathname: '/client/[id]', params: { id, to: raw } });
+  };
 
   return (
     <Animated.ScrollView
@@ -445,56 +473,107 @@ function AccountTab({ onSettings }: { onSettings: () => void }) {
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
     >
-      <Text variant="displayM">{d.account.title}</Text>
+      <View style={st.accHead}>
+        <Text variant="displayM" style={{ flex: 1 }}>{d.account.title}</Text>
+        <Pressable onPress={() => { haptics.tap(); onSettings(); }} hitSlop={10} style={st.gearBtn} accessibilityRole="button" accessibilityLabel={d.prefs.title}>
+          <SettingsIcon size={20} strokeWidth={2} color={c.mist} />
+        </Pressable>
+      </View>
 
-      {/* Les reglages vivent ICI, et plus dans l'en-tete de l'accueil. */}
-      <Card style={{ marginTop: space.lg }}>
-        <Row title={d.prefs.title} onPress={onSettings} right={<ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />} />
-      </Card>
-
-      {/* La connexion Apple n'existe que chez Apple. */}
       {Platform.OS === 'ios' && (
-        <>
-          <Text variant="label" tone="secondary" style={st.section}>{d.ui.subscription}</Text>
-          <Card><AppleSignIn /></Card>
-        </>
+        <Pressable
+          onPress={() => { haptics.tap(); router.push('/alerts'); }}
+          style={[st.notifCard, alerts && { borderColor: withAlpha('#34D399', 0.6) }]}
+          accessibilityRole="button"
+        >
+          <BellRing size={22} strokeWidth={2} color={c.mist} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+              <Text variant="title">{d.account.notifs}</Text>
+              <View style={st.betaPill}><Text variant="label" tone="secondary" style={{ fontSize: 10 }}>Beta</Text></View>
+            </View>
+            <Text variant="label" tone="secondary">{d.alerts.row}</Text>
+          </View>
+          <View style={[st.statePill, { backgroundColor: alerts ? '#34D399' : withAlpha(c.mist, 0.1) }]}>
+            <Text variant="label" color={alerts ? '#04120B' : withAlpha(c.mist, 0.7)}>{alerts ? d.alerts.on : d.alerts.off}</Text>
+          </View>
+          <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+        </Pressable>
       )}
 
-      <Text variant="label" tone="secondary" style={st.section}>{d.account.profile}</Text>
-      <Card>
-        <Row title={d.account.screenTimeValue} right={<Text variant="body" tone="secondary">{formatHours(minutes)}</Text>} />
-        <Row title={d.account.ageValue} right={<Text variant="body" tone="secondary">{age}</Text>} />
-      </Card>
-
-      <Text variant="label" tone="secondary" style={st.section}>{d.account.data}</Text>
-      <Card>
-        <Text variant="body" tone="secondary">{d.account.dataBody}</Text>
-      </Card>
-
-      <Text variant="label" tone="secondary" style={st.section}>{d.ui.share}</Text>
-      <Card>
-        <Row title={d.ui.shareWhatsApp} onPress={() => { void shareOnWhatsApp(); }} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.ui.shareLink} onPress={() => { void shareApp(); }} right={<Text variant="body" tone="tertiary">›</Text>} />
-      </Card>
-
-      <Text variant="label" tone="secondary" style={st.section}>{d.ui.assistance}</Text>
-      <Card>
-        {Platform.OS === 'ios' && (
-          <Row title={d.blockTab.shortcuts} onPress={() => router.push('/widgets')} right={<Text variant="body" tone="tertiary">›</Text>} />
+      <View style={{ gap: space.sm, marginTop: space.md }}>
+        <Pressable onPress={() => { haptics.tap(); setLinkOpen((o) => !o); setLinkNote(null); }} style={st.accRow} accessibilityRole="button">
+          <Link2 size={20} strokeWidth={2} color={c.mist} />
+          <Text variant="title" style={{ flex: 1 }}>{d.client.linkTitle}</Text>
+          <ChevronDown size={18} color={withAlpha(c.mist, 0.4)} style={linkOpen ? { transform: [{ rotate: '180deg' }] } : undefined} />
+        </Pressable>
+        {linkOpen && (
+          <View style={st.linkBox}>
+            <Text variant="body" tone="secondary">{d.client.linkBody}</Text>
+            <Pressable onPress={() => { void pasteLink(); }} style={st.linkBtn} accessibilityRole="button">
+              <ClipboardPaste size={18} strokeWidth={2.2} color={c.night} />
+              <Text variant="button" color={c.night}>{d.client.linkPaste}</Text>
+            </Pressable>
+            {linkNote ? <Text variant="label" color={c.ember}>{linkNote}</Text> : null}
+          </View>
         )}
-        <Row title={d.sources.title} onPress={() => setSources(true)} right={<Text variant="body" tone="tertiary">›</Text>} />
-        <Row title={d.account.version} right={<Text variant="body" tone="secondary">{Constants.expoConfig?.version ?? ''} · {Platform.OS}</Text>} />
-      </Card>
+        <Pressable onPress={() => { haptics.tap(); onSettings(); }} style={st.accRow} accessibilityRole="button">
+          <SettingsIcon size={20} strokeWidth={2} color={c.mist} />
+          <Text variant="title" style={{ flex: 1 }}>{d.prefs.title}</Text>
+          <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+        </Pressable>
+        {Platform.OS === 'ios' && (
+          <Pressable onPress={() => { haptics.tap(); onControl(); }} style={st.accRow} accessibilityRole="button">
+            <LayoutGrid size={20} strokeWidth={2} color={c.mist} />
+            <Text variant="title" style={{ flex: 1 }}>{d.account.control}</Text>
+            <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+          </Pressable>
+        )}
+        <Pressable onPress={() => { haptics.tap(); router.push('/help'); }} style={st.accRow} accessibilityRole="button">
+          <CircleQuestionMark size={20} strokeWidth={2} color={c.mist} />
+          <Text variant="title" style={{ flex: 1 }}>{d.faq.row}</Text>
+          <ChevronRight size={18} color={withAlpha(c.mist, 0.4)} />
+        </Pressable>
+      </View>
 
-      <Sources visible={sources} onClose={() => setSources(false)} />
+      <Text variant="label" tone="tertiary" style={[st.center, { marginTop: space.xl }]}>
+        {`UnSwipe ${Constants.expoConfig?.version ?? ''}`}
+      </Text>
     </Animated.ScrollView>
   );
 }
 
 const sheet = (c: Palette) => StyleSheet.create({
+  accHead: { flexDirection: 'row', alignItems: 'center' },
+  gearBtn: {
+    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge,
+  },
+  notifCard: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.lg,
+    padding: space.lg, borderRadius: 24, borderWidth: 1.5, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  betaPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: withAlpha(c.mist, 0.1) },
+  statePill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  accRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, height: 64,
+    borderRadius: 22, borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
+  },
+  linkBox: {
+    gap: space.md, padding: space.lg, borderRadius: 22, borderWidth: 1, borderColor: c.glassEdge,
+    backgroundColor: withAlpha(c.mist, 0.04),
+  },
+  linkBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm,
+    height: 50, borderRadius: 25, backgroundColor: c.mist,
+  },
   center: { textAlign: 'center' },
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center',
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, marginTop: space.sm,
+  },
   blockCard: {
-    marginTop: space.lg, alignItems: 'center', gap: space.sm, padding: space.lg,
+    marginTop: space.md, alignItems: 'center', gap: space.sm, padding: space.lg,
     borderRadius: 24, borderWidth: 1, borderColor: c.glassEdge, backgroundColor: c.glassSolid,
   },
   blockIcon: {

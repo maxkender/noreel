@@ -69,7 +69,7 @@ export function filtered(message: string): boolean {
   return /filtre de contenu|content filter|contentfilter/i.test(message);
 }
 
-export function ClientScreen({ id }: { id: ClientId }) {
+export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle ailleurs, a ouvrir ici. */ openUrl?: string }) {
   const c = useColors();
   const theme = useResolvedTheme();
   const pro = useProStore((p) => p.pro);
@@ -187,10 +187,13 @@ export function ClientScreen({ id }: { id: ClientId }) {
   const [entry, setEntry] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
+    // Un lien du meme site, colle depuis le compte : on l'ouvre directement.
+    let wanted: string | null = null;
+    try { if (openUrl && new URL(openUrl).hostname.endsWith(client.host)) wanted = openUrl; } catch { /* lien illisible */ }
     void firstRunUrl(id, 'login' in client ? client.login : undefined)
-      .then((u) => { if (alive) setEntry(u ?? client.url); });
+      .then((u) => { if (alive) setEntry(wanted ?? u ?? client.url); });
     return () => { alive = false; };
-  }, [id, client]);
+  }, [id, client, openUrl]);
 
   /*
     La story de bienvenue, une fois, avant que la page ne charge.
@@ -639,6 +642,7 @@ export function ClientScreen({ id }: { id: ClientId }) {
         visible={postSettings}
         onClose={() => setPostSettings(false)}
         armed={blocking && !!selection}
+        onSetup={() => router.push('/picker')}
       />
 
       <HelpSheet

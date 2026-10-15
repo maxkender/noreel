@@ -70,7 +70,8 @@ export function Picker({ onNext }: P) {
 
   return (
     <Screen cta={d.ob.keepGoing} onPress={onNext} hue="accent">
-      <Text variant="displayM">{d.picker.choose}</Text>
+      {/* De la place en haut pour le bouton retour pose par l'ecran. */}
+      <Text variant="displayM" style={{ marginTop: 48 }}>{d.picker.choose}</Text>
       {/*
         Des APPS, et rien d'autre.
         Le selecteur d'Apple propose aussi des categories et des sites web.
