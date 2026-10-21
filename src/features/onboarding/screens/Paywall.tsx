@@ -65,9 +65,24 @@ export function hasTrial(p: PurchasesPackage | undefined): boolean {
   return !!intro && intro.price === 0;
 }
 
-/** Deux decimales, virgule francaise, symbole du magasin quand on l'a. */
-function money(n: number, symbol = '€'): string {
-  return `${n.toFixed(2).replace('.', ',')} ${symbol}`;
+/**
+ * L'annuel ramene au mois, DANS LA DEVISE DU MAGASIN.
+ *
+ * Google a refuse l'app (20 octobre 2026) : l'examinateur, aux Philippines,
+ * lisait « 195,83 € / mois » a cote de « 2 350 ₱ par an » — la mensualite
+ * etait calculee ici et toujours suivie de « € ». On prend la mensualite que
+ * le magasin calcule lui-meme, sinon on la formate avec SA devise.
+ */
+function perMonthOf(p: PurchasesPackage | undefined, fallback: number): string {
+  const s = p?.product.pricePerMonthString;
+  if (s) return s;
+  const n = euros(p, fallback) / 12;
+  const currency = p?.product.currencyCode || 'EUR';
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n);
+  } catch {
+    return `${n.toFixed(2)} ${currency}`;
+  }
 }
 const MONTHLY_EUR = 5.99;
 // Douze mensualites face a un an : la comparaison honnete, et c'est elle qui
@@ -328,9 +343,10 @@ export function Paywall(
           */
           <Text variant="label" tone="tertiary" style={st.center}>
             {plan === 'annual'
-              ? t(trial ? d.pay.priceLine : d.pay.priceYearNoTrial, {
+              // Le total facture d'abord, la mensualite entre parentheses : c'est la regle de Google.
+              ? t(trial ? d.pay.priceLineYear : d.pay.priceYearNoTrial, {
                 n: TRIAL_DAYS,
-                m: money(euros(annual, ANNUAL_EUR) / 12),
+                m: perMonthOf(annual, ANNUAL_EUR),
                 y: price(annual, FALLBACK.annual),
               })
               : t(trial ? d.pay.priceMonthly : d.pay.priceMonthNoTrial, { n: TRIAL_DAYS, p: price(monthly, FALLBACK.monthly) })}
@@ -388,8 +404,11 @@ export function Paywall(
       <View style={st.plans}>
         <PlanRow
           label={d.pay.annual}
-          price={t(d.pay.perMonth, { p: money(euros(annual, ANNUAL_EUR) / 12) })}
-          sub={t(d.pay.billedYear, { y: price(annual, FALLBACK.annual) })}
+          // Le montant FACTURE en gros, la mensualite en petit, jamais l'inverse
+          // (regle des abonnements de Google : le cout ventile ne doit pas
+          // l'emporter sur le total).
+          price={t(d.pay.perYear, { p: price(annual, FALLBACK.annual) })}
+          sub={`≈ ${t(d.pay.perMonth, { p: perMonthOf(annual, ANNUAL_EUR) })}`}
           badge={`−${saving(annual, monthly)} %`}
           on={plan === 'annual'}
           onPress={() => { haptics.tick(); setPlan('annual'); }}

@@ -445,6 +445,8 @@ export const sr: Dict = {
   },
 
   pay: {
+    perYear: "{p} / god",
+    priceLineYear: "{n} dana besplatne probe, zatim {y}/god ({m}/mesec)",
     subNow: "Izbriši kratke video snimke zauvek.",
     titleNow: "Sada je vreme da vratiš {accent} nad svojim vremenom.",
     priceLine: '{n} dana besplatne probe, zatim {m}/mesec — naplata {y}/god',

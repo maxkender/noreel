@@ -445,6 +445,8 @@ export const et: Dict = {
   },
 
   pay: {
+    perYear: "{p} / aastas",
+    priceLineYear: "{n}-päevane tasuta proov, siis {y}/aastas ({m}/kuus)",
     subNow: "Kustuta lühivideod lõplikult.",
     titleNow: "Nüüd on aeg võtta taas {accent} oma aja üle.",
     priceLine: '{n}-päevane tasuta proov, siis {m}/kuus — arveldatakse {y}/aastas',

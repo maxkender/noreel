@@ -465,6 +465,8 @@ export const fr = {
   },
 
   pay: {
+    perYear: "{p} / an",
+    priceLineYear: "{n} j d’essai gratuit, puis {y}/an (soit {m}/mois)",
     subNow: "Supprime les vidéos courtes pour de bon.",
     titleNow: "C'est le moment de reprendre {accent} de ton temps.",
     priceLine: '{n} j d’essai gratuit, puis {m}/mois — facturé {y}/an',

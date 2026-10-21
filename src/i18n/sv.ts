@@ -444,6 +444,8 @@ export const sv: Dict = {
   },
 
   pay: {
+    perYear: "{p} / år",
+    priceLineYear: "{n} dagar gratis, sedan {y}/år ({m}/månad)",
     subNow: "Radera korta videor för gott.",
     titleNow: "Nu är det dags att ta tillbaka {accent} över din tid.",
     priceLine: '{n} dagar gratis, sedan {m}/månad — faktureras {y}/år',

@@ -445,6 +445,8 @@ export const tr: Dict = {
   },
 
   pay: {
+    perYear: "Yılda {p}",
+    priceLineYear: "{n} gün ücretsiz deneme, sonra yılda {y} (ayda {m})",
     subNow: "Kısa videoları sonsuza dek sil.",
     titleNow: "Şimdi zamanının {accent} geri alma zamanı.",
     priceLine: '{n} gün ücretsiz deneme, sonra ayda {m} — yıllık {y} faturalandırılır',

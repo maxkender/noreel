@@ -445,6 +445,8 @@ export const ro: Dict = {
   },
 
   pay: {
+    perYear: "{p} / an",
+    priceLineYear: "{n} zile de probă gratuită, apoi {y}/an ({m}/lună)",
     subNow: "Șterge videoclipurile scurte pentru totdeauna.",
     titleNow: "Acum e momentul să recapeți {accent} asupra timpului tău.",
     priceLine: '{n} zile de probă gratuită, apoi {m}/lună — facturat {y}/an',

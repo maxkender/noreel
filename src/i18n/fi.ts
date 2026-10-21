@@ -445,6 +445,8 @@ export const fi: Dict = {
   },
 
   pay: {
+    perYear: "{p} / vuosi",
+    priceLineYear: "{n} päivän ilmainen kokeilu, sitten {y}/vuosi ({m}/kk)",
     subNow: "Poista lyhytvideot lopullisesti.",
     titleNow: "Nyt on aika ottaa aikasi takaisin {accent}.",
     priceLine: '{n} päivän ilmainen kokeilu, sitten {m}/kk — laskutetaan {y}/vuosi',

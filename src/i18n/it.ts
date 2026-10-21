@@ -445,6 +445,8 @@ export const it: Dict = {
   },
 
   pay: {
+    perYear: "{p} / anno",
+    priceLineYear: "{n} giorni di prova gratuita, poi {y}/anno ({m}/mese)",
     subNow: "Elimina i video brevi per sempre.",
     titleNow: "È il momento di riprenderti il {accent} del tuo tempo.",
     priceLine: '{n} giorni di prova gratuita, poi {m}/mese — fatturato {y}/anno',

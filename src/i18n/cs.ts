@@ -445,6 +445,8 @@ export const cs: Dict = {
   },
 
   pay: {
+    perYear: "{p} / rok",
+    priceLineYear: "{n} dní zdarma, pak {y}/rok ({m}/měsíc)",
     subNow: "Smaž krátká videa navždy.",
     titleNow: "Teď je čas získat zpět {accent} nad svým časem.",
     priceLine: '{n} dní zdarma, pak {m}/měsíc — účtováno {y}/rok',

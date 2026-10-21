@@ -445,6 +445,8 @@ export const hu: Dict = {
   },
 
   pay: {
+    perYear: "{p} / év",
+    priceLineYear: "{n} napos ingyenes próba, utána {y}/év ({m}/hó)",
     subNow: "Töröld a rövid videókat örökre.",
     titleNow: "Itt az idő visszavenni az {accent} az időd felett.",
     priceLine: '{n} napos ingyenes próba, utána {m}/hó — évente {y} számlázva',
