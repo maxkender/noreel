@@ -59,6 +59,10 @@ const COMMON = `
   const __post = (o) => {
     try { window.ReactNativeWebView.postMessage(JSON.stringify(o)); } catch (e) {}
   };
+  // Les dernieres erreurs de la page, gardees pour le diagnostic des pages noires.
+  window.__nrErrs = window.__nrErrs || [];
+  addEventListener('error', (e) => { try { window.__nrErrs.push(String((e && e.message) || e).slice(0, 120)); window.__nrErrs = window.__nrErrs.slice(-3); } catch (x) {} });
+  addEventListener('unhandledrejection', (e) => { try { window.__nrErrs.push('rej ' + String((e && e.reason && e.reason.message) || (e && e.reason) || '').slice(0, 120)); window.__nrErrs = window.__nrErrs.slice(-3); } catch (x) {} });
   addEventListener('error', (e) => __post({
     t: 'err',
     m: String((e && e.message) || e),
@@ -1119,7 +1123,7 @@ export const INSTAGRAM_BLOCKER = `
       regarde si la page a du texte, et sinon on recharge — pas plus d'une
       fois la minute, pour ne jamais tourner en rond.
     */
-    if (location.pathname.indexOf('/notifications') === 0) {
+    if (location.pathname.indexOf('/notifications') === 0 || location.pathname.indexOf('/accounts/activity') === 0) {
       if (!window.__nrNotifAt) {
         window.__nrNotifAt = Date.now();
       } else if (Date.now() - window.__nrNotifAt > 2000) {
@@ -1130,6 +1134,28 @@ export const INSTAGRAM_BLOCKER = `
         if (text.length < 20 && Date.now() - last > 60000) {
           try { sessionStorage.setItem('nr.notifReload', String(Date.now())); } catch (e) { /* prive */ }
           location.reload();
+        } else if (text.length < 20) {
+          /*
+            TOUJOURS NOIRE APRES LE RECHARGEMENT (iPhone, octobre 2026).
+            On essaie l'ancienne page d'activite d'Instagram, une fois ; et
+            si elle aussi reste vide, on dit a l'app ce que la page a vu,
+            pour qu'une capture d'ecran suffise a trouver la cause.
+          */
+          let tried = '';
+          try { tried = sessionStorage.getItem('nr.notifAlt') || ''; } catch (e) { /* prive */ }
+          if (!tried) {
+            try { sessionStorage.setItem('nr.notifAlt', '1'); } catch (e) { /* prive */ }
+            location.assign('/accounts/activity/');
+          } else {
+            __post({
+              t: 'diag',
+              m: 'notif vide · ' + location.pathname + ' · main=' + !!document.querySelector('main')
+                + ' · html=' + document.documentElement.innerHTML.length
+                + ' · nr=' + document.querySelectorAll('[data-nr]').length
+                + ' · css=' + Array.from(document.querySelectorAll('style[id^="nr-"]')).map((x) => x.id).join(',')
+                + ' · err=' + (window.__nrErrs || []).join(' | '),
+            });
+          }
         }
         window.__nrNotifAt = Number.MAX_SAFE_INTEGER;
       }

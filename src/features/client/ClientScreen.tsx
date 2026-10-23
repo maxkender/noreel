@@ -723,6 +723,11 @@ export function ClientScreen({ id, openUrl }: { id: ClientId; /** Un lien colle 
           onMessage={(e) => {
             try {
               const m = JSON.parse(e.nativeEvent.data);
+              // Une page qui reste noire raconte ce qu'elle a vu : affiche 20 s, pour une capture.
+              if (m && m.t === 'diag' && typeof m.m === 'string') {
+                setPostNote(m.m.slice(0, 400));
+                setTimeout(() => setPostNote(null), 20000);
+              }
               if (m && (m.t === 'err' || m.t === 'rej') && m.m) {
                 setPageError(`${m.m}${m.l ? ` (l. ${m.l})` : ''}`);
               }
