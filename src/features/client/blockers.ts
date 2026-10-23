@@ -475,11 +475,28 @@ const COMMON = `
 
     // Le bandeau « Utiliser l'application », qui revient par le texte meme
     // quand ses liens ont saute. On remonte jusqu'au bloc qui le porte.
+    /*
+      JAMAIS LA PAGE ENTIERE (l'ecran noir des notifications, octobre 2026).
+      Pendant que la liste des notifications charge, le bloc qui porte TOUTE
+      la page n'a pour texte que la barre et le bandeau : « Home Explore
+      Reels Messages Back Notifications Close Use the app », 58 caracteres.
+      Il passait la regle, la page entiere etait cachee — et rien ne la
+      rendait jamais. Verifie sur instagram.com connecte, vue telephone.
+      On ne cache donc qu'un bandeau : rien qui contienne la page, la barre
+      ou une fenetre, rien de plus haut qu'un bandeau, et seulement le plus
+      haut de ces blocs-la.
+    */
     const OPEN = /utiliser l.application|use the app|ouvrir dans l.application|open in app|continuer dans l.application/i;
+    const banners = new Set();
     document.querySelectorAll('div, section, aside').forEach((el) => {
       const t = (el.textContent || '').trim();
-      if (t.length < 60 && OPEN.test(t) && el.children.length < 6) __hide(el);
+      if (!(t.length < 60 && OPEN.test(t) && el.children.length < 6)) return;
+      if (el.querySelector('main, nav, [role="main"], [role="navigation"], [role="dialog"]')) return;
+      if (el.closest('main, [role="dialog"]')) return;
+      if (el.offsetHeight > 120) return;
+      banners.add(el);
     });
+    banners.forEach((el) => { if (!banners.has(el.parentElement)) __hide(el); });
   };
 
   /**
